@@ -5,14 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
-import Usuario.DtoUsuario;
 import BaseDedatos.Coneccion;
 import enums.TipoDocumento;
 import enums.PosIva;
 
 public class DaoHuesped implements DaoHuespedInterfaz {
 
-    public boolean crearHuesped(DtoHuesped dto) throws PersistenciaException {
+    public boolean persistirHuesped(DtoHuesped dto) throws PersistenciaException {
 
         // Asume que la columna en tu BD se llama 'id_direccion' preguntar como se llama bien
         String sql = "INSERT INTO huesped (nombres, apellido, telefono, tipo_documento, numero_documento, " +
@@ -50,6 +49,28 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             throw new PersistenciaException("Error al intentar crear el huésped en la BD", e);
         }
     }
+
+    @Override
+    public Huesped crearHuesped(DtoHuesped dto) {
+        // Este método cumple con el mensaje "crearHuesped" del diagrama del CU2
+        // Instancia la ENTIDAD (Dominio) usando los datos del DTO
+        Huesped huespedEntidad = new Huesped();
+
+        huespedEntidad.setNombres(dto.getNombres());
+        huespedEntidad.setApellido(dto.getApellido());
+        huespedEntidad.setTelefono(dto.getTelefono());
+        huespedEntidad.setTipoDocumento(dto.getTipoDocumento());
+        huespedEntidad.setNroDocumento(Long.parseLong(dto.getDocumento())); // Ojo con el parseo
+        huespedEntidad.setCuit(dto.getCuit());
+        String stringIva = dto.getPosicionIva(); //pasar de String a PosIva
+        PosIva posIva = PosIva.fromString(stringIva); //pasar
+        huespedEntidad.setPosicionIva(posIva);
+        huespedEntidad.setEmail(dto.getEmail());
+        huespedEntidad.setFechaNacimiento(dto.getFechaNacimiento());
+
+        return huespedEntidad;
+    }
+
 
     public boolean crearEmailHuesped(DtoHuesped dto) {
         String sql = "INSERT INTO email_huesped (tipo_documento, nro_documento, email) VALUES (?, ?, ?)";

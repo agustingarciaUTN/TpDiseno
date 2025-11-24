@@ -5,7 +5,7 @@ public class Direccion {
     private String calle;
     private int numero;
     private String departamento;
-    private int piso;
+    private String piso;
     private int codPostal;
     private String localidad;
     private String provincia;
@@ -16,7 +16,7 @@ public class Direccion {
     }
 
     // Constructor con todos los datos
-    public Direccion(String calle, int numero, String departamento, int piso, int codPostal, String localidad, String provincia, String pais) {
+    public Direccion(String calle, int numero, String departamento, String piso, int codPostal, String localidad, String provincia, String pais) {
         this.calle = calle;
         this.numero = numero;
         this.departamento = departamento;
@@ -57,10 +57,10 @@ public class Direccion {
     public void setDepartamento(String departamento) {
         this.departamento = departamento;
     }
-    public int getPiso() {
+    public String getPiso() {
         return piso;
     }
-    public void setPiso(int piso) {
+    public void setPiso(String piso) {
         this.piso = piso;
     }
     public int getCodigoPostal() {

@@ -9,7 +9,7 @@ import Huesped.DtoDireccion;
 public class Huesped {
     private String nombres;
     private String apellido;
-    private int telefono;
+    private long telefono;
     private TipoDocumento tipoDocumento;
     private long documento;
     private String cuit;
@@ -74,10 +74,10 @@ public class Huesped {
     public void setApellido(String apellido) {
         this.apellido = apellido;
     }
-    public int getTelefono() {
+    public long getTelefono() {
         return telefono;
     }
-    public void setTelefono(int telefono) {
+    public void setTelefono(long telefono) {
         this.telefono = telefono;
     }
     public TipoDocumento getTipoDocumento() {
@@ -127,6 +127,13 @@ public class Huesped {
     }
     public void setNacionalidad(String nacionalidad) {
         this.nacionalidad = nacionalidad;
+    }
+    public void setDireccion(DtoDireccion direccion) {
+        if (direccion == null) {
+            throw new IllegalArgumentException("La dirección no puede ser nula");
+        }
+        this.direccion = direccion;
+        this.idDireccion = getIdDireccion();
     }
     public DtoDireccion getDireccion() {
         if (direccion == null && idDireccion > 0) {

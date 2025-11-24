@@ -3,6 +3,8 @@ package Huesped;
 
 import java.util.Date;
 
+import Dominio.Direccion;
+import Dominio.Huesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 
@@ -28,26 +30,40 @@ public class GestorHuesped {
         this.gestorEstadia = new GestorEstadia(new DaoEstadia());
     }
 
-    public ArrayList<DtoHuesped> buscarHuesped(DtoHuesped datos){
+    public ArrayList<Huesped> buscarHuesped(DtoHuesped criterios){
 
-        ArrayList<DtoHuesped> listaHuespedes;
+        ArrayList<DtoHuesped> listaDatos; //datos en crudo
+        ArrayList<Huesped> listaEntidades = new ArrayList<>();//Para entidades
 
-        
-        if (datos.estanVacios()) {
-            listaHuespedes = daoHuesped.obtenerTodosLosHuespedes(); 
+
+        if (criterios.estanVacios()) {
+            listaDatos = daoHuesped.obtenerTodosLosHuespedes();
         }
         else {
-            listaHuespedes = daoHuesped.obtenerHuespedesPorCriterio(datos);
+            listaDatos = daoHuesped.obtenerHuespedesPorCriterio(criterios);
         }
 
-        for (DtoHuesped huesped : listaHuespedes) {
-            asignarDireccionAHuesped(huesped);
-        }
-        
-        return listaHuespedes;
+        for (DtoHuesped datosHuesped : listaDatos) {
+            // A. Primero instanciamos la Dirección (Requerido por el diagrama)
+            // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
+            DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
 
+            // El DAO instancia la Entidad Dirección (Mensaje: crearDireccion)
+            Direccion direccionEntidad = daoDireccion.crearDireccion(dtoDireccion);
+
+            // B. Luego instanciamos el Huésped (Mensaje: crearHuesped)
+            Huesped huespedEntidad = daoHuesped.crearHuesped(datosHuesped);
+
+            // C. Asignamos la dirección al huésped (Vinculación)
+            huespedEntidad.setDireccion(dtoDireccion);
+
+            // Agregar a la lista final
+            listaEntidades.add(huespedEntidad);
+        }
+
+        return listaEntidades;
     }
-    
+
     public List<String> validarDatosHuesped(DtoHuesped datos){
         List<String> errores = new ArrayList<>();
 
@@ -143,13 +159,13 @@ public class GestorHuesped {
             //Crear la Dirección
             // Llamamos al DAO de Dirección. Este metodo actualiza el DTO de dirección
             // con el nuevo ID generado por la BD
-            DtoDireccion direccionConId = daoDireccion.crearDireccion(datosHuesped.getDireccion());
+            DtoDireccion direccionConId = daoDireccion.persistirDireccion(datosHuesped.getDireccion());
 
 
             //Crear el Huésped
             // Ahora llamamos al DAO de Huésped, pasándole el DTO completo.
             // El DAO de Huésped sabrá sacar el ID de la dirección desde datosHuesped.getDireccion().getId()
-            daoHuesped.crearHuesped(datosHuesped);
+            daoHuesped.persistirHuesped(datosHuesped);
             daoHuesped.crearEmailHuesped(datosHuesped);
 
 
@@ -330,7 +346,7 @@ public class GestorHuesped {
                 } else {
                     // Si la dirección NO tiene ID (ID=0), es una dirección NUEVA
                     // (Esto pasa si el huésped no tenía dirección y le agregaste una)
-                    DtoDireccion direccionNuevaCreada = daoDireccion.crearDireccion(direccionModificada);
+                    DtoDireccion direccionNuevaCreada = daoDireccion.persistirDireccion(direccionModificada);
                     
                     // Actualizamos el DTO del Huesped con el ID de la dirección recién creada
                     dtoHuespedModificado.setIdDireccion(direccionNuevaCreada.getId());

@@ -6,7 +6,8 @@ import Excepciones.PersistenciaException;
 import enums.TipoDocumento;
 
 public interface DaoHuespedInterfaz {
-    boolean crearHuesped(DtoHuesped dto) throws PersistenciaException;
+    //persistir datos
+    boolean persistirHuesped(DtoHuesped dto) throws PersistenciaException;
     boolean modificarHuesped(DtoHuesped dtoHuespedOriginal, DtoHuesped dtoHuespedModificado);
     boolean eliminarHuesped(String tipoDocumento, String nroDocumento);
     ArrayList<DtoHuesped> obtenerTodosLosHuespedes ();
@@ -17,6 +18,11 @@ public interface DaoHuespedInterfaz {
     boolean eliminarEmailsHuesped(String tipoDocumento, String nroDocumento);
     DtoHuesped buscarPorTipoYNumeroDocumento(TipoDocumento tipoDoc, String numDoc) throws PersistenciaException;
     boolean crearEmailHuesped(DtoHuesped dto) throws PersistenciaException;
+
+    //Para crear la entidad como indica el diagrama de secuencia de CU2
+    Huesped crearHuesped(DtoHuesped datos);
+
 }
+
 //queremos tener diferentes metodos para devolver por ej una lista de dto?
 //tenemos que controlar excepciones

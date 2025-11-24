@@ -1,5 +1,6 @@
 package Huesped;
 import BaseDedatos.Coneccion;
+import Dominio.Direccion;
 import Excepciones.PersistenciaException;
 import java.sql.*;
 
@@ -7,7 +8,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
 
         //debe ser tipo DtoDireccion porque necesitamos el ID de la Direccion creada para asignarla al Huesped
         @Override
-        public DtoDireccion crearDireccion(DtoDireccion dto) throws PersistenciaException{
+        public DtoDireccion persistirDireccion(DtoDireccion dto) throws PersistenciaException{
             // Lógica para crear una dirección en la base de datos
             String sql = "INSERT INTO direccion (calle, numero, departamento, piso, \"codPostal\", localidad, provincia, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -48,6 +49,23 @@ public class DaoDireccion implements DaoDireccionInterfaz {
                 //lanzamos la excepcion personalizada que debe ser manejada en el GestorHuesped
                 throw new PersistenciaException("Error al intentar crear la dirección en la BD", e);
             }
+        }
+
+        public Direccion crearDireccion(DtoDireccion dto){
+            if (dto == null) return null;
+
+            Direccion direccionEntidad = new Direccion();
+
+            direccionEntidad.setCalle(dto.getCalle());
+            direccionEntidad.setNumero(dto.getNumero());
+            direccionEntidad.setDepartamento(dto.getDepartamento());
+            direccionEntidad.setPiso(dto.getPiso());
+            direccionEntidad.setCodigoPostal(dto.getCodPostal());
+            direccionEntidad.setLocalidad(dto.getLocalidad());
+            direccionEntidad.setProvincia(dto.getProvincia());
+            direccionEntidad.setPais(dto.getPais());
+
+            return direccionEntidad;
         }
 
         @Override
