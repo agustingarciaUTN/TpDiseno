@@ -1,7 +1,6 @@
 package Huesped;
 import BaseDedatos.Coneccion;
 import Excepciones.PersistenciaException;
-
 import java.sql.*;
 
 public class DaoDireccion implements DaoDireccionInterfaz {

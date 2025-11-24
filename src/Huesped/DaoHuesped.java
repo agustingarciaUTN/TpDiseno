@@ -137,7 +137,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 if(!rs.wasNull()){
                     huespedDTO.setIdDireccion(idDir);
                 } else{ 
-                    huespedDTO.setIdDireccion(0); //0 indica que no hay direccion asociada
+                    huespedDTO.setIdDireccion(0); //0 indica que no hay dirección asociada
                 }
                 //Para los enums
                 //Primero leemos los strings y después los convertimos a enum

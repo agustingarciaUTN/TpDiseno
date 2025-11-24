@@ -27,7 +27,13 @@ public class Huesped {
     }
 
     // Constructor con todos los datos
-    public Huesped(String nombres, String apellido, int telefono, TipoDocumento tipoDocumento, long documento, String cuit, PosIva posicionIva, Date fechaNacimiento, String email, String ocupacion, String nacionalidad) {
+    public Huesped(String nombres, String apellido, int telefono,
+                   TipoDocumento tipoDocumento, long documento, String cuit,
+                   PosIva posicionIva, Date fechaNacimiento, String email,
+                   String ocupacion, String nacionalidad, int idDireccion) {
+        if (idDireccion <= 0) {
+            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
+        }
         this.nombres = nombres;
         this.apellido = apellido;
         this.telefono = telefono;
@@ -39,17 +45,22 @@ public class Huesped {
         this.email = email;
         this.ocupacion = ocupacion;
         this.nacionalidad = nacionalidad;
+        this.idDireccion = idDireccion;
     }
-
     // Constructor con los datos más importantes
-    public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento, long documento, PosIva posicionIva) {
+    public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento,
+                   long documento, PosIva posicionIva, int idDireccion) {
+        if (idDireccion <= 0) {
+            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
+        }
+
         this.nombres = nombres;
         this.apellido = apellido;
         this.tipoDocumento = tipoDocumento;
         this.documento = documento;
         this.posicionIva = posicionIva;
+        this.idDireccion = idDireccion;
     }
-
     // Getters y Setters
     public String getNombres() {
         return nombres;
@@ -119,16 +130,20 @@ public class Huesped {
     }
     public DtoDireccion getDireccion() {
         if (direccion == null && idDireccion > 0) {
-            // Cargar desde el DAO si es necesario
             DaoDireccion daoDireccion = new DaoDireccion();
             direccion = daoDireccion.obtenerDireccion(idDireccion);
         }
         return direccion;
     }
+
     public int getIdDireccion() {
         return idDireccion;
     }
+
     public void setIdDireccion(int idDireccion) {
+        if (idDireccion <= 0) {
+            throw new IllegalArgumentException("El ID de dirección debe ser mayor a 0");
+        }
         this.idDireccion = idDireccion;
     }
 }
