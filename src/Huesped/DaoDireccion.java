@@ -8,7 +8,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
 
         //debe ser tipo DtoDireccion porque necesitamos el ID de la Direccion creada para asignarla al Huesped
         @Override
-        public DtoDireccion CrearDireccion(DtoDireccion dto) throws PersistenciaException{
+        public DtoDireccion crearDireccion(DtoDireccion dto) throws PersistenciaException{
             // Lógica para crear una dirección en la base de datos
             String sql = "INSERT INTO direccion (calle, numero, departamento, piso, \"codPostal\", localidad, provincia, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -52,7 +52,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
         }
 
         @Override
-        public boolean ModificarDireccion(DtoDireccion dto) throws PersistenciaException {
+        public boolean modificarDireccion(DtoDireccion dto) throws PersistenciaException {
             String sql = "UPDATE direccion SET calle = ?, numero = ?, departamento = ?, piso = ?, \"codPostal\" = ?, localidad = ?, provincia = ?, pais = ? WHERE id_direccion = ?";
             
             try (Connection conn = Coneccion.getConnection();
@@ -81,13 +81,13 @@ public class DaoDireccion implements DaoDireccionInterfaz {
         }
 
         @Override
-        public boolean EliminarDireccion(int idDireccion) {
+        public boolean eliminarDireccion(int idDireccion) {
             // Lógica para eliminar una dirección en la base de datos
             return true;
         }
 
         @Override
-        public DtoDireccion ObtenerDireccion(int idDireccion) {
+        public DtoDireccion obtenerDireccion(int idDireccion) {
             String sql = "SELECT id_direccion, calle, numero, departamento, piso, \"codPostal\", localidad, provincia, pais FROM direccion WHERE id_direccion = ?";
             
             try (Connection conn = Coneccion.getConnection();

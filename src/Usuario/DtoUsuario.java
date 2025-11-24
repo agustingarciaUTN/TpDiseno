@@ -2,6 +2,8 @@ package Usuario;
 
 import Dominio.Usuario;
 
+import static Utils.UsuarioHelper.generarHashMD5;
+
 public class DtoUsuario {
     private int idUsuario;
     private String nombre;
@@ -15,7 +17,7 @@ public class DtoUsuario {
         this.nombre = nombre;
         this.contrasenia = contrasenia;
         this.idUsuario = idUsuario;
-        this.hashContrasenia = new Usuario().generarHashMD5(contrasenia);
+        this.hashContrasenia = generarHashMD5(contrasenia);
     }
 
 

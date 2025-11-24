@@ -3,6 +3,8 @@ package Dominio;
 import enums.TipoDocumento;
 import enums.PosIva;
 import java.util.Date;
+import Huesped.DaoDireccion;
+import Huesped.DtoDireccion;
 
 public class Huesped {
     private String nombres;
@@ -16,6 +18,8 @@ public class Huesped {
     private String email;
     private String ocupacion;
     private String nacionalidad;
+    private DtoDireccion direccion;
+    private int idDireccion;
 
 
     // Constructor default
@@ -71,10 +75,10 @@ public class Huesped {
     public void setTipoDocumento(TipoDocumento tipoDocumento) {
         this.tipoDocumento = tipoDocumento;
     }
-    public long getDocumento() {
+    public long getNroDocumento() {
         return documento;
     }
-    public void setDocumento(long documento) {
+    public void setNroDocumento(long documento) {
         this.documento = documento;
     }
     public String getCuit() {
@@ -112,5 +116,19 @@ public class Huesped {
     }
     public void setNacionalidad(String nacionalidad) {
         this.nacionalidad = nacionalidad;
+    }
+    public DtoDireccion getDireccion() {
+        if (direccion == null && idDireccion > 0) {
+            // Cargar desde el DAO si es necesario
+            DaoDireccion daoDireccion = new DaoDireccion();
+            direccion = daoDireccion.obtenerDireccion(idDireccion);
+        }
+        return direccion;
+    }
+    public int getIdDireccion() {
+        return idDireccion;
+    }
+    public void setIdDireccion(int idDireccion) {
+        this.idDireccion = idDireccion;
     }
 }

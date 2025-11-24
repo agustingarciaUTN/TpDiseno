@@ -1,11 +1,11 @@
 package Usuario;
-import Dominio.Usuario;
+
 
 public interface DaoUsuarioInterfaz {
-    boolean CrearUsuario(String nombre, String contrasenia, int idUsuario);
-    boolean ModificarUsuario(int idUsuario);
-    boolean EliminarUsuario(int idUsuario);
-    DtoUsuario ObtenerUsuario(int idUsuario);
-    DtoUsuario ObtenerUsuarioPorNombre(String nombre);
+    boolean crearUsuario(String nombre, String contrasenia, int idUsuario);
+    boolean modificarUsuario(int idUsuario);
+    boolean eliminarUsuario(int idUsuario);
+    DtoUsuario obtenerUsuario(int idUsuario);
+    DtoUsuario obtenerUsuarioPorNombre(String nombre);
 }
 

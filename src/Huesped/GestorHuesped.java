@@ -143,7 +143,7 @@ public class GestorHuesped {
             //Crear la Dirección
             // Llamamos al DAO de Dirección. Este metodo actualiza el DTO de dirección
             // con el nuevo ID generado por la BD
-            DtoDireccion direccionConId = daoDireccion.CrearDireccion(datosHuesped.getDireccion());
+            DtoDireccion direccionConId = daoDireccion.crearDireccion(datosHuesped.getDireccion());
 
 
             //Crear el Huésped
@@ -324,13 +324,13 @@ public class GestorHuesped {
             try {
                 if (direccionModificada.getId() > 0) {
                     // Si la dirección ya tiene un ID, la modificamos
-                    daoDireccion.ModificarDireccion(direccionModificada);
+                    daoDireccion.modificarDireccion(direccionModificada);
                     // Nos aseguramos que el DTO Huesped tenga el ID correcto
                     dtoHuespedModificado.setIdDireccion(direccionModificada.getId());
                 } else {
                     // Si la dirección NO tiene ID (ID=0), es una dirección NUEVA
                     // (Esto pasa si el huésped no tenía dirección y le agregaste una)
-                    DtoDireccion direccionNuevaCreada = daoDireccion.CrearDireccion(direccionModificada);
+                    DtoDireccion direccionNuevaCreada = daoDireccion.crearDireccion(direccionModificada);
                     
                     // Actualizamos el DTO del Huesped con el ID de la dirección recién creada
                     dtoHuespedModificado.setIdDireccion(direccionNuevaCreada.getId());
@@ -445,7 +445,7 @@ public class GestorHuesped {
             return false;
         }
 
-        DtoDireccion dtoDireccion = daoDireccion.ObtenerDireccion(dtoHuesped.getIdDireccion());
+        DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(dtoHuesped.getIdDireccion());
         if (dtoDireccion != null) {
             dtoHuesped.setDireccion(dtoDireccion);
             return true;

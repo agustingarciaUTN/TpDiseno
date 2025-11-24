@@ -1,6 +1,11 @@
 package Estadia;
 
+import Dominio.Estadia;
+import Dominio.Huesped;
+import Excepciones.PersistenciaException;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class GestorEstadia {
     private final DaoInterfazEstadia daoEstadia;
@@ -29,26 +34,36 @@ public class GestorEstadia {
 
     /**
      * Crea una nueva estadía
-     * @param dto Datos de la estadía
+     * @param estadia Datos de la estadía
+     * @param huespedes Lista de huespedes asociados
      * @return true si se creó exitosamente
      */
-    public boolean crearEstadia(DtoEstadia dto) {
-        if (dto == null) {
-            System.err.println("Los datos de la estadía no pueden ser nulos");
+    public boolean crearEstadia(Estadia estadia, List<Huesped> huespedes) {
+        if (estadia == null) {
+            System.err.println("La estadía no puede ser nula");
             return false;
         }
 
-        if (dto.getFechaInicio() == null) {
+        if (huespedes == null || huespedes.isEmpty()) {
+            System.err.println("Debe haber al menos un huésped");
+            return false;
+        }
+        if (estadia.getFechaInicio() == null) {
             System.err.println("La fecha de inicio es obligatoria");
             return false;
         }
 
-        if (dto.getValorEstadia() <= 0) {
+        if (estadia.getValorEstadia() <= 0) {
             System.err.println("El valor de la estadía debe ser mayor a 0");
             return false;
         }
 
-        return daoEstadia.crearEstadia(dto);
+        try {
+            return daoEstadia.crearEstadia(estadia, huespedes);
+        } catch (PersistenciaException e) {
+            System.err.println("Error al crear la estadía: " + e.getMessage());
+            return false;
+        }
     }
 
     /**

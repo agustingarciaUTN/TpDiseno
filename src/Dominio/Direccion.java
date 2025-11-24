@@ -1,7 +1,7 @@
 package Dominio;
 
 public class Direccion {
-    private int ID;
+    private int id_direccion;
     private String calle;
     private int numero;
     private String departamento;
@@ -37,7 +37,8 @@ public class Direccion {
     }
 
     // Getters y Setters
-    public void setId(int ID){this.ID = ID;}
+    public void setId(int ID){this.id_direccion = ID;}
+    public int getId(){return id_direccion;}
     public String getCalle() {
         return calle;
     }
@@ -62,10 +63,10 @@ public class Direccion {
     public void setPiso(int piso) {
         this.piso = piso;
     }
-    public int getCodPostal() {
+    public int getCodigoPostal() {
         return codPostal;
     }
-    public void setCodPostal(int codPostal) {
+    public void setCodigoPostal(int codPostal) {
         this.codPostal = codPostal;
     }
     public String getLocalidad() {

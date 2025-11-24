@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public class DaoUsuario implements DaoUsuarioInterfaz {
 
     @Override
-    public DtoUsuario ObtenerUsuario(int idUsuario){
+    public DtoUsuario obtenerUsuario(int idUsuario){
         String sql = "SELECT id_usuario, nombre, contrasena FROM usuario WHERE id_usuario = ?";
         Connection conn = null;
         PreparedStatement ps = null;
@@ -42,7 +42,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     }
 
     @Override
-    public DtoUsuario ObtenerUsuarioPorNombre(String nombre){
+    public DtoUsuario obtenerUsuarioPorNombre(String nombre){
         String sql = "SELECT id_usuario, nombre, contrasena FROM usuario WHERE nombre = ?";
         Connection conn = null;
         PreparedStatement ps = null;
@@ -73,7 +73,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     }
 
     @Override
-    public boolean CrearUsuario(String nombre, String contrasenia, int idUsuario){
+    public boolean crearUsuario(String nombre, String contrasenia, int idUsuario){
         String sql = "INSERT INTO usuario (id_usuario, nombre, contrasena) VALUES (?, ?, ?)";
         Connection conn = null;
         PreparedStatement ps = null;
@@ -102,7 +102,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     }
 
     @Override
-    public boolean ModificarUsuario(int idUsuario){
+    public boolean modificarUsuario(int idUsuario){
         String sql = "UPDATE usuario SET nombre = ?, contrasena = ? WHERE id_usuario = ?";
         Connection conn = null;
         PreparedStatement ps = null;
@@ -123,7 +123,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     }
 
     @Override
-    public boolean EliminarUsuario(int idUsuario){
+    public boolean eliminarUsuario(int idUsuario){
         String sql = "DELETE FROM usuario WHERE id_usuario = ?";
         Connection conn = null;
         PreparedStatement ps = null;

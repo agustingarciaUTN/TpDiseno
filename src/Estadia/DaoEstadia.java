@@ -1,35 +1,117 @@
 package Estadia;
 
 import BaseDedatos.Coneccion;
+import Dominio.Huesped;
+import Excepciones.PersistenciaException;
+
+import Dominio.Estadia;
+
+
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DaoEstadia implements DaoInterfazEstadia {
 
     @Override
-    public boolean crearEstadia(DtoEstadia dto) {
-        String sql = "INSERT INTO estadia (fecha_inicio, fecha_fin, valor_estadia) VALUES (?, ?, ?)";
+    public boolean crearEstadia(Estadia estadia, List<Huesped> huespedes) {
 
-        try (Connection conn = Coneccion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        if (huespedes == null || huespedes.isEmpty()) {
+            throw new IllegalArgumentException("La estadia debe tener al menos un huesped.");
+        }
+        if (estadia.getFechaInicio() == null) {
+            throw new IllegalArgumentException("La fecha de inicio no puede ser nula.");
+        }
 
-            ps.setDate(1, new java.sql.Date(dto.getFechaInicio().getTime()));
+        String sqlInsertEstadia = "INSERT INTO estadia (fecha_inicio, fecha_fin, valor_estadia, id_reserva) VALUES (?, ?, ?, ?)";
+        String sqlInsertEstadiaHuesped = "INSERT INTO estadia_huesped (id_estadia, tipo_documento, nro_documento) VALUES (?,?,?)";
 
-            if (dto.getFechaFin() != null) {
-                ps.setDate(2, new java.sql.Date(dto.getFechaFin().getTime()));
-            } else {
-                ps.setNull(2, Types.DATE);
+        Connection conexion = null;
+        try {
+            conexion = Coneccion.getConnection();
+            conexion.setAutoCommit(false);
+
+            int idEstadiaGenerado = -1;
+            try (PreparedStatement sentencia = conexion.prepareStatement(sqlInsertEstadia, Statement.RETURN_GENERATED_KEYS)) {
+                if (estadia.getFechaInicio() != null) {
+                    sentencia.setTimestamp(1, new Timestamp(estadia.getFechaInicio().getTime()));
+                } else {
+                    sentencia.setNull(1, Types.TIMESTAMP);
+                }
+
+                if (estadia.getFechaFin() != null) {
+                    sentencia.setTimestamp(2, new Timestamp(estadia.getFechaFin().getTime()));
+                } else {
+                    sentencia.setNull(2, Types.TIMESTAMP);
+                }
+
+                sentencia.setDouble(3, estadia.getValorEstadia());
+                // Si tu entidad Estadia tiene idReserva, se inserta aquí
+                sentencia.setInt(4, estadia.getIdReserva());
+
+                int filasAfectadas = sentencia.executeUpdate();
+                if (filasAfectadas == 0) {
+                    conexion.rollback();
+                    return false;
+                }
+
+                try (ResultSet rs = sentencia.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        idEstadiaGenerado = rs.getInt(1);
+                    } else {
+                        conexion.rollback();
+                        return false;
+                    }
+                }
             }
 
-            ps.setDouble(3, dto.getValorEstadia());
+            if (idEstadiaGenerado <= 0) {
+                conexion.rollback();
+                return false;
+            }
 
-            int filasAfectadas = ps.executeUpdate();
-            return filasAfectadas > 0;
+            try (PreparedStatement sentenciaJoin = conexion.prepareStatement(sqlInsertEstadiaHuesped)) {
+                for (Huesped huesped : huespedes) {
+                    sentenciaJoin.setInt(1, idEstadiaGenerado);
 
+                    if (huesped.getTipoDocumento() != null) {
+                        sentenciaJoin.setString(2, huesped.getTipoDocumento().name());
+                    } else {
+                        sentenciaJoin.setNull(2, Types.VARCHAR);
+                    }
+
+                    if (huesped.getNroDocumento() != 0) {
+                        sentenciaJoin.setString(3, String.valueOf(huesped.getNroDocumento()));
+                    } else { // revisar porque estariamos seteando en null
+                        sentenciaJoin.setNull(3, Types.VARCHAR);
+                    }
+
+                    sentenciaJoin.addBatch();
+                }
+                int[] resultados = sentenciaJoin.executeBatch();
+                boolean algunaInsertada = false;
+                for (int r : resultados) {
+                    if (r == Statement.SUCCESS_NO_INFO || r > 0) {
+                        algunaInsertada = true;
+                        break;
+                    }
+                }
+                if (!algunaInsertada) {
+                    conexion.rollback();
+                    return false;
+                }
+            }
+
+            conexion.commit();
+            return true;
         } catch (SQLException e) {
-            System.err.println("Error al crear estadía: " + e.getMessage());
+            try { if (conexion != null) conexion.rollback(); } catch (SQLException ex) { /* log si aplica */ }
+            System.err.println("Error al persistir estadía: " + e.getMessage());
             return false;
+        } finally {
+            try { if (conexion != null) { conexion.setAutoCommit(true); conexion.close(); } } catch (SQLException ignored) {}
         }
+
     }
 
     @Override

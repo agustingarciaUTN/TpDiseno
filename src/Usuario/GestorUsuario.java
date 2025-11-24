@@ -1,5 +1,6 @@
 package Usuario;
 import Dominio.Usuario;
+import static Utils.UsuarioHelper.generarHashMD5;
 
 public class GestorUsuario {
     private final DaoUsuarioInterfaz daoUsuario;
@@ -22,26 +23,26 @@ public class GestorUsuario {
             }
 
             //Obtener el usuario de la base de datos
-            DtoUsuario usuarioBDD = daoUsuario.ObtenerUsuarioPorNombre(nombre);
+            DtoUsuario usuarioBDD = daoUsuario.obtenerUsuarioPorNombre(nombre);
 
             //Verificar si el usuario existe
             if (usuarioBDD == null) {
-                System.err.println("Usuario no encontrado en la base de datos");
+                                System.err.println("Credenciales inválidas");
                 return false;
             }
 
             //Generar hash MD5 de la contraseña ingresada
-            String hashIngresado = new Usuario().generarHashMD5(contrasenia);
+            String hashIngresado = generarHashMD5(contrasenia);
 
             //Comparar el hash ingresado con el hash almacenado en la BDD
             String hashAlmacenado = usuarioBDD.getHashContrasenia();
 
             //Verificar si las contraseñas coinciden
-            boolean autenticacionExitosa = hashAlmacenado.equals(hashIngresado);
-
-
-            return autenticacionExitosa;
-
+            if (hashAlmacenado == null || hashIngresado == null) {
+                System.err.println("Error: hash de contraseña nulo.");
+                return false;
+            }
+            return hashAlmacenado.equals(hashIngresado);
         } catch (Exception e) {
             System.err.println("Error durante la autenticación: " + e.getMessage());
             e.printStackTrace();
