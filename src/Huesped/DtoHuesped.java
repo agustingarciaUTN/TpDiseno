@@ -1,8 +1,10 @@
 package Huesped;
 
+import Dominio.Estadia;
 import enums.TipoDocumento;
 import enums.PosIva;
 import java.util.Date;
+import java.util.List;
 
 public class DtoHuesped {
     private String nombres;
@@ -17,10 +19,19 @@ public class DtoHuesped {
     private String ocupacion;
     private String nacionalidad;
     private DtoDireccion dtoDireccion;
-    private int idDireccion;   
+    private int idDireccion;
+    private List<Estadia> estadias;
+
 
     // Constructor con todos los datos
-    public DtoHuesped(String nombres, String apellido, long telefono, TipoDocumento tipoDocumento, String documento, String cuit, String posicionIva, Date fechaNacimiento, String email, String ocupacion, String nacionalidad) {
+    public DtoHuesped(String nombres, String apellido, long telefono,
+                      TipoDocumento tipoDocumento, String documento,
+                      String cuit, String posicionIva, Date fechaNacimiento,
+                      String email, String ocupacion, String nacionalidad,
+                      DtoDireccion direccion, List<Estadia> estadias) {
+        if (direccion == null) {
+            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
+        }
         this.nombres = nombres;
         this.apellido = apellido;
         this.telefono = telefono;
@@ -32,6 +43,8 @@ public class DtoHuesped {
         this.email = email;
         this.ocupacion = ocupacion;
         this.nacionalidad = nacionalidad;
+        this.dtoDireccion = direccion;
+        this.estadias = estadias;
     }
     
     public DtoHuesped (){}
@@ -111,7 +124,12 @@ public class DtoHuesped {
     public void setIdDireccion(int idDireccion) {
         this.idDireccion = idDireccion;
     }
-    
+    public List<Estadia> getEstadias(){
+        return estadias;
+    }
+    public void setEstadias(List<Estadia> estadias){
+        this.estadias = estadias;
+    }
     public boolean estanVacios() {
         boolean apellidoVacio = (apellido == null || apellido.trim().isEmpty());
         boolean nombresVacio = (nombres == null || nombres.trim().isEmpty());
@@ -119,7 +137,7 @@ public class DtoHuesped {
         boolean docVacio = (documento.isEmpty());
         return apellidoVacio && nombresVacio && tipoDocVacio && docVacio;
     }
-    
+
     // Método auxiliar para convertir string de la BD a PosIva
     public static PosIva convertirPosIvaString(String posicionIvaStr) {
         if (posicionIvaStr == null) {

@@ -67,6 +67,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         huespedEntidad.setPosicionIva(posIva);
         huespedEntidad.setEmail(dto.getEmail());
         huespedEntidad.setFechaNacimiento(dto.getFechaNacimiento());
+        huespedEntidad.setDireccion(dto.getDireccion());
+        huespedEntidad.setEstadias(dto.getEstadias());
 
         return huespedEntidad;
     }
