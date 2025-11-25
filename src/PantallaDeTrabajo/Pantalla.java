@@ -348,7 +348,7 @@ public class Pantalla {
 
         // Crear los DTO  (aún no tenemos el ID de dirección)
         DtoDireccion direccionDto = new DtoDireccion(calleDireccion, numeroDireccionPrimitivo, departamentoDireccion, pisoDireccion, codPostalDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion);
-        DtoHuesped huespedDto = new DtoHuesped(nombres, apellido, telefono, tipoDocumento, numeroDocumento, cuit, posIva, fechaNacimiento, email, ocupacion, nacionalidad);
+        DtoHuesped huespedDto = new DtoHuesped(nombres, apellido, telefono, tipoDocumento, numeroDocumento, cuit, posIva, fechaNacimiento, email, ocupacion, nacionalidad, direccionDto, null);
 
         //asociamos el la direccion con el huesped
         huespedDto.setDireccion(direccionDto);

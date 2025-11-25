@@ -3,6 +3,8 @@ package Dominio;
 import enums.TipoDocumento;
 import enums.PosIva;
 import java.util.Date;
+import java.util.List;
+
 import Huesped.DaoDireccion;
 import Huesped.DtoDireccion;
 
@@ -20,6 +22,7 @@ public class Huesped {
     private String nacionalidad;
     private DtoDireccion direccion;
     private int idDireccion;
+    private List<Estadia> estadias;
 
 
     // Constructor default
@@ -30,7 +33,7 @@ public class Huesped {
     public Huesped(String nombres, String apellido, int telefono,
                    TipoDocumento tipoDocumento, long documento, String cuit,
                    PosIva posicionIva, Date fechaNacimiento, String email,
-                   String ocupacion, String nacionalidad, int idDireccion) {
+                   String ocupacion, String nacionalidad, int idDireccion, List<Estadia> estadias) {
         if (idDireccion <= 0) {
             throw new IllegalArgumentException("El huésped debe tener una dirección válida");
         }
@@ -46,6 +49,7 @@ public class Huesped {
         this.ocupacion = ocupacion;
         this.nacionalidad = nacionalidad;
         this.idDireccion = idDireccion;
+        this.estadias = estadias;
     }
     // Constructor con los datos más importantes
     public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento,
@@ -146,11 +150,17 @@ public class Huesped {
     public int getIdDireccion() {
         return idDireccion;
     }
-
     public void setIdDireccion(int idDireccion) {
         if (idDireccion <= 0) {
             throw new IllegalArgumentException("El ID de dirección debe ser mayor a 0");
         }
         this.idDireccion = idDireccion;
+    }
+
+    public List<Estadia> getEstadias(){
+        return estadias;
+    }
+    public void setEstadias(List<Estadia> estadias){
+        this.estadias = estadias;
     }
 }

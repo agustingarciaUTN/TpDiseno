@@ -2,6 +2,7 @@
 package Dominio;
 
 import java.util.Date;
+import java.util.List;
 
 public class Estadia {
     private int id_estadia;
@@ -9,6 +10,7 @@ public class Estadia {
     private Date fecha_fin;
     private double valor_estadia;
     private int id_reserva;
+    private List<Huesped> huespedes;
 
     public Estadia() {
         // constructor por defecto
@@ -21,7 +23,7 @@ public class Estadia {
      * @param fecha_fin Fecha de fin (opcional)
      * @param valor_estadia Valor de la estadía (opcional)
      */
-    public Estadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia) {
+    public Estadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
         if (fecha_inicio == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
         }
@@ -31,12 +33,15 @@ public class Estadia {
         if (id_reserva <= 0) {
             throw new IllegalArgumentException("El ID de reserva debe ser mayor a 0");
         }
-
+        if(huespedes == null){
+            throw new IllegalArgumentException("La estadia debe tener asignada al menos un huesped.");
+        }
         this.id_estadia = id_estadia;
         this.fecha_inicio = new Date(fecha_inicio.getTime());
         this.id_reserva = id_reserva;
         this.fecha_fin = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
         this.valor_estadia = valor_estadia;
+        this.huespedes = huespedes;
     }
 
     public int getIdEstadia() {
@@ -65,4 +70,6 @@ public class Estadia {
     }
     public void setIdReserva(int id_reserva){this.id_reserva = id_reserva;}
     public int getIdReserva(){return id_reserva;}
+    public List<Huesped> getHuespedes(){return huespedes;}
+    public void setHuespedes(List<Huesped> huespedes){this.huespedes = huespedes;}
 }
