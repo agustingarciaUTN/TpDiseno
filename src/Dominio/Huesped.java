@@ -3,6 +3,8 @@ package Dominio;
 import enums.TipoDocumento;
 import enums.PosIva;
 import java.util.Date;
+import java.util.List;
+
 import Huesped.DaoDireccion;
 import Huesped.DtoDireccion;
 
@@ -20,6 +22,7 @@ public class Huesped {
     private String nacionalidad;
     private DtoDireccion direccion;
     private int idDireccion;
+    private List<Estadia> estadias;
 
 
     // Constructor default
