@@ -1,5 +1,7 @@
 package Dominio;
 
-public class TarjetaCredito {
-    
+public class TarjetaCredito extends Tarjeta {
+
+    private int cuotasCantidad;
+
 }

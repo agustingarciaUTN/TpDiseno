@@ -1,5 +1,5 @@
 package Dominio;
 
-public class TarjetaDebito {
+public class TarjetaDebito extends Tarjeta {
     
 }
