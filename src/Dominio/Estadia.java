@@ -20,9 +20,9 @@ public class Estadia {
     }
     /**
      * Constructor completo con validaciones
-     * @param id_estadia ID de la estadía (obligatorio)
+     * @param idEstadia ID de la estadía (obligatorio)
      * @param fechaCheckIn Fecha de inicio (obligatoria)
-     * @param id_reserva ID de la reserva (obligatorio)
+     * @param idReserva ID de la reserva (obligatorio)
      * @param fechaCheckOut Fecha de fin (opcional)
      * @param valorEstadia Valor de la estadía (opcional)
      */
