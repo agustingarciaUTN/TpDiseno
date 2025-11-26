@@ -19,7 +19,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
         if (huespedes == null || huespedes.isEmpty()) {
             throw new IllegalArgumentException("La estadia debe tener al menos un huesped.");
         }
-        if (estadia.getFechaInicio() == null) {
+        if (estadia.getFechaCheckIn() == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula.");
         }
 
@@ -33,14 +33,14 @@ public class DaoEstadia implements DaoInterfazEstadia {
 
             int idEstadiaGenerado = -1;
             try (PreparedStatement sentencia = conexion.prepareStatement(sqlInsertEstadia, Statement.RETURN_GENERATED_KEYS)) {
-                if (estadia.getFechaInicio() != null) {
-                    sentencia.setTimestamp(1, new Timestamp(estadia.getFechaInicio().getTime()));
+                if (estadia.getFechaCheckIn() != null) {
+                    sentencia.setTimestamp(1, new Timestamp(estadia.getFechaCheckIn().getTime()));
                 } else {
                     sentencia.setNull(1, Types.TIMESTAMP);
                 }
 
-                if (estadia.getFechaFin() != null) {
-                    sentencia.setTimestamp(2, new Timestamp(estadia.getFechaFin().getTime()));
+                if (estadia.getFechaCheckOut() != null) {
+                    sentencia.setTimestamp(2, new Timestamp(estadia.getFechaCheckOut().getTime()));
                 } else {
                     sentencia.setNull(2, Types.TIMESTAMP);
                 }
