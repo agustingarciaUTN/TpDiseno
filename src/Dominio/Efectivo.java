@@ -2,6 +2,7 @@ package Dominio;
 
 import enums.Moneda;
 import java.util.Date;
+import java.util.ArrayList;
 
 public class Efectivo extends MedioPago{
 
@@ -11,7 +12,8 @@ public class Efectivo extends MedioPago{
     private Date fechaDePago;
     
 
-    public Efectivo(int idEfectivo, Moneda moneda, float monto, Date fechaDePago) {
+    public Efectivo(int idEfectivo, Moneda moneda, float monto, Date fechaDePago, int idPago,  ArrayList<Pago> pagos) {
+        super(idPago, pagos);
         if(idEfectivo <= 0) {
             throw new IllegalArgumentException("El ID del efectivo debe ser un número positivo.");
         }

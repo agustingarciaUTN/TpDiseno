@@ -1,10 +1,6 @@
 package Dominio;
 
-import java.util.Date;
 import java.util.ArrayList;
-
-import Huesped.DtoDireccion;
-import enums.PosIva;
 import enums.TipoDocumento;
 
 public class PersonaFisica extends ResponsablePago {
