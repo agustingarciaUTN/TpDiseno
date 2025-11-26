@@ -1,6 +1,6 @@
 package Dominio;
 
-public class ResponsablePago {
+public abstract class ResponsablePago {
     
     private int idResponsablePago;
     private int idFactura; // CUAL DE LOS DOS

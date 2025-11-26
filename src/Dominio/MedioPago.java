@@ -2,7 +2,7 @@ package Dominio;
 
 import java.util.ArrayList;
 
-public class MedioPago {
+public abstract class MedioPago {
 
     private ArrayList<Pago> pagos;
     

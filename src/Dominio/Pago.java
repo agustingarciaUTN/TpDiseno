@@ -12,5 +12,7 @@ public class Pago {
     private float cotizacion;
     private Date fechaPago;
     private ArrayList<MedioPago> mediosPago;
+    private int idFactura;//CUAL DE LOS DOS
+    private Factura factura;// CUAL DE LOS DOS
 
 }
