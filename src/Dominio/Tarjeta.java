@@ -4,7 +4,7 @@ import enums.RedDePago;
 import java.util.Date;
 import enums.Moneda;
 
-public abstract class Tarjeta {
+public abstract class Tarjeta extends MedioPago {
     
     private RedDePago redDePago;
     private String banco;
@@ -15,7 +15,8 @@ public abstract class Tarjeta {
     private Moneda moneda;
     private Date fechaDePago;
 
-    public Tarjeta(RedDePago redDePago, String banco, int numeroDeTarjeta, Date fechaVencimiento, int codigoSeguridad, float monto, Moneda moneda, Date fechaDePago) {
+    public Tarjeta(RedDePago redDePago, String banco, int numeroDeTarjeta, Date fechaVencimiento, int codigoSeguridad, float monto, Moneda moneda, Date fechaDePago, int idPago,  java.util.ArrayList<Pago> pagos) {
+        super(idPago, pagos);
         if(numeroDeTarjeta <= 0) {
             throw new IllegalArgumentException("El número de tarjeta debe ser un número positivo.");
         }

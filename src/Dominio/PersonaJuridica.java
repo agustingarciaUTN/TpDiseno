@@ -1,6 +1,5 @@
 package Dominio;
 
-import Huesped.DtoDireccion;
 import java.util.ArrayList;
 public class PersonaJuridica  extends ResponsablePago {
     
@@ -8,7 +7,7 @@ public class PersonaJuridica  extends ResponsablePago {
     private String cuit;
     private long telefono;
     private int idDireccion; // CUAL DE LOS DOS
-    private DtoDireccion direccion; // CUAL DE LOS DOS
+   // private DtoDireccion direccion; // CUAL DE LOS DOS
 
     public PersonaJuridica(String razonSocial, String cuit, long telefono, int idDireccion, int idResponsablePago, ArrayList<Factura> facturas) {
         super(idResponsablePago, facturas);

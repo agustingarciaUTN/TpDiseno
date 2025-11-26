@@ -1,6 +1,7 @@
 package Dominio;
 
 import java.util.Date;
+import java.util.ArrayList;
 
 public class Cheque extends MedioPago {
 
@@ -12,7 +13,8 @@ public class Cheque extends MedioPago {
     private Date fechaDePago;
 
 
-    public Cheque(String numeroCheque, String banco, String plaza, float monto, Date fechaCobro, Date fechaDePago) {
+    public Cheque(String numeroCheque, String banco, String plaza, float monto, Date fechaCobro, Date fechaDePago, int idPago, ArrayList<Pago> pagos) {
+        super(idPago, pagos);
         if (numeroCheque == null || numeroCheque.isEmpty()) {
             throw new IllegalArgumentException("El número de cheque no puede ser nulo o vacío.");
         }
