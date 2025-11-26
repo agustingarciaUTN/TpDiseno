@@ -11,7 +11,7 @@ public class Estadia {
     private Date fechaCheckOut;
     private double valorEstadia;
     private int idReserva;// CUAL DE LOS DOS
-    private Reserva reserva; // CUAL DE LOS DOS
+   // private Reserva reserva; // CUAL DE LOS DOS
     private List<Huesped> huespedes;
     private ArrayList<Factura> facturas;
 
@@ -26,19 +26,20 @@ public class Estadia {
      * @param fechaCheckOut Fecha de fin (opcional)
      * @param valorEstadia Valor de la estadía (opcional)
      */
-    public Estadia(int idEstadia, Date fechaCheckIn, int idReserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes) {
+    public Estadia(int idEstadia, Date fechaCheckIn, int idReserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes, ArrayList<Factura> facturas) {
         if (fechaCheckIn == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
         }
         if (idEstadia <= 0) {
             throw new IllegalArgumentException("El ID de estadía debe ser mayor a 0");
         }
-        if (idReserva <= 0) {
-            throw new IllegalArgumentException("El ID de reserva debe ser mayor a 0");
-        }
         if(huespedes == null){
             throw new IllegalArgumentException("La estadia debe tener asignada al menos un huesped.");
         }
+        if(facturas == null){
+            throw new IllegalArgumentException("La estadia debe tener asignada al menos una factura.");
+        }
+        this.facturas = facturas;
         this.idEstadia = idEstadia;
         this.fechaCheckIn = new Date(fechaCheckIn.getTime());
         this.idReserva = idReserva;
@@ -75,4 +76,7 @@ public class Estadia {
     public int getIdReserva(){return idReserva;}
     public List<Huesped> getHuespedes(){return huespedes;}
     public void setHuespedes(List<Huesped> huespedes){this.huespedes = huespedes;}
+    public ArrayList<Factura> getFacturas(){return facturas;}
+    public void setFacturas(ArrayList<Factura> facturas){this.facturas = facturas;}
+
 }
