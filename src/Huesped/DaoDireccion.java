@@ -52,7 +52,6 @@ public class DaoDireccion implements DaoDireccionInterfaz {
         }
 
         public Direccion crearDireccion(DtoDireccion dto){
-            if (dto == null) return null;
 
             Direccion direccionEntidad = new Direccion();
 
