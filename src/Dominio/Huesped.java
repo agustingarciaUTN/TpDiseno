@@ -20,8 +20,8 @@ public class Huesped {
     private String email;
     private String ocupacion;
     private String nacionalidad;
-    private DtoDireccion direccion;
-    private int idDireccion;
+    private DtoDireccion direccion;// CUAL DE LOS DOS
+    private int idDireccion;// CUAL DE LOS DOS
     private List<Estadia> estadias;
 
 
