@@ -630,7 +630,7 @@ public class Pantalla {
         System.out.println("========================================");
 
         DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
-        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
+        ArrayList<DtoHuesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
@@ -765,20 +765,20 @@ public class Pantalla {
         }
     }*/
 
-    private void seleccionarHuespedDeLista(ArrayList<Huesped> huespedes) {
+    private void seleccionarHuespedDeLista(ArrayList<DtoHuesped> huespedes) {
         mostrarListaDatosEspecificos(huespedes);
         System.out.print("Ingrese el ID del huésped para modificar, o 0 para dar de alta uno nuevo: ");
         int seleccion = leerOpcionNumerica();
 
         if (seleccion > 0 && seleccion <= huespedes.size()) {
-            Huesped huespedSeleccionado = huespedes.get(seleccion - 1);
+            DtoHuesped huespedSeleccionado = huespedes.get(seleccion - 1);
             //this.iniciarModificacionHuesped(huespedSeleccionado); //CU 10
         } else {
             this.darAltaDeHuesped(); //Si no hay seleccion llamamos CU 9
         }
     }
 
-    private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
+    private void mostrarListaDatosEspecificos(ArrayList<DtoHuesped> listaHuespedes) {
 
         System.out.println("\n--- OPCIONES DE ORDENAMIENTO ---");
         System.out.println("Seleccione la columna:");
@@ -791,7 +791,6 @@ public class Pantalla {
         int columna = leerOpcionNumerica();
         if (columna < 1 || columna > 4) {
             System.out.println("Opción inválida. No se ordenará la lista.");
-            return;
         }
 
         System.out.println("Seleccione el orden:");
@@ -802,36 +801,35 @@ public class Pantalla {
         int orden = leerOpcionNumerica();
         boolean ascendente = (orden == 1);
 
-        // Definimos el comparador para la ENTIDAD Huesped
-        Comparator<Huesped> comparador = switch (columna) {
+        // Definimos el comparador para el DTO Huesped
+        Comparator<DtoHuesped> comparador = switch (columna) {
             case 1 -> // Apellido
-                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
+                    Comparator.comparing(DtoHuesped::getApellido, String.CASE_INSENSITIVE_ORDER);
             case 2 -> // Nombre
-                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
+                    Comparator.comparing(DtoHuesped::getNombres, String.CASE_INSENSITIVE_ORDER);
             case 3 -> // Tipo de Documento (Enum)
-                    Comparator.comparing(h -> h.getTipoDocumento().name());
-            case 4 -> // Número de Documento (long)
-                // Al ser 'long' en la Entidad, el ordenamiento numérico es nativo y correcto
-                    Comparator.comparingLong(Huesped::getNroDocumento);
-            default -> null;
+                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z"); // Si es null, lo mandamos al final
+            case 4 -> // Número de Documento (String en DTO)
+                    Comparator.comparing(DtoHuesped::getDocumento);
+            default -> null; // Si es inválido, no se ordena
         };
 
         if (comparador != null) {
             if (!ascendente) {
                 comparador = comparador.reversed();
             }
+            // Sort en la lista de DtoHuesped
             listaHuespedes.sort(comparador);
         }
-
-
 
         System.out.println("\n-- Huéspedes Encontrados --");
         System.out.printf("%-5s %-20s %-20s %s%n", "ID", "APELLIDO", "NOMBRES", "DOCUMENTO");
         System.out.println("-----------------------------------------------------------------");
         //Por cada huesped obtenemos los 4 datos necesarios y mostramos esos.
         for (int i = 0; i < listaHuespedes.size(); i++) {
-            Huesped h = listaHuespedes.get(i);
-            String docCompleto = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A") + " " + h.getNroDocumento();
+            DtoHuesped h = listaHuespedes.get(i);
+            String tipoDoc = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A");
+            String docCompleto = tipoDoc + " " + (h.getDocumento() != null ? h.getDocumento() : ""); 
             System.out.printf("[%d]   %-20s %-20s %s%n", i + 1, h.getApellido(), h.getNombres(), docCompleto);
         }
         System.out.println("-----------------------------------------------------------------");
