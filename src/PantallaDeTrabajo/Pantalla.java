@@ -1,4 +1,5 @@
 package PantallaDeTrabajo;
+import Dominio.Huesped;
 import Huesped.*;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -159,13 +160,13 @@ public class Pantalla {
 
             switch (opcion) {
                 case 1:
-                    iniciarBusquedaHuesped();
+                    buscarHuesped();
                     break;
                 case 2:
-                    iniciarAltaHuesped();
+                    darAltaDeHuesped();
                     break;
                 case 3:
-                    iniciarBajaHuesped();
+                    //iniciarBajaHuesped();
                     break;
                 case 4:
                     System.out.print("¿Está seguro que desea cerrar sesión? (SI/NO): ");
@@ -183,7 +184,8 @@ public class Pantalla {
         //Paso 5: El CU termina
     }
 
-    public void iniciarAltaHuesped() {//este metodo debe tener el mismo nombre que el CU?
+    public void darAltaDeHuesped() {
+        //este metodo debe tener el mismo nombre que el CU?
 
         //no se si es necesario, despues habra que ver la parte estetica
         System.out.println('\n'+"-- Iniciando CU9 'dar de alta huesped' --");
@@ -295,7 +297,7 @@ public class Pantalla {
         }//fin while
 
         System.out.println("-- Fin CU9 'dar de alta huesped' ---");
-    }//fin iniciarAltaHuesped
+    }//fin darAltaDeHuesped
 
         //metodo privado para pedir los datos del huesped a ingresar
     private DtoHuesped mostrarYPedirDatosFormulario() {
@@ -443,7 +445,6 @@ public class Pantalla {
         return valor;
     }
 
-
     private Long pedirLong(String mensaje) { // Devuelve Long (wrapper)
         Long valor = null; // Usamos la clase wrapper Long
         boolean valido = false;
@@ -574,8 +575,7 @@ public class Pantalla {
         return tipoDoc;
     }
 
-
-   private String pedirPosIva() {
+    private String pedirPosIva() {
         String posIva = null;
         boolean valido = false;
 
@@ -617,7 +617,6 @@ public class Pantalla {
         return posIva;
     }
 
-
     //METODO AUXILIAR PARA PAUSAR
     public void pausa() {
         System.out.print("Presione ENTER para continuar...");
@@ -625,19 +624,19 @@ public class Pantalla {
         System.out.println();
     }
 
-    public void iniciarBusquedaHuesped() {
+    public void buscarHuesped() {
         System.out.println("========================================");
         System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
         System.out.println("========================================");
 
-        DtoHuesped datos = leerCriteriosDeBusqueda();
-        ArrayList<DtoHuesped> huespedesEncontrados = gestorHuesped.buscarHuesped(datos);
+        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
+        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
             System.out.print("¿Desea dar de alta un nuevo huésped? (SI/NO): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                this.iniciarAltaHuesped();
+                this.darAltaDeHuesped(); //CU 9
             }
         } else {
             this.seleccionarHuespedDeLista(huespedesEncontrados);
@@ -645,7 +644,7 @@ public class Pantalla {
         pausa();
     }
 
-    private DtoHuesped leerCriteriosDeBusqueda() {
+    private DtoHuesped solicitarCriteriosDeBusqueda() {
         DtoHuesped criterios = new DtoHuesped();
         System.out.println("Ingrese uno o más criterios (presione ENTER para omitir).");
 
@@ -723,7 +722,7 @@ public class Pantalla {
             try {
                 return TipoDocumento.valueOf(tipoStr); // Intenta convertir el String al enum.
             } catch (IllegalArgumentException e) {
-                System.out.println("❌ Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, Libreta de Enrolamiento, Libreta Civica.");
+                System.out.println("Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, Libreta de Enrolamiento, Libreta Civica.");
             }
         }
     }
@@ -766,26 +765,73 @@ public class Pantalla {
         }
     }*/
 
-    private void seleccionarHuespedDeLista(List<DtoHuesped> huespedes) {
-        mostrarListaHuespedes(huespedes);
+    private void seleccionarHuespedDeLista(ArrayList<Huesped> huespedes) {
+        mostrarListaDatosEspecificos(huespedes);
         System.out.print("Ingrese el ID del huésped para modificar, o 0 para dar de alta uno nuevo: ");
         int seleccion = leerOpcionNumerica();
 
         if (seleccion > 0 && seleccion <= huespedes.size()) {
-            DtoHuesped huespedSeleccionado = huespedes.get(seleccion - 1);
-            this.iniciarModificacionHuesped(huespedSeleccionado);
+            Huesped huespedSeleccionado = huespedes.get(seleccion - 1);
+            //this.iniciarModificacionHuesped(huespedSeleccionado); //CU 10
         } else {
-            System.out.println("llegamos a seguir dando de alta otro huesped");//this.iniciarAltaHuesped();
+            this.darAltaDeHuesped(); //Si no hay seleccion llamamos CU 9
         }
     }
 
-    private void mostrarListaHuespedes(List<DtoHuesped> huespedes) {
+    private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
+
+        System.out.println("\n--- OPCIONES DE ORDENAMIENTO ---");
+        System.out.println("Seleccione la columna:");
+        System.out.println("1. Apellido");
+        System.out.println("2. Nombre");
+        System.out.println("3. Tipo de Documento");
+        System.out.println("4. Número de Documento");
+        System.out.print("Ingrese opción: ");
+
+        int columna = leerOpcionNumerica();
+        if (columna < 1 || columna > 4) {
+            System.out.println("Opción inválida. No se ordenará la lista.");
+            return;
+        }
+
+        System.out.println("Seleccione el orden:");
+        System.out.println("1. Ascendente (A-Z / Menor a Mayor)");
+        System.out.println("2. Descendente (Z-A / Mayor a Menor)");
+        System.out.print("Ingrese opción: ");
+
+        int orden = leerOpcionNumerica();
+        boolean ascendente = (orden == 1);
+
+        // Definimos el comparador para la ENTIDAD Huesped
+        Comparator<Huesped> comparador = switch (columna) {
+            case 1 -> // Apellido
+                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
+            case 2 -> // Nombre
+                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
+            case 3 -> // Tipo de Documento (Enum)
+                    Comparator.comparing(h -> h.getTipoDocumento().name());
+            case 4 -> // Número de Documento (long)
+                // Al ser 'long' en la Entidad, el ordenamiento numérico es nativo y correcto
+                    Comparator.comparingLong(Huesped::getNroDocumento);
+            default -> null;
+        };
+
+        if (comparador != null) {
+            if (!ascendente) {
+                comparador = comparador.reversed();
+            }
+            listaHuespedes.sort(comparador);
+        }
+
+
+
         System.out.println("\n-- Huéspedes Encontrados --");
         System.out.printf("%-5s %-20s %-20s %s%n", "ID", "APELLIDO", "NOMBRES", "DOCUMENTO");
         System.out.println("-----------------------------------------------------------------");
-        for (int i = 0; i < huespedes.size(); i++) {
-            DtoHuesped h = huespedes.get(i);
-            String docCompleto = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A") + " " + h.getDocumento();
+        //Por cada huesped obtenemos los 4 datos necesarios y mostramos esos.
+        for (int i = 0; i < listaHuespedes.size(); i++) {
+            Huesped h = listaHuespedes.get(i);
+            String docCompleto = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A") + " " + h.getNroDocumento();
             System.out.printf("[%d]   %-20s %-20s %s%n", i + 1, h.getApellido(), h.getNombres(), docCompleto);
         }
         System.out.println("-----------------------------------------------------------------");
@@ -801,8 +847,7 @@ public class Pantalla {
         }
     }
 
-
-    public void iniciarBajaHuesped() {
+    /*public void iniciarBajaHuesped() {
         System.out.println("\n========================================");
         System.out.println("   CU11: DAR DE BAJA HUÉSPED");
         System.out.println("========================================\n");
@@ -811,7 +856,7 @@ public class Pantalla {
         System.out.println("Primero debe buscar el huésped que desea eliminar.\n");
 
         DtoHuesped criterios = leerCriteriosDeBusqueda();
-        ArrayList<DtoHuesped> huespedesEncontrados = gestorHuesped.buscarHuesped(criterios);
+        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuesped(criterios);
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
@@ -821,7 +866,7 @@ public class Pantalla {
         }
 
         // Mostrar lista de huéspedes encontrados
-        mostrarListaHuespedes(huespedesEncontrados);
+        mostrarListaDatosEspecificos(huespedesEncontrados);
 
         System.out.print("\nIngrese el número del huésped que desea eliminar (0 para cancelar): ");
         int seleccion = leerOpcionNumerica();
@@ -906,11 +951,10 @@ public class Pantalla {
         System.out.println("========================================");
         System.out.println("   FIN CU11: DAR DE BAJA HUÉSPED");
         System.out.println("========================================\n");
-    }
+    }*/
     // Paso 5: El CU termina
 
-
- private void iniciarModificacionHuesped(DtoHuesped dtoHuesped){ //Metodo para Modificar Huesped CU10
+ /*private void iniciarModificacionHuesped(DtoHuesped dtoHuesped){ //Metodo para Modificar Huesped CU10
     boolean salir = false;
     DtoHuesped dtoHuespedModificado = new DtoHuesped(dtoHuesped);
     String tipoDocStr = "";
@@ -1246,7 +1290,7 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
     /*
      * Lee una fecha desde la entrada en formato dd/MM/yyyy.
      * Si el usuario ingresa línea vacía, devuelve current (mantiene la fecha actual).
-     */
+
     private Date leerFecha(String etiqueta, Date current) {
         SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
         formato.setLenient(false);
@@ -1263,7 +1307,7 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
                 System.out.println("Formato inválido. Use dd/MM/yyyy. Intente nuevamente.");
             }
         }
-    }
+    }*/
     private String pedirDocumento(TipoDocumento tipo) {
         String documento = null;
         boolean valido = false;

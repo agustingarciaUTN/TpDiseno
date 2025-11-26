@@ -124,7 +124,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         return null; // No encontró duplicado
     }
     
-    public ArrayList<DtoHuesped> obtenerTodosLosHuespedes (){
+    public ArrayList<DtoHuesped> obtenerTodosLosHuespedes(){
        
         ArrayList<DtoHuesped> huespedesEncontrados = new ArrayList<>();
 
