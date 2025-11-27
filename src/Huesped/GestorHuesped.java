@@ -30,44 +30,32 @@ public class GestorHuesped {
         this.gestorEstadia = new GestorEstadia(new DaoEstadia());
     }
 
-    public ArrayList<Huesped> buscarHuespedes(DtoHuesped criterios){
-    //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
-    //atributos de Huesped.
+   public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
+        //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
+        //atributos de Huesped.
 
+        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
 
-    ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
-    ArrayList<Huesped> listaHuespedes = new ArrayList<>();//Para entidades
+        if (!criterios.estanVacios()) {
+            listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
+        }
+        else {
+            listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+        }
 
+        for (DtoHuesped datosHuesped : listaDtoHuespedesEncontrados) {
+            // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
+            // Esto es crucial para que la Pantalla (CU10) tenga la dirección completa.
+            if (datosHuesped.getIdDireccion() > 0) {
+                 DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
+                 // Asignamos el DTO de Dirección al DTO del Huésped
+                 datosHuesped.setDireccion(dtoDireccion);
+            }
+            // Eliminado: El código para crear las entidades Huesped y Direccion
+        }
 
-    if (!criterios.estanVacios()) {
-        listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
+        return listaDtoHuespedesEncontrados;
     }
-    else {
-        listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
-    }
-
-    for (DtoHuesped datosHuesped : listaDtoHuespedesEncontrados) {
-        // A. Primero instanciamos la Dirección (Requerido por el diagrama)
-        // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
-        // Si el dtoHuesped guarda el DtoDireccion, borramos este metodo
-        DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
-
-        // El DAO instancia la Entidad Dirección (Mensaje: crearDireccion)
-        // Si el DtoHuesped guarda el DtoDireccion hacemos en el arg de crearDireccion(dtoHuesped.getDireccion())
-        Direccion direccionEntidad = daoDireccion.crearDireccion(dtoDireccion); // Flujo del diagrama
-
-        // B. Luego instanciamos el Huésped (Mensaje: crearHuesped)
-        Huesped huespedEntidad = daoHuesped.crearHuesped(datosHuesped); // Flujo del diagrama
-
-        // C. Asignamos la dirección al huésped (Vinculación)
-        huespedEntidad.setDireccion(dtoDireccion); // Setea el DTO en el Huesped Entity
-
-        // Agregar a la lista final
-        listaHuespedes.add(huespedEntidad);
-    }
-
-    return listaHuespedes;
-}
 
     public List<String> validarDatosHuesped(DtoHuesped datos){
         List<String> errores = new ArrayList<>();

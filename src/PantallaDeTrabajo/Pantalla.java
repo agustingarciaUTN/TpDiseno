@@ -630,6 +630,7 @@ public class Pantalla {
         System.out.println("========================================");
 
         DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
+        // CAMBIO: El gestor ahora devuelve ArrayList<DtoHuesped>
         ArrayList<DtoHuesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
 
         if (huespedesEncontrados.isEmpty()) {
@@ -639,6 +640,7 @@ public class Pantalla {
                 this.darAltaDeHuesped(); //CU 9
             }
         } else {
+            // CAMBIO: Llamamos a seleccionarHuespedDeLista con DtoHuesped
             this.seleccionarHuespedDeLista(huespedesEncontrados);
         }
         pausa();
@@ -767,18 +769,21 @@ public class Pantalla {
 
     private void seleccionarHuespedDeLista(ArrayList<DtoHuesped> huespedes) {
         mostrarListaDatosEspecificos(huespedes);
-        System.out.print("Ingrese el ID del huésped para modificar, o 0 para dar de alta uno nuevo: ");
+        // CAMBIO: Mensaje para CU10
+        System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
         int seleccion = leerOpcionNumerica();
 
         if (seleccion > 0 && seleccion <= huespedes.size()) {
             DtoHuesped huespedSeleccionado = huespedes.get(seleccion - 1);
             //this.iniciarModificacionHuesped(huespedSeleccionado); //CU 10
+        } else if (seleccion == 0) {
+            this.darAltaDeHuesped(); // CU 9
         } else {
-            this.darAltaDeHuesped(); //Si no hay seleccion llamamos CU 9
+             System.out.println("Opción inválida. Volviendo al menú principal.");
         }
     }
 
-    private void mostrarListaDatosEspecificos(ArrayList<DtoHuesped> listaHuespedes) {
+   private void mostrarListaDatosEspecificos(ArrayList<DtoHuesped> listaHuespedes) {
 
         System.out.println("\n--- OPCIONES DE ORDENAMIENTO ---");
         System.out.println("Seleccione la columna:");
@@ -834,7 +839,6 @@ public class Pantalla {
         }
         System.out.println("-----------------------------------------------------------------");
     }
-
     private int leerOpcionNumerica() {
         try {
             return scanner.nextInt();
