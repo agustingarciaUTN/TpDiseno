@@ -2,7 +2,6 @@ package Estadia;
 
 import BaseDedatos.Coneccion;
 import Dominio.Huesped;
-import Excepciones.PersistenciaException;
 
 import Dominio.Estadia;
 
@@ -13,8 +12,10 @@ import java.util.List;
 
 public class DaoEstadia implements DaoInterfazEstadia {
 
+
+
     @Override
-    public boolean crearEstadia(Estadia estadia, List<Huesped> huespedes) {
+    public boolean persistirEstadia(Estadia estadia, List<Huesped> huespedes) {
 
         if (huespedes == null || huespedes.isEmpty()) {
             throw new IllegalArgumentException("La estadia debe tener al menos un huesped.");
@@ -47,7 +48,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
 
                 sentencia.setDouble(3, estadia.getValorEstadia());
                 // Si tu entidad Estadia tiene idReserva, se inserta aquí
-                sentencia.setInt(4, estadia.getIdReserva());
+                sentencia.setInt(4, estadia.getReserva());
 
                 int filasAfectadas = sentencia.executeUpdate();
                 if (filasAfectadas == 0) {
@@ -121,10 +122,10 @@ public class DaoEstadia implements DaoInterfazEstadia {
         try (Connection conn = Coneccion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setDate(1, new java.sql.Date(dto.getFechaInicio().getTime()));
+            ps.setDate(1, new java.sql.Date(dto.getFechaCheckIn().getTime()));
 
-            if (dto.getFechaFin() != null) {
-                ps.setDate(2, new java.sql.Date(dto.getFechaFin().getTime()));
+            if (dto.getFechaCheckOut() != null) {
+                ps.setDate(2, new java.sql.Date(dto.getFechaCheckOut().getTime()));
             } else {
                 ps.setNull(2, Types.DATE);
             }
@@ -172,8 +173,8 @@ public class DaoEstadia implements DaoInterfazEstadia {
                 if (rs.next()) {
                     DtoEstadia dto = new DtoEstadia();
                     dto.setIdEstadia(rs.getInt("id_estadia"));
-                    dto.setFechaInicio(rs.getDate("fecha_inicio"));
-                    dto.setFechaFin(rs.getDate("fecha_fin"));
+                    dto.setFechaCheckIn(rs.getDate("fecha_inicio"));
+                    dto.setFechaCheckOut(rs.getDate("fecha_fin"));
                     dto.setValorEstadia(rs.getDouble("valor_estadia"));
                     return dto;
                 }
@@ -199,8 +200,8 @@ public class DaoEstadia implements DaoInterfazEstadia {
             while (rs.next()) {
                 DtoEstadia dto = new DtoEstadia();
                 dto.setIdEstadia(rs.getInt("id_estadia"));
-                dto.setFechaInicio(rs.getDate("fecha_inicio"));
-                dto.setFechaFin(rs.getDate("fecha_fin"));
+                dto.setFechaCheckIn(rs.getDate("fecha_inicio"));
+                dto.setFechaCheckOut(rs.getDate("fecha_fin"));
                 dto.setValorEstadia(rs.getDouble("valor_estadia"));
                 estadias.add(dto);
             }

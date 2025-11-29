@@ -10,8 +10,8 @@ public class Estadia {
     private Date fechaCheckIn;
     private Date fechaCheckOut;
     private double valorEstadia;
-    private int idReserva;// CUAL DE LOS DOS
-   // private Reserva reserva; // CUAL DE LOS DOS
+    private Reserva reserva;
+    private Habitacion habitacion;
     private List<Huesped> huespedes;
     private ArrayList<Factura> facturas;
 
@@ -22,11 +22,11 @@ public class Estadia {
      * Constructor completo con validaciones
      * @param idEstadia ID de la estadía (obligatorio)
      * @param fechaCheckIn Fecha de inicio (obligatoria)
-     * @param idReserva ID de la reserva (obligatorio)
+     * @param reserva ID de la reserva (obligatorio)
      * @param fechaCheckOut Fecha de fin (opcional)
      * @param valorEstadia Valor de la estadía (opcional)
      */
-    public Estadia(int idEstadia, Date fechaCheckIn, int idReserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes, ArrayList<Factura> facturas) {
+    public Estadia(int idEstadia, Date fechaCheckIn, Reserva reserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes, ArrayList<Factura> facturas) {
         if (fechaCheckIn == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
         }
@@ -42,7 +42,7 @@ public class Estadia {
         this.facturas = facturas;
         this.idEstadia = idEstadia;
         this.fechaCheckIn = new Date(fechaCheckIn.getTime());
-        this.idReserva = idReserva;
+        this.reserva = reserva;
         this.fechaCheckOut = (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
         this.valorEstadia = valorEstadia;
         this.huespedes = huespedes;
@@ -72,11 +72,12 @@ public class Estadia {
     public void setValorEstadia(double valorEstadia) {
         this.valorEstadia = valorEstadia;
     }
-    public void setIdReserva(int idReserva){this.idReserva = idReserva;}
-    public int getIdReserva(){return idReserva;}
+    public void setReserva(Reserva reserva){this.reserva = reserva;}
+    public Reserva getReserva(){return reserva;}
     public List<Huesped> getHuespedes(){return huespedes;}
     public void setHuespedes(List<Huesped> huespedes){this.huespedes = huespedes;}
     public ArrayList<Factura> getFacturas(){return facturas;}
     public void setFacturas(ArrayList<Factura> facturas){this.facturas = facturas;}
-
+    public void setHabitacion(Habitacion habitacion){this.habitacion = habitacion;}
+    public Habitacion getHabitacion(){return habitacion;}
 }

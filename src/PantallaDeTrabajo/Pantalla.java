@@ -249,7 +249,7 @@ public class Pantalla {
 
 
                     //paso todas las validaciones, creamos el Huesped en la db
-                    gestorHuesped.crearHuespedCompleto(datosIngresados);
+                    gestorHuesped.crearHuespedYPersistir(datosIngresados);
 
 
                 } catch (PersistenciaException e) {
@@ -641,6 +641,7 @@ public class Pantalla {
             }
         } else {
             // CAMBIO: Llamamos a seleccionarHuespedDeLista con DtoHuesped
+            mostrarListaDatosEspecificos(huespedesEncontrados);
             this.seleccionarHuespedDeLista(huespedesEncontrados);
         }
         pausa();
@@ -767,14 +768,15 @@ public class Pantalla {
         }
     }*/
 
-    private void seleccionarHuespedDeLista(ArrayList<DtoHuesped> huespedes) {
-        mostrarListaDatosEspecificos(huespedes);
+    private void seleccionarHuespedDeLista(ArrayList<DtoHuesped> listaDtoHuespedes) throws PersistenciaException {
+
         // CAMBIO: Mensaje para CU10
         System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
         int seleccion = leerOpcionNumerica();
 
-        if (seleccion > 0 && seleccion <= huespedes.size()) {
-            DtoHuesped huespedSeleccionado = huespedes.get(seleccion - 1);
+        if (seleccion > 0 && seleccion <= listaDtoHuespedes.size()) {
+            DtoHuesped huespedDtoSeleccionado = listaDtoHuespedes.get(seleccion - 1);
+            Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
             //this.iniciarModificacionHuesped(huespedSeleccionado); //CU 10
         } else if (seleccion == 0) {
             this.darAltaDeHuesped(); // CU 9

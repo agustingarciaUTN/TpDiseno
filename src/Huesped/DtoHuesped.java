@@ -1,6 +1,6 @@
 package Huesped;
 
-import Dominio.Estadia;
+import Estadia.DtoEstadia;
 import enums.TipoDocumento;
 import enums.PosIva;
 import java.util.Date;
@@ -19,8 +19,7 @@ public class DtoHuesped {
     private String ocupacion;
     private String nacionalidad;
     private DtoDireccion dtoDireccion;
-    private int idDireccion;
-    private List<Estadia> estadias;
+    private List<DtoEstadia> dtoEstadias;
 
 
     // Constructor con todos los datos
@@ -28,7 +27,7 @@ public class DtoHuesped {
                       TipoDocumento tipoDocumento, String documento,
                       String cuit, String posicionIva, Date fechaNacimiento,
                       String email, String ocupacion, String nacionalidad,
-                      DtoDireccion direccion, List<Estadia> estadias) {
+                      DtoDireccion direccion, List<DtoEstadia> estadias) {
         if (direccion == null) {
             throw new IllegalArgumentException("El huésped debe tener una dirección válida");
         }
@@ -44,7 +43,7 @@ public class DtoHuesped {
         this.ocupacion = ocupacion;
         this.nacionalidad = nacionalidad;
         this.dtoDireccion = direccion;
-        this.estadias = estadias;
+        this.dtoEstadias = estadias;
     }
     
     public DtoHuesped (){}
@@ -74,10 +73,10 @@ public class DtoHuesped {
     public void setTipoDocumento(TipoDocumento tipoDocumento) {
         this.tipoDocumento = tipoDocumento;
     }
-    public String getDocumento() {
+    public String getNroDocumento() {
         return documento;
     }
-    public void setDocumento(String documento) {
+    public void setNroDocumento(String documento) {
         this.documento = documento;
     }
     public String getCuit() {
@@ -118,17 +117,11 @@ public class DtoHuesped {
     }
     public void setDireccion(DtoDireccion dtoDireccion){ this.dtoDireccion = dtoDireccion; }
     public DtoDireccion getDireccion(){ return this.dtoDireccion; }
-    public int getIdDireccion() {
-        return idDireccion;
+    public List<DtoEstadia> getEstadias(){
+        return dtoEstadias;
     }
-    public void setIdDireccion(int idDireccion) {
-        this.idDireccion = idDireccion;
-    }
-    public List<Estadia> getEstadias(){
-        return estadias;
-    }
-    public void setEstadias(List<Estadia> estadias){
-        this.estadias = estadias;
+    public void setEstadias(List<DtoEstadia> estadias){
+        this.dtoEstadias = estadias;
     }
     public boolean estanVacios() {
         boolean apellidoVacio = (apellido == null || apellido.trim().isEmpty());

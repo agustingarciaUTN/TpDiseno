@@ -32,13 +32,50 @@ public class GestorEstadia {
         return daoEstadia.huespedTieneEstadias(tipoDocumento, nroDocumento);
     }
 
+
+    public Estadia crearEstadia(DtoEstadia dtoEstadia){
+        if (dtoEstadia == null) {
+            return null;
+        }
+
+        Estadia estadia = new Estadia();
+
+        // Intentar asignar id si existe en el DTO
+        try {
+            // Si el DTO expone un id entero
+            if (dtoEstadia.getIdEstadia() > 0) {
+                estadia.setId(dtoEstadia.getIdEstadia());
+            }
+        } catch (Exception ignored) {}
+
+        // Fechas
+        try {
+            estadia.setFechaCheckIn(dtoEstadia.getFechaCheckIn());
+        } catch (Exception ignored) {}
+        try {
+            estadia.setFechaCheckOut(dtoEstadia.getFechaCheckOut());
+        } catch (Exception ignored) {}
+
+
+        try {
+            estadia.setValorEstadia(dtoEstadia.getValorEstadia());
+
+        } catch (Exception ignored) {}
+
+        // Observaciones u otros campos opcionales
+
+
+        return estadia;
+    }
+
+
     /**
      * Crea una nueva estadía
      * @param estadia Datos de la estadía
      * @param huespedes Lista de huespedes asociados
      * @return true si se creó exitosamente
      */
-    public boolean crearEstadia(Estadia estadia, List<Huesped> huespedes) {
+    public boolean crearYPersistirEstadia(Estadia estadia, List<Huesped> huespedes) {
         if (estadia == null) {
             System.err.println("La estadía no puede ser nula");
             return false;
@@ -48,7 +85,7 @@ public class GestorEstadia {
             System.err.println("Debe haber al menos un huésped");
             return false;
         }
-        if (estadia.getFechaInicio() == null) {
+        if (estadia.getFechaCheckIn() == null) {
             System.err.println("La fecha de inicio es obligatoria");
             return false;
         }
@@ -59,7 +96,7 @@ public class GestorEstadia {
         }
 
         try {
-            return daoEstadia.crearEstadia(estadia, huespedes);
+            return daoEstadia.persistirEstadia(estadia, huespedes);
         } catch (PersistenciaException e) {
             System.err.println("Error al crear la estadía: " + e.getMessage());
             return false;
