@@ -1,7 +1,5 @@
 package Usuario;
 
-import Dominio.Usuario;
-
 import static Utils.UsuarioHelper.generarHashMD5;
 
 public class DtoUsuario {

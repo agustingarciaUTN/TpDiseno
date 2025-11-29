@@ -38,7 +38,7 @@ public class GestorUsuario {
             String hashAlmacenado = usuarioBDD.getHashContrasenia();
 
             //Verificar si las contraseñas coinciden
-            if (hashAlmacenado == null || hashIngresado == null) {
+            if (hashAlmacenado == null) {
                 System.err.println("Error: hash de contraseña nulo.");
                 return false;
             }
