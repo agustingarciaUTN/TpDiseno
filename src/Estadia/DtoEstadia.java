@@ -1,9 +1,11 @@
 package Estadia;
 
-//import Reserva.DtoReserva;
+
+
+import Habitacion.DtoHabitacion;
 import Huesped.DtoHuesped;
-//import Factura.DtoFactura;
-//import Reserva.DtoHabitacion;
+import Reserva.DtoReserva;
+
 
 import java.util.Date;
 import java.util.ArrayList;
@@ -13,10 +15,9 @@ public class DtoEstadia {
     private Date fechaCheckIn;
     private Date fechaCheckOut;
     private double valorEstadia;
-    //private DtoReserva dtoRreserva; NO EXISTE TODAVIA
+    private DtoReserva dtoReserva;
     private ArrayList<DtoHuesped> dtoHuespedes;
-    //private ArrayList<DtoFactura> dtoFacturas; NO EXISTE TODAVIA
-    //private DtoHabitacion dtoHabitacion; NO EXISTE TODAVIA
+    private DtoHabitacion dtoHabitacion;
 
 
     public DtoEstadia() {
@@ -27,9 +28,8 @@ public class DtoEstadia {
         this.fechaCheckIn = builder.fechaCheckIn;
         this.fechaCheckOut = builder.fechaCheckOut;
         this.valorEstadia = builder.valorEstadia;
-       // this.dtoReserva = builder.dtoReserva;
+        this.dtoReserva = builder.dtoReserva;
         this.dtoHuespedes = builder.dtoHuespedes;
-       //this.dtoFacturas = builder.facturas;
     }
     /*public DtoEstadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
         if (fecha_inicio == null) {
@@ -65,14 +65,11 @@ public class DtoEstadia {
     public double getValorEstadia() { return valorEstadia; }
     public void setValorEstadia(double valorEstadia) { this.valorEstadia = valorEstadia; }
 
-    //public DtoReserva getDtoReserva() { return dtoReserva; }
-    //public void setDtoReserva(DtoReserva dtoReserva) { this.dtoReserva = dtoReserva; }
+    public DtoReserva getDtoReserva() { return dtoReserva; }
+    public void setDtoReserva(DtoReserva dtoReserva) { this.dtoReserva = dtoReserva; }
 
     public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
     public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
-
-    //public ArrayList<Factura> getFacturas() { return dtoFacturas; }
-    //public void setFacturas(ArrayList<Factura> facturas) { this.dtoFacturas = facturas; }
 
 
     // --- CLASE STATIC BUILDER ---
@@ -81,9 +78,8 @@ public class DtoEstadia {
         private Date fechaCheckIn;
         private Date fechaCheckOut;
         private double valorEstadia;
-        //private DtoReserva dtoReserva;
+        private DtoReserva dtoReserva;
         private ArrayList<DtoHuesped> dtoHuespedes = new ArrayList<>();
-        //private ArrayList<DtoFactura> facturas = new ArrayList<>();
 
         public Builder() {
             // Constructor vacío
@@ -109,10 +105,10 @@ public class DtoEstadia {
             return this;
         }
 
-        /*public Builder dtoReserva(DtoReserva val) {
+        public Builder dtoReserva(DtoReserva val) {
             this.dtoReserva = val;
             return this;
-        }*/
+        }
 
         public Builder dtoHuespedes(ArrayList<DtoHuesped> val) {
             this.dtoHuespedes = val;

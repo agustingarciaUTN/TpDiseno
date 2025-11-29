@@ -13,7 +13,6 @@ public class Estadia {
     private Reserva reserva;
     private Habitacion habitacion;
     private ArrayList<Huesped> huespedes;
-    private ArrayList<Factura> facturas;
 
     public Estadia() {
         // constructor por defecto
@@ -28,7 +27,6 @@ public class Estadia {
         this.reserva = builder.reserva;
         this.habitacion = builder.habitacion;
         this.huespedes = builder.huespedes;
-        this.facturas = builder.facturas;
     }
 
     /*
@@ -89,9 +87,6 @@ public class Estadia {
     public List<Huesped> getHuespedes(){return huespedes;}
     public void setHuespedes(ArrayList<Huesped> huespedes){this.huespedes = huespedes;}
 
-    public ArrayList<Factura> getFacturas(){return facturas;}
-    public void setFacturas(ArrayList<Factura> facturas){this.facturas = facturas;}
-
     public void setHabitacion(Habitacion habitacion){this.habitacion = habitacion;}
     public Habitacion getHabitacion(){return habitacion;}
 
@@ -108,7 +103,6 @@ public class Estadia {
         private double valorEstadia;
         private Reserva reserva;
         private Habitacion habitacion;
-        private ArrayList<Factura> facturas = new ArrayList<>();
 
         // Constructor con los datos MÍNIMOS para que una estadía tenga sentido
         public Builder(Date fechaCheckIn) {
@@ -127,13 +121,6 @@ public class Estadia {
         public Builder agregarHuesped(Huesped val) {
             if (this.huespedes == null) this.huespedes = new ArrayList<>();
             this.huespedes.add(val);
-            return this;
-        }
-
-        public Builder facturas(ArrayList<Factura> val) { facturas = val; return this; }
-        public Builder agregarFactura(Factura val) {
-            if (this.facturas == null) this.facturas = new ArrayList<>();
-            this.facturas.add(val);
             return this;
         }
 

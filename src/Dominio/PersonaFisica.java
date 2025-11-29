@@ -1,36 +1,52 @@
 package Dominio;
 
-import java.util.ArrayList;
 import enums.TipoDocumento;
 
 public class PersonaFisica extends ResponsablePago {
 
     private TipoDocumento tipoDocumento;
     private String numeroDocumento;
-    
-    public PersonaFisica( TipoDocumento tipoDocumento, String numeroDocumento, int idResponsablePago, ArrayList<Factura> facturas) {
-        super(idResponsablePago, facturas);
-        if(numeroDocumento == null || numeroDocumento.isEmpty()) {
-            throw new IllegalArgumentException("El número de documento no puede estar vacío.");
-        }
-        if(tipoDocumento == null) {
-            throw new IllegalArgumentException("El tipo de documento no puede ser nulo.");
-        }
-        this.tipoDocumento = tipoDocumento;
-        this.numeroDocumento = numeroDocumento;
+
+    // --- CONSTRUCTOR PRIVADO ---
+    private PersonaFisica(Builder builder) {
+        super(builder.idResponsablePago);
+        this.tipoDocumento = builder.tipoDocumento;
+        this.numeroDocumento = builder.numeroDocumento;
     }
 
-    // Getters y Setters
-    public TipoDocumento getTipoDocumento() {
-        return tipoDocumento;
+    // Constructor por defecto
+    public PersonaFisica() {
+        super(0);
     }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
-    }
-    public String getNumeroDocumento() {
-        return numeroDocumento;
-    }
-    public void setNumeroDocumento(String numeroDocumento) {
-        this.numeroDocumento = numeroDocumento;
+
+    // --- GETTERS Y SETTERS ---
+    public TipoDocumento getTipoDocumento() { return tipoDocumento; }
+    public void setTipoDocumento(TipoDocumento tipoDocumento) { this.tipoDocumento = tipoDocumento; }
+
+    public String getNumeroDocumento() { return numeroDocumento; }
+    public void setNumeroDocumento(String numeroDocumento) { this.numeroDocumento = numeroDocumento; }
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private TipoDocumento tipoDocumento;
+        private String numeroDocumento;
+        private int idResponsablePago = 0;
+
+        public Builder(TipoDocumento tipo, String numero) {
+            this.tipoDocumento = tipo;
+            this.numeroDocumento = numero;
+        }
+
+        public Builder idResponsablePago(int val) { idResponsablePago = val; return this; }
+
+        public PersonaFisica build() {
+            if (numeroDocumento == null || numeroDocumento.isEmpty()) {
+                throw new IllegalArgumentException("El número de documento no puede estar vacío.");
+            }
+            if (tipoDocumento == null) {
+                throw new IllegalArgumentException("El tipo de documento no puede ser nulo.");
+            }
+            return new PersonaFisica(this);
+        }
     }
 }

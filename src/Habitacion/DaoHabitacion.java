@@ -1,4 +1,4 @@
 package Habitacion;
 
-public class DaoHabitacion {
+public class DaoHabitacion extends DaoInterfazHabitacion{
 }
