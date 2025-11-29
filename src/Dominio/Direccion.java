@@ -1,7 +1,7 @@
 package Dominio;
 
 public class Direccion {
-    private int id_direccion;
+    private int idDireccion;
     private String calle;
     private int numero;
     private String departamento;
@@ -15,30 +15,22 @@ public class Direccion {
     public Direccion() {
     }
 
-    // Constructor con todos los datos
-    public Direccion(String calle, int numero, String departamento, String piso, int codPostal, String localidad, String provincia, String pais) {
-        this.calle = calle;
-        this.numero = numero;
-        this.departamento = departamento;
-        this.piso = piso;
-        this.codPostal = codPostal;
-        this.localidad = localidad;
-        this.provincia = provincia;
-        this.pais = pais;
-    }
-
-    // Constructor con datos principales
-    public Direccion(String calle, int numero, String localidad, String provincia, String pais) {
-        this.calle = calle;
-        this.numero = numero;
-        this.localidad = localidad;
-        this.provincia = provincia;
-        this.pais = pais;
+    // --- CONSTRUCTOR PRIVADO (Usado por el Builder) ---
+    private Direccion(Builder builder) {
+        this.idDireccion = builder.idDireccion;
+        this.calle = builder.calle;
+        this.numero = builder.numero;
+        this.departamento = builder.departamento;
+        this.piso = builder.piso;
+        this.codPostal = builder.codPostal;
+        this.localidad = builder.localidad;
+        this.provincia = builder.provincia;
+        this.pais = builder.pais;
     }
 
     // Getters y Setters
-    public void setId(int ID){this.id_direccion = ID;}
-    public int getId(){return id_direccion;}
+    public void setId(int idDireccion){this.idDireccion = idDireccion;}
+    public int getId(){return idDireccion;}
     public String getCalle() {
         return calle;
     }
@@ -86,5 +78,40 @@ public class Direccion {
     }
     public void setPais(String pais) {
         this.pais = pais;
+    }
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        // Datos obligatorios
+        private String calle;
+        private int numero;
+        private String localidad;
+        private String provincia;
+        private String pais;
+
+        // Datos opcionales (con valores por defecto)
+        private int idDireccion = 0;
+        private String departamento = null;
+        private String piso = null;
+        private int codPostal = 0;
+
+        // Constructor con lo MÍNIMO necesario para una dirección válida
+        public Builder(String calle, int numero, String localidad, String provincia, String pais) {
+            this.calle = calle;
+            this.numero = numero;
+            this.localidad = localidad;
+            this.provincia = provincia;
+            this.pais = pais;
+        }
+
+        // Métodos fluidos para opcionales
+        public Builder id(int val) { idDireccion = val; return this; }
+        public Builder departamento(String val) { departamento = val; return this; }
+        public Builder piso(String val) { piso = val; return this; }
+        public Builder codigoPostal(int val) { codPostal = val; return this; }
+
+        public Direccion build() {
+            return new Direccion(this);
+        }
     }
 }
