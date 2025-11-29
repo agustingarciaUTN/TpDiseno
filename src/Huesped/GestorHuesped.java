@@ -9,6 +9,8 @@ import enums.PosIva;
 import enums.TipoDocumento;
 
 import Estadia.GestorEstadia;
+import Dominio.Estadia;
+import Estadia.DtoEstadia;
 import Excepciones.PersistenciaException;
 import Estadia.DaoEstadia;
 import java.util.List;
@@ -30,14 +32,11 @@ public class GestorHuesped {
         this.gestorEstadia = new GestorEstadia(new DaoEstadia());
     }
 
-    public ArrayList<Huesped> buscarHuespedes(DtoHuesped criterios){
+   public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
         //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
         //atributos de Huesped.
 
-
         ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
-        ArrayList<Huesped> listaHuespedes = new ArrayList<>();//Para entidades
-
 
         if (!criterios.estanVacios()) {
             listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
@@ -47,26 +46,17 @@ public class GestorHuesped {
         }
 
         for (DtoHuesped datosHuesped : listaDtoHuespedesEncontrados) {
-            // A. Primero instanciamos la Dirección (Requerido por el diagrama)
             // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
-            // Si el dtoHuesped guarda el DtoDireccion, borramos este metodo
-            DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
-
-            // El DAO instancia la Entidad Dirección (Mensaje: crearDireccion)
-            // Si el DtoHuesped guarda el DtoDireccion hacemos en el arg de crearDireccion(dtoHuesped.getDireccion())
-            Direccion direccionEntidad = daoDireccion.crearDireccion(dtoDireccion);
-
-            // B. Luego instanciamos el Huésped (Mensaje: crearHuesped)
-            Huesped huespedEntidad = daoHuesped.crearHuesped(datosHuesped);
-
-            // C. Asignamos la dirección al huésped (Vinculación)
-            huespedEntidad.setDireccion(dtoDireccion);
-
-            // Agregar a la lista final
-            listaHuespedes.add(huespedEntidad);
+            // Esto es crucial para que la Pantalla (CU10) tenga la dirección completa.
+            if (datosHuesped.getIdDireccion() > 0) {
+                 DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
+                 // Asignamos el DTO de Dirección al DTO del Huésped
+                 datosHuesped.setDireccion(dtoDireccion);
+            }
+            // Eliminado: El código para crear las entidades Huesped y Direccion
         }
 
-        return listaHuespedes;
+        return listaDtoHuespedesEncontrados;
     }
 
     public List<String> validarDatosHuesped(DtoHuesped datos){
@@ -82,7 +72,7 @@ public class GestorHuesped {
         if (datos.getTipoDocumento() == null) {
             errores.add("El Tipo de Documento es obligatorio.");
         }
-        if (datos.getDocumento().isEmpty()) {
+        if (datos.getNroDocumento().isEmpty()) {
             // Asumiendo que Documento ahora es Long y lo pediste con pedirLongOpcional
             errores.add("El Número de Documento es obligatorio.");
         }
@@ -155,10 +145,83 @@ public class GestorHuesped {
 
     public DtoHuesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
         // La validación de null ya se hizo en el paso anterior (validarDatosHuesped)
-        return daoHuesped.buscarPorTipoYNumeroDocumento(datos.getTipoDocumento(), datos.getDocumento());
+        return daoHuesped.buscarPorTipoYNumeroDocumento(datos.getTipoDocumento(), datos.getNroDocumento());
     }
 
-    public DtoHuesped crearHuespedCompleto(DtoHuesped datosHuesped) throws PersistenciaException {
+    public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped) {
+        Huesped huespedEntidad = new Huesped();
+
+        if (dtoHuesped == null) {
+            return huespedEntidad;
+        }
+
+        // Mapear campos básicos
+        huespedEntidad.setNombres(dtoHuesped.getNombres());
+        huespedEntidad.setApellido(dtoHuesped.getApellido());
+        try {
+            huespedEntidad.setTelefono(dtoHuesped.getTelefono());
+        } catch (Exception ignored) {}
+
+        try {
+            huespedEntidad.setTipoDocumento(dtoHuesped.getTipoDocumento());
+        } catch (Exception ignored) {}
+
+        // Parseo seguro del número de documento (si viene como String)
+        try {
+            if (dtoHuesped.getNroDocumento() != null && !dtoHuesped.getNroDocumento().isBlank()) {
+                huespedEntidad.setNroDocumento(Long.parseLong(dtoHuesped.getNroDocumento()));
+            }
+        } catch (NumberFormatException ignored) {}
+
+        huespedEntidad.setCuit(dtoHuesped.getCuit());
+        // Posición IVA (si viene como String)
+        try {
+            if (dtoHuesped.getPosicionIva() != null) {
+                huespedEntidad.setPosicionIva(PosIva.fromString(dtoHuesped.getPosicionIva()));
+            }
+        } catch (IllegalArgumentException ignored) {}
+
+        huespedEntidad.setEmail(dtoHuesped.getEmail());
+        huespedEntidad.setFechaNacimiento(dtoHuesped.getFechaNacimiento());
+
+        // Direccion: crear objeto Dominio.Direccion a partir de DtoDireccion si existe
+        DtoDireccion dtoDir = dtoHuesped.getDireccion();
+        if (dtoDir != null) {
+            Direccion direccion = new Direccion();
+            try { direccion.setId(dtoDir.getId()); } catch (Exception ignored) {}
+            try { direccion.setCalle(dtoDir.getCalle()); } catch (Exception ignored) {}
+            try { direccion.setNumero(dtoDir.getNumero()); } catch (Exception ignored) {}
+            try { direccion.setPiso(dtoDir.getPiso()); } catch (Exception ignored) {}
+            try { direccion.setDepartamento(dtoDir.getDepartamento()); } catch (Exception ignored) {}
+            try { direccion.setLocalidad(dtoDir.getLocalidad()); } catch (Exception ignored) {}
+            try { direccion.setProvincia(dtoDir.getProvincia()); } catch (Exception ignored) {}
+            try { direccion.setPais(dtoDir.getPais()); } catch (Exception ignored) {}
+            try { direccion.setCodigoPostal(dtoDir.getCodPostal()); } catch (Exception ignored) {}
+
+            huespedEntidad.setDireccion(direccion);
+        }
+
+        // Estadías: convertir lista de DtoEstadia a List<Estadia> usando gestorEstadia
+        List<Estadia> estadias = new ArrayList<>();
+        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getEstadias();
+        if (listaDtoEstadias != null) {
+            for (DtoEstadia dtoE : listaDtoEstadias) {
+                try {
+                    Estadia e = gestorEstadia.crearYPersistirEstadia(dtoE);
+                    if (e != null) {
+                        estadias.add(e);
+                    }
+                } catch (Exception ignored) {
+                    // Si falla la conversión de una estadía, se ignora esa entrada pero se siguen procesando las demás
+                }
+            }
+        }
+        huespedEntidad.setEstadias(estadias);
+
+        return huespedEntidad;
+    }
+
+    public DtoHuesped crearHuespedYPersistir(DtoHuesped datosHuesped) throws PersistenciaException {
 
         try {
             //Crear la Dirección

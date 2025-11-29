@@ -1,7 +1,11 @@
 package Estadia;
 
+import Dominio.Factura;
 import Dominio.Huesped;
+//import Reserva.DtoReserva;
+import Huesped.DtoHuesped;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -10,8 +14,10 @@ public class DtoEstadia {
     private Date fecha_inicio;
     private Date fecha_fin;
     private double valor_estadia;
-    private int id_reserva;
-    private List<Huesped> huespedes;
+    private DtoReserva reserva; //no existe tdavia
+    private List<DtoHuesped> dtoHuespedes;
+    private ArrayList<Factura> facturas;
+
 
     public DtoEstadia() {
         // constructor por defecto
@@ -45,16 +51,16 @@ public class DtoEstadia {
     public void setIdEstadia(int id_estadia) {
         this.id_estadia = id_estadia;
     }
-    public Date getFechaInicio() {
+    public Date getFechaCheckIn() {
         return (fecha_inicio == null) ? null : new Date(fecha_inicio.getTime());
     }
-    public void setFechaInicio(Date fecha_inicio) {
+    public void setFechaCheckIn(Date fecha_inicio) {
         this.fecha_inicio = (fecha_inicio == null) ? null : new Date(fecha_inicio.getTime());
     }
-    public Date getFechaFin() {
+    public Date getFechaCheckOut() {
         return (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
     }
-    public void setFechaFin(Date fecha_fin) {
+    public void setFechaCheckOut(Date fecha_fin) {
         this.fecha_fin = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
     }
     public double getValorEstadia() {
@@ -67,4 +73,5 @@ public class DtoEstadia {
     public int getIdReserva(){return id_reserva;}
     public List<Huesped> getHuespedes(){return huespedes;}
     public void setHuespedes(List<Huesped> huespedes){this.huespedes = huespedes;}
+
 }

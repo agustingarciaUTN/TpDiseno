@@ -3,6 +3,8 @@ import java.sql.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import Dominio.Direccion;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
 import BaseDedatos.Coneccion;
@@ -50,28 +52,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
-    @Override
-    public Huesped crearHuesped(DtoHuesped dto) {
-        // Este método cumple con el mensaje "crearHuesped" del diagrama del CU2
-        // Instancia la ENTIDAD (Dominio) usando los datos del DTO
-        Huesped huespedEntidad = new Huesped();
 
-        huespedEntidad.setNombres(dto.getNombres());
-        huespedEntidad.setApellido(dto.getApellido());
-        huespedEntidad.setTelefono(dto.getTelefono());
-        huespedEntidad.setTipoDocumento(dto.getTipoDocumento());
-        huespedEntidad.setNroDocumento(Long.parseLong(dto.getDocumento())); // Ojo con el parseo
-        huespedEntidad.setCuit(dto.getCuit());
-        String stringIva = dto.getPosicionIva(); //pasar de String a PosIva
-        PosIva posIva = PosIva.fromString(stringIva); //pasar
-        huespedEntidad.setPosicionIva(posIva);
-        huespedEntidad.setEmail(dto.getEmail());
-        huespedEntidad.setFechaNacimiento(dto.getFechaNacimiento());
-        huespedEntidad.setDireccion(dto.getDireccion());
-        huespedEntidad.setEstadias(dto.getEstadias());
-
-        return huespedEntidad;
-    }
 
 
     public boolean crearEmailHuesped(DtoHuesped dto) {

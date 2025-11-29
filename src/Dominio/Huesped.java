@@ -20,8 +20,7 @@ public class Huesped {
     private String email;
     private String ocupacion;
     private String nacionalidad;
-    private DtoDireccion direccion;// CUAL DE LOS DOS
-    private int idDireccion;// CUAL DE LOS DOS
+    private Direccion direccion;// CUAL DE LOS DOS
     private List<Estadia> estadias;
 
 
@@ -33,10 +32,8 @@ public class Huesped {
     public Huesped(String nombres, String apellido, int telefono,
                    TipoDocumento tipoDocumento, long documento, String cuit,
                    PosIva posicionIva, Date fechaNacimiento, String email,
-                   String ocupacion, String nacionalidad, int idDireccion, List<Estadia> estadias) {
-        if (idDireccion <= 0) {
-            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
-        }
+                   String ocupacion, String nacionalidad, Direccion direccion, List<Estadia> estadias) {
+
         this.nombres = nombres;
         this.apellido = apellido;
         this.telefono = telefono;
@@ -48,13 +45,13 @@ public class Huesped {
         this.email = email;
         this.ocupacion = ocupacion;
         this.nacionalidad = nacionalidad;
-        this.idDireccion = idDireccion;
+        this.direccion = direccion;
         this.estadias = estadias;
     }
     // Constructor con los datos más importantes
     public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento,
-                   long documento, PosIva posicionIva, int idDireccion) {
-        if (idDireccion <= 0) {
+                   long documento, PosIva posicionIva, Direccion direccion) {
+        if (direccion == null) {
             throw new IllegalArgumentException("El huésped debe tener una dirección válida");
         }
 
@@ -63,7 +60,7 @@ public class Huesped {
         this.tipoDocumento = tipoDocumento;
         this.documento = documento;
         this.posicionIva = posicionIva;
-        this.idDireccion = idDireccion;
+        this.direccion = direccion;
     }
     // Getters y Setters
     public String getNombres() {
@@ -132,31 +129,15 @@ public class Huesped {
     public void setNacionalidad(String nacionalidad) {
         this.nacionalidad = nacionalidad;
     }
-    public void setDireccion(DtoDireccion direccion) {
+    public void setDireccion(Direccion direccion) {
         if (direccion == null) {
             throw new IllegalArgumentException("La dirección no puede ser nula");
         }
         this.direccion = direccion;
-        this.idDireccion = getIdDireccion();
     }
-    public DtoDireccion getDireccion() {
-        if (direccion == null && idDireccion > 0) {
-            DaoDireccion daoDireccion = new DaoDireccion();
-            direccion = daoDireccion.obtenerDireccion(idDireccion);
-        }
+    public Direccion getDireccion() {
         return direccion;
     }
-
-    public int getIdDireccion() {
-        return idDireccion;
-    }
-    public void setIdDireccion(int idDireccion) {
-        if (idDireccion <= 0) {
-            throw new IllegalArgumentException("El ID de dirección debe ser mayor a 0");
-        }
-        this.idDireccion = idDireccion;
-    }
-
     public List<Estadia> getEstadias(){
         return estadias;
     }
