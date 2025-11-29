@@ -6,13 +6,19 @@ public class Cama {
 
 private int idCama;
 private TipoCama tipoCama;
-private String idHabitacion; // CUAL DE LOS DOS
-private Habitacion habitacion; // CUAL DE LOS DOS
+private String idHabitacion;
+private Habitacion habitacion;
 
-public Cama(int idCama, String idHabitacion) {
-    this.idCama = idCama;
-    this.idHabitacion = idHabitacion;
+    // --- CONSTRUCTOR PRIVADO (Builder) ---
+    private Cama(Builder builder) {
+    this.idCama = builder.idCama;
+    this.tipoCama = builder.tipoCama;
+    this.idHabitacion = builder.idHabitacion;
+    this.habitacion = builder.habitacion;
 }
+
+    // Constructor por defecto
+    public Cama() {}
 
 //setters y getters
 public int getIdCama() {
@@ -39,4 +45,24 @@ public Habitacion getHabitacion() {
 public void setHabitacion(Habitacion habitacion) {
     this.habitacion = habitacion;
 }
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private int idCama;
+        private TipoCama tipoCama;
+        private String idHabitacion;
+        private Habitacion habitacion;
+
+        public Builder() {}
+
+        public Builder idCama(int val) { idCama = val; return this; }
+        public Builder tipoCama(TipoCama val) { tipoCama = val; return this; }
+        public Builder idHabitacion(String val) { idHabitacion = val; return this; }
+        public Builder habitacion(Habitacion val) { habitacion = val; return this; }
+
+        public Cama build() {
+            return new Cama(this);
+        }
+    }
+
 }
