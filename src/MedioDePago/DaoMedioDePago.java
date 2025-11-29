@@ -1,4 +1,4 @@
 package MedioDePago;
 
-public class DaoMedioDePago
+public class DaoMedioDePago {
 }
