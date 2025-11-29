@@ -1,5 +1,6 @@
 package Huesped;
 
+import Dominio.Estadia;
 import Estadia.DtoEstadia;
 import enums.TipoDocumento;
 import enums.PosIva;
@@ -7,13 +8,14 @@ import java.util.Date;
 import java.util.List;
 
 public class DtoHuesped {
+    // Atributos (igual que antes)
     private String nombres;
     private String apellido;
     private long telefono;
     private TipoDocumento tipoDocumento;
-    private String documento;
+    private String documento; // Recuerda que en DTO es String
     private String cuit;
-    private String posicionIva;
+    private String posicionIva; // String en DTO
     private Date fechaNacimiento;
     private String email;
     private String ocupacion;
@@ -21,145 +23,66 @@ public class DtoHuesped {
     private DtoDireccion dtoDireccion;
     private List<DtoEstadia> dtoEstadias;
 
-
-    // Constructor con todos los datos
-    public DtoHuesped(String nombres, String apellido, long telefono,
-                      TipoDocumento tipoDocumento, String documento,
-                      String cuit, String posicionIva, Date fechaNacimiento,
-                      String email, String ocupacion, String nacionalidad,
-                      DtoDireccion direccion, List<DtoEstadia> estadias) {
-        if (direccion == null) {
-            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
-        }
-        this.nombres = nombres;
-        this.apellido = apellido;
-        this.telefono = telefono;
-        this.tipoDocumento = tipoDocumento;
-        this.documento = documento;
-        this.cuit = cuit;
-        this.posicionIva = posicionIva;
-        this.fechaNacimiento = fechaNacimiento;
-        this.email = email;
-        this.ocupacion = ocupacion;
-        this.nacionalidad = nacionalidad;
-        this.dtoDireccion = direccion;
-        this.dtoEstadias = estadias;
-    }
-    
-    public DtoHuesped (){}
-
-    // Getters y Setters
-    public String getNombres() {
-        return nombres;
-    }
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
-    }
-    public String getApellido() {
-        return apellido;
-    }
-    public void setApellido(String apellido) {
-        this.apellido = apellido;
-    }
-    public long getTelefono() {
-        return telefono;
-    }
-    public void setTelefono(long telefono) {
-        this.telefono = telefono;
-    }
-    public TipoDocumento getTipoDocumento() {
-        return tipoDocumento;
-    }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
-    }
-    public String getNroDocumento() {
-        return documento;
-    }
-    public void setNroDocumento(String documento) {
-        this.documento = documento;
-    }
-    public String getCuit() {
-        return cuit;
-    }
-    public void setCuit(String cuit) {
-        this.cuit = cuit;
-    }
-    public String getPosicionIva() {
-        return posicionIva;
-    }
-    public void setPosicionIva(String posicionIva) {
-        this.posicionIva = posicionIva;
-    }
-    public Date getFechaNacimiento() {
-        return fechaNacimiento;
-    }
-    public void setFechaNacimiento(Date fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public String getOcupacion() {
-        return ocupacion;
-    }
-    public void setOcupacion(String ocupacion) {
-        this.ocupacion = ocupacion;
-    }
-    public String getNacionalidad() {
-        return nacionalidad;
-    }
-    public void setNacionalidad(String nacionalidad) {
-        this.nacionalidad = nacionalidad;
-    }
-    public void setDireccion(DtoDireccion dtoDireccion){ this.dtoDireccion = dtoDireccion; }
-    public DtoDireccion getDireccion(){ return this.dtoDireccion; }
-    public List<DtoEstadia> getEstadias(){
-        return dtoEstadias;
-    }
-    public void setEstadias(List<DtoEstadia> estadias){
-        this.dtoEstadias = estadias;
-    }
-    public boolean estanVacios() {
-        boolean apellidoVacio = (apellido == null || apellido.trim().isEmpty());
-        boolean nombresVacio = (nombres == null || nombres.trim().isEmpty());
-        boolean tipoDocVacio = (tipoDocumento == null);
-        boolean docVacio = (documento.isEmpty());
-        return apellidoVacio && nombresVacio && tipoDocVacio && docVacio;
+    // 1. Constructor Privado (Recibe el Builder)
+    private DtoHuesped(Builder builder) {
+        this.nombres = builder.nombres;
+        this.apellido = builder.apellido;
+        this.telefono = builder.telefono;
+        this.tipoDocumento = builder.tipoDocumento;
+        this.documento = builder.documento;
+        this.cuit = builder.cuit;
+        this.posicionIva = builder.posicionIva;
+        this.fechaNacimiento = builder.fechaNacimiento;
+        this.email = builder.email;
+        this.ocupacion = builder.ocupacion;
+        this.nacionalidad = builder.nacionalidad;
+        this.dtoDireccion = builder.dtoDireccion;
+        this.dtoEstadias = builder.dtoEstadias;
     }
 
-    // Método auxiliar para convertir string de la BD a PosIva
-    public static PosIva convertirPosIvaString(String posicionIvaStr) {
-        if (posicionIvaStr == null) {
-            return PosIva.ConsumidorFinal;
+    // Constructor vacío (necesario a veces para frameworks o serialización)
+    public DtoHuesped() {}
+
+    // Getters y Setters... (Mantenlos todos igual)
+
+    // 2. Clase Static Builder
+    public static class Builder {
+        // Mismos atributos que la clase externa
+        private String nombres;
+        private String apellido;
+        private TipoDocumento tipoDocumento;
+        private String documento;
+
+        // Opcionales inicializados
+        private long telefono;
+        private String cuit;
+        private String posicionIva;
+        private Date fechaNacimiento;
+        private String email;
+        private String ocupacion;
+        private String nacionalidad;
+        private DtoDireccion dtoDireccion;
+        private List<DtoEstadia> dtoEstadias;
+
+        // Constructor del Builder (puedes pedir datos mínimos obligatorios o dejarlo vacío)
+        public Builder() {}
+
+        public Builder nombres(String val) { nombres = val; return this; }
+        public Builder apellido(String val) { apellido = val; return this; }
+        public Builder telefono(long val) { telefono = val; return this; }
+        public Builder tipoDocumento(TipoDocumento val) { tipoDocumento = val; return this; }
+        public Builder documento(String val) { documento = val; return this; }
+        public Builder cuit(String val) { cuit = val; return this; }
+        public Builder posicionIva(String val) { posicionIva = val; return this; }
+        public Builder fechaNacimiento(Date val) { fechaNacimiento = val; return this; }
+        public Builder email(String val) { email = val; return this; }
+        public Builder ocupacion(String val) { ocupacion = val; return this; }
+        public Builder nacionalidad(String val) { nacionalidad = val; return this; }
+        public Builder direccion(DtoDireccion val) { dtoDireccion = val; return this; }
+        public Builder estadias(List<DtoEstadia> val) { dtoEstadias = val; return this; }
+
+        public DtoHuesped build() {
+            return new DtoHuesped(this);
         }
-        try {
-            // Eliminamos espacios y convertimos a mayúsculas
-            String posIvaSinEspacios = posicionIvaStr.replace(" ", "").toUpperCase();
-            return PosIva.valueOf(posIvaSinEspacios);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Valor de posicion_iva no válido: " + posicionIvaStr);
-            return PosIva.ConsumidorFinal;
-        }
-    }
-    public DtoHuesped(DtoHuesped original) {
-        this.nombres = original.nombres;
-        this.apellido = original.apellido;
-        this.telefono = original.telefono;
-        this.tipoDocumento = original.tipoDocumento;
-        this.documento = original.documento;
-        this.cuit = original.cuit;
-        this.posicionIva = original.posicionIva;
-        this.fechaNacimiento = original.fechaNacimiento;
-        this.email = original.email;
-        this.ocupacion = original.ocupacion;
-        this.nacionalidad = original.nacionalidad;
-        this.idDireccion = original.idDireccion;
-        
-        // Copiamos la referencia de la dirección (se edita por separado)
-        this.dtoDireccion = original.dtoDireccion;
     }
 }

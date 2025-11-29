@@ -1,22 +1,21 @@
 package Estadia;
 
-import Dominio.Factura;
 import Dominio.Huesped;
 //import Reserva.DtoReserva;
 import Huesped.DtoHuesped;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.ArrayList;
 
 public class DtoEstadia {
-    private int id_estadia;
-    private Date fecha_inicio;
-    private Date fecha_fin;
-    private double valor_estadia;
-    private DtoReserva reserva; //no existe tdavia
-    private List<DtoHuesped> dtoHuespedes;
-    private ArrayList<Factura> facturas;
+    private int idEstadia;
+    private Date fechaCheckIn;
+    private Date fechaCheckOut;
+    private double valorEstadia;
+    //private DtoReserva dtoRreserva; NO EXISTE TODAVIA
+    private ArrayList<DtoHuesped> dtoHuespedes;
+    //private ArrayList<DtoFactura> dtoFacturas; NO EXISTE TODAVIA
+    //private DtoHabitacion dtoHabitacion; NO EXISTE TODAVIA
 
 
     public DtoEstadia() {
@@ -39,8 +38,8 @@ public class DtoEstadia {
         this.id_estadia = id_estadia;
         this.fecha_inicio = new Date(fecha_inicio.getTime());
         this.id_reserva = id_reserva;
-        this.fecha_fin = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
-        this.valor_estadia = valor_estadia;
+        this.fechaCheckOut = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
+        this.valorEstadia = valor_estadia;
         this.huespedes = huespedes;
     }
 
@@ -58,16 +57,16 @@ public class DtoEstadia {
         this.fecha_inicio = (fecha_inicio == null) ? null : new Date(fecha_inicio.getTime());
     }
     public Date getFechaCheckOut() {
-        return (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
+        return (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
     }
     public void setFechaCheckOut(Date fecha_fin) {
-        this.fecha_fin = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
+        this.fechaCheckOut = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
     }
     public double getValorEstadia() {
-        return valor_estadia;
+        return valorEstadia;
     }
     public void setValorEstadia(double valor_estadia) {
-        this.valor_estadia = valor_estadia;
+        this.valorEstadia = valor_estadia;
     }
     public void setIdReserva(int id_reserva){this.id_reserva = id_reserva;}
     public int getIdReserva(){return id_reserva;}

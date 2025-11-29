@@ -12,20 +12,15 @@ public class Estadia {
     private double valorEstadia;
     private Reserva reserva;
     private Habitacion habitacion;
-    private List<Huesped> huespedes;
+    private ArrayList<Huesped> huespedes;
     private ArrayList<Factura> facturas;
 
     public Estadia() {
         // constructor por defecto
     }
-    /**
-     * Constructor completo con validaciones
-     * @param idEstadia ID de la estadía (obligatorio)
-     * @param fechaCheckIn Fecha de inicio (obligatoria)
-     * @param reserva ID de la reserva (obligatorio)
-     * @param fechaCheckOut Fecha de fin (opcional)
-     * @param valorEstadia Valor de la estadía (opcional)
-     */
+
+    /*
+
     public Estadia(int idEstadia, Date fechaCheckIn, Reserva reserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes, ArrayList<Factura> facturas) {
         if (fechaCheckIn == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
@@ -46,7 +41,7 @@ public class Estadia {
         this.fechaCheckOut = (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
         this.valorEstadia = valorEstadia;
         this.huespedes = huespedes;
-    }
+    }*/
 
     public int getIdEstadia() {
         return idEstadia;
@@ -80,4 +75,49 @@ public class Estadia {
     public void setFacturas(ArrayList<Factura> facturas){this.facturas = facturas;}
     public void setHabitacion(Habitacion habitacion){this.habitacion = habitacion;}
     public Habitacion getHabitacion(){return habitacion;}
+
+
+    // --- CLASE BUILDER ---
+    public static class Builder {
+        private String nombres;
+        private String apellido;
+        private TipoDocumento tipoDocumento;
+        private long documento;
+        // Valores por defecto o opcionales
+        private long telefono;
+        private String cuit;
+        private PosIva posicionIva;
+        private Date fechaNacimiento;
+        private String email;
+        private String ocupacion;
+        private String nacionalidad;
+        private Direccion direccion;
+        private List<Estadia> estadias;
+
+        // Constructor del Builder con los datos OBLIGATORIOS (mínimos para existir)
+        public Builder(String nombres, String apellido, TipoDocumento tipoDocumento, long documento) {
+            this.nombres = nombres;
+            this.apellido = apellido;
+            this.tipoDocumento = tipoDocumento;
+            this.documento = documento;
+        }
+
+        // Métodos fluidos para el resto
+        public Builder telefono(long val) { telefono = val; return this; }
+        public Builder cuit(String val) { cuit = val; return this; }
+        public Builder posicionIva(PosIva val) { posicionIva = val; return this; }
+        public Builder fechaNacimiento(Date val) { fechaNacimiento = val; return this; }
+        public Builder email(String val) { email = val; return this; }
+        public Builder ocupacion(String val) { ocupacion = val; return this; }
+        public Builder nacionalidad(String val) { nacionalidad = val; return this; }
+        public Builder direccion(Direccion val) { direccion = val; return this; }
+        public Builder estadias(List<Estadia> val) { estadias = val; return this; }
+
+        public Huesped build() {
+            return new Huesped(this);
+        }
+    }
+
+
+
 }

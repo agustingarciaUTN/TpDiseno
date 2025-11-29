@@ -5,9 +5,6 @@ import enums.PosIva;
 import java.util.Date;
 import java.util.List;
 
-import Huesped.DaoDireccion;
-import Huesped.DtoDireccion;
-
 public class Huesped {
     private String nombres;
     private String apellido;
@@ -28,40 +25,23 @@ public class Huesped {
     public Huesped() {
     }
 
-    // Constructor con todos los datos
-    public Huesped(String nombres, String apellido, int telefono,
-                   TipoDocumento tipoDocumento, long documento, String cuit,
-                   PosIva posicionIva, Date fechaNacimiento, String email,
-                   String ocupacion, String nacionalidad, Direccion direccion, List<Estadia> estadias) {
-
-        this.nombres = nombres;
-        this.apellido = apellido;
-        this.telefono = telefono;
-        this.tipoDocumento = tipoDocumento;
-        this.documento = documento;
-        this.cuit = cuit;
-        this.posicionIva = posicionIva;
-        this.fechaNacimiento = fechaNacimiento;
-        this.email = email;
-        this.ocupacion = ocupacion;
-        this.nacionalidad = nacionalidad;
-        this.direccion = direccion;
-        this.estadias = estadias;
+    // Constructor Privado: Solo el Builder puede instanciar
+    private Huesped(Builder builder) {
+        this.nombres = builder.nombres;
+        this.apellido = builder.apellido;
+        this.telefono = builder.telefono;
+        this.tipoDocumento = builder.tipoDocumento;
+        this.documento = builder.documento;
+        this.cuit = builder.cuit;
+        this.posicionIva = builder.posicionIva;
+        this.fechaNacimiento = builder.fechaNacimiento;
+        this.email = builder.email;
+        this.ocupacion = builder.ocupacion;
+        this.nacionalidad = builder.nacionalidad;
+        this.direccion = builder.direccion;
+        this.estadias = builder.estadias;
     }
-    // Constructor con los datos más importantes
-    public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento,
-                   long documento, PosIva posicionIva, Direccion direccion) {
-        if (direccion == null) {
-            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
-        }
 
-        this.nombres = nombres;
-        this.apellido = apellido;
-        this.tipoDocumento = tipoDocumento;
-        this.documento = documento;
-        this.posicionIva = posicionIva;
-        this.direccion = direccion;
-    }
     // Getters y Setters
     public String getNombres() {
         return nombres;
@@ -144,4 +124,48 @@ public class Huesped {
     public void setEstadias(List<Estadia> estadias){
         this.estadias = estadias;
     }
+
+
+
+    // --- CLASE BUILDER ---
+    public static class Builder {
+        private String nombres;
+        private String apellido;
+        private TipoDocumento tipoDocumento;
+        private long documento;
+        // Valores por defecto u opcionales
+        private long telefono;
+        private String cuit;
+        private PosIva posicionIva;
+        private Date fechaNacimiento;
+        private String email;
+        private String ocupacion;
+        private String nacionalidad;
+        private Direccion direccion;
+        private List<Estadia> estadias;
+
+        // Constructor del Builder con los datos OBLIGATORIOS (mínimos para existir)
+        public Builder(String nombres, String apellido, TipoDocumento tipoDocumento, long documento) {
+            this.nombres = nombres;
+            this.apellido = apellido;
+            this.tipoDocumento = tipoDocumento;
+            this.documento = documento;
+        }
+
+        // Métodos fluidos para el resto
+        public Builder telefono(long val) { telefono = val; return this; }
+        public Builder cuit(String val) { cuit = val; return this; }
+        public Builder posicionIva(PosIva val) { posicionIva = val; return this; }
+        public Builder fechaNacimiento(Date val) { fechaNacimiento = val; return this; }
+        public Builder email(String val) { email = val; return this; }
+        public Builder ocupacion(String val) { ocupacion = val; return this; }
+        public Builder nacionalidad(String val) { nacionalidad = val; return this; }
+        public Builder direccion(Direccion val) { direccion = val; return this; }
+        public Builder estadias(List<Estadia> val) { estadias = val; return this; }
+
+        public Huesped build() {
+            return new Huesped(this);
+        }
+    }
+
 }
