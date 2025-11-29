@@ -1,8 +1,9 @@
 package Estadia;
 
-import Dominio.Huesped;
 //import Reserva.DtoReserva;
 import Huesped.DtoHuesped;
+//import Factura.DtoFactura;
+//import Reserva.DtoHabitacion;
 
 import java.util.Date;
 import java.util.ArrayList;
@@ -21,8 +22,16 @@ public class DtoEstadia {
     public DtoEstadia() {
         // constructor por defecto
     }
-
-    public DtoEstadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
+    private DtoEstadia(Builder builder) {
+        this.idEstadia = builder.idEstadia;
+        this.fechaCheckIn = builder.fechaCheckIn;
+        this.fechaCheckOut = builder.fechaCheckOut;
+        this.valorEstadia = builder.valorEstadia;
+       // this.dtoReserva = builder.dtoReserva;
+        this.dtoHuespedes = builder.dtoHuespedes;
+       //this.dtoFacturas = builder.facturas;
+    }
+    /*public DtoEstadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
         if (fecha_inicio == null) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
         }
@@ -41,36 +50,93 @@ public class DtoEstadia {
         this.fechaCheckOut = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
         this.valorEstadia = valor_estadia;
         this.huespedes = huespedes;
-    }
+    }*/
 
 
-    public int getIdEstadia() {
-        return id_estadia;
+    public int getIdEstadia() { return idEstadia; }
+    public void setIdEstadia(int idEstadia) { this.idEstadia = idEstadia; }
+
+    public Date getFechaCheckIn() { return fechaCheckIn; }
+    public void setFechaCheckIn(Date fechaCheckIn) { this.fechaCheckIn = fechaCheckIn; }
+
+    public Date getFechaCheckOut() { return fechaCheckOut; }
+    public void setFechaCheckOut(Date fechaCheckOut) { this.fechaCheckOut = fechaCheckOut; }
+
+    public double getValorEstadia() { return valorEstadia; }
+    public void setValorEstadia(double valorEstadia) { this.valorEstadia = valorEstadia; }
+
+    //public DtoReserva getDtoReserva() { return dtoReserva; }
+    //public void setDtoReserva(DtoReserva dtoReserva) { this.dtoReserva = dtoReserva; }
+
+    public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
+    public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
+
+    //public ArrayList<Factura> getFacturas() { return dtoFacturas; }
+    //public void setFacturas(ArrayList<Factura> facturas) { this.dtoFacturas = facturas; }
+
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private int idEstadia;
+        private Date fechaCheckIn;
+        private Date fechaCheckOut;
+        private double valorEstadia;
+        //private DtoReserva dtoReserva;
+        private ArrayList<DtoHuesped> dtoHuespedes = new ArrayList<>();
+        //private ArrayList<DtoFactura> facturas = new ArrayList<>();
+
+        public Builder() {
+            // Constructor vacío
+        }
+
+        public Builder idEstadia(int val) {
+            this.idEstadia = val;
+            return this;
+        }
+
+        public Builder fechaCheckIn(Date val) {
+            this.fechaCheckIn = val;
+            return this;
+        }
+
+        public Builder fechaCheckOut(Date val) {
+            this.fechaCheckOut = val;
+            return this;
+        }
+
+        public Builder valorEstadia(double val) {
+            this.valorEstadia = val;
+            return this;
+        }
+
+        /*public Builder dtoReserva(DtoReserva val) {
+            this.dtoReserva = val;
+            return this;
+        }*/
+
+        public Builder dtoHuespedes(ArrayList<DtoHuesped> val) {
+            this.dtoHuespedes = val;
+            return this;
+        }
+
+        // Helper para agregar huéspedes de a uno
+        public Builder agregarHuesped(DtoHuesped val) {
+            if (this.dtoHuespedes == null) {
+                this.dtoHuespedes = new ArrayList<>();
+            }
+            this.dtoHuespedes.add(val);
+            return this;
+        }
+
+        /*public Builder facturas(ArrayList<DtoFactura> val) {
+            this.facturas = val;
+            return this;
+        }*/
+
+        public DtoEstadia build() {
+            return new DtoEstadia(this);
+        }
     }
-    public void setIdEstadia(int id_estadia) {
-        this.id_estadia = id_estadia;
-    }
-    public Date getFechaCheckIn() {
-        return (fecha_inicio == null) ? null : new Date(fecha_inicio.getTime());
-    }
-    public void setFechaCheckIn(Date fecha_inicio) {
-        this.fecha_inicio = (fecha_inicio == null) ? null : new Date(fecha_inicio.getTime());
-    }
-    public Date getFechaCheckOut() {
-        return (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
-    }
-    public void setFechaCheckOut(Date fecha_fin) {
-        this.fechaCheckOut = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
-    }
-    public double getValorEstadia() {
-        return valorEstadia;
-    }
-    public void setValorEstadia(double valor_estadia) {
-        this.valorEstadia = valor_estadia;
-    }
-    public void setIdReserva(int id_reserva){this.id_reserva = id_reserva;}
-    public int getIdReserva(){return id_reserva;}
-    public List<Huesped> getHuespedes(){return huespedes;}
-    public void setHuespedes(List<Huesped> huespedes){this.huespedes = huespedes;}
+
 
 }
