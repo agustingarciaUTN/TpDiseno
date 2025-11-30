@@ -44,20 +44,6 @@ public class GestorHuesped {
 
 
 
-    //debe presentarse en pantalla la opción para ejecutar el método de buscar huesped
-    // solo si se autentico antes el conserje
-
-    //los daos que utilizara el gestor (son de tipo interfaz por SOLID)
-    private final DaoHuespedInterfaz daoHuesped;
-    private final DaoDireccionInterfaz daoDireccion;
-    private final GestorEstadia gestorEstadia;
-
-    public GestorHuesped(DaoHuespedInterfaz daoHuesped, DaoDireccionInterfaz daoDireccion) {
-        this.daoHuesped = daoHuesped;
-        this.daoDireccion = daoDireccion;
-        this.gestorEstadia = new GestorEstadia(new DaoEstadia());
-    }
-
    public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
         //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
         //atributos de Huesped.
