@@ -18,6 +18,32 @@ import java.util.ArrayList;
 
 
 public class GestorHuesped {
+
+    // 1. La única instancia (static y private)
+    private static GestorHuesped instancia;
+
+    // Referencias a los DAOs que este gestor necesita
+    private final DaoHuespedInterfaz daoHuesped;
+    private final DaoDireccionInterfaz daoDireccion; // Ejemplo si necesita validar habitación
+
+    // 2. Constructor PRIVADO
+    // Nadie puede hacer "new GestorReserva()" desde fuera.
+    private GestorHuesped() {
+        // ¡IMPORTANTE! Aquí obtenemos las instancias de los DAOs
+        this.daoHuesped = DaoHuesped.getInstance();
+        this.daoDireccion = DaoDireccion.getInstance();
+    }
+
+    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
+    public static synchronized GestorHuesped getInstance() {
+        if (instancia == null) {
+            instancia = new GestorHuesped();
+        }
+        return instancia;
+    }
+
+
+
     //debe presentarse en pantalla la opción para ejecutar el método de buscar huesped
     // solo si se autentico antes el conserje
 
