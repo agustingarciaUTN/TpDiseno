@@ -1,93 +1,109 @@
 package Dominio;
 
 import enums.Moneda;
-
 import java.util.ArrayList;
 import java.util.Date;
 
+
 public class Pago {
-    
+
     private int idPago;
     private Moneda moneda;
-    private float montoTotal;
-    private float cotizacion;
+    private double montoTotal; // double por consistencia
+    private double cotizacion;
     private Date fechaPago;
+
+    // relación
+    private Factura factura;
+
+    // Relación con Medios de Pago
     private ArrayList<MedioPago> mediosPago;
-    private int idFactura;//CUAL DE LOS DOS
-    //private Factura factura;// CUAL DE LOS DOS
 
-    public Pago(int idPago , Moneda moneda, float montoTotal, float cotizacion, Date fechaPago, ArrayList<MedioPago> mediosPago, int idFactura) {
-        if(idPago <= 0) {
-            throw new IllegalArgumentException("El ID del pago debe ser un número positivo.");
-        }
-        if(montoTotal < 0) {
-            throw new IllegalArgumentException("El monto total no puede ser negativo.");
-        }
-        if(fechaPago == null) {
-            throw new IllegalArgumentException("La fecha de pago no puede ser nula.");
-        }
-        if(idFactura <= 0) {
-            throw new IllegalArgumentException("El ID de la factura debe ser un número positivo.");
-        }
-        if(mediosPago == null || mediosPago.isEmpty()) {
-            throw new IllegalArgumentException("El pago debe tener al menos un medio de pago asociado.");
-        }
-        this.idPago = idPago;
-        this.moneda = moneda;
-        this.montoTotal = montoTotal;
-        this.cotizacion = cotizacion;
-        this.fechaPago = fechaPago;
-        this.mediosPago = mediosPago;
-        this.idFactura = idFactura;
+    // --- CONSTRUCTOR PRIVADO ---
+    private Pago(Builder builder) {
+        this.idPago = builder.idPago;
+        this.moneda = builder.moneda;
+        this.montoTotal = builder.montoTotal;
+        this.cotizacion = builder.cotizacion;
+        this.fechaPago = builder.fechaPago;
+        this.factura = builder.factura;
+        this.mediosPago = builder.mediosPago;
     }
 
-    // Getters y Setters
-    public int getIdPago() {
-        return idPago;
-    }
-    public void setIdPago(int idPago) {
-        this.idPago = idPago;
-    }
-    public Moneda getMoneda() {
-        return moneda;
-    }
-    public void setMoneda(Moneda moneda) {
-        this.moneda = moneda;
-    }
-    public float getMontoTotal() {
-        return montoTotal;
-    }
-    public void setMontoTotal(float montoTotal) {
-        this.montoTotal = montoTotal;
-    }
-    public float getCotizacion() {
-        return cotizacion;
-    }
-    public void setCotizacion(float cotizacion) {
-        this.cotizacion = cotizacion;
-    }
-    public Date getFechaPago() {
-        return fechaPago;
-    }
-    public void setFechaPago(Date fechaPago) {
-        this.fechaPago = fechaPago;
-    }
-    public ArrayList<MedioPago> getMediosPago() {
-        return mediosPago;
-    }
-    public void setMediosPago(ArrayList<MedioPago> mediosPago) {
-        this.mediosPago = mediosPago;
-    }
-    public int getIdFactura() {
-        return idFactura;
-    }
-    public void setIdFactura(int idFactura) {
-        this.idFactura = idFactura;
-    }
-    /*public Factura getFactura() {
-        return factura;
-    }
+    // Constructor por defecto
+    public Pago() {}
+
+    // --- GETTERS Y SETTERS ---
+    public int getIdPago() { return idPago; }
+    public void setIdPago(int idPago) { this.idPago = idPago; }
+
+    public Moneda getMoneda() { return moneda; }
+    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+
+    public double getMontoTotal() { return montoTotal; }
+    public void setMontoTotal(double montoTotal) { this.montoTotal = montoTotal; }
+
+    public double getCotizacion() { return cotizacion; }
+    public void setCotizacion(double cotizacion) { this.cotizacion = cotizacion; }
+
+    public Date getFechaPago() { return fechaPago; }
+    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
+
+    public Factura getFactura() { return factura; }
     public void setFactura(Factura factura) {
         this.factura = factura;
-    }*/
+    }
+
+    public ArrayList<MedioPago> getMediosPago() { return mediosPago; }
+    public void setMediosPago(ArrayList<MedioPago> mediosPago) { this.mediosPago = mediosPago; }
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private int idPago = 0;
+        private Moneda moneda;
+        private double montoTotal;
+        private double cotizacion;
+        private Date fechaPago;
+        private Factura factura;
+
+        // Opcionales
+        private ArrayList<MedioPago> mediosPago = new ArrayList<>();
+
+        // Constructor con obligatorios
+        public Builder(Moneda moneda, double montoTotal, Date fechaPago, Factura factura) {
+            this.moneda = moneda;
+            this.montoTotal = montoTotal;
+            this.fechaPago = fechaPago;
+            this.factura = factura;
+        }
+
+        public Builder idPago(int val) { idPago = val; return this; }
+        public Builder cotizacion(double val) { cotizacion = val; return this; }
+
+        // Relaciones
+        public Builder factura(Factura val) { factura = val; return this; }
+
+        public Builder mediosPago(ArrayList<MedioPago> val) { mediosPago = val; return this; }
+        public Builder agregarMedioPago(MedioPago val) {
+            if (this.mediosPago == null) this.mediosPago = new ArrayList<>();
+            this.mediosPago.add(val);
+            return this;
+        }
+
+        public Pago build() {
+            if (montoTotal < 0) {
+                throw new IllegalArgumentException("El monto total no puede ser negativo.");
+            }
+            if (moneda == null) {
+                throw new IllegalArgumentException("La moneda es obligatoria.");
+            }
+            if (fechaPago == null) {
+                throw new IllegalArgumentException("La fecha de pago es obligatoria.");
+            }
+            if (factura == null) {
+                throw new IllegalArgumentException("Debe existir una factura asociada.");
+            }
+            return new Pago(this);
+        }
+    }
 }

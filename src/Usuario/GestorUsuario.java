@@ -1,9 +1,31 @@
 package Usuario;
-import Dominio.Usuario;
+
 import static Utils.UsuarioHelper.generarHashMD5;
 
 public class GestorUsuario {
-    private final DaoUsuarioInterfaz daoUsuario;
+
+    // 1. La única instancia (static y private)
+    private static GestorUsuario instancia;
+
+    // Referencias a los DAOs que este gestor necesita
+    private final DaoUsuarioInterfaz daoUsuario;// Ejemplo si necesita validar habitación
+
+    // 2. Constructor PRIVADO
+    // Nadie puede hacer new GestorUsuario() desde fuera.
+    private GestorUsuario() {
+        // Obtenemos las instancias de los DAOs
+        this.daoUsuario = DaoUsuario.getInstance();
+    }
+
+    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
+    public static synchronized GestorUsuario getInstance() {
+        if (instancia == null) {
+            instancia = new GestorUsuario();
+        }
+        return instancia;
+    }
+
+
 
     public GestorUsuario(DaoUsuarioInterfaz dao) {
         this.daoUsuario = dao;
@@ -38,7 +60,7 @@ public class GestorUsuario {
             String hashAlmacenado = usuarioBDD.getHashContrasenia();
 
             //Verificar si las contraseñas coinciden
-            if (hashAlmacenado == null || hashIngresado == null) {
+            if (hashAlmacenado == null) {
                 System.err.println("Error: hash de contraseña nulo.");
                 return false;
             }

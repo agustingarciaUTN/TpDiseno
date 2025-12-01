@@ -8,53 +8,56 @@ import Dominio.Huesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 
-import Estadia.GestorEstadia;
 import Dominio.Estadia;
 import Estadia.DtoEstadia;
 import Excepciones.PersistenciaException;
-import Estadia.DaoEstadia;
+
 import java.util.List;
 import java.util.ArrayList;
 
 
 public class GestorHuesped {
-    //debe presentarse en pantalla la opción para ejecutar el método de buscar huesped
-    // solo si se autentico antes el conserje
 
-    //los daos que utilizara el gestor (son de tipo interfaz por SOLID)
+    // 1. La única instancia (static y private)
+    private static GestorHuesped instancia;
+
+    // Referencias a los DAOs que este gestor necesita
     private final DaoHuespedInterfaz daoHuesped;
-    private final DaoDireccionInterfaz daoDireccion;
-    private final GestorEstadia gestorEstadia;
+    private final DaoDireccionInterfaz daoDireccion; // Ejemplo si necesita validar habitación
 
-    public GestorHuesped(DaoHuespedInterfaz daoHuesped, DaoDireccionInterfaz daoDireccion) {
-        this.daoHuesped = daoHuesped;
-        this.daoDireccion = daoDireccion;
-        this.gestorEstadia = new GestorEstadia(new DaoEstadia());
+    // 2. Constructor PRIVADO
+    // Nadie puede hacer "new GestorReserva()" desde fuera.
+    private GestorHuesped() {
+        // ¡IMPORTANTE! Aquí obtenemos las instancias de los DAOs
+        this.daoHuesped = DaoHuesped.getInstance();
+        this.daoDireccion = DaoDireccion.getInstance();
     }
 
+    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
+    public static synchronized GestorHuesped getInstance() {
+        if (instancia == null) {
+            instancia = new GestorHuesped();
+        }
+        return instancia;
+    }
+
+
+
    public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
-        //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
-        //atributos de Huesped.
+       ArrayList<Huesped> listaHuespedesEncontrados; //datos de huespedes
 
-        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
 
-        if (!criterios.estanVacios()) {
-            listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
-        }
-        else {
-            listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
-        }
 
-        for (DtoHuesped datosHuesped : listaDtoHuespedesEncontrados) {
-            // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
-            // Esto es crucial para que la Pantalla (CU10) tenga la dirección completa.
-            if (datosHuesped.getIdDireccion() > 0) {
-                 DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
-                 // Asignamos el DTO de Dirección al DTO del Huésped
-                 datosHuesped.setDireccion(dtoDireccion);
-            }
-            // Eliminado: El código para crear las entidades Huesped y Direccion
-        }
+
+       if (criterios == null) {
+           listaHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios.getApellido(),
+                   criterios.getNombres(), criterios.getTipoDocumento(), criterios.getNroDocumento());
+       }
+       else {
+           listaHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+       }
+
+       //ArrayList<DtoHuesped> listaDtoHuespedesEncontrados = mapearEntidadADtoHuesped(listaHuespedesEncontrados);
 
         return listaDtoHuespedesEncontrados;
     }
@@ -203,7 +206,7 @@ public class GestorHuesped {
 
         // Estadías: convertir lista de DtoEstadia a List<Estadia> usando gestorEstadia
         List<Estadia> estadias = new ArrayList<>();
-        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getEstadias();
+        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getIdEstadias();
         if (listaDtoEstadias != null) {
             for (DtoEstadia dtoE : listaDtoEstadias) {
                 try {
