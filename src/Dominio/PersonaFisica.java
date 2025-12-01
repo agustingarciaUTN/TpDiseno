@@ -4,14 +4,12 @@ import enums.TipoDocumento;
 
 public class PersonaFisica extends ResponsablePago {
 
-    private TipoDocumento tipoDocumento;
-    private String numeroDocumento;
+    private Huesped huesped;
 
     // --- CONSTRUCTOR PRIVADO ---
     private PersonaFisica(Builder builder) {
         super(builder.idResponsablePago);
-        this.tipoDocumento = builder.tipoDocumento;
-        this.numeroDocumento = builder.numeroDocumento;
+        this.huesped = builder.huesped;
     }
 
     // Constructor por defecto
@@ -20,31 +18,24 @@ public class PersonaFisica extends ResponsablePago {
     }
 
     // --- GETTERS Y SETTERS ---
-    public TipoDocumento getTipoDocumento() { return tipoDocumento; }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) { this.tipoDocumento = tipoDocumento; }
+    public Huesped getHuesped() { return huesped; }
+    public void setHuesped(Huesped huesped) { this.huesped = huesped; }
 
-    public String getNumeroDocumento() { return numeroDocumento; }
-    public void setNumeroDocumento(String numeroDocumento) { this.numeroDocumento = numeroDocumento; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
-        private TipoDocumento tipoDocumento;
-        private String numeroDocumento;
+        private Huesped huesped;
         private int idResponsablePago = 0;
 
-        public Builder(TipoDocumento tipo, String numero) {
-            this.tipoDocumento = tipo;
-            this.numeroDocumento = numero;
+        public Builder(Huesped huesped) {
+            this.huesped = huesped;
         }
 
         public Builder idResponsablePago(int val) { idResponsablePago = val; return this; }
 
         public PersonaFisica build() {
-            if (numeroDocumento == null || numeroDocumento.isEmpty()) {
-                throw new IllegalArgumentException("El número de documento no puede estar vacío.");
-            }
-            if (tipoDocumento == null) {
-                throw new IllegalArgumentException("El tipo de documento no puede ser nulo.");
+            if (huesped == null) {
+                throw new IllegalArgumentException("La persona física debe ser un huésped.");
             }
             return new PersonaFisica(this);
         }

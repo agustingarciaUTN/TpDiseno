@@ -13,8 +13,7 @@ public class Pago {
     private double cotizacion;
     private Date fechaPago;
 
-    // Relación con Factura (Doble referencia)
-    private int idFactura;
+    // relación
     private Factura factura;
 
     // Relación con Medios de Pago
@@ -27,7 +26,6 @@ public class Pago {
         this.montoTotal = builder.montoTotal;
         this.cotizacion = builder.cotizacion;
         this.fechaPago = builder.fechaPago;
-        this.idFactura = builder.idFactura;
         this.factura = builder.factura;
         this.mediosPago = builder.mediosPago;
     }
@@ -51,13 +49,9 @@ public class Pago {
     public Date getFechaPago() { return fechaPago; }
     public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
 
-    public int getIdFactura() { return idFactura; }
-    public void setIdFactura(int idFactura) { this.idFactura = idFactura; }
-
     public Factura getFactura() { return factura; }
     public void setFactura(Factura factura) {
         this.factura = factura;
-        if (factura != null) this.idFactura = factura.getIdFactura();
     }
 
     public ArrayList<MedioPago> getMediosPago() { return mediosPago; }
@@ -70,18 +64,17 @@ public class Pago {
         private double montoTotal;
         private double cotizacion;
         private Date fechaPago;
-        private int idFactura;
+        private Factura factura;
 
         // Opcionales
-        private Factura factura;
         private ArrayList<MedioPago> mediosPago = new ArrayList<>();
 
         // Constructor con obligatorios
-        public Builder(Moneda moneda, double montoTotal, Date fechaPago, int idFactura) {
+        public Builder(Moneda moneda, double montoTotal, Date fechaPago, Factura factura) {
             this.moneda = moneda;
             this.montoTotal = montoTotal;
             this.fechaPago = fechaPago;
-            this.idFactura = idFactura;
+            this.factura = factura;
         }
 
         public Builder idPago(int val) { idPago = val; return this; }
@@ -107,8 +100,8 @@ public class Pago {
             if (fechaPago == null) {
                 throw new IllegalArgumentException("La fecha de pago es obligatoria.");
             }
-            if (idFactura <= 0) {
-                throw new IllegalArgumentException("El ID de la factura asociada es obligatorio.");
+            if (factura == null) {
+                throw new IllegalArgumentException("Debe existir una factura asociada.");
             }
             return new Pago(this);
         }

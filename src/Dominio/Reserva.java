@@ -11,13 +11,12 @@ public class Reserva {
     private Date fechaDesde;
     private Date fechaHasta;
 
-    // Datos del responsable (Strings sueltos, según tu requerimiento)
+    // Datos del responsable
     private String nombreHuespedResponsable;
     private String apellidoHuespedResponsable;
     private String telefonoHuespedResponsable;
 
-    // Relación con Habitación: ID para persistencia + Objeto para lógica
-    private String idHabitacion;
+    // Relación
     private Habitacion habitacion;
 
     // --- CONSTRUCTOR PRIVADO ---
@@ -30,7 +29,6 @@ public class Reserva {
         this.nombreHuespedResponsable = builder.nombreHuespedResponsable;
         this.apellidoHuespedResponsable = builder.apellidoHuespedResponsable;
         this.telefonoHuespedResponsable = builder.telefonoHuespedResponsable;
-        this.idHabitacion = builder.idHabitacion;
         this.habitacion = builder.habitacion;
     }
 
@@ -61,16 +59,11 @@ public class Reserva {
     public String getTelefonoHuespedResponsable() { return telefonoHuespedResponsable; }
     public void setTelefonoHuespedResponsable(String telefonoHuespedResponsable) { this.telefonoHuespedResponsable = telefonoHuespedResponsable; }
 
-    public String getIdHabitacion() { return idHabitacion; }
-    public void setIdHabitacion(String idHabitacion) { this.idHabitacion = idHabitacion; }
+
 
     public Habitacion getHabitacion() { return habitacion; }
     public void setHabitacion(Habitacion habitacion) {
         this.habitacion = habitacion;
-        // Mantenemos coherencia: si seteo el objeto, actualizo el ID automáticamente
-        if (habitacion != null) {
-            this.idHabitacion = habitacion.getNumero();
-        }
     }
 
     // --- CLASE STATIC BUILDER ---
@@ -83,14 +76,13 @@ public class Reserva {
         private String nombreHuespedResponsable;
         private String apellidoHuespedResponsable;
         private String telefonoHuespedResponsable;
-        private String idHabitacion;
         private Habitacion habitacion;
 
         // Constructor con lo mínimo indispensable para reservar
-        public Builder(Date fechaDesde, Date fechaHasta, String idHabitacion) {
+        public Builder(Date fechaDesde, Date fechaHasta, Habitacion habitacion) {
             this.fechaDesde = fechaDesde;
             this.fechaHasta = fechaHasta;
-            this.idHabitacion = idHabitacion;
+            this.habitacion = habitacion;
         }
 
         public Builder id(int val) { idReserva = val; return this; }
@@ -103,8 +95,6 @@ public class Reserva {
 
         public Builder habitacion(Habitacion val) {
             this.habitacion = val;
-            // Si me pasan el objeto, aseguro el ID también
-            if(val != null) this.idHabitacion = val.getNumero();
             return this;
         }
 

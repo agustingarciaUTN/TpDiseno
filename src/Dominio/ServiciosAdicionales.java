@@ -11,9 +11,9 @@ public class ServiciosAdicionales {
     private double valorServicio; // double por consistencia con moneda
     private Date fechaConsumo;
 
-    // Relación con Estadia (Dueño)
+    // Relación
     private Estadia estadia;
-    private int idEstadia;
+
 
     // --- CONSTRUCTOR PRIVADO ---
     private ServiciosAdicionales(Builder builder) {
@@ -23,7 +23,6 @@ public class ServiciosAdicionales {
         this.valorServicio = builder.valorServicio;
         this.fechaConsumo = builder.fechaConsumo;
         this.estadia = builder.estadia;
-        this.idEstadia = builder.idEstadia;
     }
 
     public ServiciosAdicionales() {}
@@ -44,13 +43,9 @@ public class ServiciosAdicionales {
     public Date getFechaConsumo() { return fechaConsumo; }
     public void setFechaConsumo(Date fechaConsumo) { this.fechaConsumo = fechaConsumo; }
 
-    public int getIdEstadia() { return idEstadia; }
-    public void setIdEstadia(int idEstadia) { this.idEstadia = idEstadia; }
-
     public Estadia getEstadia() { return estadia; }
     public void setEstadia(Estadia estadia) {
         this.estadia = estadia;
-        if(estadia != null) this.idEstadia = estadia.getIdEstadia();
     }
 
     // --- CLASE STATIC BUILDER ---
@@ -61,7 +56,6 @@ public class ServiciosAdicionales {
         private double valorServicio;
         private Date fechaConsumo;
         private Estadia estadia;
-        private int idEstadia;
 
         // Constructor con obligatorios
         public Builder(TipoServicio tipo, double valor, Date fecha) {
@@ -72,11 +66,8 @@ public class ServiciosAdicionales {
 
         public Builder id(int val) { idServicio = val; return this; }
         public Builder descripcion(String val) { descripcionServicio = val; return this; }
-
-        public Builder idEstadia(int val) { idEstadia = val; return this; }
         public Builder estadia(Estadia val) {
             estadia = val;
-            if(val != null) idEstadia = val.getIdEstadia();
             return this;
         }
 

@@ -7,7 +7,7 @@ public class PersonaJuridica extends ResponsablePago {
     private String razonSocial;
     private String cuit;
     private long telefono;
-    private int idDireccion;
+    private Direccion direccion;
 
 
     // --- CONSTRUCTOR PRIVADO ---
@@ -18,7 +18,7 @@ public class PersonaJuridica extends ResponsablePago {
         this.razonSocial = builder.razonSocial;
         this.cuit = builder.cuit;
         this.telefono = builder.telefono;
-        this.idDireccion = builder.idDireccion;
+        this.direccion = builder.direccion;
     }
 
     // Constructor por defecto
@@ -36,8 +36,8 @@ public class PersonaJuridica extends ResponsablePago {
     public long getTelefono() { return telefono; }
     public void setTelefono(long telefono) { this.telefono = telefono; }
 
-    public int getIdDireccion() { return idDireccion; }
-    public void setIdDireccion(int idDireccion) { this.idDireccion = idDireccion; }
+    public Direccion getDireccion() { return direccion; }
+    public void setDireccion(Direccion idDireccion) { this.direccion = direccion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
@@ -45,16 +45,16 @@ public class PersonaJuridica extends ResponsablePago {
         private String razonSocial;
         private String cuit;
         private long telefono;
-        private int idDireccion;
+        private Direccion direccion;
 
         // Heredados de ResponsablePago
         private int idResponsablePago = 0;
 
         // Constructor con obligatorios
-        public Builder(String razonSocial, String cuit, int idDireccion) {
+        public Builder(String razonSocial, String cuit, Direccion direccion) {
             this.razonSocial = razonSocial;
             this.cuit = cuit;
-            this.idDireccion = idDireccion;
+            this.direccion = direccion;
         }
 
         // Métodos fluidos
@@ -70,8 +70,8 @@ public class PersonaJuridica extends ResponsablePago {
             if (cuit == null || cuit.isEmpty()) {
                 throw new IllegalArgumentException("El CUIT es obligatorio.");
             }
-            if (idDireccion <= 0) {
-                throw new IllegalArgumentException("La persona jurídica debe tener una dirección válida (ID > 0).");
+            if (direccion == null) {
+                throw new IllegalArgumentException("La persona jurídica debe tener una dirección asignada.");
             }
             return new PersonaJuridica(this);
         }

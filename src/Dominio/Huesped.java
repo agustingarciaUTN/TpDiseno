@@ -8,15 +8,20 @@ import java.util.List;
 public class Huesped {
     private String nombres;
     private String apellido;
-    private List<Long> telefono;
     private TipoDocumento tipoDocumento;
     private String nroDocumento;
     private String cuit;
     private PosIva posicionIva;
     private Date fechaNacimiento;
+    private String nacionalidad;
+
+
+    // traemos todos porque si necesitamos solo uno, después lo filtramos y el acceso a la tabla intermedia es solo 1
     private List<String> email;
     private List<String> ocupacion;
-    private String nacionalidad;
+    private List<Long> telefono;
+
+    // relaciones
     private Direccion direccion;
     private List<Estadia> estadias;
 
