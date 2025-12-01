@@ -1,4 +1,4 @@
-package Utils;
+package Utils.Mapear;
 /**
  * Interfaz genérica para mapeos DTO <-> Entidad.
  */

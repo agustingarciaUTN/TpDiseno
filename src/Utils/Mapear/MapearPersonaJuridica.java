@@ -1,4 +1,4 @@
-package Utils;
+package Utils.Mapear;
 
 import Dominio.PersonaJuridica;
 import ResponsablePago.DtoPersonaJuridica;

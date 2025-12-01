@@ -1,9 +1,8 @@
-package Utils;
+package Utils.Mapear;
 
 import Dominio.NotaDeCredito;
 import Dominio.Factura;
 import Factura.DtoNotaDeCredito;
-import java.util.ArrayList;
 
 public class MapearNotaDeCredito implements MapeoInterfaz<DtoNotaDeCredito, NotaDeCredito> {
 

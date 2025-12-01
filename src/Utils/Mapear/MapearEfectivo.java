@@ -1,4 +1,4 @@
-package Utils;
+package Utils.Mapear;
 import Dominio.Efectivo;
 import MedioDePago.DtoEfectivo;
 

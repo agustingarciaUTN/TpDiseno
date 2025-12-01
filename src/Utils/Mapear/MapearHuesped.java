@@ -1,8 +1,9 @@
 // java
-package Utils;
+package Utils.Mapear;
 
 import Dominio.Huesped;
 import Huesped.DtoHuesped;
+
 import java.util.ArrayList;
 
 public class MapearHuesped implements MapeoInterfaz<DtoHuesped, Huesped> {

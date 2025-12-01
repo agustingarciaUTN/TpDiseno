@@ -1,4 +1,4 @@
-package Utils;
+package Utils.Mapear;
 import Dominio.TarjetaCredito;
 import MedioDePago.DtoTarjetaCredito;
 
@@ -6,7 +6,7 @@ public class MapearTarjetaCredito implements MapeoInterfaz<DtoTarjetaCredito, Ta
     @Override
     public TarjetaCredito mapearDtoAEntidad(DtoTarjetaCredito dtoTarjetaCredito) {
         if (dtoTarjetaCredito == null) return null;
-        return new TarjetaCredito.Builder(dtoTarjetaCredito.get(), dtoTarjetaCredito.getNumeroDeTarjeta(), dtoTarjetaCredito.getMonto(), dtoTarjetaCredito.getCuotasCantidad())
+        return new TarjetaCredito.Builder(dtoTarjetaCredito.getRedDePago(), dtoTarjetaCredito.getNumeroDeTarjeta(), dtoTarjetaCredito.getMonto(), dtoTarjetaCredito.getCuotasCantidad())
                 .idPago(dtoTarjetaCredito.getIdPago())
                 .banco(dtoTarjetaCredito.getBanco())
                 .fechaVencimiento(dtoTarjetaCredito.getFechaVencimiento())

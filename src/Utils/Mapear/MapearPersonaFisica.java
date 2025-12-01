@@ -1,7 +1,6 @@
-package Utils;
+package Utils.Mapear;
 
 import Dominio.PersonaFisica;
-import Dominio.Factura;
 import ResponsablePago.DtoPersonaFisica;
 
 public class MapearPersonaFisica implements MapeoInterfaz<DtoPersonaFisica, PersonaFisica> {

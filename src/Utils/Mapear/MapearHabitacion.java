@@ -1,5 +1,5 @@
 // java
-package Utils;
+package Utils.Mapear;
 
 import Dominio.Habitacion;
 import Habitacion.DtoHabitacion;
