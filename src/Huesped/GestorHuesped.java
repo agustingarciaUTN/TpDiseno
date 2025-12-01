@@ -44,20 +44,37 @@ public class GestorHuesped {
 
 
    public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
-       ArrayList<Huesped> listaHuespedesEncontrados; //datos de huespedes
+       ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
 
-
-
-
-       if (criterios == null) {
-           listaHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios.getApellido(),
+       if (!(criterios == null)) {
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios.getApellido(),
                    criterios.getNombres(), criterios.getTipoDocumento(), criterios.getNroDocumento());
        }
        else {
-           listaHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
        }
 
-       //ArrayList<DtoHuesped> listaDtoHuespedesEncontrados = mapearEntidadADtoHuesped(listaHuespedesEncontrados);
+       // Mapper local
+       Utils.Mapear.MapearHuesped mapper = new Utils.Mapear.MapearHuesped();
+
+       // Lista de entidades dominio a devolver
+       ArrayList<Huesped> listaHuespedes = new ArrayList<>();
+
+       // For que mapea cada DtoHuesped a Huesped y lo añade a la lista
+       if (listaDtoHuespedesEncontrados != null) {
+           for (DtoHuesped dto : listaDtoHuespedesEncontrados) {
+               try {
+                   Huesped entidad = mapper.mapearDtoAEntidad(dto);
+                   if (entidad != null) {
+                       listaHuespedes.add(entidad);
+                   }
+               } catch (Exception ignored) {
+                   // Ignorar mapping fallido por registro
+               }
+           }
+       }
+
+
 
         return listaDtoHuespedesEncontrados;
     }
