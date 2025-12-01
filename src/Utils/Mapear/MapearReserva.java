@@ -1,53 +1,48 @@
-// java
 package Utils.Mapear;
 
 import Dominio.Reserva;
-import Reserva.DtoReserva;
 import Dominio.Habitacion;
+import Reserva.DtoReserva;
 
 public class MapearReserva implements MapeoInterfaz<DtoReserva, Reserva> {
 
     @Override
     public Reserva mapearDtoAEntidad(DtoReserva dto) {
         if (dto == null) return null;
-        Reserva r = new Reserva();
-        try { r.setIdReserva(dto.getIdReserva()); } catch (Throwable ignored) {}
-        try { r.setEstadoReserva(dto.getEstadoReserva()); } catch (Throwable ignored) {}
-        try { r.setFechaReserva(dto.getFechaReserva()); } catch (Throwable ignored) {}
-        try { r.setFechaDesde(dto.getFechaDesde()); } catch (Throwable ignored) {}
-        try { r.setFechaHasta(dto.getFechaHasta()); } catch (Throwable ignored) {}
-        try { r.setNombreHuespedResponsable(dto.getNombreHuespedResponsable()); } catch (Throwable ignored) {}
-        try { r.setApellidoHuespedResponsable(dto.getApellidoHuespedResponsable()); } catch (Throwable ignored) {}
-        try { r.setTelefonoHuespedResponsable(dto.getTelefonoHuespedResponsable()); } catch (Throwable ignored) {}
 
-        // Mapear habitación mínimamente a partir de idHabitacion (si es numérico se asigna a numero)
-        try { r.setIdReserva(dto.getIdReserva()); } catch (Throwable ignored)  {}
+        // Creamos una Habitación "referencia" solo con el ID para la Entidad
+        Habitacion habRef = null;
+        if (dto.getIdHabitacion() != null) {
+            habRef = new Habitacion.Builder(dto.getIdHabitacion(), null, 0).build();
+        }
 
-
-        return r;
+        return new Reserva.Builder(dto.getFechaDesde(), dto.getFechaHasta(), habRef)
+                .id(dto.getIdReserva())
+                .estado(dto.getEstadoReserva())
+                .fechaReserva(dto.getFechaReserva())
+                .nombreResponsable(dto.getNombreHuespedResponsable())
+                .apellidoResponsable(dto.getApellidoHuespedResponsable())
+                .telefonoResponsable(dto.getTelefonoHuespedResponsable())
+                .build();
     }
 
     @Override
     public DtoReserva mapearEntidadADto(Reserva entidad) {
         if (entidad == null) return null;
-        DtoReserva dto = new DtoReserva();
-        try { dto.setIdReserva(entidad.getIdReserva()); } catch (Throwable ignored) {}
-        try { dto.setEstadoReserva(entidad.getEstadoReserva()); } catch (Throwable ignored) {}
-        try { dto.setFechaReserva(entidad.getFechaReserva()); } catch (Throwable ignored) {}
-        try { dto.setFechaDesde(entidad.getFechaDesde()); } catch (Throwable ignored) {}
-        try { dto.setFechaHasta(entidad.getFechaHasta()); } catch (Throwable ignored) {}
-        try { dto.setNombreHuespedResponsable(entidad.getNombreHuespedResponsable()); } catch (Throwable ignored) {}
-        try { dto.setApellidoHuespedResponsable(entidad.getApellidoHuespedResponsable()); } catch (Throwable ignored) {}
-        try { dto.setTelefonoHuespedResponsable(entidad.getTelefonoHuespedResponsable()); } catch (Throwable ignored) {}
 
-        // Mapear idHabitacion como String a partir del numero de la entidad Habitacion (si existe)
-        try {
-            Habitacion h = entidad.getHabitacion();
-            if (h != null) {
-                try { dto.setIdHabitacion(String.valueOf(h.getNumero())); } catch (Throwable ignored) {}
-            }
-        } catch (Throwable ignored) {}
+        // Extraemos el ID de la habitación si existe el objeto
+        String idHab = entidad.getHabitacion().getNumero();
 
-        return dto;
+        return new DtoReserva.Builder()
+                .id(entidad.getIdReserva())
+                .estado(entidad.getEstadoReserva())
+                .fechaReserva(entidad.getFechaReserva())
+                .fechaDesde(entidad.getFechaDesde())
+                .fechaHasta(entidad.getFechaHasta())
+                .nombreResponsable(entidad.getNombreHuespedResponsable())
+                .apellidoResponsable(entidad.getApellidoHuespedResponsable())
+                .telefonoResponsable(entidad.getTelefonoHuespedResponsable())
+                .idHabitacion(idHab)
+                .build();
     }
 }
