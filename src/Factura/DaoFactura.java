@@ -17,7 +17,7 @@ public class DaoFactura implements DaoInterfazFactura {
     @Override
     public boolean persistirFactura(Factura factura) throws PersistenciaException {
         String sql = "INSERT INTO factura (numero_factura, fecha_emision, importe_total, id_estadia, id_nota_credito,id_responsable, importe_neto, fecha_vencimiento, \"IVA\", estado, tipo_factura) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        // Nota: id_nota_credito es opcional, lo dejo fuera de este insert básico o lo manejas con if
+
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -57,7 +57,7 @@ public class DaoFactura implements DaoInterfazFactura {
     @Override
     public boolean eliminarFactura(int id) { return false; }
     @Override
-    public Factura obtenerFacturaPorId(int id) { return null; }
+    public DtoFactura obtenerFacturaPorId(int id) { return null; }
     @Override
-    public ArrayList<Factura> obtenerTodas() { return new ArrayList<>(); }
+    public ArrayList<DtoFactura> obtenerTodas() { return new ArrayList<>(); }
 }

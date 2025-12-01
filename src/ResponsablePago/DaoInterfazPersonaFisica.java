@@ -4,6 +4,6 @@ import Excepciones.PersistenciaException;
 
 public interface DaoInterfazPersonaFisica {
     boolean persistirPersonaFisica(PersonaFisica persona) throws PersistenciaException;
-    PersonaFisica obtenerPorId(int id);
+    DtoPersonaFisica obtenerPorId(int id);
     // Modificar, Eliminar...
 }

@@ -36,7 +36,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     }
 
     @Override
-    public Usuario buscarPorNombre(String nombre) throws PersistenciaException {
+    public DtoUsuario buscarPorNombre(String nombre) throws PersistenciaException {
         String sql = "SELECT * FROM usuario WHERE nombre = ?";
 
         try (Connection conn = Conexion.getConnection();
@@ -47,10 +47,9 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     // USO DEL BUILDER con los datos justos y necesarios
-                    return new Usuario.Builder(
-                            rs.getString("nombre"),
-                            rs.getString("hash_contrasenia")
-                    )
+                    return new DtoUsuario.Builder()
+                            .nombre(rs.getString("nombre"))
+                            .contrasenia(rs.getString("hash_contrasenia"))
                             .id(rs.getInt("id_usuario"))
                             .build();
                 }

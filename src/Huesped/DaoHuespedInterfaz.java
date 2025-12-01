@@ -13,11 +13,11 @@ public interface DaoHuespedInterfaz {
     boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento);
 
     // Búsquedas (Devuelven Entidades completas)
-    Huesped obtenerHuesped(TipoDocumento tipo, String nroDocumento);
-    ArrayList<Huesped> obtenerTodosLosHuespedes();
+    DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento);
+    ArrayList<DtoHuesped> obtenerTodosLosHuespedes();
 
     // Búsqueda por Criterio (Recibe filtros sueltos para no forzar una Entidad inválida)
-    ArrayList<Huesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc);
+    ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc);
 
     // Métodos auxiliares necesarios
     int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento);

@@ -77,7 +77,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
     @Override
     public boolean eliminarEstadia(int idEstadia) { return false; } // TODO
     @Override
-    public Estadia obtenerEstadiaPorId(int idEstadia) { return null; } // TODO
+    public DtoEstadia obtenerEstadiaPorId(int idEstadia) { return null; } // TODO
     @Override
-    public ArrayList<Estadia> obtenerTodasLasEstadias() { return new ArrayList<>(); } // TODO
+    public ArrayList<DtoEstadia> obtenerTodasLasEstadias() { return new ArrayList<>(); } // TODO
 }

@@ -15,7 +15,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     }
 
     @Override
-    public Direccion persistirDireccion(Direccion direccion) throws PersistenciaException {
+    public boolean persistirDireccion(Direccion direccion) throws PersistenciaException {
         String sql = "INSERT INTO direccion (calle, numero, departamento, piso, \"codPostal\", localidad, provincia, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -33,7 +33,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) direccion.setId(rs.getInt(1));
             }
-            return direccion;
+            return true;
         } catch (SQLException e) {
             throw new PersistenciaException("Error al persistir dirección", e);
         }
@@ -71,20 +71,20 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     }
 
     @Override
-    public Direccion obtenerDireccion(int idDireccion) {
+    public DtoDireccion obtenerDireccion(int idDireccion) {
         String sql = "SELECT * FROM direccion WHERE id_direccion=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idDireccion);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Direccion.Builder(
+                    return new DtoDireccion.Builder(
                             rs.getString("calle"), rs.getInt("numero"),
                             rs.getString("localidad"), rs.getString("provincia"), rs.getString("pais"))
-                            .id(rs.getInt("id_direccion"))
+                            .idDireccion(rs.getInt("id_direccion"))
                             .departamento(rs.getString("departamento"))
                             .piso(rs.getString("piso"))
-                            .codigoPostal(rs.getInt("codPostal"))
+                            .codPostal(rs.getInt("codPostal"))
                             .build();
                 }
             }

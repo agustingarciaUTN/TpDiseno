@@ -8,7 +8,7 @@ public interface DaoUsuarioInterfaz {
     boolean persistir(Usuario usuario) throws PersistenciaException;
 
     // Buscamos por nombre para el login
-    Usuario buscarPorNombre(String nombre) throws PersistenciaException;
+    DtoUsuario buscarPorNombre(String nombre) throws PersistenciaException;
 
     // Si necesitamos modificar contraseña
     boolean modificar(Usuario usuario) throws PersistenciaException;

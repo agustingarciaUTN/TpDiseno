@@ -7,6 +7,6 @@ public interface DaoInterfazReserva {
     boolean persistirReserva(Reserva reserva) throws PersistenciaException;
     boolean modificarReserva(Reserva reserva) throws PersistenciaException;
     boolean eliminarReserva(int id);
-    Reserva obtenerPorId(int id);
-    ArrayList<Reserva> obtenerTodas();
+    DtoReserva obtenerPorId(int id);
+    ArrayList<DtoReserva> obtenerTodas();
 }

@@ -4,6 +4,7 @@ import BaseDedatos.Conexion;
 import Dominio.NotaDeCredito;
 import Excepciones.PersistenciaException;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class DaoNotaDeCredito implements DaoInterfazNotaDeCredito {
     private static DaoNotaDeCredito instancia;
@@ -27,20 +28,40 @@ public class DaoNotaDeCredito implements DaoInterfazNotaDeCredito {
     }
 
     @Override
-    public NotaDeCredito obtenerPorNumero(String numero) {
-        String sql = "SELECT * FROM nota_credito WHERE numero_nota = ?";
+    public DtoNotaDeCredito obtenerPorNumero(String numero) {
+        String sqlNota = "SELECT * FROM nota_credito WHERE numero_nota = ?";
+        String sqlFacturas = "SELECT id_factura FROM factura WHERE id_nota_credito = ?";
+
         try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, numero);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new NotaDeCredito.Builder(
-                            rs.getString("numero_nota"),
-                            rs.getDouble("monto_devolucion")
-                    ).build();
+             PreparedStatement psNota = conn.prepareStatement(sqlNota)) {
+
+            psNota.setString(1, numero);
+            try (ResultSet rsNota = psNota.executeQuery()) {
+                if (!rsNota.next()) return null;
+
+                String numeroNota = rsNota.getString("numero_nota");
+                double monto = rsNota.getDouble("monto_devolucion");
+
+                ArrayList<Integer> idsFacturas = new ArrayList<>();
+                // Segunda consulta para obtener los ids de factura asociados
+                try (PreparedStatement psFact = conn.prepareStatement(sqlFacturas)) {
+                    psFact.setString(1, numeroNota);
+                    try (ResultSet rsFact = psFact.executeQuery()) {
+                        while (rsFact.next()) {
+                            idsFacturas.add(rsFact.getInt("id_factura"));
+                        }
+                    }
                 }
+
+                return new DtoNotaDeCredito.Builder()
+                        .numero(numeroNota)
+                        .monto(monto)
+                        .idsFacturas(idsFacturas)
+                        .build();
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 }

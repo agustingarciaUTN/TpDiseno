@@ -16,14 +16,14 @@ public class DaoHabitacion implements DaoInterfazHabitacion {
     }
 
     @Override
-    public Habitacion obtenerPorNumero(String numero) {
+    public DtoHabitacion obtenerPorNumero(String numero) {
         String sql = "SELECT * FROM habitacion WHERE numero = ?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, numero);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Habitacion h = new Habitacion.Builder(
+                    DtoHabitacion h = new DtoHabitacion.Builder(
                             rs.getString("numero"),
                             TipoHabitacion.valueOf(rs.getString("tipo_habitacion")),
                             rs.getInt("capacidad")

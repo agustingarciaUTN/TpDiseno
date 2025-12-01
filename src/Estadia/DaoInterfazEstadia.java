@@ -7,8 +7,8 @@ public interface DaoInterfazEstadia {
     boolean persistirEstadia(Estadia estadia) throws PersistenciaException;
     boolean modificarEstadia(Estadia estadia) throws PersistenciaException;
     boolean eliminarEstadia(int idEstadia);
-    Estadia obtenerEstadiaPorId(int idEstadia);
-    ArrayList<Estadia> obtenerTodasLasEstadias();
+    DtoEstadia obtenerEstadiaPorId(int idEstadia);
+    ArrayList<DtoEstadia> obtenerTodasLasEstadias();
 
     /*
     // Obtener estadías de una reserva específica
