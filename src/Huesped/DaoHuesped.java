@@ -45,7 +45,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
 
             // 2. Insertar Tablas Satélite (Multivaluados)
-            insertarSatellites(conn, huesped);
+            insertarSatelites(conn, huesped);
 
             conn.commit(); // FIN TRANSACCIÓN
             return true;
@@ -83,8 +83,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
 
             // Actualizar satélites: Borrar viejos e insertar nuevos (Estrategia simple y segura)
-            borrarSatellites(conn, huesped.getTipoDocumento().name(), huesped.getNroDocumento());
-            insertarSatellites(conn, huesped);
+            borrarSatelites(conn, huesped.getTipoDocumento().name(), huesped.getNroDocumento());
+            insertarSatelites(conn, huesped);
 
             conn.commit();
             return true;
@@ -188,7 +188,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- MÉTODOS AUXILIARES (SATÉLITES y MAPEO) ---
 
-    private void insertarSatellites(Connection conn, Huesped h) throws SQLException {
+    private void insertarSatelites(Connection conn, Huesped h) throws SQLException {
         String tipo = h.getTipoDocumento().name();
         String nro = h.getNroDocumento();
 
@@ -233,7 +233,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
-    private void borrarSatellites(Connection conn, String tipo, String nro) throws SQLException {
+    private void borrarSatelites(Connection conn, String tipo, String nro) throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.executeUpdate("DELETE FROM telefono_huesped WHERE tipo_documento='" + tipo + "' AND numero_documento='" + nro + "'");
             st.executeUpdate("DELETE FROM email_huesped WHERE tipo_documento='" + tipo + "' AND numero_documento='" + nro + "'");
