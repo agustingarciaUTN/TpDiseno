@@ -25,10 +25,10 @@ public class DaoFactura implements DaoInterfazFactura {
             ps.setString(1, factura.getNumeroFactura());
             ps.setDate(2, new java.sql.Date(factura.getFechaEmision().getTime()));
             ps.setDouble(3, factura.getImporteTotal());
-            ps.setInt(4, factura.getIdEstadia());
-            if(factura.getNotaDeCredito() != null) ps.setInt(5, factura.getIdNotaDeCredito());
+            ps.setInt(4, factura.getEstadia().getIdEstadia());
+            if(factura.getNotaDeCredito() != null) ps.setString(5, factura.getNotaDeCredito().getNumeroNotaCredito());
             else ps.setNull(5, Types.INTEGER);
-            ps.setInt(6, factura.getIdResponsable());
+            ps.setInt(6, factura.getResponsable().getIdResponsablePago());
             ps.setDouble(7, factura.getImporteNeto());
 
             if (factura.getFechaVencimiento() != null) ps.setDate(8, new java.sql.Date(factura.getFechaVencimiento().getTime()));

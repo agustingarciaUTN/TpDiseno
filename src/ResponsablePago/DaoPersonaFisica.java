@@ -37,8 +37,8 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
 
             try (PreparedStatement ps = conn.prepareStatement(sqlHija)) {
                 ps.setInt(1, idGenerado);
-                ps.setString(2, persona.getTipoDocumento().name());
-                ps.setString(3, persona.getNumeroDocumento());
+                ps.setString(2, persona.getHuesped().getTipoDocumento().name());
+                ps.setString(3, persona.getHuesped().getNroDocumento());
                 ps.executeUpdate();
             }
 

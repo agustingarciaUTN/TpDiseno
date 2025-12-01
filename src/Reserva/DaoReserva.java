@@ -28,7 +28,7 @@ public class DaoReserva implements DaoInterfazReserva {
             ps.setString(5, reserva.getNombreHuespedResponsable());
             ps.setString(6, reserva.getApellidoHuespedResponsable());
             ps.setString(7, reserva.getTelefonoHuespedResponsable());
-            ps.setString(8, reserva.getIdHabitacion());
+            ps.setString(8, reserva.getHabitacion().getNumero());
 
             int res = ps.executeUpdate();
             if (res > 0) {

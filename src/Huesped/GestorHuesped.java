@@ -44,28 +44,20 @@ public class GestorHuesped {
 
 
    public ArrayList<DtoHuesped> buscarHuespedes(DtoHuesped criterios){
-        //Dado unos criterios, posiblemente vacios, retorna una lista completa de todos los
-        //atributos de Huesped.
+       ArrayList<Huesped> listaHuespedesEncontrados; //datos de huespedes
 
-        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
 
-        if (!criterios.estanVacios()) {
-            listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
-        }
-        else {
-            listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
-        }
 
-        for (DtoHuesped datosHuesped : listaDtoHuespedesEncontrados) {
-            // Buscamos los datos completos de la dirección usando el ID que vino en el huésped
-            // Esto es crucial para que la Pantalla (CU10) tenga la dirección completa.
-            if (datosHuesped.getIdDireccion() > 0) {
-                 DtoDireccion dtoDireccion = daoDireccion.obtenerDireccion(datosHuesped.getIdDireccion());
-                 // Asignamos el DTO de Dirección al DTO del Huésped
-                 datosHuesped.setDireccion(dtoDireccion);
-            }
-            // Eliminado: El código para crear las entidades Huesped y Direccion
-        }
+
+       if (criterios == null) {
+           listaHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios.getApellido(),
+                   criterios.getNombres(), criterios.getTipoDocumento(), criterios.getNroDocumento());
+       }
+       else {
+           listaHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+       }
+
+       //ArrayList<DtoHuesped> listaDtoHuespedesEncontrados = mapearEntidadADtoHuesped(listaHuespedesEncontrados);
 
         return listaDtoHuespedesEncontrados;
     }

@@ -708,7 +708,7 @@ public class Pantalla {
 
         // VALIDACIÓN DE NÚMERO DE DOCUMENTO
         if (criterios.getTipoDocumento() != null) {
-            criterios.setDocumento(pedirDocumento(criterios.getTipoDocumento()));
+            criterios.setNroDocumento(pedirDocumento(criterios.getTipoDocumento()));
         }
 
         return criterios;

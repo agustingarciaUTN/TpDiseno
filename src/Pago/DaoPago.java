@@ -27,7 +27,7 @@ public class DaoPago implements DaoInterfazPago {
 
             int idPago;
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setInt(1, pago.getIdFactura());
+                ps.setInt(1, pago.getFactura().getIdFactura());
                 ps.setDate(2, new java.sql.Date(pago.getFechaPago().getTime()));
                 ps.setDouble(3, pago.getMontoTotal());
                 ps.setDouble(4, pago.getCotizacion());

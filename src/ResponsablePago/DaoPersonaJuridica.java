@@ -41,7 +41,7 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
                 ps.setInt(1, idGenerado);
                 ps.setString(2, pj.getRazonSocial());
                 ps.setString(3, pj.getCuit());
-                ps.setInt(4, pj.getIdDireccion()); // Asumimos que el Gestor ya persistió la dirección
+                ps.setInt(4, pj.getDireccion().getId()); // Asumimos que el Gestor ya persistió la dirección
                 ps.executeUpdate();
             }
 
