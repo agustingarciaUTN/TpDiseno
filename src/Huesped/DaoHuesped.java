@@ -142,7 +142,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- OBTENER TODOS ---
     @Override
-    public ArrayList<Huesped> obtenerTodosLosHuespedes() {
+    public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
         ArrayList<Huesped> lista = new ArrayList<>();
         String sql = "SELECT * FROM huesped";
         try (Connection conn = Conexion.getConnection();

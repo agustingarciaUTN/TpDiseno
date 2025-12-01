@@ -299,7 +299,7 @@ public class Pantalla {
         System.out.println("-- Fin CU9 'dar de alta huesped' ---");
     }//fin darAltaDeHuesped
 
-        //metodo privado para pedir los datos del huesped a ingresar
+    //metodo privado para pedir los datos del huesped a ingresar, CU9
     private DtoHuesped mostrarYPedirDatosFormulario() {
 
         System.out.println('\n'+"INGRESE LOS DATOS DEL HUÉSPED A REGISTRAR");
@@ -360,7 +360,8 @@ public class Pantalla {
         return huespedDto; // Devolver el DTO con los datos cargados
 
     }
-    
+
+    //metodos para pedir cada tipo de dato, CU9
     private String pedirStringValidado(String mensaje) {
         String entrada;
         while (true) {
@@ -624,14 +625,16 @@ public class Pantalla {
         System.out.println();
     }
 
+
+    //CU2
     public void buscarHuesped() {
         System.out.println("========================================");
         System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
         System.out.println("========================================");
 
         DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
-        // CAMBIO: El gestor ahora devuelve ArrayList<DtoHuesped>
-        ArrayList<DtoHuesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
+        // CAMBIO: El gestor ahora devuelve ArrayList<Huesped>
+        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
