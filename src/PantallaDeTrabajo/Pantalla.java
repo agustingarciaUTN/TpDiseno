@@ -788,7 +788,7 @@ public class Pantalla {
         }
     }
 
-   private void mostrarListaDatosEspecificos(ArrayList<DtoHuesped> listaHuespedes) {
+   private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
 
         System.out.println("\n--- OPCIONES DE ORDENAMIENTO ---");
         System.out.println("Seleccione la columna:");
@@ -844,6 +844,7 @@ public class Pantalla {
         }
         System.out.println("-----------------------------------------------------------------");
     }
+
     private int leerOpcionNumerica() {
         try {
             return scanner.nextInt();
