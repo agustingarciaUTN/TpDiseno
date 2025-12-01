@@ -1,6 +1,6 @@
 package Reserva;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Reserva;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -18,7 +18,7 @@ public class DaoReserva implements DaoInterfazReserva {
     public boolean persistirReserva(Reserva reserva) throws PersistenciaException {
         String sql = "INSERT INTO reserva (fecha_reserva, fecha_desde, fecha_hasta, estado_reserva, nombre_huesped, apellido_huesped, telefono_huesped, id_habitacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setDate(1, new java.sql.Date(reserva.getFechaReserva().getTime()));

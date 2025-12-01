@@ -1,14 +1,11 @@
 package Habitacion;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Habitacion;
-import Dominio.Cama;
 import enums.TipoHabitacion;
 import enums.EstadoHabitacion;
-import enums.TipoCama;
+
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DaoHabitacion implements DaoInterfazHabitacion {
     private static DaoHabitacion instancia;
@@ -21,7 +18,7 @@ public class DaoHabitacion implements DaoInterfazHabitacion {
     @Override
     public Habitacion obtenerPorNumero(String numero) {
         String sql = "SELECT * FROM habitacion WHERE numero = ?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, numero);
             try (ResultSet rs = ps.executeQuery()) {

@@ -1,6 +1,5 @@
 package MedioDePago;
 
-import BaseDedatos.Coneccion;
 import Dominio.MedioPago;
 import Dominio.Efectivo;
 import Dominio.Cheque;

@@ -1,11 +1,11 @@
 package Pago;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Pago;
 import Dominio.MedioPago;
 import MedioDePago.DaoMedioDePago;
 import Excepciones.PersistenciaException;
-import enums.Moneda;
+
 import java.sql.*;
 
 public class DaoPago implements DaoInterfazPago {
@@ -22,7 +22,7 @@ public class DaoPago implements DaoInterfazPago {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false);
 
             int idPago;

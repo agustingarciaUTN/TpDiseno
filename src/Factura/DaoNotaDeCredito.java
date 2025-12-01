@@ -1,6 +1,6 @@
 package Factura;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.NotaDeCredito;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -16,7 +16,7 @@ public class DaoNotaDeCredito implements DaoInterfazNotaDeCredito {
     @Override
     public boolean persistirNota(NotaDeCredito nota) throws PersistenciaException {
         String sql = "INSERT INTO nota_credito (numero_nota, monto_devolucion) VALUES (?, ?)";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nota.getNumeroNotaCredito());
             ps.setDouble(2, nota.getMontoDevolucion());
@@ -29,7 +29,7 @@ public class DaoNotaDeCredito implements DaoInterfazNotaDeCredito {
     @Override
     public NotaDeCredito obtenerPorNumero(String numero) {
         String sql = "SELECT * FROM nota_credito WHERE numero_nota = ?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, numero);
             try (ResultSet rs = ps.executeQuery()) {

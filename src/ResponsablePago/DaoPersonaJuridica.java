@@ -1,6 +1,6 @@
 package ResponsablePago;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.PersonaJuridica;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -22,7 +22,7 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false);
 
             // 1. Padre

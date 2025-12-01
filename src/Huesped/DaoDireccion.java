@@ -1,6 +1,6 @@
 package Huesped;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Direccion;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -17,7 +17,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     @Override
     public Direccion persistirDireccion(Direccion direccion) throws PersistenciaException {
         String sql = "INSERT INTO direccion (calle, numero, departamento, piso, \"codPostal\", localidad, provincia, pais) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, direccion.getCalle());
@@ -42,7 +42,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     @Override
     public boolean modificarDireccion(Direccion direccion) throws PersistenciaException {
         String sql = "UPDATE direccion SET calle=?, numero=?, departamento=?, piso=?, \"codPostal\"=?, localidad=?, provincia=?, pais=? WHERE id_direccion=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             // ... setear parámetros ...
             ps.setString(1, direccion.getCalle());
@@ -63,7 +63,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     @Override
     public boolean eliminarDireccion(int idDireccion) {
         String sql = "DELETE FROM direccion WHERE id_direccion=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idDireccion);
             return ps.executeUpdate() > 0;
@@ -73,7 +73,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
     @Override
     public Direccion obtenerDireccion(int idDireccion) {
         String sql = "SELECT * FROM direccion WHERE id_direccion=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idDireccion);
             try (ResultSet rs = ps.executeQuery()) {

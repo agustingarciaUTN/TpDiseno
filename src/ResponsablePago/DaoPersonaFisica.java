@@ -1,6 +1,6 @@
 package ResponsablePago;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.PersonaFisica;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -22,7 +22,7 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false);
 
             int idGenerado;

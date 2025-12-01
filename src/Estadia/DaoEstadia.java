@@ -1,6 +1,6 @@
 package Estadia;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Estadia;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
@@ -23,7 +23,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false);
 
             // Insertar Estadía
@@ -43,7 +43,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
                 ps.executeUpdate();
                 try(ResultSet rs = ps.getGeneratedKeys()){
                     if(rs.next()) idGenerado = rs.getInt(1);
-                    else throw new SQLException("Sin ID");
+                                        else throw new SQLException("No se encontró un ID");
                 }
                 estadia.setIdEstadia(idGenerado);
             }
@@ -65,7 +65,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
             return true;
         } catch (SQLException e) {
             if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
-            throw new PersistenciaException("Error persistir estadia", e);
+            throw new PersistenciaException("Error al persistir estadia", e);
         } finally {
             if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
         }

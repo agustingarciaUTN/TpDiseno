@@ -1,6 +1,6 @@
 package Factura;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Factura;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -16,25 +16,27 @@ public class DaoFactura implements DaoInterfazFactura {
 
     @Override
     public boolean persistirFactura(Factura factura) throws PersistenciaException {
-        String sql = "INSERT INTO factura (numero_factura, fecha_emision, importe_total, id_estadia, id_responsable, importe_neto, fecha_vencimiento, \"IVA\", estado, tipo_factura) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO factura (numero_factura, fecha_emision, importe_total, id_estadia, id_nota_credito,id_responsable, importe_neto, fecha_vencimiento, \"IVA\", estado, tipo_factura) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         // Nota: id_nota_credito es opcional, lo dejo fuera de este insert básico o lo manejas con if
 
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, factura.getNumeroFactura());
             ps.setDate(2, new java.sql.Date(factura.getFechaEmision().getTime()));
             ps.setDouble(3, factura.getImporteTotal());
             ps.setInt(4, factura.getIdEstadia());
-            ps.setInt(5, factura.getIdResponsable());
-            ps.setDouble(6, factura.getImporteNeto());
+            if(factura.getNotaDeCredito() != null) ps.setInt(5, factura.getIdNotaDeCredito());
+            else ps.setNull(5, Types.INTEGER);
+            ps.setInt(6, factura.getIdResponsable());
+            ps.setDouble(7, factura.getImporteNeto());
 
-            if (factura.getFechaVencimiento() != null) ps.setDate(7, new java.sql.Date(factura.getFechaVencimiento().getTime()));
-            else ps.setNull(7, Types.DATE);
+            if (factura.getFechaVencimiento() != null) ps.setDate(8, new java.sql.Date(factura.getFechaVencimiento().getTime()));
+            else ps.setNull(8, Types.DATE);
 
-            ps.setDouble(8, factura.getIva());
-            ps.setString(9, factura.getEstadoFactura().name());
-            ps.setString(10, factura.getTipoFactura().name());
+            ps.setDouble(9, factura.getIva());
+            ps.setString(10, factura.getEstadoFactura().name());
+            ps.setString(11, factura.getTipoFactura().name());
 
             int res = ps.executeUpdate();
             if (res > 0) {
@@ -45,7 +47,7 @@ public class DaoFactura implements DaoInterfazFactura {
             }
             return false;
         } catch (SQLException e) {
-            throw new PersistenciaException("Error persistir factura", e);
+            throw new PersistenciaException("Error al persistir factura", e);
         }
     }
 

@@ -1,6 +1,6 @@
 package Huesped;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Huesped;
 import Dominio.Direccion;
 import Excepciones.PersistenciaException;
@@ -27,7 +27,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false); // INICIO TRANSACCIÓN
 
             // 1. Insertar Huesped
@@ -65,7 +65,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
         Connection conn = null;
         try {
-            conn = Coneccion.getConnection();
+            conn = Conexion.getConnection();
             conn.setAutoCommit(false);
 
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
@@ -121,7 +121,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             params.add(nroDoc + "%");
         }
 
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             for (int i = 0; i < params.size(); i++) {
@@ -145,7 +145,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     public ArrayList<Huesped> obtenerTodosLosHuespedes() {
         ArrayList<Huesped> lista = new ArrayList<>();
         String sql = "SELECT * FROM huesped";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -159,7 +159,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     @Override
     public Huesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
         String sql = "SELECT * FROM huesped WHERE tipo_documento=? AND numero_documento=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
             ps.setString(2, nroDocumento);
@@ -175,7 +175,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {
         // Nota: Los satélites deberían borrarse por CASCADE en la BD, si no, hay que hacerlo manual aquí
         String sql = "DELETE FROM huesped WHERE tipo_documento=? AND numero_documento=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
             ps.setString(2, nroDocumento);
@@ -307,7 +307,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     @Override
     public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
         String sql = "SELECT 1 FROM huesped WHERE tipo_documento=? AND numero_documento=?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
             ps.setString(2, nroDocumento);

@@ -1,6 +1,6 @@
 package Usuario;
 
-import BaseDedatos.Coneccion;
+import BaseDedatos.Conexion;
 import Dominio.Usuario;
 import Excepciones.PersistenciaException;
 import java.sql.*;
@@ -22,7 +22,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     public boolean persistir(Usuario usuario) throws PersistenciaException {
         String sql = "INSERT INTO usuario (nombre, hash_contrasenia) VALUES (?, ?)";
 
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario.getNombre());
@@ -39,7 +39,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     public Usuario buscarPorNombre(String nombre) throws PersistenciaException {
         String sql = "SELECT * FROM usuario WHERE nombre = ?";
 
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, nombre);
@@ -65,7 +65,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     public boolean modificar(Usuario usuario) throws PersistenciaException {
         // Por si cambian la contraseña
         String sql = "UPDATE usuario SET hash_contrasenia = ? WHERE id_usuario = ?";
-        try (Connection conn = Coneccion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario.getHashContrasenia());
