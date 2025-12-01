@@ -1,7 +1,5 @@
 package Huesped;
 
-import Dominio.Direccion;
-import Dominio.Estadia;
 import Estadia.DtoEstadia;
 import enums.TipoDocumento;
 import enums.PosIva;
@@ -11,15 +9,19 @@ import java.util.List;
 public class DtoHuesped {
     private String nombres;
     private String apellido;
-    private List<Long> telefono;
     private TipoDocumento tipoDocumento;
     private String nroDocumento;
     private String cuit;
     private PosIva posicionIva;
     private Date fechaNacimiento;
+    private String nacionalidad;
+
+    // traemos todos porque si necesitamos solo uno, despues lo filtramos y el acceso a la tabla intermedia es solo 1
     private List<String> email;
     private List<String> ocupacion;
-    private String nacionalidad;
+    private List<Long> telefono;
+
+    // relaciones
     private DtoDireccion dtoDireccion;
     private List<DtoEstadia> dtoEstadias;
 
@@ -111,19 +113,19 @@ public class DtoHuesped {
     public void setNacionalidad(String nacionalidad) {
         this.nacionalidad = nacionalidad;
     }
-    public void setDireccion(DtoDireccion direccion) {
-        if (direccion == null) {
+    public void setDtoDireccion(DtoDireccion dtoDireccion) {
+        if (dtoDireccion == null) {
             throw new IllegalArgumentException("La dirección no puede ser nula");
         }
-        this.dtoDireccion = direccion;
+        this.dtoDireccion = dtoDireccion;
     }
-    public DtoDireccion getDireccion() {
+    public DtoDireccion getDtoDireccion() {
         return dtoDireccion;
     }
-    public List<DtoEstadia> getEstadias(){
+    public List<DtoEstadia> getDtoEstadias(){
         return dtoEstadias;
     }
-    public void setEstadias(List<DtoEstadia> estadias){
+    public void setDtoEstadias(List<DtoEstadia> estadias){
         this.dtoEstadias = estadias;
     }
 
@@ -145,6 +147,7 @@ public class DtoHuesped {
         private String nacionalidad;
         private DtoDireccion dtoDireccion;
         private List<DtoEstadia> dtoEstadias;
+
 
         // Constructor del Builder (puedes pedir datos mínimos obligatorios o dejarlo vacío)
         public Builder() {}

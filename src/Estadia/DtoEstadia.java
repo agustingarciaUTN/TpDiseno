@@ -15,6 +15,7 @@ public class DtoEstadia {
     private Date fechaCheckIn;
     private Date fechaCheckOut;
     private double valorEstadia;
+
     private DtoReserva dtoReserva;
     private ArrayList<DtoHuesped> dtoHuespedes;
     private DtoHabitacion dtoHabitacion;
@@ -30,6 +31,7 @@ public class DtoEstadia {
         this.valorEstadia = builder.valorEstadia;
         this.dtoReserva = builder.dtoReserva;
         this.dtoHuespedes = builder.dtoHuespedes;
+        this.dtoHabitacion = builder.dtoHabitacion;
     }
     /*public DtoEstadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
         if (fecha_inicio == null) {
@@ -71,6 +73,9 @@ public class DtoEstadia {
     public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
     public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
 
+    public DtoHabitacion getDtoHabitacion(){return dtoHabitacion;}
+    public void setDtoHabitacion(DtoHabitacion dtoHabitacion){this.dtoHabitacion = dtoHabitacion;}
+
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
@@ -80,6 +85,7 @@ public class DtoEstadia {
         private double valorEstadia;
         private DtoReserva dtoReserva;
         private ArrayList<DtoHuesped> dtoHuespedes = new ArrayList<>();
+        private DtoHabitacion dtoHabitacion;
 
         public Builder() {
             // Constructor vacío
@@ -114,6 +120,8 @@ public class DtoEstadia {
             this.dtoHuespedes = val;
             return this;
         }
+
+        public Builder dtoHabitacion(DtoHabitacion val){this.dtoHabitacion = val; return this;}
 
         // Helper para agregar huéspedes de a uno
         public Builder agregarHuesped(DtoHuesped val) {

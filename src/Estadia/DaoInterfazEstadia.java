@@ -12,7 +12,7 @@ public interface DaoInterfazEstadia {
 
     /*
     // Obtener estadías de una reserva específica
-    ArrayList<Estadia> obtenerPorReserva(int idReserva);
+    ArrayList<Estadia> obtenerPorReserva(int dtoReserva);
     // Obtener estadías activas (sin fecha fin)
     ArrayList<Estadia> obtenerEstadiasActivas();
     */

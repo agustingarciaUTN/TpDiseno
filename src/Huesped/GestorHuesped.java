@@ -8,11 +8,10 @@ import Dominio.Huesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 
-import Estadia.GestorEstadia;
 import Dominio.Estadia;
 import Estadia.DtoEstadia;
 import Excepciones.PersistenciaException;
-import Estadia.DaoEstadia;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -215,7 +214,7 @@ public class GestorHuesped {
 
         // Estadías: convertir lista de DtoEstadia a List<Estadia> usando gestorEstadia
         List<Estadia> estadias = new ArrayList<>();
-        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getEstadias();
+        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getIdEstadias();
         if (listaDtoEstadias != null) {
             for (DtoEstadia dtoE : listaDtoEstadias) {
                 try {
