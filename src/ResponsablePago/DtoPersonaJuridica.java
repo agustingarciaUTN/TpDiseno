@@ -1,13 +1,13 @@
 package ResponsablePago;
 
-import java.util.ArrayList;
+import Huesped.DtoDireccion;
 
 public class DtoPersonaJuridica {
     private int idResponsablePago;
     private String razonSocial;
     private String cuit;
     private long telefono;
-    private int idDireccion;
+    private DtoDireccion dtoDireccion;
 
 
     // --- CONSTRUCTOR PRIVADO ---
@@ -16,7 +16,7 @@ public class DtoPersonaJuridica {
         this.razonSocial = builder.razonSocial;
         this.cuit = builder.cuit;
         this.telefono = builder.telefono;
-        this.idDireccion = builder.idDireccion;
+        this.dtoDireccion = builder.dtoDireccion;
     }
 
     public DtoPersonaJuridica() {}
@@ -34,8 +34,8 @@ public class DtoPersonaJuridica {
     public long getTelefono() { return telefono; }
     public void setTelefono(long telefono) { this.telefono = telefono; }
 
-    public int getIdDireccion() { return idDireccion; }
-    public void setIdDireccion(int idDireccion) { this.idDireccion = idDireccion; }
+    public DtoDireccion getDireccion() { return dtoDireccion; }
+    public void setDireccion(DtoDireccion dtoDireccion) { this.dtoDireccion = dtoDireccion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
@@ -43,7 +43,7 @@ public class DtoPersonaJuridica {
         private String razonSocial;
         private String cuit;
         private long telefono;
-        private int idDireccion;
+        private DtoDireccion dtoDireccion;
 
         public Builder() {}
 
@@ -51,7 +51,7 @@ public class DtoPersonaJuridica {
         public Builder razonSocial(String val) { razonSocial = val; return this; }
         public Builder cuit(String val) { cuit = val; return this; }
         public Builder telefono(long val) { telefono = val; return this; }
-        public Builder idDireccion(int val) { idDireccion = val; return this; }
+        public Builder dtoDireccion(DtoDireccion val) { dtoDireccion = val; return this; }
 
         public DtoPersonaJuridica build() {
             return new DtoPersonaJuridica(this);

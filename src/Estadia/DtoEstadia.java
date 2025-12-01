@@ -33,26 +33,6 @@ public class DtoEstadia {
         this.dtoHuespedes = builder.dtoHuespedes;
         this.dtoHabitacion = builder.dtoHabitacion;
     }
-    /*public DtoEstadia(int id_estadia, Date fecha_inicio, int id_reserva, Date fecha_fin, double valor_estadia, List<Huesped> huespedes) {
-        if (fecha_inicio == null) {
-            throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
-        }
-        if (id_estadia <= 0) {
-            throw new IllegalArgumentException("El ID de estadía debe ser mayor a 0");
-        }
-        if (id_reserva <= 0) {
-            throw new IllegalArgumentException("El ID de reserva debe ser mayor a 0");
-        }
-        if(huespedes == null){
-            throw new IllegalArgumentException("La estadia debe tener asignada al menos un huesped.");
-        }
-        this.id_estadia = id_estadia;
-        this.fecha_inicio = new Date(fecha_inicio.getTime());
-        this.id_reserva = id_reserva;
-        this.fechaCheckOut = (fecha_fin == null) ? null : new Date(fecha_fin.getTime());
-        this.valorEstadia = valor_estadia;
-        this.huespedes = huespedes;
-    }*/
 
 
     public int getIdEstadia() { return idEstadia; }

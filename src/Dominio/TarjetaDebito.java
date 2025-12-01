@@ -14,7 +14,33 @@ public class TarjetaDebito extends Tarjeta {
                 builder.fechaVencimiento, builder.codigoSeguridad, builder.monto,
                 builder.moneda, builder.fechaDePago);
     }
+    // --- GETTERS / SETTERS delegados a Tarjeta / MedioPago ---
+    public int getIdPago() { return super.getIdPago(); }
+    public void setIdPago(int idPago) { super.setIdPago(idPago); }
 
+    public RedDePago getRedDePago() { return super.getRedDePago(); }
+    public void setRedDePago(RedDePago redDePago) { super.setRedDePago(redDePago); }
+
+    public String getBanco() { return super.getBanco(); }
+    public void setBanco(String banco) { super.setBanco(banco); }
+
+    public String getNumeroDeTarjeta() { return super.getNumeroDeTarjeta(); }
+    public void setNumeroDeTarjeta(String numeroDeTarjeta) { super.setNumeroDeTarjeta(numeroDeTarjeta); }
+
+    public Date getFechaVencimiento() { return super.getFechaVencimiento(); }
+    public void setFechaVencimiento(Date fechaVencimiento) { super.setFechaVencimiento(fechaVencimiento); }
+
+    public int getCodigoSeguridad() { return super.getCodigoSeguridad(); }
+    public void setCodigoSeguridad(int codigoSeguridad) { super.setCodigoSeguridad(codigoSeguridad); }
+
+    public float getMonto() { return super.getMonto(); }
+    public void setMonto(float monto) { super.setMonto(monto); }
+
+    public Moneda getMoneda() { return super.getMoneda(); }
+    public void setMoneda(Moneda moneda) { super.setMoneda(moneda); }
+
+    public Date getFechaDePago() { return super.getFechaDePago(); }
+    public void setFechaDePago(Date fechaDePago) { super.setFechaDePago(fechaDePago); }
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
         // Atributos de Tarjeta (Padre)

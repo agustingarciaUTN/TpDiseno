@@ -21,7 +21,7 @@ public class MapearReserva implements MapeoInterfaz<DtoReserva, Reserva> {
         try { r.setTelefonoHuespedResponsable(dto.getTelefonoHuespedResponsable()); } catch (Throwable ignored) {}
 
         // Mapear habitación mínimamente a partir de idHabitacion (si es numérico se asigna a numero)
-        try { r.setIdReserva(dto.getIdReserva()); } catch (Throwable ignored){}
+        try { r.setIdReserva(dto.getIdReserva()); } catch (Throwable ignored)  {}
 
 
         return r;

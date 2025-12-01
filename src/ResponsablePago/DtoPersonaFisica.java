@@ -1,17 +1,16 @@
 package ResponsablePago;
 
+import Dominio.Huesped;
 import enums.TipoDocumento;
 
 public class DtoPersonaFisica {
     private int idResponsablePago;
-    private TipoDocumento tipoDocumento;
-    private String numeroDocumento;
+    private Huesped huesped;
 
     // --- CONSTRUCTOR PRIVADO ---
     private DtoPersonaFisica(Builder builder) {
         this.idResponsablePago = builder.idResponsablePago;
-        this.tipoDocumento = builder.tipoDocumento;
-        this.numeroDocumento = builder.numeroDocumento;
+        this.huesped = builder.huesped;
     }
 
     public DtoPersonaFisica() {}
@@ -20,23 +19,19 @@ public class DtoPersonaFisica {
     public int getIdResponsablePago() { return idResponsablePago; }
     public void setIdResponsablePago(int idResponsablePago) { this.idResponsablePago = idResponsablePago; }
 
-    public TipoDocumento getTipoDocumento() { return tipoDocumento; }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) { this.tipoDocumento = tipoDocumento; }
+    public Huesped getHuesped() { return huesped; }
+    public void setHuesped(Huesped huesped) { this.huesped = huesped; }
 
-    public String getNumeroDocumento() { return numeroDocumento; }
-    public void setNumeroDocumento(String numeroDocumento) { this.numeroDocumento = numeroDocumento; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
         private int idResponsablePago;
-        private TipoDocumento tipoDocumento;
-        private String numeroDocumento;
+        private Huesped huesped;
 
         public Builder() {}
 
         public Builder id(int val) { idResponsablePago = val; return this; }
-        public Builder tipoDocumento(TipoDocumento val) { tipoDocumento = val; return this; }
-        public Builder numeroDocumento(String val) { numeroDocumento = val; return this; }
+        public Builder huesped(Huesped val) { huesped = val; return this; }
 
         public DtoPersonaFisica build() {
             return new DtoPersonaFisica(this);

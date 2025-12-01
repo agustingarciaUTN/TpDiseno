@@ -34,7 +34,32 @@ public class DtoTarjetaCredito {
     // Getters y Setters ... (omitidos, estándar)
     public int getCuotasCantidad() { return cuotasCantidad; }
     public void setCuotasCantidad(int c) { this.cuotasCantidad = c; }
-    // ... resto ...
+    public int getIdPago() { return idPago; }
+    public void setIdPago(int idPago) { this.idPago = idPago; }
+
+    public RedDePago getRedDePago() { return redDePago; }
+    public void setRedDePago(RedDePago redDePago) { this.redDePago = redDePago; }
+
+    public String getBanco() { return banco; }
+    public void setBanco(String banco) { this.banco = banco; }
+
+    public String getNumeroDeTarjeta() { return numeroDeTarjeta; }
+    public void setNumeroDeTarjeta(String numeroDeTarjeta) { this.numeroDeTarjeta = numeroDeTarjeta; }
+
+    public Date getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(Date fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
+
+    public int getCodigoSeguridad() { return codigoSeguridad; }
+    public void setCodigoSeguridad(int codigoSeguridad) { this.codigoSeguridad = codigoSeguridad; }
+
+    public float getMonto() { return monto; }
+    public void setMonto(float monto) { this.monto = monto; }
+
+    public Moneda getMoneda() { return moneda; }
+    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+
+    public Date getFechaDePago() { return fechaDePago; }
+    public void setFechaDePago(Date fechaDePago) { this.fechaDePago = fechaDePago; }
 
     public static class Builder {
         private int idPago;
