@@ -43,6 +43,27 @@ public class DaoReserva implements DaoInterfazReserva {
         }
     }
 
+    public boolean hayReservaEnFecha(String numeroHabitacion, java.util.Date fecha) {
+        String sql = "SELECT 1 FROM reserva WHERE id_habitacion = ? " +
+                "AND ? >= fecha_desde AND ? <= fecha_hasta " + // La fecha cae dentro de reserva
+                "AND estado_reserva = 'ACTIVA' LIMIT 1";
+
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            java.sql.Date fechaSql = new java.sql.Date(fecha.getTime());
+            ps.setString(1, numeroHabitacion);
+            ps.setDate(2, fechaSql);
+            ps.setDate(3, fechaSql);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // True si encontró al menos una
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
     // Implementar CRUD restante...
     @Override
     public boolean modificarReserva(Reserva reserva) throws PersistenciaException { return false; }

@@ -71,6 +71,37 @@ public class DaoEstadia implements DaoInterfazEstadia {
         }
     }
 
+    // Agrega este método en tu DAO y en la interfaz DaoInterfazEstadia
+    @Override
+    public boolean hayEstadiaEnFecha(String numeroHabitacion, java.util.Date fecha) {
+        // Buscamos si hay una estadía para esa habitación donde:
+        // 1. La fecha consultada es mayor o igual al inicio (ya llegó)
+        // 2. Y (La fecha fin es nula O la fecha consultada es menor a la fecha fin)
+        //    (Es decir, o no se fue todavía, o se va después de hoy)
+
+        String sql = "SELECT 1 FROM estadia WHERE id_habitacion = ? " +
+                "AND ? >= fecha_inicio " +
+                "AND (fecha_fin IS NULL OR ? <= fecha_fin) LIMIT 1";
+
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // Convertimos la fecha de Java Util a SQL
+            java.sql.Date fechaSql = new java.sql.Date(fecha.getTime());
+
+            ps.setString(1, numeroHabitacion); // Ojo: Asegúrate que la columna en tu BD se llama id_habitacion o numero_habitacion
+            ps.setDate(2, fechaSql);
+            ps.setDate(3, fechaSql);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // Si devuelve una fila, la habitación está ocupada físicamente
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al verificar disponibilidad de estadía: " + e.getMessage());
+            return false; // Ante la duda, asumimos libre o manejas la excepción
+        }
+    }
+
     // Implementar métodos obtener usando Builder
     @Override
     public boolean modificarEstadia(Estadia estadia) throws PersistenciaException { return false; } // TODO

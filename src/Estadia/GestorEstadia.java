@@ -3,6 +3,8 @@ package Estadia;
 import Dominio.Estadia;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
+import Utils.Mapear.MapearEstadia;
+import Utils.Mapear.MapearHabitacion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ public class GestorEstadia {
     private GestorEstadia() {
         //Obtenemos las instancias de los DAOs
         this.daoEstadia = DaoEstadia.getInstance();
+        // Referencia a MapearEstadia
+        MapearEstadia mapearEstadia = new MapearEstadia();
     }
 
     // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
@@ -176,7 +180,17 @@ public class GestorEstadia {
      * Obtiene todas las estadías
      * @return Lista de estadías
      */
-    public ArrayList<DtoEstadia> obtenerTodasLasEstadias() {
-        return daoEstadia.obtenerTodasLasEstadias();
+    public ArrayList<Estadia> obtenerTodasLasEstadias() {
+        ArrayList<DtoEstadia> estadiasDtoEncontradas =  daoEstadia.obtenerTodasLasEstadias();
+        ArrayList<Estadia> listaEstadias = new ArrayList<>();
+        for(int i = 0; i < estadiasDtoEncontradas.size() ; i++){
+            listaEstadias.add(i, MapearEstadia.mapearDtoAEntidad(estadiasDtoEncontradas.get(i)));
+        }
+        return listaEstadias;
+    }
+
+
+    public boolean estaOcupadaEnFecha(String nroHabitacion, java.util.Date fecha) {
+        return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fecha);
     }
 }

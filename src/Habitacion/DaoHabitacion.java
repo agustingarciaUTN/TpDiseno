@@ -6,6 +6,7 @@ import enums.TipoHabitacion;
 import enums.EstadoHabitacion;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 public class DaoHabitacion implements DaoInterfazHabitacion {
     private static DaoHabitacion instancia;
@@ -39,6 +40,43 @@ public class DaoHabitacion implements DaoInterfazHabitacion {
     }
 
 
+    @Override
+    public ArrayList<DtoHabitacion> obtenerTodas(){
+        String sql = "SELECT * FROM habitacion";
+        ArrayList<DtoHabitacion> lista = new ArrayList<>();
+        try (Connection conn = Conexion.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)){
+            while (rs.next()) {
+                lista.add(mapearHabitacion(conn, rs));
+            }
+        }catch (SQLException e) {e.printStackTrace();}
+        return lista;
+    }
+
+    // PRIVATE
+    private DtoHabitacion mapearHabitacion(Connection conn, ResultSet rs) throws SQLException {
+        String numero = rs.getString("numero");
+        String tipoStr = rs.getString("tipo_habitacion");
+        TipoHabitacion tipo = tipoStr != null ? TipoHabitacion.valueOf(tipoStr) : null;
+        int capacidad = rs.getInt("capacidad");
+
+        DtoHabitacion.Builder builder = new DtoHabitacion.Builder(numero, tipo, capacidad);
+
+        String estadoStr = rs.getString("estado_habitacion");
+        if (estadoStr != null) {
+            builder.estado(EstadoHabitacion.valueOf(estadoStr));
+        }
+
+        // getFloat devuelve 0.0 si es NULL; si quieres distinguir NULL usa rs.wasNull()
+        float costo = rs.getFloat("costo_por_noche");
+        if (!rs.wasNull()) {
+            builder.costo(costo);
+        }
+
+        // Si hay que cargar reservas u otras relaciones, hacerlo aquí usando 'conn' y otros DAOs.
+        return builder.build();
+    }
     // Resto de métodos CRUD básicos (persistir, modificar, eliminar) ya siguen el patrón estándar
     @Override public boolean persistirHabitacion(Habitacion h) { return false; } // TODO
     @Override public boolean modificarHabitacion(Habitacion h) { return false; } // TODO

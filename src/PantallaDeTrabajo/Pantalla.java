@@ -1,8 +1,13 @@
 package PantallaDeTrabajo;
+import Dominio.Habitacion;
 import Dominio.Huesped;
+import Estadia.GestorEstadia;
+import Habitacion.DtoHabitacion;
+import Habitacion.GestorHabitacion;
 import Huesped.*;
-import Utils.Mapear.MapearDireccion;
+import Reserva.GestorReserva;
 import Utils.Mapear.MapearHuesped;
+import enums.EstadoHabitacion;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
@@ -12,22 +17,27 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import Excepciones.PersistenciaException;
-
-import static Utils.Mapear.MapearEstadia.mapearHuesped;
 
 public class Pantalla {
 
     private final GestorHuesped gestorHuesped;
     private final Scanner scanner;//para la entrada por teclado
     private final GestorUsuario gestorUsuario;
+    private final GestorHabitacion gestorHabitacion;
+    private final GestorEstadia gestorEstadia;
+    private final GestorReserva gestorReserva;
     private boolean usuarioAutenticado;
     private String nombreUsuarioActual;
 
 
     //constructor (hay que ver como lo vamos a llamar)
-    public Pantalla() {
+    public Pantalla(GestorHabitacion gestorHabitacion, GestorEstadia gestorEstadia, GestorReserva gestorReserva) {
+        this.gestorHabitacion = gestorHabitacion;
+        this.gestorEstadia = gestorEstadia;
+        this.gestorReserva = gestorReserva;
         //inicializamos el gestor huesped
         DaoHuespedInterfaz daoHuesped =  DaoHuesped.getInstance();
         DaoDireccionInterfaz daoDireccion =  DaoDireccion.getInstance();
@@ -361,7 +371,7 @@ public class Pantalla {
         DtoHuesped huespedDto = new DtoHuesped(nombres, apellido, telefono, tipoDocumento, numeroDocumento, cuit, posIva, fechaNacimiento, email, ocupacion, nacionalidad, direccionDto, null);
 
         //asociamos el la direccion con el huesped
-        huespedDto.setDireccion(direccionDto);
+        huespedDto.setDtoDireccion(direccionDto);
 
 
         System.out.println("--- Fin Formulario ---");
@@ -635,7 +645,7 @@ public class Pantalla {
 
 
     //CU2
-    public void buscarHuesped() {
+    public void buscarHuesped() throws PersistenciaException {
         System.out.println("========================================");
         System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
         System.out.println("========================================");
@@ -828,15 +838,15 @@ public class Pantalla {
         boolean ascendente = (orden == 1);
 
         // Definimos el comparador para el DTO Huesped
-        Comparator<DtoHuesped> comparador = switch (columna) {
+        Comparator<Huesped> comparador = switch (columna) {
             case 1 -> // Apellido
-                    Comparator.comparing(DtoHuesped::getApellido, String.CASE_INSENSITIVE_ORDER);
+                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
             case 2 -> // Nombre
-                    Comparator.comparing(DtoHuesped::getNombres, String.CASE_INSENSITIVE_ORDER);
+                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
             case 3 -> // Tipo de Documento (Enum)
                     Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z"); // Si es null, lo mandamos al final
             case 4 -> // Número de Documento (String en DTO)
-                    Comparator.comparing(DtoHuesped::getNroDocumento);
+                    Comparator.comparing(Huesped::getNroDocumento);
             default -> null; // Si es inválido, no se ordena
         };
 
@@ -853,7 +863,7 @@ public class Pantalla {
         System.out.println("-----------------------------------------------------------------");
         //Por cada huesped obtenemos los 4 datos necesarios y mostramos esos.
         for (int i = 0; i < listaHuespedes.size(); i++) {
-            DtoHuesped h = listaHuespedes.get(i);
+            Huesped h = listaHuespedes.get(i);
             String tipoDoc = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A");
             String docCompleto = tipoDoc + " " + (h.getNroDocumento() != null ? h.getNroDocumento() : "");
             System.out.printf("[%d]   %-20s %-20s %s%n", i + 1, h.getApellido(), h.getNombres(), docCompleto);
@@ -1386,6 +1396,91 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
             }
         }
         return documento;
+    }
+
+
+    public void mostrarGrillaDisponibilidad() {
+        System.out.println("\n========================================");
+        System.out.println("   PLANNING DE DISPONIBILIDAD (Próx. 15 días)");
+        System.out.println("========================================\n");
+
+        // 1. Obtener las columnas (Habitaciones)
+        ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodasLasHabitaciones(); // Asumiendo que devuelve DTOs
+
+        if (habitaciones.isEmpty()) {
+            System.out.println("No hay habitaciones registradas.");
+            return;
+        }
+
+        // Configuración visual
+        String formatoFecha = "%-10s";
+        String formatoCelda = "| %-9s ";
+
+        // 2. Imprimir Encabezado (Nros de Habitación)
+        System.out.printf(formatoFecha, "FECHA");
+        for (Habitacion hab : habitaciones) {
+            System.out.printf(formatoCelda, hab.getNumero());
+        }
+        System.out.println("|");
+        imprimirSeparador(habitaciones.size());
+
+        // 3. Bucle de Días (Filas)
+        LocalDate iteradorFecha = LocalDate.now();
+        DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM");
+
+        for (int i = 0; i < 15; i++) {
+            // Convertimos a Date para los Gestores
+            Date fechaConsulta = Date.from(iteradorFecha.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+            // Imprimir fecha
+            System.out.printf(formatoFecha, iteradorFecha.format(formateador));
+
+            // 4. Bucle de Habitaciones (Columnas) - ORQUESTACIÓN
+            for (Habitacion hab : habitaciones) {
+                String estadoVisual;
+
+                // PRIORIDAD 1: ESTADO
+                if (hab.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO) {
+                    estadoVisual = "[ - ]"; // Mantenimiento / Rota
+                }
+                else {
+                    // vemos si hay gente.
+
+                    // PRIORIDAD 2: OCUPACIÓN
+                    // La pantalla le pregunta al Gestor de Estadías
+                    boolean ocupada = gestorEstadia.estaOcupadaEnFecha(hab.getNumero(), fechaConsulta);
+
+                    if (ocupada) {
+                        estadoVisual = "[ X ]"; // Ocupada por alguien alojado
+                    } else {
+                        // PRIORIDAD 3: RESERVA
+                        // La pantalla le pregunta al Gestor de Reservas
+                        boolean reservada = gestorReserva.estaReservadaEnFecha(hab.getNumero(), fechaConsulta);
+
+                        if (reservada) {
+                            estadoVisual = "[ R ]"; // Reservada
+                        } else {
+                            // PRIORIDAD 4: LIBRE
+                            estadoVisual = "[ L ]"; // Disponible para vender
+                        }
+                    }
+                }
+
+                System.out.printf(formatoCelda, estadoVisual);
+            }
+            System.out.println("|"); // Fin de fila
+            iteradorFecha = iteradorFecha.plusDays(1);
+        }
+
+        imprimirSeparador(habitaciones.size());
+        System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [-]Fuera Servicio");
+        pausa();
+    }
+
+    private void imprimirSeparador(int columnas) {
+        System.out.print("----------");
+        for (int i = 0; i < columnas; i++) System.out.print("+-----------");
+        System.out.println("+");
     }
 
 }

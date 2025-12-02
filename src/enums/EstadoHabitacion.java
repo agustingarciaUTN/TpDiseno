@@ -1,7 +1,6 @@
 package enums;
 
 public enum EstadoHabitacion {
-    OCUPADA,
-    LIBRE,
-    RESERVADA
+    HABILITADA,
+    FUERA_DE_SERVICIO
 }

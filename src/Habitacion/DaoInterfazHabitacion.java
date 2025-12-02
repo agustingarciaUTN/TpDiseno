@@ -8,7 +8,6 @@ public interface DaoInterfazHabitacion {
     boolean modificarHabitacion(Habitacion h);
     boolean eliminarHabitacion(String numero);
     DtoHabitacion obtenerPorNumero(String numero);
+    ArrayList<DtoHabitacion> obtenerTodas();
 
-    // Extras
-    // ArrayList<Habitacion> obtenerDisponibles(Date fechaDesde, Date fechaHasta);
 }

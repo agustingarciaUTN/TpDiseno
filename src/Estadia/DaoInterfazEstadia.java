@@ -10,6 +10,8 @@ public interface DaoInterfazEstadia {
     DtoEstadia obtenerEstadiaPorId(int idEstadia);
     ArrayList<DtoEstadia> obtenerTodasLasEstadias();
 
+    boolean hayEstadiaEnFecha(String numeroHabitacion, java.util.Date fecha);
+
     /*
     // Obtener estadías de una reserva específica
     ArrayList<Estadia> obtenerPorReserva(int dtoReserva);

@@ -9,4 +9,5 @@ public interface DaoInterfazReserva {
     boolean eliminarReserva(int id);
     DtoReserva obtenerPorId(int id);
     ArrayList<DtoReserva> obtenerTodas();
+    boolean hayReservaEnFecha(String numeroHabitacion, java.util.Date fecha);
 }
