@@ -2,12 +2,12 @@ package PantallaDeTrabajo;
 import Dominio.Habitacion;
 import Dominio.Huesped;
 import Estadia.GestorEstadia;
-import Habitacion.DtoHabitacion;
 import Habitacion.GestorHabitacion;
 import Huesped.*;
+import Reserva.DtoReserva;
 import Reserva.GestorReserva;
 import Utils.Mapear.MapearHuesped;
-import enums.EstadoHabitacion;
+import enums.EstadoReserva;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
@@ -184,7 +184,7 @@ public class Pantalla {
                     //reservarHabitacion(); EN PROGRESO
                     break;
                 case 3:
-                    darAltaDeHuesped();
+                    darDeAltaHuesped();
                     break;
                 case 4:
                     //iniciarBajaHuesped();
@@ -206,27 +206,40 @@ public class Pantalla {
     }
 
     // CU9
-    public void darAltaDeHuesped() {
+    public void darDeAltaHuesped() {
 
-        //no se si es necesario, despues habra que ver la parte estetica
+        //Mensaje de principio de ejecucion del CU9
         System.out.println('\n'+"-- Iniciando CU9 'dar de alta huesped' --");
 
-        boolean continuarCargando = true;//bandera
+        boolean continuarCargando = true;//bandera que representa la condicion del loop principal
 
-        while (continuarCargando) {
-            //metodo para pedir datos
+        while (continuarCargando) {//loop principal
+
+            //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
             DtoHuesped datosIngresados = mostrarYPedirDatosFormulario();
 
-            System.out.println("Acciones: 1 = SIGUIENTE, 2 = CANCELAR");
-            System.out.println("Ingrese una opción: ");
+            //parametros para manejar la seleccion de SIGUIENTE o CANCELAR
             int opcionBoton = -1;
-            try {
-                opcionBoton = scanner.nextInt();
-                scanner.nextLine();//para consumir el salto de linea
-            } catch (InputMismatchException e) {
-                scanner.nextLine(); //limpiar buffer
-                System.out.println("\nOpción inválida. Intente nuevamente.\n");
-                break;
+            boolean opcionValida = false;
+
+            //Luego de la carga de datos, se selecciona la opcion SIGUIENTE o CANCELAR
+            while (!opcionValida) {//Bucle interno para la validacion de la seleccion
+                System.out.println("Acciones: 1 = SIGUIENTE, 2 = CANCELAR");
+                System.out.print("Ingrese una opción: ");
+
+                try {
+                    String entrada = scanner.nextLine(); // Leemos como String para no renegar con el buffer
+                    opcionBoton = Integer.parseInt(entrada);//Parseamos a integer
+
+                    if (opcionBoton == 1 || opcionBoton == 2) {
+                        opcionValida = true;
+                    } else {
+                        System.out.println("Opción inválida. Ingrese 1 (SIGUIENTE) o 2 (CANCELAR).");
+                    }
+
+                } catch (NumberFormatException e) {
+                    System.out.println("Debe ingresar un número.");
+                }
             }
 
             if (opcionBoton == 1) {//presiono SIGUIENTE
@@ -235,22 +248,26 @@ public class Pantalla {
 
                 //aca hay que llamar al gestor para que valide los datos
                 List<String> errores = new ArrayList<>();
+                //Metodo que retorna una lista de todos los errores en la validacion de negocio
                 errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
-
+                //Actuamos en consecuencia, dependiendo si hubo errores o no
                 if (!errores.isEmpty()) {
                     System.out.println("ERROR: Se encontraron los siguientes errores: ");
                     for (String error : errores) {
                         System.out.println("- " + error);
                     }
                     System.out.println("Por favor, ingrese los datos nuevamente");
-                    continue; //fuerzaa al inicio del while
+                    continue; //fuerza al inicio del while
                 }
 
+                //Si no hubo errores de validacion de negocio, seguimos
                 try {
+                    //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
+                    //Le pasamos al gestorHuesped un DTO con el huesped ingresado
                     DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
 
-                    if (duplicado != null) {
+                    if (duplicado != null) {//si encuentra duplicado
                         System.out.println("----------------------------------------------------------------");
                         System.out.println("   ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
                         System.out.println("   Huésped existente: " + duplicado.getNombres() + " " + duplicado.getApellido());
@@ -258,8 +275,28 @@ public class Pantalla {
                         System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
                         System.out.println("Ingrese una opción: ");
 
-                        int opcionDuplicado = scanner.nextInt();
-                        scanner.nextLine(); // Consumir salto de línea
+                        //Parametros para bucle interno
+                        int opcionDuplicado = -1;
+                        boolean opcionValida2 = false;
+
+                        //Bucle para validar la entrada ACEPTAR IGUALMENTE o CORREGIR
+                        while (!opcionValida2) {
+                            System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
+                            System.out.print("Ingrese una opción: ");
+
+                            try {
+                                String entrada = scanner.nextLine();
+                                opcionDuplicado = Integer.parseInt(entrada);
+
+                                if (opcionDuplicado == 1 || opcionDuplicado == 2) {
+                                    opcionValida2 = true; // Salimos del bucle
+                                } else {
+                                    System.out.println("Opción inválida. Ingrese 1 (ACEPTAR IGUALMENTE) o 2 (CORREGIR).");
+                                }
+                            } catch (NumberFormatException e) {
+                                System.out.println("Debe ingresar un número.");
+                            }
+                        }
 
                         if (opcionDuplicado == 2) { // Eligió CORREGIR
                             System.out.println("Seleccionó CORREGIR. Vuelva a ingresar los datos.");
@@ -269,7 +306,7 @@ public class Pantalla {
                     }
 
 
-                    //Si no existen duplicados, INSERT. Si existe y se seleccionó "aceptar igualmente", UPDATE
+                    //Si no existen duplicados, INSERT. Si existe (y se seleccionó "aceptar igualmente"), UPDATE
                     gestorHuesped.upsertHuesped(datosIngresados);
 
 
@@ -287,7 +324,6 @@ public class Pantalla {
                 //validacion de ingreso correcto
                 String ingresoOtroHuesped = scanner.nextLine();
                 while (!ingresoOtroHuesped.equalsIgnoreCase("NO") && !ingresoOtroHuesped.equalsIgnoreCase("SI")) {
-                    //no se si aca hay que consumir salto de linea o no
                     System.out.println("Ingreso invalido. ¿Desea cargar otro huésped? (SI/NO): ");
                     ingresoOtroHuesped = scanner.nextLine();
                 }
@@ -297,13 +333,12 @@ public class Pantalla {
                     continuarCargando = false;
                 }
 
-            } else if (opcionBoton == 2) {//presiono CANCELAR
+            } else{//presiono CANCELAR
                 System.out.println("¿Desea cancelar el alta del huésped? (SI/NO): ");
 
-                //validacion de ingreso correcto (capaz esto puede ser una funcion aparte, habria que ver como manejar los mensajes distintos)
+                //validacion de ingreso correcto
                 String ingresoCancelarAlta = scanner.nextLine();
                 while (!ingresoCancelarAlta.equalsIgnoreCase("NO") && !ingresoCancelarAlta.equalsIgnoreCase("SI")) {
-                    //no se si aca hay que consumir salto de linea o no
                     System.out.println("Ingreso invalido. ¿Desea cancelar el alta de huesped? (SI/NO): ");
                     ingresoCancelarAlta = scanner.nextLine();
                 }
@@ -313,8 +348,6 @@ public class Pantalla {
                     continuarCargando = false;//termina el bucle
                 }
                 //si ingresa NO, el bucle se repite y vuelve a pedir los datos (no se si esta bien que tenga que ingresar todo de 0)
-            } else {
-                System.out.println("Ingreso invalido. Intente nuevamente.");
             }
         }//fin while
 
@@ -674,7 +707,7 @@ public class Pantalla {
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
-            this.darAltaDeHuesped(); //CU 9
+            this.darDeAltaHuesped(); //CU 9
         } else {
             // CAMBIO: Llamamos a seleccionarHuespedDeLista con DtoHuesped
             mostrarListaDatosEspecificos(huespedesEncontrados);
@@ -828,7 +861,7 @@ public class Pantalla {
             Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
             System.out.println("FUNCIONALIDAD CASO DE USO 10 EN PROGRESO...");
         } else if (seleccion == 0) {
-            this.darAltaDeHuesped(); // CU 9
+            this.darDeAltaHuesped(); // CU 9
         } else {
              System.out.println("Opción inválida. Volviendo al menú principal.");
         }
@@ -961,8 +994,8 @@ public class Pantalla {
         return NroDocumento;
     }
 
-EU PUSHEA
-    // --- NUEVO MÉTODO: GRILLA DE DISPONIBILIDAD ---
+
+    // GRILLA, CU 5
     public void mostrarGrillaDisponibilidad() {
         System.out.println("\n========================================");
         System.out.println("   CONSULTA DE DISPONIBILIDAD (GRILLA)");
@@ -971,8 +1004,6 @@ EU PUSHEA
         // A. Pedir Fechas (Usamos un helper que permita fechas futuras)
         System.out.println("Ingrese el rango de fechas a consultar:");
         Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
-
-        // Por defecto sugerimos 15 días después, pero el usuario elige
         Date fechaFin = pedirFechaFutura("Fecha de Fin");
 
         // B. Validar Lógica de Negocio (Rango coherente)
@@ -1169,564 +1200,161 @@ EU PUSHEA
         return calendar.getTime();
     }
 
-    public void reservarHabitacion(){
-
-
-
-
-
-
-
-
-    }
-
-
-
-    //CASO DE USO 11
-    /*
-     CASO DE USO 11
-     Valida si un huésped puede ser eliminado del sistema
-
-     * Un huésped solo puede eliminarse si NUNCA se alojó en el hotel
-     * @param tipoDocumento Tipo de documento del huésped
-     * @param nroDocumento Número de documento del huésped
-     * @return true si puede eliminarse (no tiene estadías), false si no puede
-
-    public boolean puedeEliminarHuesped(String tipoDocumento, String nroDocumento) {
-        if (tipoDocumento == null || tipoDocumento.trim().isEmpty()) {
-            System.err.println("El tipo de documento no puede estar vacío");
-            return false;
-        }
-
-        TipoDocumento tipo = TipoDocumento.valueOf(tipoDocumento);
-        String documentoValido = pedirDocumento(tipo);
-        if (documentoValido == null || documentoValido.trim().isEmpty()) {
-            System.err.println("El número de documento no es válido");
-            return false;
-        }
-
-        // Verificar si el huésped tiene estadías registradas
-        boolean tieneEstadias = gestorEstadia.huespedSeAlojoAlgunaVez(tipoDocumento, nroDocumento);
-
-        return !tieneEstadias; // Retorna true solo si NO tiene estadías
-    }
-
-    /**
-     * Elimina un huésped del sistema (borrado físico)
-     * También elimina su dirección asociada
-     * @param tipoDocumento Tipo de documento del huésped
-     * @param nroDocumento Número de documento del huésped
-     * @return true si se eliminó exitosamente
-
-    public boolean eliminarHuesped(String tipoDocumento, String nroDocumento) {
-        try {
-            // NIVEL 2.1: Verificar que puede eliminarse (ya valida que no tenga estadías)
-            if (!puedeEliminarHuesped(tipoDocumento, nroDocumento)) {
-                System.err.println("El huésped no puede ser eliminado porque tiene estadías registradas");
-                gestorHuesped.registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene estadías registradas");
-                return false;
-            }
-
-            // NIVEL 2.2: Verificar que no tenga reservas pendientes/activas
-            if (gestorHuesped.tieneReservasPendientes(tipoDocumento, nroDocumento)) {
-                System.err.println("El huésped tiene reservas pendientes y no puede ser eliminado");
-                gestorHuesped.registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene reservas pendientes");
-                return false;
-            }
-
-            // 2. Obtener el ID de la dirección antes de eliminar el huésped
-            int idDireccion = gestorHuesped.obtenerDireccionId(TipoDocumento.valueOf(tipoDocumento), nroDocumento);
-
-            // 3. Eliminar el huésped
-            boolean huespedEliminado = gestorHuesped.eliminacionDeHuesped(TipoDocumento.valueOf(tipoDocumento), nroDocumento);
-
-            if (!huespedEliminado) {
-                // (Si esto falla ahora, es raro, pero la auditoría es correcta)
-                System.err.println("No se pudo eliminar el huésped");
-                gestorHuesped.registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Error en eliminación de BD");
-                return false;
-            }
-
-            // 4. Si tenía dirección, eliminarla también
-            if (idDireccion > 0) {
-                boolean direccionEliminada = gestorHuesped.eliminacionDeDireccion(idDireccion);
-                if (!direccionEliminada) {
-                    System.err.println("Advertencia: El huésped fue eliminado pero hubo un error al eliminar su dirección");
-                }
-            }
-
-            // NIVEL 2.3: Registrar auditoría de eliminación exitosa
-            gestorHuesped.registrarAuditoriaExitosa(tipoDocumento, nroDocumento);
-
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("Error al eliminar huésped: " + e.getMessage());
-            gestorHuesped.registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Excepción: " + e.getMessage());
-            return false;
-        }
-    }*/
-
-    //COSAS DE DESARROLLO (CU10 Y 11)
-    /*public void iniciarBajaHuesped() {
-        System.out.println("\n========================================");
-        System.out.println("   CU11: DAR DE BAJA HUÉSPED");
-        System.out.println("========================================\n");
-
-        // Paso 1: Buscar el huésped a eliminar
-        System.out.println("Primero debe buscar el huésped que desea eliminar.\n");
-
-        DtoHuesped criterios = leerCriteriosDeBusqueda();
-        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuesped(criterios);
-
-        if (huespedesEncontrados.isEmpty()) {
-            System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
-            System.out.println("No hay huéspedes para eliminar.\n");
-            pausa();
-            return; // Termina el CU
-        }
-
-        // Mostrar lista de huéspedes encontrados
-        mostrarListaDatosEspecificos(huespedesEncontrados);
-
-        System.out.print("\nIngrese el número del huésped que desea eliminar (0 para cancelar): ");
-        int seleccion = leerOpcionNumerica();
-
-        if (seleccion == 0) {
-            System.out.println("Eliminación cancelada.\n");
-            return; // Termina el CU
-        }
-
-        if (seleccion < 1 || seleccion > huespedesEncontrados.size()) {
-            System.out.println("Selección inválida. Eliminación cancelada.\n");
-            pausa();
-            return; // Termina el CU
-        }
-
-        // Huésped seleccionado
-        DtoHuesped huespedSeleccionado = huespedesEncontrados.get(seleccion - 1);
-
-        // Paso 2: Validar si el huésped puede ser eliminado
-        String tipoDoc = huespedSeleccionado.getTipoDocumento().name();
-        String nroDoc = huespedSeleccionado.getDocumento();
-
-        boolean puedeEliminar = gestorHuesped.puedeEliminarHuesped(tipoDoc, nroDoc);
-
-        if (!puedeEliminar) {
-            // Flujo Alternativo 2.A: El huésped se alojó alguna vez
-            System.out.println("\n*** NO SE PUEDE ELIMINAR ***");
-            System.out.println("El huésped se ha alojado en el hotel en alguna oportunidad.");
-            System.out.println("Por razones de auditoría, el huésped NO puede ser eliminado del sistema.");
-            System.out.println("*****************************\n");
-
-            pausa();
-            return; // Termina el CU (Flujo Alternativo 2.A.1)
-        }
-
-        // Paso 2 (continuación): El huésped NUNCA se alojó, se puede eliminar
-        System.out.println("\nLos datos del huésped que será eliminado son:");
-        System.out.println("----------------------------------------");
-        System.out.println("Nombre:    " + huespedSeleccionado.getNombres());
-        System.out.println("Apellido:  " + huespedSeleccionado.getApellido());
-        System.out.println("Documento: " + huespedSeleccionado.getTipoDocumento().name() + " " + huespedSeleccionado.getDocumento());
-        System.out.println("----------------------------------------\n");
-
-        System.out.println("¿Está seguro que desea ELIMINAR este huésped?");
-        System.out.println("1. ELIMINAR");
-        System.out.println("2. CANCELAR");
-        System.out.print("Ingrese una opción: ");
-
-        int opcion = leerOpcionNumerica();
-
-        if (opcion == 1) {
-            // Paso 3: El actor presiona "ELIMINAR"
-            System.out.println("\nEliminando huésped...");
-
-            boolean eliminado = gestorHuesped.eliminarHuesped(tipoDoc, nroDoc);
-
-            if (eliminado) {
-                // Éxito
-                System.out.println("\n*** ELIMINACIÓN EXITOSA ***");
-                System.out.println("Los datos del huésped " + huespedSeleccionado.getNombres() + " " + huespedSeleccionado.getApellido());
-                System.out.println("(" + huespedSeleccionado.getTipoDocumento().name() + " " + huespedSeleccionado.getDocumento() + ")");
-                System.out.println("han sido eliminados del sistema.");
-                System.out.println("***************************\n");
-            } else {
-                // Error
-                System.out.println("\n*** ERROR ***");
-                System.out.println("No se pudo eliminar el huésped.");
-                System.out.println("Intente nuevamente o contacte al administrador.");
-                System.out.println("*************\n");
-            }
-
-        } else if (opcion == 2) {
-            // Flujo Alternativo 3.A: El actor presiona "CANCELAR"
-            System.out.println("\nEliminación cancelada.\n");
-        } else {
-            System.out.println("\nOpción inválida. Eliminación cancelada.\n");
-        }
-
-        // Paso 4: El actor presiona cualquier tecla
-        pausa();
-
+    // CU4: Reservar Habitación
+    public void reservarHabitacion() throws PersistenciaException {
         System.out.println("========================================");
-        System.out.println("   FIN CU11: DAR DE BAJA HUÉSPED");
+        System.out.println("   CU4: RESERVAR HABITACIÓN");
         System.out.println("========================================\n");
-    }*/
-    // Paso 5: El CU termina
-    /*private void iniciarModificacionHuesped(DtoHuesped dtoHuesped){ //Metodo para Modificar Huesped CU10
-    boolean salir = false;
-    DtoHuesped dtoHuespedModificado = new DtoHuesped(dtoHuesped);
-    String tipoDocStr = "";
-    String posIvaStr = "";
-        while(!salir){
 
-            System.out.println("========================================");
+        // 1. C -> C: ref CU05_MostrarEstadoHabitaciones() -> mostrarGrillaConEstados()
+        // Reutilizamos tu metodo existente que ya valida fechas y dibuja la grilla.
+        // Nota: Para hacerlo interactivo, extraemos la petición de fechas fuera de mostrarGrillaDisponibilidad
 
-            mostrarDatosHuesped(dtoHuespedModificado);
+        System.out.println("-- Consultando Disponibilidad --");
+        Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
+        Date fechaFin = pedirFechaFutura("Fecha de Fin");
 
-            int opcion = -1;
-            try {
-                opcion = scanner.nextInt();
-                scanner.nextLine(); //consumir salto de linea
-            } catch (Exception e) {
-                scanner.nextLine(); //limpiar buffer
-                System.out.println("\nOpción inválida. Intente nuevamente.\n");
+        try {
+            gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+
+        // Mostrar la grilla (Visualización)
+        ArrayList<Habitacion> todasLasHabitaciones = gestorHabitacion.obtenerTodasLasHabitaciones();
+        dibujarGrilla(todasLasHabitaciones, fechaInicio, fechaFin);
+
+        List<DtoReserva> listaReservasSolicitadas = new ArrayList<>();
+        boolean continuarSeleccionando = true;
+
+        // Loop: mientras el usuario desee seleccionar habitaciones
+        while (continuarSeleccionando) {
+            System.out.println("\n¿Desea seleccionar una habitación para reservar? (SI/NO): ");
+            String respuesta = scanner.nextLine().trim();
+
+            if (!respuesta.equalsIgnoreCase("SI")) {
+                continuarSeleccionando = false;
+                break;
+            }
+
+            // A -> C: seleccionarHabitacion(...)
+            System.out.print("Ingrese Número de Habitación a reservar: ");
+            String nroHabitacion = scanner.nextLine().trim();
+
+            // Validación básica de existencia en la lista cargada
+            Habitacion habSeleccionada = todasLasHabitaciones.stream()
+                    .filter(h -> h.getNumero().equals(nroHabitacion))
+                    .findFirst()
+                    .orElse(null);
+
+            if (habSeleccionada == null) {
+                System.out.println("Error: La habitación no existe en la lista mostrada.");
                 continue;
             }
 
-            System.out.println();
+            // C -> C: validarDisponibilidadDeSeleccion(...)
+            // Usamos el metodo que ya tenemos en GestorEstadia y GestorReserva
+            boolean ocupadaPorEstadia = gestorEstadia.estaOcupadaEnFecha(nroHabitacion, fechaInicio, fechaFin);
+            boolean ocupadaPorReserva = gestorReserva.estaReservadaEnFecha(nroHabitacion, fechaInicio, fechaFin);
+            boolean fueraDeServicio = habSeleccionada.getEstadoHabitacion().name().equals("FUERA_DE_SERVICIO");
 
-            switch(opcion){
-                case 1:
-                    System.out.print("Nuevo Apellido: ");
-                    dtoHuespedModificado.setApellido(scanner.nextLine().trim());
-                    break;
-                case 2:
-                    System.out.print("Nuevo Nombre: ");
-                   dtoHuespedModificado.setNombres(scanner.nextLine().trim());
-                    break;
-                case 3:
-                    System.out.print("Nuevo Tipo de Documento (DNI, PASAPORTE, LE, LC): ");
-                    tipoDocStr = scanner.nextLine().trim().toUpperCase();
-
-                    // FALTABA ESTO: Asignar el valor al DTO modificado
-                    try {
-                        dtoHuespedModificado.setTipoDocumento(TipoDocumento.valueOf(tipoDocStr));
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("❌ Error: Tipo de documento no válido. Se mantiene el valor anterior.");
-                        // Invalidamos tipoDocStr para que la validación posterior lo note
-                        tipoDocStr = "ERROR";
-                    }
-                    break;
-                case 4:
-                    System.out.print("Nuevo Número de Documento: ");
-                   dtoHuespedModificado.setDocumento(scanner.nextLine());
-                    break;
-                case 5:
-                    System.out.print("Nuevo CUIT: ");
-                    dtoHuespedModificado.setCuit(scanner.nextLine().trim());
-                    break;
-                case 6:
-                    System.out.println("Nueva Posición Frente al IVA:");
-                    System.out.println("1. " + PosIva.ConsumidorFinal.getDescripicion());
-                    System.out.println("2. " + PosIva.Monotributista.getDescripicion());
-                    System.out.println("3. " + PosIva.ResponsableInscripto.getDescripicion());
-                    System.out.println("4. " + PosIva.Excento.getDescripicion());
-                    System.out.print("Ingrese una opción: ");
-                    try {
-                        int opcionIva = scanner.nextInt();
-                        scanner.nextLine(); // Consumir salto de línea
-                        switch (opcionIva) {
-                            case 1: posIvaStr = PosIva.ConsumidorFinal.getDescripicion(); break;
-                            case 2: posIvaStr = PosIva.Monotributista.getDescripicion(); break;
-                            case 3: posIvaStr = PosIva.ResponsableInscripto.getDescripicion(); break;
-                            case 4: posIvaStr = PosIva.Excento.getDescripicion(); break;
-                            default:
-                                System.out.println("Opción inválida. Se mantendrá el valor actual.");
-                                break;
-                        }
-                        if (opcionIva >= 1 && opcionIva <= 4) {
-                            dtoHuespedModificado.setPosicionIva(posIvaStr);
-                        }
-                    } catch (Exception e) {
-                        scanner.nextLine(); // Limpiar el buffer
-                        System.out.println("Entrada inválida. Se mantendrá el valor actual.");
-                    }
-                    break;
-                 case 7:
-                    System.out.print("Nueva Fecha de Nacimiento (dd/MM/yyyy): ");
-                    dtoHuespedModificado.setFechaNacimiento(leerFecha("Fecha de nacimiento", dtoHuespedModificado.getFechaNacimiento()));
-                     break;
-                case 8:
-                    cambiarDireccionHuesped(dtoHuespedModificado.getDireccion());
-                    break;
-                case 9:
-                    System.out.print("Nuevo Teléfono: ");
-                    dtoHuespedModificado.setTelefono(scanner.nextLong());
-                    break;
-                case 10:
-                    System.out.print("Nuevo Email: ");
-                    dtoHuespedModificado.setEmail(scanner.nextLine().trim());
-                    break;
-                case 11:
-                    System.out.print("Nueva Ocupación: ");
-                    dtoHuespedModificado.setOcupacion(scanner.nextLine().trim());
-                    break;
-                case 12:
-                    System.out.print("Nueva Nacionalidad: ");
-                    dtoHuespedModificado.setNacionalidad(scanner.nextLine().trim());
-                    break;
-                 case 13:
-                    // Al pulsar SIGUIENTE validamos omisiones. Si hay errores, no salimos. Paso2 CU10
-                    if (gestorHuesped.validarDatos(dtoHuespedModificado, tipoDocStr, posIvaStr)) {
-                        if(gestorHuesped.tipoynroDocExistente(dtoHuespedModificado)){
-                            System.out.println("¡CUIDADO! El tipo y número de documento ya existen en el sistema");
-                            System.out.println("1. ACEPTAR IGUALMENTE");
-                            System.out.println("2. CORREGIR");
-                            System.out.print("Ingrese una opción: ");
-                            int opcionDoc = -1;
-                            try {
-                                opcionDoc = scanner.nextInt();
-                                scanner.nextLine(); //consumir salto de linea
-                            } catch (Exception e) {
-                                scanner.nextLine(); //limpiar buffer
-                                System.out.println("\nOpción inválida. Intente nuevamente.\n");
-                                break;
-                            }
-                            if (opcionDoc == 2) {
-                                // quedarse en la pantalla para que el actor corrija
-                                break;
-                            }else if (opcionDoc != 1) {
-                                System.out.println("Opción inválida. Intente nuevamente.\n");
-                                break;
-                            }   else{
-                                gestorHuesped.modificarHuesped(dtoHuesped, dtoHuespedModificado);
-                                salir = true;
-                            }
-                        }else{
-                            gestorHuesped.modificarHuesped(dtoHuesped, dtoHuespedModificado);
-                            salir = true;
-                        }
-                    } else {
-                        // quedarse en la pantalla para que el actor corrija. Mensajes enviados en validarDatos
-                    }
-                    break;
-                case 14:
-                    BooleanRef salirRef = new BooleanRef(salir);
-                    pulsarCancelar(salirRef);
-                    salir = salirRef.getValue();
-                    break;
-                case 15:
-                    eliminarHuespedDesdeCU10(dtoHuesped);//CU11
-                    salir = true;
-                    break;
-                default:
-                    System.out.println("Opción inválida. Intente nuevamente.\n");
-            }
-        }
-    }
-
-    private void eliminarHuespedDesdeCU10(DtoHuesped dtoHuesped){
-        String tipoDoc = dtoHuesped.getTipoDocumento().name();
-        String nroDoc = dtoHuesped.getDocumento();
-
-        boolean puedeEliminar = gestorHuesped.puedeEliminarHuesped(tipoDoc, nroDoc);
-
-        if (!puedeEliminar) {
-            // Flujo Alternativo 2.A: El huésped se alojó alguna vez
-            System.out.println("\n*** NO SE PUEDE ELIMINAR ***");
-            System.out.println("El huésped se ha alojado en el hotel en alguna oportunidad.");
-            System.out.println("Por razones de auditoría, el huésped NO puede ser eliminado del sistema.");
-            System.out.println("*****************************\n");
-
-            pausa();
-            return; // Termina el CU (Flujo Alternativo 2.A.1)
-        }
-
-        // Paso 2 (continuación): El huésped NUNCA se alojó, se puede eliminar
-        System.out.println("\nLos datos del huésped que será eliminado son:");
-        System.out.println("----------------------------------------");
-        System.out.println("Nombre:    " + dtoHuesped.getNombres());
-        System.out.println("Apellido:  " + dtoHuesped.getApellido());
-        System.out.println("Documento: " + dtoHuesped.getTipoDocumento().name() + " " + dtoHuesped.getDocumento());
-        System.out.println("----------------------------------------\n");
-
-        System.out.println("¿Está seguro que desea ELIMINAR este huésped?");
-        System.out.println("1. ELIMINAR");
-        System.out.println("2. CANCELAR");
-        System.out.print("Ingrese una opción: ");
-
-        int opcion = leerOpcionNumerica();
-
-        if (opcion == 1) {
-            // Paso 3: El actor presiona "ELIMINAR"
-            System.out.println("\nEliminando huésped...");
-
-            boolean eliminado = gestorHuesped.eliminarHuesped(tipoDoc, nroDoc);
-
-            if (eliminado) {
-                // Éxito
-                System.out.println("\n*** ELIMINACIÓN EXITOSA ***");
-                System.out.println("Los datos del huésped " + dtoHuesped.getNombres() + " " + dtoHuesped.getApellido());
-                System.out.println("(" + dtoHuesped.getTipoDocumento().name() + " " + dtoHuesped.getDocumento() + ")");
-                System.out.println("han sido eliminados del sistema.");
-                System.out.println("***************************\n");
+            // opt Estado no es "Disponible"
+            if (ocupadaPorEstadia || ocupadaPorReserva || fueraDeServicio) {
+                // C -> A: mostrarError("Habitaciones seleccionadas no están Disponibles")
+                System.out.println("ERROR: La habitación seleccionada NO está disponible en esas fechas.");
             } else {
-                // Error
-                System.out.println("\n*** ERROR ***");
-                System.out.println("No se pudo eliminar el huésped.");
-                System.out.println("Intente nuevamente o contacte al administrador.");
-                System.out.println("*************\n");
+                // Agregar a la lista temporal
+                DtoReserva dto = new DtoReserva.Builder()
+                        .idHabitacion(nroHabitacion)
+                        .fechaDesde(fechaInicio)
+                        .fechaHasta(fechaFin)
+                        .estado(EstadoReserva.ACTIVA) // Estado inicial
+                        .fechaReserva(new Date()) // Fecha de hoy
+                        .build();
+
+                listaReservasSolicitadas.add(dto);
+                System.out.println("Habitación " + nroHabitacion + " agregada a la selección.");
             }
-
-        } else if (opcion == 2) {
-            // Flujo Alternativo 3.A: El actor presiona "CANCELAR"
-            System.out.println("\nEliminación cancelada.\n");
-        } else {
-            System.out.println("\nOpción inválida. Eliminación cancelada.\n");
         }
-    }
 
-public void cambiarDireccionHuesped(DtoDireccion direccion){
-    if (direccion == null) {
-        System.out.println("\nNo hay dirección asociada al huésped.");
-        return;
-    }
-
-    boolean salir = false;
-    while(!salir){
-        System.out.println("\nSelecciona el dato a cambiar:");
-        System.out.println("1. Calle: " + direccion.getCalle());
-        System.out.println("2. Número: " + direccion.getNumero());
-        System.out.println("3. Departamento: " + direccion.getDepartamento());
-        System.out.println("4. Piso: " + direccion.getPiso());
-        System.out.println("5. Código Postal: " + direccion.getCodPostal());
-        System.out.println("6. Localidad: " + direccion.getLocalidad());
-        System.out.println("7. Provincia: " + direccion.getProvincia());
-        System.out.println("8. País: " + direccion.getPais());
-        System.out.println("9. VOLVER");
-        System.out.print("Ingrese una opción: ");
-        int opcion = -1;
-        try {
-            opcion = scanner.nextInt();
-            scanner.nextLine(); //consumir salto de linea
-        } catch (Exception e) {
-            scanner.nextLine(); //limpiar buffer
-            System.out.println("\nOpción inválida. Intente nuevamente.\n");
+        if (listaReservasSolicitadas.isEmpty()) {
+            System.out.println("No se seleccionaron habitaciones. Finalizando CU.");
             return;
         }
-        switch(opcion){
-            case 1:
-                System.out.print("Nueva Calle: ");
-                direccion.setCalle(scanner.nextLine().trim());
-                break;
-            case 2:
-                System.out.print("Nuevo Número: ");
-                direccion.setNumero(scanner.nextInt());
-                break;
-            case 3:
-                System.out.print("Nuevo Departamento: ");
-                direccion.setDepartamento(scanner.nextLine().trim());
-                break;
-            case 4:
-                System.out.print("Nuevo Piso: ");
-                direccion.setPiso(scanner.nextLine());
-                break;
-            case 5:
-                System.out.print("Nuevo Código Postal: ");
-                direccion.setCodPostal(scanner.nextInt());
-                break;
-            case 6:
-                System.out.print("Nueva Localidad: ");
-                direccion.setLocalidad(scanner.nextLine().trim());
-                break;
-            case 7:
-                System.out.print("Nueva Provincia: ");
-                direccion.setProvincia(scanner.nextLine().trim());
-                break;
-            case 8:
-                System.out.print("Nuevo País: ");
-                direccion.setPais(scanner.nextLine().trim());
-            break;
-            case 9:
-                return;
-            default:
-                System.out.println("Opción inválida. Intente nuevamente.\n");
+
+        // C -> C: pintarHabitacionesReservada (Visualmente en consola mostramos el resumen)
+        System.out.println("\n--- Resumen de Reservas Solicitadas ---");
+        // C -> A: mostrarListadoReservaSolicitadas
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        for (DtoReserva r : listaReservasSolicitadas) {
+            System.out.println("Habitación: " + r.getIdHabitacion());
+            System.out.println(" - Ingreso: " + sdf.format(r.getFechaDesde()) + " 12:00hs");
+            System.out.println(" - Egreso:  " + sdf.format(r.getFechaHasta()) + " 10:00hs");
+            System.out.println("-------------------------------------");
+        }
+
+        // C -> A: mostrarBotones("ACEPTAR", "RECHAZAR")
+        System.out.println("¿Confirma la operación?");
+        System.out.println("1. ACEPTAR");
+        System.out.println("2. RECHAZAR");
+        System.out.print("Opción: ");
+        int opcion = leerOpcionNumerica();
+
+        // alt Actor presiona RECHAZAR
+        if (opcion != 1) {
+            // C -> C: deshacerOperacionesGrilla() (En este contexto, simplemente limpiamos la lista y salimos)
+            System.out.println("Operación Rechazada. Finalizando caso de uso.");
+            return;
+        }
+
+        // else Actor presiona ACEPTAR
+        // C -> A: solicitarDatosReserva() -> mostrarCampos("Apellido", "Nombre", "Teléfono")
+        System.out.println("\nIngrese los datos del Responsable de la Reserva:");
+
+        String apellidoResponsable = "";
+        String nombreResponsable = "";
+        String telefonoResponsable = "";
+
+        boolean datosValidos = false;
+
+        // loop hasta que los datos sean válidos
+        while (!datosValidos) {
+            // A -> C: ingresarDatos(...)
+            apellidoResponsable = pedirStringTexto("Apellido: ");
+            nombreResponsable = pedirStringTexto("Nombre: ");
+            Long tel = pedirLong("Teléfono: ");
+            telefonoResponsable = String.valueOf(tel);
+
+            // C -> C: validarDatos(...)
+            // (Tus métodos pedirStringTexto ya validan que no sea vacío, cumpliendo "Campos incompletos")
+            datosValidos = true;
+        }
+
+        // Actualizar los DTO con los datos del responsable
+        for (DtoReserva dto : listaReservasSolicitadas) {
+            dto.setApellidoHuespedResponsable(apellidoResponsable);
+            dto.setNombreHuespedResponsable(nombreResponsable);
+            dto.setTelefonoHuespedResponsable(telefonoResponsable);
+        }
+
+        // note right of C: Los datos son válidos, se procede a crear las reservas
+        System.out.println("Procesando reservas...");
+
+        try {
+            // C -> GR: crearReserva
+            gestorReserva.crearReservas(listaReservasSolicitadas);
+
+            // GR --> C: confirmacionDeCreacion
+            // C --> A: confirmacionDeCreacion
+            System.out.println("\n¡Reservas creadas con ÉXITO!");
+            pausa();
+
+        } catch (PersistenciaException e) {
+            System.out.println("Error crítico al guardar las reservas: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
-}
-    private void pulsarCancelar(BooleanRef salir){ //Paso3 CU10
-        System.out.print("\n¿Desea cancelar la modificación del huésped? ");
-        System.out.print("1. SI ");
-        System.out.print(" 2. NO \n");
-        int opt = -1;
-        while (true) {
-            System.out.print("Ingrese una opción: ");
-            try {
-                opt = scanner.nextInt();
-                scanner.nextLine(); //consumir salto de linea
-            } catch (Exception e) {
-                scanner.nextLine(); //limpiar buffer
-                System.out.println("\nOpción inválida. Intente nuevamente.\n");
-
-            }
-            switch (opt){
-                case 1:
-                    System.out.println("\nModificación cancelada.\n");
-                    salir.setValue(true);
-                    return;
-                case 2:
-                    System.out.println("\nContinuando con la modificación.\n");
-                    return;
-                default:
-                    System.out.println("Opción inválida. Intente nuevamente.\n");
-            }
-        }
-    }
-
-    private void mostrarDatosHuesped(DtoHuesped dtoHuesped){
-        System.out.println("---- DATOS DEL HUESPED ----");
-        System.out.println("1. Apellido: " + dtoHuesped.getApellido());
-        System.out.println("2. Nombre: " + dtoHuesped.getNombres());
-        System.out.println("3. Tipo de documento: " + dtoHuesped.getTipoDocumento());
-        System.out.println("4. Número de documento: " + dtoHuesped.getDocumento());
-        System.out.println("5. CUIT: " + dtoHuesped.getCuit());
-        System.out.println("6. Posición IVA: " + dtoHuesped.getPosicionIva());
-        System.out.println("7. Fecha de nacimiento: " + dtoHuesped.getFechaNacimiento());
-        System.out.println("8. Dirección, pulsa para mas informacion");
-        System.out.println("9. Teléfono: " + dtoHuesped.getTelefono());
-        System.out.println("10. Agregar Email");
-        System.out.println("11. Ocupación: " + dtoHuesped.getOcupacion());
-        System.out.println("12. Nacionalidad: " + dtoHuesped.getNacionalidad());
-        System.out.println("13. SIGUIENTE");
-        System.out.println("14. CANCELAR");
-        System.out.println("15. BORRAR HUESPED");
-        System.out.println("---------------------------\n");
-    }
-
-
-
-    /*
-     * Lee una fecha desde la entrada en formato dd/MM/yyyy.
-     * Si el usuario ingresa línea vacía, devuelve current (mantiene la fecha actual).
-
-    private Date leerFecha(String etiqueta, Date current) {
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
-        formato.setLenient(false);
-        while (true) {
-            String actual = (current == null) ? "vacío" : formato.format(current);
-            System.out.print(etiqueta + " (dd/MM/yyyy) [ENTER para mantener: " + actual + "]: ");
-            String linea = scanner.nextLine().trim();
-            if (linea.isEmpty()) {
-                return current;
-            }
-            try {
-                return formato.parse(linea);
-            } catch (ParseException e) {
-                System.out.println("Formato inválido. Use dd/MM/yyyy. Intente nuevamente.");
-            }
-        }
-    }*/
 
 }

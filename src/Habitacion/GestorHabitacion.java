@@ -14,7 +14,7 @@ public class GestorHabitacion {
     // 1. La única instancia (static y private)
     private static GestorHabitacion instancia;
 
-    // Referencias a los DAOs que necesita
+    // Referencias a los DAO que necesita
     private final DaoInterfazHabitacion daoHabitacion;
 
     // 2. Constructor PRIVADO
