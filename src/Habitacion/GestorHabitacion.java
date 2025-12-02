@@ -5,6 +5,7 @@ import Utils.Mapear.MapearHabitacion;
 import enums.EstadoHabitacion;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -34,13 +35,21 @@ public class GestorHabitacion {
     }
 
     public ArrayList<Habitacion> obtenerTodasLasHabitaciones() {
+        ArrayList<DtoHabitacion> entidades = daoHabitacion.obtenerTodas();
+        ArrayList<Habitacion> dtos = new ArrayList<>();
 
-        ArrayList<DtoHabitacion> habitacionesDtoEncontradas =  daoHabitacion.obtenerTodas();
-        ArrayList<Habitacion> listaHabitaciones = new ArrayList<>();
-        for(int i = 0 ; i < habitacionesDtoEncontradas.size() ; i++){
-            listaHabitaciones.add(i, MapearHabitacion.mapearDtoAEntidad(habitacionesDtoEncontradas.get(i)));
+        // Mapeo
+        for (DtoHabitacion h : entidades) {
+            dtos.add(MapearHabitacion.mapearDtoAEntidad(h));
         }
-        return listaHabitaciones;
+
+        // ORDENAMIENTO:
+        // 1. Por Tipo de Habitación (según el orden del Enum)
+        // 2. Por Número de Habitación (para que dentro de la misma categoría queden ordenadas)
+        dtos.sort(Comparator.comparing(Habitacion::getTipoHabitacion)
+                .thenComparing(Habitacion::getNumero));
+
+        return dtos;
     }
 
     public Habitacion obtenerHabitacionPorNumero(String numero) {

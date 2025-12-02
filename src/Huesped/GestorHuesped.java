@@ -222,6 +222,7 @@ public class GestorHuesped {
     public boolean eliminacionDeDireccion(int id){
         return daoDireccion.eliminarDireccion(id);
     }
+
     public boolean tieneReservasPendientes(String tipoDocumento, String nroDocumento) {
         // Consultar si existe en reserva_huesped con reservas activas/pendientes
         // Por ahora retornamos false (implementar cuando tengas el módulo de reservas)
@@ -275,7 +276,7 @@ public class GestorHuesped {
         }
     }
 
-    public void modificarHuesped(DtoHuesped dtoHuespedOriginal, DtoHuesped dtoHuespedModificado){
+    /* public void modificarHuesped(DtoHuesped dtoHuespedOriginal, DtoHuesped dtoHuespedModificado){
         
         // 1. Aseguramos que el DTO original (para el WHERE) tenga su dirección
         asignarDireccionAHuesped(dtoHuespedOriginal);
@@ -311,10 +312,8 @@ public class GestorHuesped {
         // Ahora sí, 'dtoHuespedModificado.getIdDireccion()' tendrá el ID correcto (nuevo o modificado)
         daoHuesped.modificarHuesped(dtoHuespedOriginal, dtoHuespedModificado);
         System.out.println("“La operación ha culminado con éxito");
-    }
-    
-
-    public boolean validarDatos(DtoHuesped dtoHuesped, String TipoDoc, String PosicionIva) {
+    }*/
+    /*public boolean validarDatos(DtoHuesped dtoHuesped, String TipoDoc, String PosicionIva) {
         List<String> errores = new ArrayList<>();
 
         if (dtoHuesped.getApellido() == null || dtoHuesped.getApellido().isBlank()) {
@@ -332,7 +331,7 @@ public class GestorHuesped {
         if (documentoValido == null || documentoValido.trim().isEmpty()) {
             System.err.println("El número de documento no es válido");
             return false;
-        }*/
+        }
         if (dtoHuesped.getDocumento() == null || dtoHuesped.getDocumento().isBlank()) {
             errores.add("Número de documento");
         }
@@ -393,19 +392,12 @@ public class GestorHuesped {
             return false;
         }
         return true;
-    }    
-
-    public boolean tipoynroDocExistente(DtoHuesped dtoHuesped) {
+    }    */
+    /*public boolean tipoynroDocExistente(DtoHuesped dtoHuesped) {
         //consultar dao si existe un huesped con ese tipo y nro de doc
         return daoHuesped.docExistente(dtoHuesped); //retornar true si existe, false si no
-    }
-
-    /**
-     * Obtiene y asigna los datos completos de la dirección al DtoHuesped
-     * @param dtoHuesped El DTO del huésped al que se le asignará la dirección
-     * @return true si se pudo asignar la dirección, false si hubo algún error
-     */
-    public boolean asignarDireccionAHuesped(DtoHuesped dtoHuesped) {
+    }*/
+    /*public boolean asignarDireccionAHuesped(DtoHuesped dtoHuesped) {
         if (dtoHuesped == null || dtoHuesped.getIdDireccion() <= 0) {
             return false;
         }
@@ -416,7 +408,7 @@ public class GestorHuesped {
             return true;
         }
         return false;
-    }
+    }*/
 
 
     private String pedirDocumento(String nroDoc, TipoDocumento tipo) {
@@ -476,13 +468,68 @@ public class GestorHuesped {
 
         if (!existe) {
             // === CAMINO: ALTA (No existe) ===
+            // Lógica: Crear dirección -> Guardar dirección -> Usar ID dirección para crear Huesped -> Guardar Huésped
 
-            // A. Convertir DTOs a Entidades (Mapeo)
-            //Estos dos metodos se encargan de llamar a las entidades, pedirles que "se creen" y retornarlas al gestor
+            // A. Convertir DTOs a Entidades
             Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
             Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
 
-            // B. Persistir Dirección primero (para obtener su ID). El gestor le diece al DAO correspondiente que persista la entidad previamente creada
+            // B. Persistir Dirección (El DAO le asignará el ID generado al objeto direccionEntidad)
+            daoDireccion.persistirDireccion(direccionEntidad);
+
+            // C. Asignar la dirección (ya con ID) al huésped
+            huespedEntidad.setDireccion(direccionEntidad);
+
+            // D. Persistir Huésped. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
+            daoHuesped.persistirHuesped(huespedEntidad);
+
+            // E. Crear email si corresponde
+            daoHuesped.crearEmailHuesped(dtoHuesped);
+
+        } else {
+            // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
+            // Lógica: Recuperar ID Dir anterior -> Actualizar Dirección -> Actualizar Huésped
+
+            // A. Recuperar ID de la dirección vieja para no dejar una dirección huérfana/nueva
+            int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+
+            // B. Actualizar la Dirección
+            if (idDireccionExistente > 0) {
+                // Mapeamos la dirección nueva
+                Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
+                // Le forzamos el ID viejo para que el UPDATE pise la fila correcta
+                direccionEntidad.setId(idDireccionExistente);
+
+                // Llamamos al DAO de Dirección. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
+                daoDireccion.modificarDireccion(direccionEntidad);
+
+                // Creamos la entidad Huésped con esta dirección
+                Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+                huespedEntidad.setDireccion(direccionEntidad);
+
+                // C. Actualizar el Huésped
+                daoHuesped.modificarHuesped(huespedEntidad);
+            }
+
+            // D. Actualizar Emails (Borrar viejos y crear nuevos es lo más seguro)
+            daoHuesped.eliminarEmailsHuesped(dtoHuesped.getTipoDocumento().name(), dtoHuesped.getNroDocumento());
+            daoHuesped.crearEmailHuesped(dtoHuesped);
+        }
+    }
+    public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
+
+        // 1. Verificamos existencia
+        boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+
+        if (!existe) {
+            // === CAMINO: ALTA (No existe) ===
+
+            // A. Convertir DTOs a Entidades (Mapeo)
+
+            Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
+            Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+
+            // B. Persistir Dirección primero (para obtener su ID).
             daoDireccion.persistirDireccion(direccionEntidad);
 
             // C. Asignar la dirección guardada al huésped. Para poder persistirlo con su direccion asociada

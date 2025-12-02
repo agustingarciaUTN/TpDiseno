@@ -269,6 +269,7 @@ public class Pantalla {
                     gestorHuesped.upsertHuesped(datosIngresados);
 
 
+
                 } catch (PersistenciaException e) {
                     System.out.println("ERROR DE BASE DE DATOS: No se pudo verificar el duplicado.");
                     e.printStackTrace();
