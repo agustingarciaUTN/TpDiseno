@@ -3,10 +3,9 @@ package Utils.Mapear;
 import Dominio.Cama;
 import Habitacion.DtoCama;
 
-public class MapearCama implements MapeoInterfaz<DtoCama, Cama> {
+public class MapearCama{
 
-    @Override
-    public Cama mapearDtoAEntidad(DtoCama dto) {
+    public static Cama mapearDtoAEntidad(DtoCama dto) {
         if (dto == null) return null;
         return new Cama.Builder()
                 .idCama(dto.getIdCama())
@@ -14,8 +13,7 @@ public class MapearCama implements MapeoInterfaz<DtoCama, Cama> {
                 .build();
     }
 
-    @Override
-    public DtoCama mapearEntidadADto(Cama entidad) {
+    public static DtoCama mapearEntidadADto(Cama entidad) {
         if (entidad == null) return null;
         return new DtoCama.Builder()
                 .idCama(entidad.getIdCama())

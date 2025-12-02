@@ -203,7 +203,6 @@ public class Pantalla {
 
     // CU9
     public void darAltaDeHuesped() {
-        //este metodo debe tener el mismo nombre que el CU?
 
         //no se si es necesario, despues habra que ver la parte estetica
         System.out.println('\n'+"-- Iniciando CU9 'dar de alta huesped' --");
@@ -328,7 +327,6 @@ public class Pantalla {
 
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
-
         String numeroDocumento = pedirDocumento(tipoDocumento);
 
         String cuit = pedirCUIT();
@@ -365,14 +363,12 @@ public class Pantalla {
         int numeroDireccionPrimitivo = numeroDireccion.intValue();
         int codPostalDireccionPrimitivo = codPostalDireccion.intValue();
 
-
         // Crear los DTO  (aún no tenemos el ID de dirección)
         DtoDireccion direccionDto = new DtoDireccion(calleDireccion, numeroDireccionPrimitivo, departamentoDireccion, pisoDireccion, codPostalDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion);
         DtoHuesped huespedDto = new DtoHuesped(nombres, apellido, telefono, tipoDocumento, numeroDocumento, cuit, posIva, fechaNacimiento, email, ocupacion, nacionalidad, direccionDto, null);
 
         //asociamos el la direccion con el huesped
         huespedDto.setDtoDireccion(direccionDto);
-
 
         System.out.println("--- Fin Formulario ---");
         return huespedDto; // Devolver el DTO con los datos cargados
@@ -426,7 +422,7 @@ public class Pantalla {
 
             //Si está vacío, es válido (opcional)
             if (entrada.trim().isEmpty()) {
-                return null; // O puedes devolver "" si lo preferís
+                return null;
         
             //Si no está vacío, valida el formato
             } else if (!entrada.matches(str)) {
@@ -643,7 +639,6 @@ public class Pantalla {
         System.out.println();
     }
 
-
     //CU2
     public void buscarHuesped() throws PersistenciaException {
         System.out.println("========================================");
@@ -743,12 +738,12 @@ public class Pantalla {
             try {
                 return TipoDocumento.valueOf(tipoStr); // Intenta convertir el String al enum.
             } catch (IllegalArgumentException e) {
-                System.out.println("Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, Libreta de Enrolamiento, Libreta Civica.");
+                System.out.println("Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, LIBRETA DE ENROLAMIENTO Y LIBRETA CIVICA.");
             }
         }
-    }
+    }//NO SE DE QUE SON ESTOS METODOS
 
-    /*private long validarYLeerNumeroDocumento(TipoDocumento tipoDoc) {
+    private long validarYLeerNumeroDocumento(String numero) {
         while (true) {
             System.out.print("Número de Documento: ");
             String numeroStr = scanner.nextLine().trim();
@@ -784,7 +779,7 @@ public class Pantalla {
                 System.out.println("⚠ El número de documento debe ser un valor numérico. Intente nuevamente.");
             }
         }
-    }*/
+    }//NO SE DE QUE SON ESTOS METODOS
 
     private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
 
@@ -881,6 +876,8 @@ public class Pantalla {
         }
     }
 
+
+    //COSAS DE DESARROLLO (CU10 Y 11)
     /*public void iniciarBajaHuesped() {
         System.out.println("\n========================================");
         System.out.println("   CU11: DAR DE BAJA HUÉSPED");
@@ -987,8 +984,7 @@ public class Pantalla {
         System.out.println("========================================\n");
     }*/
     // Paso 5: El CU termina
-
- /*private void iniciarModificacionHuesped(DtoHuesped dtoHuesped){ //Metodo para Modificar Huesped CU10
+    /*private void iniciarModificacionHuesped(DtoHuesped dtoHuesped){ //Metodo para Modificar Huesped CU10
     boolean salir = false;
     DtoHuesped dtoHuespedModificado = new DtoHuesped(dtoHuesped);
     String tipoDocStr = "";
@@ -1342,8 +1338,10 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
             }
         }
     }*/
+
+
     private String pedirDocumento(TipoDocumento tipo) {
-        String documento = null;
+        String NroDocumento = null;
         boolean valido = false;
 
         // Definimos las reglas (Regex)
@@ -1392,95 +1390,196 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
             }
 
             if (valido) {
-                documento = entrada;
+                NroDocumento = entrada;
             }
         }
-        return documento;
+        return NroDocumento;
     }
 
 
+    // --- NUEVO MÉTODO: GRILLA DE DISPONIBILIDAD ---
     public void mostrarGrillaDisponibilidad() {
         System.out.println("\n========================================");
-        System.out.println("   PLANNING DE DISPONIBILIDAD (Próx. 15 días)");
+        System.out.println("   CONSULTA DE DISPONIBILIDAD (GRILLA)");
         System.out.println("========================================\n");
 
-        // 1. Obtener las columnas (Habitaciones)
-        ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodasLasHabitaciones(); // Asumiendo que devuelve DTOs
+        // A. Pedir Fechas (Usamos un helper que permita fechas futuras)
+        System.out.println("Ingrese el rango de fechas a consultar:");
+        Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
 
-        if (habitaciones.isEmpty()) {
-            System.out.println("No hay habitaciones registradas.");
+        // Por defecto sugerimos 15 días después, pero el usuario elige
+        Date fechaFin = pedirFechaFutura("Fecha de Fin");
+
+        // B. Validar Lógica de Negocio (Rango coherente)
+        try {
+            // Delegamos la validación al Gestor
+            gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error en el rango de fechas: " + e.getMessage());
+            pausa();
             return;
         }
 
-        // Configuración visual
-        String formatoFecha = "%-10s";
-        String formatoCelda = "| %-9s ";
+        // C. Obtener Columnas (Habitaciones)
+        ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodasLasHabitaciones();
 
-        // 2. Imprimir Encabezado (Nros de Habitación)
-        System.out.printf(formatoFecha, "FECHA");
-        for (Habitacion hab : habitaciones) {
-            System.out.printf(formatoCelda, hab.getNumero());
-        }
-        System.out.println("|");
-        imprimirSeparador(habitaciones.size());
-
-        // 3. Bucle de Días (Filas)
-        LocalDate iteradorFecha = LocalDate.now();
-        DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM");
-
-        for (int i = 0; i < 15; i++) {
-            // Convertimos a Date para los Gestores
-            Date fechaConsulta = Date.from(iteradorFecha.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-            // Imprimir fecha
-            System.out.printf(formatoFecha, iteradorFecha.format(formateador));
-
-            // 4. Bucle de Habitaciones (Columnas) - ORQUESTACIÓN
-            for (Habitacion hab : habitaciones) {
-                String estadoVisual;
-
-                // PRIORIDAD 1: ESTADO
-                if (hab.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO) {
-                    estadoVisual = "[ - ]"; // Mantenimiento / Rota
-                }
-                else {
-                    // vemos si hay gente.
-
-                    // PRIORIDAD 2: OCUPACIÓN
-                    // La pantalla le pregunta al Gestor de Estadías
-                    boolean ocupada = gestorEstadia.estaOcupadaEnFecha(hab.getNumero(), fechaConsulta);
-
-                    if (ocupada) {
-                        estadoVisual = "[ X ]"; // Ocupada por alguien alojado
-                    } else {
-                        // PRIORIDAD 3: RESERVA
-                        // La pantalla le pregunta al Gestor de Reservas
-                        boolean reservada = gestorReserva.estaReservadaEnFecha(hab.getNumero(), fechaConsulta);
-
-                        if (reservada) {
-                            estadoVisual = "[ R ]"; // Reservada
-                        } else {
-                            // PRIORIDAD 4: LIBRE
-                            estadoVisual = "[ L ]"; // Disponible para vender
-                        }
-                    }
-                }
-
-                System.out.printf(formatoCelda, estadoVisual);
-            }
-            System.out.println("|"); // Fin de fila
-            iteradorFecha = iteradorFecha.plusDays(1);
+        if (habitaciones.isEmpty()) {
+            System.out.println("⚠️ No hay habitaciones registradas en el sistema.");
+            pausa();
+            return;
         }
 
-        imprimirSeparador(habitaciones.size());
-        System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [-]Fuera Servicio");
+        System.out.println("\nCargando disponibilidad...\n");
+
+        // D. Dibujar la Grilla
+        dibujarGrilla(habitaciones, fechaInicio, fechaFin);
+
         pausa();
     }
 
+    /**
+     * Solicita la fecha de inicio en bucle hasta que sea válida (formato y >= hoy).
+     */
+    private Date validarFechaInicio() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setLenient(false);
+
+        while (true) {
+            System.out.print("Ingrese Fecha de Inicio (dd/MM/yyyy): ");
+            String input = scanner.nextLine().trim();
+
+            try {
+                Date fecha = sdf.parse(input);
+
+                // Validar que no sea anterior a hoy (para disponibilidad futura)
+                if (fecha.before(getStartOfDay(new Date()))) {
+                    System.out.println("❌ La fecha de inicio no puede ser anterior al día de hoy.");
+                    continue;
+                }
+                return fecha;
+
+            } catch (ParseException e) {
+                System.out.println("Formato inválido. Use dd/MM/yyyy.");
+            }
+        }
+    }
+
+    private Date validarFechaFin(Date fechaInicio) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setLenient(false);
+
+        while (true) {
+            System.out.print("Ingrese Fecha de Fin (dd/MM/yyyy): ");
+            String input = scanner.nextLine().trim();
+
+            try {
+                Date fechaFin = sdf.parse(input);
+
+                return fechaFin;
+
+            } catch (ParseException e) {
+                System.out.println("❌ Formato inválido. Use dd/MM/yyyy.");
+            }
+        }
+    }
+
+
+    private void dibujarGrilla(List<Habitacion> habitaciones, Date inicio, Date fin) {
+        String formatoFecha = "%-12s";
+        String formatoCelda = "| %-9s ";
+
+        // Conversión a LocalDate para iterar cómodamente
+        LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // 1. Imprimir Encabezado (Habitaciones)
+        System.out.print("             "); // Espacio para la columna de fecha
+        for (Habitacion hab : habitaciones) {
+            System.out.printf(formatoCelda, "Hab " + hab.getNumero());
+        }
+        System.out.println("|");
+
+        imprimirSeparador(habitaciones.size());
+
+        // 2. Bucle Principal (Días)
+        LocalDate actual = inicioLocal;
+        while (!actual.isAfter(finLocal)) {
+            // Imprimir Fecha (Fila)
+            System.out.printf(formatoFecha, actual.format(formateador));
+
+            // Convertir fecha actual a Date para consultar al Gestor
+            Date fechaConsulta = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+            // 3. Bucle Interno (Celdas/Habitaciones)
+            for (Habitacion hab : habitaciones) {
+                // ORQUESTACIÓN: La pantalla pregunta el estado para esa celda específica
+                String estado = gestorHabitacion.obtenerEstadoParaFecha(hab.getNumero(), fechaConsulta);
+
+                // Mapeo visual
+                String visual;
+                switch (estado) {
+                    case "OCUPADA": visual = "[ X ]"; break;     // Ocupación Real
+                    case "RESERVADA": visual = "[ R ]"; break;   // Reserva Futura
+                    case "FUERA DE SERVICIO": visual = "[ - ]"; break; // Rota
+                    case "LIBRE": visual = "[ L ]"; break;       // Disponible
+                    default: visual = "[ ? ]"; break;
+                }
+
+                // Colorización opcional (si tu terminal lo soporta, sino quita los códigos ANSI)
+                // visual = colorizarEstado(visual, estado);
+
+                System.out.printf(formatoCelda, visual);
+            }
+            System.out.println("|"); // Fin de fila
+
+            actual = actual.plusDays(1); // Siguiente día
+        }
+
+        imprimirSeparador(habitaciones.size());
+        System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [-]Fuera de Servicio");
+    }
+
+    // --- Helpers Auxiliares ---
+
     private void imprimirSeparador(int columnas) {
-        System.out.print("----------");
-        for (int i = 0; i < columnas; i++) System.out.print("+-----------");
+        System.out.print("------------"); // Ancho columna fecha
+        for (int i = 0; i < columnas; i++) {
+            System.out.print("+-----------"); // Ancho columna celda
+        }
         System.out.println("+");
+    }
+
+    // Versión de pedirFecha que permite fechas futuras (a diferencia de la de nacimiento)
+    private Date pedirFechaFutura(String mensaje) {
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+        formatoFecha.setLenient(false);
+
+        while (true) {
+            System.out.print(mensaje + " (dd/MM/yyyy): ");
+            String entrada = scanner.nextLine().trim();
+
+            if (entrada.isEmpty()) {
+                System.out.println("Error: La fecha es obligatoria.");
+                continue;
+            }
+
+            try {
+                return formatoFecha.parse(entrada);
+            } catch (ParseException e) {
+                System.out.println("Error: Formato inválido. Use dd/MM/yyyy.");
+            }
+        }
+    }
+
+    private Date getStartOfDay(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 
 }
