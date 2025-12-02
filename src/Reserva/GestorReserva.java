@@ -27,7 +27,7 @@ public class GestorReserva {
         return instancia;
     }
 
-    public boolean estaReservadaEnFecha(String nroHabitacion, java.util.Date fecha) {
-        return daoReserva.hayReservaEnFecha(nroHabitacion, fecha);
+    public boolean estaReservadaEnFecha(String nroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFin) {
+        return daoReserva.hayReservaEnFecha(nroHabitacion, fechaInicial, fechaFin);
     }
 }

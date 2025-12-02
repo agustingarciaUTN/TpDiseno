@@ -73,7 +73,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
 
     // Agrega este método en tu DAO y en la interfaz DaoInterfazEstadia
     @Override
-    public boolean hayEstadiaEnFecha(String numeroHabitacion, java.util.Date fecha) {
+    public boolean hayEstadiaEnFecha(String numeroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFin) {
         // Buscamos si hay una estadía para esa habitación donde:
         // 1. La fecha consultada es mayor o igual al inicio (ya llegó)
         // 2. Y (La fecha fin es nula O la fecha consultada es menor a la fecha fin)
@@ -87,11 +87,12 @@ public class DaoEstadia implements DaoInterfazEstadia {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             // Convertimos la fecha de Java Util a SQL
-            java.sql.Date fechaSql = new java.sql.Date(fecha.getTime());
+            java.sql.Date fechaFinal = new java.sql.Date(fechaFin.getTime());
+            java.sql.Date fechaInicio = new java.sql.Date(fechaInicial.getTime());
 
             ps.setString(1, numeroHabitacion); // Ojo: Asegúrate que la columna en tu BD se llama id_habitacion o numero_habitacion
-            ps.setDate(2, fechaSql);
-            ps.setDate(3, fechaSql);
+            ps.setDate(2, fechaInicio);
+            ps.setDate(3, fechaFinal);
 
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next(); // Si devuelve una fila, la habitación está ocupada físicamente

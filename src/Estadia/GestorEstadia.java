@@ -190,7 +190,7 @@ public class GestorEstadia {
     }
 
 
-    public boolean estaOcupadaEnFecha(String nroHabitacion, java.util.Date fecha) {
-        return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fecha);
+    public boolean estaOcupadaEnFecha(String nroHabitacion, java.util.Date fechaInicio, java.util.Date fechaFin) {
+        return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fechaInicio, fechaFin);
     }
 }
