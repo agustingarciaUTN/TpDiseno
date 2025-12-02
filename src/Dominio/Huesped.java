@@ -1,7 +1,9 @@
 package Dominio;
 
+import Utils.Mapear.MapearHuesped;
 import enums.TipoDocumento;
 import enums.PosIva;
+import Huesped.DtoHuesped;
 import java.util.Date;
 import java.util.List;
 
@@ -130,7 +132,9 @@ public class Huesped {
         this.estadias = estadias;
     }
 
-
+    public Huesped crearSinPersistirHuesped(DtoHuesped dtoHuesped, Direccion direccion){
+        return MapearHuesped.mapearDtoAEntidadSinDireccion(dtoHuesped, direccion);
+    }
 
     // --- CLASE BUILDER ---
     public static class Builder {

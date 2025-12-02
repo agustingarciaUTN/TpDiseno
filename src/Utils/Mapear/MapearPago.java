@@ -6,10 +6,9 @@ import Dominio.MedioPago;
 import Pago.DtoPago;
 
 
-public class MapearPago implements MapeoInterfaz<DtoPago, Pago> {
+public class MapearPago {
 
-    @Override
-    public Pago mapearDtoAEntidad(DtoPago dtoPago) {
+    public static Pago mapearDtoAEntidad(DtoPago dtoPago) {
         if (dtoPago == null) return null;
 
         // Referencia Factura
@@ -30,8 +29,7 @@ public class MapearPago implements MapeoInterfaz<DtoPago, Pago> {
                 .build();
     }
 
-    @Override
-    public DtoPago mapearEntidadADto(Pago pago) {
+    public static DtoPago mapearEntidadADto(Pago pago) {
         if (pago == null) return null;
 
         DtoPago.Builder builder = new DtoPago.Builder()

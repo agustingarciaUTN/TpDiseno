@@ -4,10 +4,10 @@ import Dominio.NotaDeCredito;
 import Dominio.Factura;
 import Factura.DtoNotaDeCredito;
 
-public class MapearNotaDeCredito implements MapeoInterfaz<DtoNotaDeCredito, NotaDeCredito> {
+public class MapearNotaDeCredito  {
 
-    @Override
-    public NotaDeCredito mapearDtoAEntidad(DtoNotaDeCredito dtoNotaDeCredito) {
+
+    public static NotaDeCredito mapearDtoAEntidad(DtoNotaDeCredito dtoNotaDeCredito) {
         if (dtoNotaDeCredito == null) return null;
 
         NotaDeCredito.Builder builder = new NotaDeCredito.Builder(
@@ -15,8 +15,6 @@ public class MapearNotaDeCredito implements MapeoInterfaz<DtoNotaDeCredito, Nota
                 dtoNotaDeCredito.getMontoDevolucion()
         );
 
-        // Reconstruir referencias de facturas (Objetos vacíos con ID, si DtoFactura tuviera ID numérico)
-        // Como en tu DtoNotaDeCredito usaste ArrayList<Integer> idsFacturas, asumimos que Factura tiene ID.
         if (dtoNotaDeCredito.getIdsFacturas() != null) {
             for (Integer idFactura : dtoNotaDeCredito.getIdsFacturas()) {
                 Factura facRef = new Factura.Builder(null, null, 0, null, null).build();
@@ -27,8 +25,8 @@ public class MapearNotaDeCredito implements MapeoInterfaz<DtoNotaDeCredito, Nota
         return builder.build();
     }
 
-    @Override
-    public DtoNotaDeCredito mapearEntidadADto(NotaDeCredito notaDeCredito) {
+
+    public static DtoNotaDeCredito mapearEntidadADto(NotaDeCredito notaDeCredito) {
         if (notaDeCredito == null) return null;
 
         DtoNotaDeCredito.Builder builder = new DtoNotaDeCredito.Builder()

@@ -4,10 +4,10 @@ import Dominio.ServiciosAdicionales;
 import Dominio.Estadia;
 import Estadia.DtoServiciosAdicionales;
 
-public class MapearServiciosAdicionales implements MapeoInterfaz<DtoServiciosAdicionales, ServiciosAdicionales> {
+public class MapearServiciosAdicionales  {
 
-    @Override
-    public ServiciosAdicionales mapearDtoAEntidad(DtoServiciosAdicionales dtoServiciosAdicionales) {
+
+    public static ServiciosAdicionales mapearDtoAEntidad(DtoServiciosAdicionales dtoServiciosAdicionales) {
         if (dtoServiciosAdicionales == null) return null;
 
         // Referencia a Estadia (Solo ID)
@@ -24,8 +24,8 @@ public class MapearServiciosAdicionales implements MapeoInterfaz<DtoServiciosAdi
                 .build();
     }
 
-    @Override
-    public DtoServiciosAdicionales mapearEntidadADto(ServiciosAdicionales serviciosAdicionales) {
+
+    public static DtoServiciosAdicionales mapearEntidadADto(ServiciosAdicionales serviciosAdicionales) {
         if (serviciosAdicionales == null) return null;
 
         return new DtoServiciosAdicionales.Builder()

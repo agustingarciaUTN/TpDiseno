@@ -3,10 +3,9 @@ package Utils.Mapear;
 import Dominio.PersonaFisica;
 import ResponsablePago.DtoPersonaFisica;
 
-public class MapearPersonaFisica implements MapeoInterfaz<DtoPersonaFisica, PersonaFisica> {
+public class MapearPersonaFisica  {
 
-    @Override
-    public PersonaFisica mapearDtoAEntidad(DtoPersonaFisica dtoPersonaFisica) {
+    public static PersonaFisica mapearDtoAEntidad(DtoPersonaFisica dtoPersonaFisica) {
         if (dtoPersonaFisica == null) return null;
 
         PersonaFisica.Builder builder = new PersonaFisica.Builder(
@@ -18,8 +17,7 @@ public class MapearPersonaFisica implements MapeoInterfaz<DtoPersonaFisica, Pers
         return builder.build();
     }
 
-    @Override
-    public DtoPersonaFisica mapearEntidadADto(PersonaFisica personaFisica) {
+    public static DtoPersonaFisica mapearEntidadADto(PersonaFisica personaFisica) {
         if (personaFisica == null) return null;
 
         DtoPersonaFisica.Builder builder = new DtoPersonaFisica.Builder()

@@ -1,5 +1,8 @@
 package Dominio;
 
+import Utils.Mapear.MapearDireccion;
+import Huesped.DtoDireccion;
+
 public class Direccion {
     private int idDireccion;
     private String calle;
@@ -78,6 +81,10 @@ public class Direccion {
     }
     public void setPais(String pais) {
         this.pais = pais;
+    }
+
+    public Direccion crearSinPersistirDireccion(DtoDireccion dtoDireccion){
+        return MapearDireccion.mapearDtoAEntidad(dtoDireccion);
     }
 
     // --- CLASE STATIC BUILDER ---

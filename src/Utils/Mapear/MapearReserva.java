@@ -4,10 +4,10 @@ import Dominio.Reserva;
 import Dominio.Habitacion;
 import Reserva.DtoReserva;
 
-public class MapearReserva implements MapeoInterfaz<DtoReserva, Reserva> {
+public class MapearReserva {
 
-    @Override
-    public Reserva mapearDtoAEntidad(DtoReserva dto) {
+
+    public static Reserva mapearDtoAEntidad(DtoReserva dto) {
         if (dto == null) return null;
 
         // Creamos una Habitación "referencia" solo con el ID para la Entidad
@@ -26,8 +26,8 @@ public class MapearReserva implements MapeoInterfaz<DtoReserva, Reserva> {
                 .build();
     }
 
-    @Override
-    public DtoReserva mapearEntidadADto(Reserva entidad) {
+
+    public static DtoReserva mapearEntidadADto(Reserva entidad) {
         if (entidad == null) return null;
 
         // Extraemos el ID de la habitación si existe el objeto

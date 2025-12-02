@@ -7,12 +7,12 @@ import Habitacion.DtoCama;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapearHabitacion implements MapeoInterfaz<DtoHabitacion, Habitacion> {
+public class MapearHabitacion  {
 
     private final MapearCama mapearCama = new MapearCama();
 
-    @Override
-    public Habitacion mapearDtoAEntidad(DtoHabitacion dto) {
+
+    public static Habitacion mapearDtoAEntidad(DtoHabitacion dto) {
         if (dto == null) return null;
 
         Habitacion.Builder builder = new Habitacion.Builder(
@@ -27,8 +27,8 @@ public class MapearHabitacion implements MapeoInterfaz<DtoHabitacion, Habitacion
         return builder.build();
     }
 
-    @Override
-    public DtoHabitacion mapearEntidadADto(Habitacion entidad) {
+
+    public static DtoHabitacion mapearEntidadADto(Habitacion entidad) {
         if (entidad == null) return null;
 
         DtoHabitacion.Builder builder = new DtoHabitacion.Builder(entidad.getNumero(), entidad.getTipoHabitacion(), entidad.getCapacidad())

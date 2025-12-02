@@ -2,9 +2,9 @@ package Utils.Mapear;
 import Dominio.Cheque;
 import MedioDePago.DtoCheque;
 
-public class MapearCheque implements MapeoInterfaz<DtoCheque, Cheque> {
-    @Override
-    public Cheque mapearDtoAEntidad(DtoCheque dtoCheque) {
+public class MapearCheque  {
+
+    public static Cheque mapearDtoAEntidad(DtoCheque dtoCheque) {
         if (dtoCheque == null) return null;
         return new Cheque.Builder(dtoCheque.getNumeroCheque(), dtoCheque.getBanco(), dtoCheque.getMonto())
                 .idPago(dtoCheque.getIdPago())
@@ -13,8 +13,8 @@ public class MapearCheque implements MapeoInterfaz<DtoCheque, Cheque> {
                 .fechaDePago(dtoCheque.getFechaDePago())
                 .build();
     }
-    @Override
-    public DtoCheque mapearEntidadADto(Cheque cheque) {
+
+    public static DtoCheque mapearEntidadADto(Cheque cheque) {
         if (cheque == null) return null;
         return new DtoCheque.Builder()
                 .idPago(cheque.getIdPago())

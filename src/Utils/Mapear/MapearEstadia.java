@@ -6,14 +6,14 @@ import Estadia.DtoEstadia;
 import Huesped.DtoHuesped;
 import java.util.ArrayList;
 
-public class MapearEstadia implements MapeoInterfaz<DtoEstadia, Estadia> {
+public class MapearEstadia {
 
     // Composición de mappers
-    private final MapearReserva mapearReserva = new MapearReserva();
-    private final MapearHuesped mapearHuesped = new MapearHuesped();
+    private static MapearReserva mapearReserva = new MapearReserva();
+    private static MapearHuesped mapearHuesped = new MapearHuesped();
 
-    @Override
-    public Estadia mapearDtoAEntidad(DtoEstadia dto) {
+
+    public static Estadia mapearDtoAEntidad(DtoEstadia dto) {
         if (dto == null) return null;
 
         Estadia.Builder builder = new Estadia.Builder(dto.getFechaCheckIn())
@@ -36,8 +36,8 @@ public class MapearEstadia implements MapeoInterfaz<DtoEstadia, Estadia> {
         return builder.build();
     }
 
-    @Override
-    public DtoEstadia mapearEntidadADto(Estadia entidad) {
+
+    public static DtoEstadia mapearEntidadADto(Estadia entidad) {
         if (entidad == null) return null;
 
         DtoEstadia.Builder builder = new DtoEstadia.Builder()

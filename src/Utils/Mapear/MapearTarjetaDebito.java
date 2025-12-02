@@ -2,9 +2,9 @@ package Utils.Mapear;
 import Dominio.TarjetaDebito;
 import MedioDePago.DtoTarjetaDebito;
 
-public class MapearTarjetaDebito implements MapeoInterfaz<DtoTarjetaDebito, TarjetaDebito> {
-    @Override
-    public TarjetaDebito mapearDtoAEntidad(DtoTarjetaDebito dtoTarjetaDebito) {
+public class MapearTarjetaDebito {
+
+    public static TarjetaDebito mapearDtoAEntidad(DtoTarjetaDebito dtoTarjetaDebito) {
         if (dtoTarjetaDebito == null) return null;
         return new TarjetaDebito.Builder(dtoTarjetaDebito.getRedDePago(), dtoTarjetaDebito.getNumeroDeTarjeta(), dtoTarjetaDebito.getMonto())
                 .idPago(dtoTarjetaDebito.getIdPago())
@@ -15,8 +15,8 @@ public class MapearTarjetaDebito implements MapeoInterfaz<DtoTarjetaDebito, Tarj
                 .fechaDePago(dtoTarjetaDebito.getFechaDePago())
                 .build();
     }
-    @Override
-    public DtoTarjetaDebito mapearEntidadADto(TarjetaDebito tarjetaDebito) {
+
+    public static DtoTarjetaDebito mapearEntidadADto(TarjetaDebito tarjetaDebito) {
         if (tarjetaDebito == null) return null;
         return new DtoTarjetaDebito.Builder()
                 .idPago(tarjetaDebito.getIdPago())

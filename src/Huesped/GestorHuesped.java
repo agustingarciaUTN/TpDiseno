@@ -10,6 +10,8 @@ import java.util.Date;
 
 import Dominio.Direccion;
 import Dominio.Huesped;
+import Utils.Mapear.MapearDireccion;
+import Utils.Mapear.MapearEstadia;
 import enums.PosIva;
 import enums.TipoDocumento;
 
@@ -51,7 +53,6 @@ public class GestorHuesped {
 
 
    public ArrayList<Huesped> buscarHuespedes(DtoHuesped criterios){
-
         MapearHuesped mapearHuesped = new MapearHuesped();
 
        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huespedes
@@ -71,7 +72,7 @@ public class GestorHuesped {
            listaHuespedesEncontrados.add(i, mapearHuesped.mapearDtoAEntidad(listaDtoHuespedesEncontrados.get(i)));
        }
 
-        return listaDtoHuespedesEncontrados;
+        return listaHuespedesEncontrados;
     }
 
     public List<String> validarDatosHuesped(DtoHuesped datos){
@@ -102,7 +103,7 @@ public class GestorHuesped {
         }
 
         // Validación de Dirección (asumiendo que DtoHuesped tiene getDireccion())
-        DtoDireccion direccion = datos.getDireccion();
+        DtoDireccion direccion = datos.getDtoDireccion();
         if (direccion == null) {
             errores.add("Los datos de la Dirección son obligatorios.");
         } else {
@@ -163,78 +164,17 @@ public class GestorHuesped {
         return daoHuesped.buscarPorTipoYNumeroDocumento(datos.getTipoDocumento(), datos.getNroDocumento());
     }
 
-    public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped) {
-        Huesped huespedEntidad = new Huesped();
+    public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped){
+        DtoDireccion dtoDireccion = dtoHuesped.getDtoDireccion();
+        Direccion direccion = new Direccion();
+        direccion = direccion.crearSinPersistirDireccion(dtoDireccion);
 
-        if (dtoHuesped == null) {
-            return huespedEntidad;
-        }
+        Huesped huesped = new Huesped();
+        huesped = huesped.crearSinPersistirHuesped(dtoHuesped, direccion);
 
-        // Mapear campos básicos
-        huespedEntidad.setNombres(dtoHuesped.getNombres());
-        huespedEntidad.setApellido(dtoHuesped.getApellido());
-        try {
-            huespedEntidad.setTelefono(dtoHuesped.getTelefono());
-        } catch (Exception ignored) {}
-
-        try {
-            huespedEntidad.setTipoDocumento(dtoHuesped.getTipoDocumento());
-        } catch (Exception ignored) {}
-
-        // Parseo seguro del número de documento (si viene como String)
-        try {
-            if (dtoHuesped.getNroDocumento() != null && !dtoHuesped.getNroDocumento().isBlank()) {
-                huespedEntidad.setNroDocumento(Long.parseLong(dtoHuesped.getNroDocumento()));
-            }
-        } catch (NumberFormatException ignored) {}
-
-        huespedEntidad.setCuit(dtoHuesped.getCuit());
-        // Posición IVA (si viene como String)
-        try {
-            if (dtoHuesped.getPosicionIva() != null) {
-                huespedEntidad.setPosicionIva(PosIva.fromString(dtoHuesped.getPosicionIva()));
-            }
-        } catch (IllegalArgumentException ignored) {}
-
-        huespedEntidad.setEmail(dtoHuesped.getEmail());
-        huespedEntidad.setFechaNacimiento(dtoHuesped.getFechaNacimiento());
-
-        // Direccion: crear objeto Dominio.Direccion a partir de DtoDireccion si existe
-        DtoDireccion dtoDir = dtoHuesped.getDireccion();
-        if (dtoDir != null) {
-            Direccion direccion = new Direccion();
-            try { direccion.setId(dtoDir.getId()); } catch (Exception ignored) {}
-            try { direccion.setCalle(dtoDir.getCalle()); } catch (Exception ignored) {}
-            try { direccion.setNumero(dtoDir.getNumero()); } catch (Exception ignored) {}
-            try { direccion.setPiso(dtoDir.getPiso()); } catch (Exception ignored) {}
-            try { direccion.setDepartamento(dtoDir.getDepartamento()); } catch (Exception ignored) {}
-            try { direccion.setLocalidad(dtoDir.getLocalidad()); } catch (Exception ignored) {}
-            try { direccion.setProvincia(dtoDir.getProvincia()); } catch (Exception ignored) {}
-            try { direccion.setPais(dtoDir.getPais()); } catch (Exception ignored) {}
-            try { direccion.setCodigoPostal(dtoDir.getCodPostal()); } catch (Exception ignored) {}
-
-            huespedEntidad.setDireccion(direccion);
-        }
-
-        // Estadías: convertir lista de DtoEstadia a List<Estadia> usando gestorEstadia
-        List<Estadia> estadias = new ArrayList<>();
-        List<DtoEstadia> listaDtoEstadias = dtoHuesped.getIdEstadias();
-        if (listaDtoEstadias != null) {
-            for (DtoEstadia dtoE : listaDtoEstadias) {
-                try {
-                    Estadia e = gestorEstadia.crearYPersistirEstadia(dtoE);
-                    if (e != null) {
-                        estadias.add(e);
-                    }
-                } catch (Exception ignored) {
-                    // Si falla la conversión de una estadía, se ignora esa entrada pero se siguen procesando las demás
-                }
-            }
-        }
-        huespedEntidad.setEstadias(estadias);
-
-        return huespedEntidad;
+        return huesped;
     }
+
 
     public DtoHuesped crearHuespedYPersistir(DtoHuesped datosHuesped) throws PersistenciaException {
 

@@ -1,14 +1,21 @@
 package PantallaDeTrabajo;
 import Dominio.Huesped;
 import Huesped.*;
+import Utils.Mapear.MapearDireccion;
+import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import Excepciones.PersistenciaException;
+
+import static Utils.Mapear.MapearEstadia.mapearHuesped;
 
 public class Pantalla {
 
@@ -22,13 +29,13 @@ public class Pantalla {
     //constructor (hay que ver como lo vamos a llamar)
     public Pantalla() {
         //inicializamos el gestor huesped
-        DaoHuespedInterfaz daoHuesped = new DaoHuesped();
-        DaoDireccionInterfaz daoDireccion = new DaoDireccion();
-        this.gestorHuesped = new GestorHuesped(daoHuesped, daoDireccion);
+        DaoHuespedInterfaz daoHuesped =  DaoHuesped.getInstance();
+        DaoDireccionInterfaz daoDireccion =  DaoDireccion.getInstance();
+        this.gestorHuesped =  GestorHuesped.getInstance();
 
         //inicializamos el gestor usuario
-        DaoUsuarioInterfaz daoUsuario = new DaoUsuario();
-        this.gestorUsuario = new GestorUsuario(daoUsuario);
+        DaoUsuarioInterfaz daoUsuario = DaoUsuario.getInstance();
+        this.gestorUsuario =  GestorUsuario.getInstance();
 
         //inicializamos el scanner
         this.scanner = new Scanner(System.in);
@@ -184,6 +191,7 @@ public class Pantalla {
         //Paso 5: El CU termina
     }
 
+    // CU9
     public void darAltaDeHuesped() {
         //este metodo debe tener el mismo nombre que el CU?
 
@@ -526,10 +534,10 @@ public class Pantalla {
                 try {
                     fecha = formatoFecha.parse(fechaStr);
                     // Convertir a LocalDate para comparar solo la fecha (sin hora)
-                    java.time.LocalDate fechaLocal = java.time.Instant.ofEpochMilli(fecha.getTime())
-                            .atZone(java.time.ZoneId.systemDefault())
+                    LocalDate fechaLocal = Instant.ofEpochMilli(fecha.getTime())
+                            .atZone(ZoneId.systemDefault())
                             .toLocalDate();
-                    java.time.LocalDate hoy = java.time.LocalDate.now();
+                    LocalDate hoy = LocalDate.now();
 
                     if (!fechaLocal.isBefore(hoy)) {
                         System.out.println("Error: La fecha debe ser anterior a hoy. Ingrese una fecha pasada.");
@@ -638,10 +646,7 @@ public class Pantalla {
 
         if (huespedesEncontrados.isEmpty()) {
             System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
-            System.out.print("¿Desea dar de alta un nuevo huésped? (SI/NO): ");
-            if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                this.darAltaDeHuesped(); //CU 9
-            }
+            this.darAltaDeHuesped(); //CU 9
         } else {
             // CAMBIO: Llamamos a seleccionarHuespedDeLista con DtoHuesped
             mostrarListaDatosEspecificos(huespedesEncontrados);
@@ -771,16 +776,27 @@ public class Pantalla {
         }
     }*/
 
-    private void seleccionarHuespedDeLista(ArrayList<DtoHuesped> listaDtoHuespedes) throws PersistenciaException {
+    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
 
         // CAMBIO: Mensaje para CU10
         System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
         int seleccion = leerOpcionNumerica();
+        System.out.print("SIGUIENTE: presione cualquier botón...");
+        scanner.nextLine();
+        System.out.println();
 
+        //Mapear lista entidades a dto
+        ArrayList<DtoHuesped> listaHuespedes = new ArrayList<>();
+        MapearHuesped mapearHuesped = new MapearHuesped();
+        for(int i = 0 ; i < listaDtoHuespedes.size() ; i++){
+            listaHuespedes.add(i, MapearHuesped.mapearEntidadADto(listaDtoHuespedes.get(i)));
+        }
+
+        //Sigue el flujo
         if (seleccion > 0 && seleccion <= listaDtoHuespedes.size()) {
-            DtoHuesped huespedDtoSeleccionado = listaDtoHuespedes.get(seleccion - 1);
+            DtoHuesped huespedDtoSeleccionado = listaHuespedes.get(seleccion - 1);
             Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
-            //this.iniciarModificacionHuesped(huespedSeleccionado); //CU 10
+            System.out.println("FUNCIONALIDAD CASO DE USO 10 EN PROGRESO...");
         } else if (seleccion == 0) {
             this.darAltaDeHuesped(); // CU 9
         } else {
@@ -820,7 +836,7 @@ public class Pantalla {
             case 3 -> // Tipo de Documento (Enum)
                     Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z"); // Si es null, lo mandamos al final
             case 4 -> // Número de Documento (String en DTO)
-                    Comparator.comparing(DtoHuesped::getDocumento);
+                    Comparator.comparing(DtoHuesped::getNroDocumento);
             default -> null; // Si es inválido, no se ordena
         };
 
@@ -839,7 +855,7 @@ public class Pantalla {
         for (int i = 0; i < listaHuespedes.size(); i++) {
             DtoHuesped h = listaHuespedes.get(i);
             String tipoDoc = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A");
-            String docCompleto = tipoDoc + " " + (h.getDocumento() != null ? h.getDocumento() : ""); 
+            String docCompleto = tipoDoc + " " + (h.getNroDocumento() != null ? h.getNroDocumento() : "");
             System.out.printf("[%d]   %-20s %-20s %s%n", i + 1, h.getApellido(), h.getNombres(), docCompleto);
         }
         System.out.println("-----------------------------------------------------------------");

@@ -3,10 +3,10 @@ package Utils.Mapear;
 import Dominio.Direccion;
 import Huesped.DtoDireccion;
 
-public class MapearDireccion implements MapeoInterfaz<DtoDireccion, Direccion> {
+public class MapearDireccion  {
 
-    @Override
-    public Direccion mapearDtoAEntidad(DtoDireccion dto) {
+
+    public static Direccion mapearDtoAEntidad(DtoDireccion dto) {
         if (dto == null) return null;
         return new Direccion.Builder(
                 dto.getCalle(),
@@ -22,8 +22,7 @@ public class MapearDireccion implements MapeoInterfaz<DtoDireccion, Direccion> {
                 .build();
     }
 
-    @Override
-    public DtoDireccion mapearEntidadADto(Direccion entity) {
+    public static DtoDireccion mapearEntidadADto(Direccion entity) {
         if (entity == null) return null;
         return new DtoDireccion.Builder(
                 entity.getCalle(),
