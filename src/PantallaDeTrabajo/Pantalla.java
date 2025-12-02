@@ -34,10 +34,10 @@ public class Pantalla {
 
 
     //constructor (hay que ver como lo vamos a llamar)
-    public Pantalla(GestorHabitacion gestorHabitacion, GestorEstadia gestorEstadia, GestorReserva gestorReserva) {
-        this.gestorHabitacion = gestorHabitacion;
-        this.gestorEstadia = gestorEstadia;
-        this.gestorReserva = gestorReserva;
+    public Pantalla() {
+        this.gestorHabitacion = GestorHabitacion.getInstance();
+        this.gestorEstadia = GestorEstadia.getInstance();
+        this.gestorReserva = GestorReserva.getInstance();
         //inicializamos el gestor huesped
         DaoHuespedInterfaz daoHuesped =  DaoHuesped.getInstance();
         DaoDireccionInterfaz daoDireccion =  DaoDireccion.getInstance();
@@ -54,7 +54,7 @@ public class Pantalla {
     }
 
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
-    public void iniciarSistema() {
+    public void iniciarSistema() throws PersistenciaException {
         System.out.println("========================================");
         System.out.println("   SISTEMA DE GESTION HOTELERA");
         System.out.println("========================================\n");
@@ -146,7 +146,7 @@ public class Pantalla {
     }
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
-    private void mostrarMenuPrincipal() {
+    private void mostrarMenuPrincipal() throws PersistenciaException {
         //Paso 4: El sistema presenta la pantalla principal
         boolean salir = false;
 
@@ -248,7 +248,7 @@ public class Pantalla {
 
                     if (duplicado != null) {
                         System.out.println("----------------------------------------------------------------");
-                        System.out.println("⚠️ ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
+                        System.out.println("   ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
                         System.out.println("   Huésped existente: " + duplicado.getNombres() + " " + duplicado.getApellido());
                         System.out.println("----------------------------------------------------------------");
                         System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
@@ -265,8 +265,8 @@ public class Pantalla {
                     }
 
 
-                    //paso todas las validaciones, creamos el Huesped en la db
-                    gestorHuesped.crearHuespedYPersistir(datosIngresados);
+                    //Si no existen duplicados, INSERT. Si existe y se selecciono "aceptar igualmente", UPDATE
+                    gestorHuesped.upsertHuesped(datosIngresados);
 
 
                 } catch (PersistenciaException e) {
@@ -364,8 +364,26 @@ public class Pantalla {
         int codPostalDireccionPrimitivo = codPostalDireccion.intValue();
 
         // Crear los DTO  (aún no tenemos el ID de dirección)
-        DtoDireccion direccionDto = new DtoDireccion(calleDireccion, numeroDireccionPrimitivo, departamentoDireccion, pisoDireccion, codPostalDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion);
-        DtoHuesped huespedDto = new DtoHuesped(nombres, apellido, telefono, tipoDocumento, numeroDocumento, cuit, posIva, fechaNacimiento, email, ocupacion, nacionalidad, direccionDto, null);
+        // Crear DtoDireccion usando Builder
+        DtoDireccion direccionDto = new DtoDireccion.Builder(calleDireccion, numeroDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion)
+                .departamento(departamentoDireccion)
+                .piso(pisoDireccion)
+                .codPostal(codPostalDireccionPrimitivo)
+                .build();
+        DtoHuesped huespedDto = new DtoHuesped.Builder()
+                .nombres(nombres)
+                .apellido(apellido)
+                .telefono(Collections.singletonList(telefono))
+                .tipoDocumento(tipoDocumento)
+                .documento(numeroDocumento)
+                .cuit(cuit)
+                .posicionIva(PosIva.valueOf(posIva))
+                .fechaNacimiento(fechaNacimiento)
+                .email(Collections.singletonList(email))
+                .ocupacion(Collections.singletonList(ocupacion))
+                .nacionalidad(nacionalidad)
+                .direccion(direccionDto)
+                .build();
 
         //asociamos el la direccion con el huesped
         huespedDto.setDtoDireccion(direccionDto);
@@ -743,13 +761,13 @@ public class Pantalla {
         }
     }//NO SE DE QUE SON ESTOS METODOS
 
-    private long validarYLeerNumeroDocumento(String numero) {
+    private String validarYLeerNumeroDocumento(TipoDocumento tipoDoc) {
         while (true) {
             System.out.print("Número de Documento: ");
             String numeroStr = scanner.nextLine().trim();
 
             if (numeroStr.isEmpty()) {
-                return 0; // Se devuelve 0 si se omite
+                return ""; // Se devuelve 0 si se omite
             }
 
             try {
@@ -757,23 +775,25 @@ public class Pantalla {
 
                 // VALIDACIÓN DE RANGO SEGÚN TIPO DE DOCUMENTO
                 if (tipoDoc == TipoDocumento.DNI) {
+                    long numero = Long.parseLong(numeroStr.trim());
                     if (numero < 0 || numero > 99999999) {
-                        System.out.println("⚠ El DNI debe estar entre 0 y 99.999.999. Intente nuevamente.");
+                        System.out.println("El DNI debe estar entre 0 y 99.999.999. Intente nuevamente.");
                         continue;
                     }
                 } else if (tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
+                    long numero = Long.parseLong(numeroStr.trim());
                     if (numero < 0 || numero > 99999999) {
-                        System.out.println("⚠ La " + tipoDoc.name() + " debe estar entre 0 y 99.999.999. Intente nuevamente.");
+                        System.out.println("La " + tipoDoc.name() + " debe estar entre 0 y 99.999.999. Intente nuevamente.");
                         continue;
                     }
                 } else if (tipoDoc == TipoDocumento.PASAPORTE) {
-                    if (numero <= 0) {
-                        System.out.println("⚠ El número de pasaporte debe ser mayor a 0. Intente nuevamente.");
+                    if (numeroStr.isBlank()) {
+                        System.out.println("Debe ingresar un Pasaporte. Intente nuevamente.");
                         continue;
                     }
                 }
 
-                return numero;
+                return numeroStr;
 
             } catch (NumberFormatException e) {
                 System.out.println("⚠ El número de documento debe ser un valor numérico. Intente nuevamente.");
@@ -1424,7 +1444,7 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
         ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodasLasHabitaciones();
 
         if (habitaciones.isEmpty()) {
-            System.out.println("⚠️ No hay habitaciones registradas en el sistema.");
+            System.out.println("No hay habitaciones registradas en el sistema.");
             pausa();
             return;
         }
@@ -1453,7 +1473,7 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
 
                 // Validar que no sea anterior a hoy (para disponibilidad futura)
                 if (fecha.before(getStartOfDay(new Date()))) {
-                    System.out.println("❌ La fecha de inicio no puede ser anterior al día de hoy.");
+                    System.out.println("La fecha de inicio no puede ser anterior al día de hoy.");
                     continue;
                 }
                 return fecha;
@@ -1464,6 +1484,9 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
         }
     }
 
+    /**
+     * Solicita la fecha de fin en bucle y valida lógica de negocio con el Gestor.
+     */
     private Date validarFechaFin(Date fechaInicio) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         sdf.setLenient(false);
@@ -1475,14 +1498,33 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
             try {
                 Date fechaFin = sdf.parse(input);
 
-                return fechaFin;
+                // Validar lógica de negocio con el Gestor (Rango válido, no excesivo, etc)
+                try {
+                    gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
+                    // Si no lanza excepción, el rango es válido, retornamos la fecha.
+                    return fechaFin;
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error de lógica: " + e.getMessage());
+                }
 
             } catch (ParseException e) {
-                System.out.println("❌ Formato inválido. Use dd/MM/yyyy.");
+                System.out.println("Formato inválido. Use dd/MM/yyyy.");
             }
         }
     }
 
+
+
+    public String obtenerEstadoParaFecha(Habitacion habitacion, Date fecha){
+        String estado;
+        if(habitacion.getEstadoHabitacion().name().equals("FUERA DE SERVICIO")){
+            estado = "FUERA DE SERVICIO";
+        }
+        else if(gestorEstadia.estaOcupadaEnFecha(habitacion.getNumero(), fecha, fecha)){estado = "OCUPADA";}
+        else if(gestorReserva.estaReservadaEnFecha(habitacion.getNumero(), fecha, fecha)){estado = "RESERVADA";}
+        else {estado = "LIBRE";}
+        return estado;
+    }
 
     private void dibujarGrilla(List<Habitacion> habitaciones, Date inicio, Date fin) {
         String formatoFecha = "%-12s";
@@ -1514,7 +1556,7 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
             // 3. Bucle Interno (Celdas/Habitaciones)
             for (Habitacion hab : habitaciones) {
                 // ORQUESTACIÓN: La pantalla pregunta el estado para esa celda específica
-                String estado = gestorHabitacion.obtenerEstadoParaFecha(hab.getNumero(), fechaConsulta);
+                String estado = obtenerEstadoParaFecha(hab, fechaConsulta);
 
                 // Mapeo visual
                 String visual;
@@ -1580,6 +1622,97 @@ public void cambiarDireccionHuesped(DtoDireccion direccion){
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
+    }
+
+
+    /* Valida si un huésped puede ser eliminado del sistema
+     * Un huésped solo puede eliminarse si NUNCA se alojó en el hotel
+     * @param tipoDocumento Tipo de documento del huésped
+     * @param nroDocumento Número de documento del huésped
+     * @return true si puede eliminarse (no tiene estadías), false si no puede
+     */
+    public boolean puedeEliminarHuesped(String tipoDocumento, String nroDocumento) {
+        if (tipoDocumento == null || tipoDocumento.trim().isEmpty()) {
+            System.err.println("El tipo de documento no puede estar vacío");
+            return false;
+        }
+
+        TipoDocumento tipo = TipoDocumento.valueOf(tipoDocumento);
+        String documentoValido = pedirDocumento(tipo);
+        if (documentoValido == null || documentoValido.trim().isEmpty()) {
+            System.err.println("El número de documento no es válido");
+            return false;
+        }
+
+        // Verificar si el huésped tiene estadías registradas
+        boolean tieneEstadias = gestorEstadia.huespedSeAlojoAlgunaVez(tipoDocumento, nroDocumento);
+
+        return !tieneEstadias; // Retorna true solo si NO tiene estadías
+    }
+
+    /**
+     * Elimina un huésped del sistema (borrado físico)
+     * También elimina su dirección asociada
+     * @param tipoDocumento Tipo de documento del huésped
+     * @param nroDocumento Número de documento del huésped
+     * @return true si se eliminó exitosamente
+     */
+    public boolean eliminarHuesped(String tipoDocumento, String nroDocumento) {
+        try {
+            // NIVEL 2.1: Verificar que puede eliminarse (ya valida que no tenga estadías)
+            if (!puedeEliminarHuesped(tipoDocumento, nroDocumento)) {
+                System.err.println("El huésped no puede ser eliminado porque tiene estadías registradas");
+                gestorHuesped.registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene estadías registradas");
+                return false;
+            }
+
+            // NIVEL 2.2: Verificar que no tenga reservas pendientes/activas
+            if (tieneReservasPendientes(tipoDocumento, nroDocumento)) {
+                System.err.println("El huésped tiene reservas pendientes y no puede ser eliminado");
+                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene reservas pendientes");
+                return false;
+            }
+
+            // 2. Obtener el ID de la dirección antes de eliminar el huésped
+            int idDireccion = daoHuesped.obtenerIdDireccion(tipoDocumento, nroDocumento);
+
+            // 2.5  Eliminar los emails
+            boolean emailsEliminados = daoHuesped.eliminarEmailsHuesped(tipoDocumento, nroDocumento);
+
+            if (!emailsEliminados) {
+                System.err.println("No se pudieron eliminar los emails asociados al huésped.");
+                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Error en eliminación de emails (BD)");
+                return false;
+            }
+
+            // 3. Eliminar el huésped
+            boolean huespedEliminado = daoHuesped.eliminarHuesped(tipoDocumento, nroDocumento);
+
+            if (!huespedEliminado) {
+                // (Si esto falla ahora, es raro, pero la auditoría es correcta)
+                System.err.println("No se pudo eliminar el huésped");
+                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Error en eliminación de BD");
+                return false;
+            }
+
+            // 4. Si tenía dirección, eliminarla también
+            if (idDireccion > 0) {
+                boolean direccionEliminada = daoHuesped.eliminarDireccion(idDireccion);
+                if (!direccionEliminada) {
+                    System.err.println("Advertencia: El huésped fue eliminado pero hubo un error al eliminar su dirección");
+                }
+            }
+
+            // NIVEL 2.3: Registrar auditoría de eliminación exitosa
+            registrarAuditoriaExitosa(tipoDocumento, nroDocumento);
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Error al eliminar huésped: " + e.getMessage());
+            registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Excepción: " + e.getMessage());
+            return false;
+        }
     }
 
 }

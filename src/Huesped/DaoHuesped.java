@@ -96,7 +96,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
-    // --- BUSCAR POR CRITERIO (TU REQUERIMIENTO) ---
+    // --- BUSCAR POR CRITERIO ---
     @Override
     public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
@@ -310,6 +310,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
         } catch (SQLException e) { return false; }
     }
+
+
 
 
 }

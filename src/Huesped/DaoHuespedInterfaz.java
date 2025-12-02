@@ -12,6 +12,7 @@ public interface DaoHuespedInterfaz {
     boolean modificarHuesped(Huesped huesped) throws PersistenciaException;
     boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento);
 
+
     // Búsquedas (Devuelven Entidades completas)
     DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento);
     ArrayList<DtoHuesped> obtenerTodosLosHuespedes();
@@ -22,5 +23,6 @@ public interface DaoHuespedInterfaz {
     // Métodos auxiliares necesarios
     int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento);
     boolean existeHuesped(TipoDocumento tipo, String nroDocumento);
+
 
     }

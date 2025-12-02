@@ -126,12 +126,12 @@ public class GestorHuesped {
                 errores.add("El Código Postal es obligatorio y debe ser positivo.");
             }
         }
-
-
-        if (datos.getTelefono() <= 0) {
+        List<Long> telefonos = datos.getTelefono();
+        if (telefonos.getLast() <= 0) {
             errores.add("El Teléfono es obligatorio.");
         }
-        if (datos.getOcupacion() == null || datos.getOcupacion().trim().isEmpty()) {
+        List<String> ocupaciones = datos.getOcupacion();
+        if (ocupaciones.getLast() == null || ocupaciones.getLast().trim().isEmpty()) {
             errores.add("La Ocupación es obligatoria.");
         }
         if (datos.getNacionalidad() == null || datos.getNacionalidad().trim().isEmpty()) {
@@ -161,7 +161,8 @@ public class GestorHuesped {
 
     public DtoHuesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
         // La validación de null ya se hizo en el paso anterior (validarDatosHuesped)
-        return daoHuesped.buscarPorTipoYNumeroDocumento(datos.getTipoDocumento(), datos.getNroDocumento());
+        if(daoHuesped.existeHuesped(datos.getTipoDocumento(), datos.getNroDocumento())){return datos;}
+        else {return null;}
     }
 
     public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped){
@@ -175,24 +176,15 @@ public class GestorHuesped {
         return huesped;
     }
 
-
-    public DtoHuesped crearHuespedYPersistir(DtoHuesped datosHuesped) throws PersistenciaException {
+    public Huesped crearHuespedYPersistir(DtoHuesped datosHuesped) throws PersistenciaException {
 
         try {
             //Crear la Dirección
             // Llamamos al DAO de Dirección. Este metodo actualiza el DTO de dirección
             // con el nuevo ID generado por la BD
-            DtoDireccion direccionConId = daoDireccion.persistirDireccion(datosHuesped.getDireccion());
-
-
-            //Crear el Huésped
-            // Ahora llamamos al DAO de Huésped, pasándole el DTO completo.
-            // El DAO de Huésped sabrá sacar el ID de la dirección desde datosHuesped.getDireccion().getId()
-            daoHuesped.persistirHuesped(datosHuesped);
-            daoHuesped.crearEmailHuesped(datosHuesped);
-
-
-            return datosHuesped;
+            Huesped huesped = MapearHuesped.mapearDtoAEntidad(datosHuesped);
+            daoHuesped.persistirHuesped(huesped);
+            return huesped;
 
         } catch (PersistenciaException e) {
             // Si algo falló (crear dirección O crear huésped), capturamos la excepcion
@@ -203,95 +195,9 @@ public class GestorHuesped {
     }
 
 
-    /* Valida si un huésped puede ser eliminado del sistema
-     * Un huésped solo puede eliminarse si NUNCA se alojó en el hotel
-     * @param tipoDocumento Tipo de documento del huésped
-     * @param nroDocumento Número de documento del huésped
-     * @return true si puede eliminarse (no tiene estadías), false si no puede
-     */
-    public boolean puedeEliminarHuesped(String tipoDocumento, String nroDocumento) {
-        if (tipoDocumento == null || tipoDocumento.trim().isEmpty()) {
-            System.err.println("El tipo de documento no puede estar vacío");
-            return false;
-        }
 
-        TipoDocumento tipo = TipoDocumento.valueOf(tipoDocumento);
-        String documentoValido = pedirDocumento(nroDocumento, tipo);
-        if (documentoValido == null || documentoValido.trim().isEmpty()) {
-            System.err.println("El número de documento no es válido");
-            return false;
-        }
 
-        // Verificar si el huésped tiene estadías registradas
-        boolean tieneEstadias = gestorEstadia.huespedSeAlojoAlgunaVez(tipoDocumento, nroDocumento);
 
-        return !tieneEstadias; // Retorna true solo si NO tiene estadías
-    }
-
-    /**
-     * Elimina un huésped del sistema (borrado físico)
-     * También elimina su dirección asociada
-     * @param tipoDocumento Tipo de documento del huésped
-     * @param nroDocumento Número de documento del huésped
-     * @return true si se eliminó exitosamente
-     */
-    public boolean eliminarHuesped(String tipoDocumento, String nroDocumento) {
-        try {
-            // NIVEL 2.1: Verificar que puede eliminarse (ya valida que no tenga estadías)
-            if (!puedeEliminarHuesped(tipoDocumento, nroDocumento)) {
-                System.err.println("El huésped no puede ser eliminado porque tiene estadías registradas");
-                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene estadías registradas");
-                return false;
-            }
-
-            // NIVEL 2.2: Verificar que no tenga reservas pendientes/activas
-            if (tieneReservasPendientes(tipoDocumento, nroDocumento)) {
-                System.err.println("El huésped tiene reservas pendientes y no puede ser eliminado");
-                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Tiene reservas pendientes");
-                return false;
-            }
-
-        // 2. Obtener el ID de la dirección antes de eliminar el huésped
-            int idDireccion = daoHuesped.obtenerIdDireccion(tipoDocumento, nroDocumento);
-            
-            // 2.5  Eliminar los emails
-            boolean emailsEliminados = daoHuesped.eliminarEmailsHuesped(tipoDocumento, nroDocumento);
-            
-            if (!emailsEliminados) {
-                 System.err.println("No se pudieron eliminar los emails asociados al huésped.");
-                 registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Error en eliminación de emails (BD)");
-                 return false;
-            }
-
-            // 3. Eliminar el huésped
-            boolean huespedEliminado = daoHuesped.eliminarHuesped(tipoDocumento, nroDocumento);
-
-            if (!huespedEliminado) {
-                // (Si esto falla ahora, es raro, pero la auditoría es correcta)
-                System.err.println("No se pudo eliminar el huésped");
-                registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Error en eliminación de BD");
-                return false;
-            }
-
-            // 4. Si tenía dirección, eliminarla también
-            if (idDireccion > 0) {
-                boolean direccionEliminada = daoHuesped.eliminarDireccion(idDireccion);
-                if (!direccionEliminada) {
-                    System.err.println("Advertencia: El huésped fue eliminado pero hubo un error al eliminar su dirección");
-                }
-            }
-
-            // NIVEL 2.3: Registrar auditoría de eliminación exitosa
-            registrarAuditoriaExitosa(tipoDocumento, nroDocumento);
-
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("Error al eliminar huésped: " + e.getMessage());
-            registrarAuditoriaFallida(tipoDocumento, nroDocumento, "Excepción: " + e.getMessage());
-            return false;
-        }
-    }
 
     /**
      * NIVEL 2.2: Verifica si un huésped tiene reservas pendientes o activas
@@ -310,7 +216,7 @@ public class GestorHuesped {
     /**
      * NIVEL 2.3: Registra en log la eliminación exitosa de un huésped
      */
-    private void registrarAuditoriaExitosa(String tipoDocumento, String nroDocumento) {
+    public void registrarAuditoriaExitosa(String tipoDocumento, String nroDocumento) {
         String timestamp = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date());
         String mensaje = String.format("[AUDITORÍA] %s - Huésped eliminado: %s %s - Usuario: Sistema",
                 timestamp, tipoDocumento, nroDocumento);
@@ -324,7 +230,7 @@ public class GestorHuesped {
     /**
      * NIVEL 2.3: Registra en log un intento fallido de eliminación
      */
-    private void registrarAuditoriaFallida(String tipoDocumento, String nroDocumento, String motivo) {
+    public void registrarAuditoriaFallida(String tipoDocumento, String nroDocumento, String motivo) {
         String timestamp = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date());
         String mensaje = String.format("[AUDITORÍA] %s - Intento fallido de eliminar huésped: %s %s - Motivo: %s",
                 timestamp, tipoDocumento, nroDocumento, motivo);
@@ -388,7 +294,7 @@ public class GestorHuesped {
     }
     
 
- public boolean validarDatos(DtoHuesped dtoHuesped, String TipoDoc, String PosicionIva) {
+    public boolean validarDatos(DtoHuesped dtoHuesped, String TipoDoc, String PosicionIva) {
         List<String> errores = new ArrayList<>();
 
         if (dtoHuesped.getApellido() == null || dtoHuesped.getApellido().isBlank()) {
@@ -539,6 +445,56 @@ public class GestorHuesped {
             }
 
         return documento;
+    }
+
+
+    //Logica de UPSERT para CU9
+    public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
+
+        // 1. Verificamos existencia (condicion del alt)
+        boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+
+        if (!existe) {
+            // === CAMINO: ALTA (No existe) ===
+
+            // A. Convertir DTOs a Entidades (Mapeo)
+            Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
+            Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+
+            // B. Persistir Dirección primero (para obtener su ID)
+            daoDireccion.persistirDireccion(direccionEntidad);
+
+            // C. Asignar la dirección guardada al huésped
+            huespedEntidad.setDireccion(direccionEntidad);
+
+            // D. Persistir Huésped
+            daoHuesped.persistirHuesped(huespedEntidad);
+
+        } else {
+            // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
+
+            // A. Recuperar el ID de la dirección que ya tenía este huésped en la BD
+            // Esto es necesario para hacer el UPDATE sobre la fila correcta en la tabla direcciones
+            int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+
+            // B. Actualizar la Dirección (Si corresponde)
+            if (idDireccionExistente > 0) {
+                // Convertimos el DTO de dirección a Entidad
+                Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
+                // Le clavamos el ID viejo para que sobreescriba esa fila
+                direccionEntidad.setId(idDireccionExistente);
+                // Llamamos al DAO de Dirección (recibe Entidad)
+                daoDireccion.modificarDireccion(direccionEntidad);
+
+                // Preparamos la entidad Huesped con esta dirección
+                Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+                huespedEntidad.setDireccion(direccionEntidad);
+
+                // C. Actualizar el Huésped
+                // Llamamos al DAO de Huésped (recibe Entidad)
+                daoHuesped.modificarHuesped(huespedEntidad);
+            }
+        }
     }
 }
 
