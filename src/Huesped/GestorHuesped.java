@@ -34,12 +34,18 @@ public class GestorHuesped {
     private final DaoHuespedInterfaz daoHuesped;
     private final DaoDireccionInterfaz daoDireccion; // Ejemplo si necesita validar habitación
 
+    private static MapearHuesped mapearHuesped;
+    private static MapearDireccion mapearDireccion;
+
     // 2. Constructor PRIVADO
     // Nadie puede hacer "new GestorReserva()" desde fuera.
     private GestorHuesped() {
         // ¡IMPORTANTE! Aquí obtenemos las instancias de los DAOs
         this.daoHuesped = DaoHuesped.getInstance();
         this.daoDireccion = DaoDireccion.getInstance();
+        /*mapearHuesped = new MapearHuesped();
+        mapearDireccion = new MapearDireccion();*/
+
     }
 
     // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
@@ -203,7 +209,20 @@ public class GestorHuesped {
      * NIVEL 2.2: Verifica si un huésped tiene reservas pendientes o activas
      * Reserva pendiente = fecha_inicio >= HOY y no tiene check-in
      */
-    private boolean tieneReservasPendientes(String tipoDocumento, String nroDocumento) {
+
+    public int obtenerDireccionId(TipoDocumento tipoDocumento, String nroDocumento){
+
+        return daoHuesped.obtenerIdDireccion(tipoDocumento, nroDocumento);
+    }
+
+    public boolean eliminacionDeHuesped(TipoDocumento tipoDocumento, String nroDocumento){
+        return daoHuesped.eliminarHuesped(tipoDocumento, nroDocumento);
+    }
+
+    public boolean eliminacionDeDireccion(int id){
+        return daoDireccion.eliminarDireccion(id);
+    }
+    public boolean tieneReservasPendientes(String tipoDocumento, String nroDocumento) {
         // Consultar si existe en reserva_huesped con reservas activas/pendientes
         // Por ahora retornamos false (implementar cuando tengas el módulo de reservas)
 
@@ -263,8 +282,9 @@ public class GestorHuesped {
 
         // 2. Verificamos si la dirección del DTO modificado existe.
         // Si el DtoDireccion existe, significa que lo estamos modificando.
-        DtoDireccion direccionModificada = dtoHuespedModificado.getDireccion();
+        DtoDireccion direccionModificada = dtoHuespedModificado.getDtoDireccion();
 
+        Direccion direccionEntidadModificada = MapearDireccion.mapearDtoAEntidad(direccionModificada);
         if (direccionModificada != null) {
             try {
                 if (direccionModificada.getId() > 0) {
@@ -278,7 +298,7 @@ public class GestorHuesped {
                     DtoDireccion direccionNuevaCreada = daoDireccion.persistirDireccion(direccionModificada);
                     
                     // Actualizamos el DTO del Huesped con el ID de la dirección recién creada
-                    dtoHuespedModificado.setIdDireccion(direccionNuevaCreada.getId());
+                    dtoHuespedModificado.setDtoDireccion(direccionNuevaCreada.getId());
                 }
             } catch (Excepciones.PersistenciaException e) {
                 System.err.println("Error al intentar persistir la dirección en la BD: " + e.getMessage());
@@ -458,16 +478,17 @@ public class GestorHuesped {
             // === CAMINO: ALTA (No existe) ===
 
             // A. Convertir DTOs a Entidades (Mapeo)
+            //Estos dos metodos se encargan de llamar a las entidades, pedirles que "se creen" y retornarlas al gestor
             Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
             Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
 
-            // B. Persistir Dirección primero (para obtener su ID)
+            // B. Persistir Dirección primero (para obtener su ID). El gestor le diece al DAO correspondiente que persista la entidad previamente creada
             daoDireccion.persistirDireccion(direccionEntidad);
 
-            // C. Asignar la dirección guardada al huésped
+            // C. Asignar la dirección guardada al huésped. Para poder persistirlo con su direccion asociada
             huespedEntidad.setDireccion(direccionEntidad);
 
-            // D. Persistir Huésped
+            // D. Persistir Huésped. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
             daoHuesped.persistirHuesped(huespedEntidad);
 
         } else {
