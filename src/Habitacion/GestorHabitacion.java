@@ -20,13 +20,13 @@ public class GestorHabitacion {
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorHabitacion() desde fuera.
     private GestorHabitacion() {
-        //Obtenemos las instancias de los DAOs
+        //Obtenemos las instancias de los DAO
         this.daoHabitacion = DaoHabitacion.getInstance();
         // Referencia al mapearHabitacion
         MapearHabitacion mapearHabitacion = new MapearHabitacion();
     }
 
-    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
+    // 3. Metodo de acceso global, synchronized para guardar peligro por multihilos
     public static synchronized GestorHabitacion getInstance() {
         if (instancia == null) {
             instancia = new GestorHabitacion();
@@ -38,7 +38,7 @@ public class GestorHabitacion {
         ArrayList<DtoHabitacion> entidades = daoHabitacion.obtenerTodas();
         ArrayList<Habitacion> dtos = new ArrayList<>();
 
-        // Mapeo
+        // Aca se está creando la entidad habitación y asignándole todos los valores del dto.
         for (DtoHabitacion h : entidades) {
             dtos.add(MapearHabitacion.mapearDtoAEntidad(h));
         }
@@ -53,7 +53,7 @@ public class GestorHabitacion {
     }
 
     public Habitacion obtenerHabitacionPorNumero(String numero) {
-        //Obtenemos el dto y mapeamos a entidad para devolver
+        //Obtenemos el dto. Y mapeamos a entidad para devolverla
         return MapearHabitacion.mapearDtoAEntidad(daoHabitacion.obtenerPorNumero(numero)); // Placeholder
     }
 

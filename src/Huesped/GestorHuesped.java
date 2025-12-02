@@ -463,105 +463,42 @@ public class GestorHuesped {
     //Logica de UPSERT para CU9
     public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
 
-        // 1. Verificamos existencia (condicion del alt)
+        // 1. Verificamos existencia (alt)
         boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
 
-        if (!existe) {
-            // === CAMINO: ALTA (No existe) ===
-            // Lógica: Crear dirección -> Guardar dirección -> Usar ID dirección para crear Huesped -> Guardar Huésped
-
-            // A. Convertir DTOs a Entidades
-            Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
-            Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
-
-            // B. Persistir Dirección (El DAO le asignará el ID generado al objeto direccionEntidad)
-            daoDireccion.persistirDireccion(direccionEntidad);
-
-            // C. Asignar la dirección (ya con ID) al huésped
-            huespedEntidad.setDireccion(direccionEntidad);
-
-            // D. Persistir Huésped. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
-            daoHuesped.persistirHuesped(huespedEntidad);
-
-            // E. Crear email si corresponde
-            daoHuesped.crearEmailHuesped(dtoHuesped);
-
-        } else {
-            // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
-            // Lógica: Recuperar ID Dir anterior -> Actualizar Dirección -> Actualizar Huésped
-
-            // A. Recuperar ID de la dirección vieja para no dejar una dirección huérfana/nueva
-            int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
-
-            // B. Actualizar la Dirección
-            if (idDireccionExistente > 0) {
-                // Mapeamos la dirección nueva
-                Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
-                // Le forzamos el ID viejo para que el UPDATE pise la fila correcta
-                direccionEntidad.setId(idDireccionExistente);
-
-                // Llamamos al DAO de Dirección. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
-                daoDireccion.modificarDireccion(direccionEntidad);
-
-                // Creamos la entidad Huésped con esta dirección
-                Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
-                huespedEntidad.setDireccion(direccionEntidad);
-
-                // C. Actualizar el Huésped
-                daoHuesped.modificarHuesped(huespedEntidad);
-            }
-
-            // D. Actualizar Emails (Borrar viejos y crear nuevos es lo más seguro)
-            daoHuesped.eliminarEmailsHuesped(dtoHuesped.getTipoDocumento().name(), dtoHuesped.getNroDocumento());
-            daoHuesped.crearEmailHuesped(dtoHuesped);
-        }
-    }
-    public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
-
-        // 1. Verificamos existencia
-        boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+        // A. Convertir DTOs a Entidades (Usando los mappers)
+        Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
+        Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
 
         if (!existe) {
             // === CAMINO: ALTA (No existe) ===
 
-            // A. Convertir DTOs a Entidades (Mapeo)
-
-            Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
-            Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
-
-            // B. Persistir Dirección primero (para obtener su ID).
+            // 1. Persistir Dirección primero para obtener ID
             daoDireccion.persistirDireccion(direccionEntidad);
 
-            // C. Asignar la dirección guardada al huésped. Para poder persistirlo con su direccion asociada
+            // 2. Asignar la dirección (con ID generado) al huésped
             huespedEntidad.setDireccion(direccionEntidad);
 
-            // D. Persistir Huésped. El gestor le diece al DAO correspondiente que persista la entidad previamente creada
+            // 3. Persistir Huésped (El DAO se encarga de guardar emails, teléfonos, etc.)
             daoHuesped.persistirHuesped(huespedEntidad);
 
         } else {
             // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
 
-            // A. Recuperar el ID de la dirección que ya tenía este huésped en la BD
-            // Esto es necesario para hacer el UPDATE sobre la fila correcta en la tabla direcciones
+            // 1. Recuperar ID de la dirección vieja
             int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
 
-            // B. Actualizar la Dirección (Si corresponde)
+            // 2. Actualizar la Dirección si existe
             if (idDireccionExistente > 0) {
-                // Convertimos el DTO de dirección a Entidad
-                Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
-                // Le clavamos el ID viejo para que sobreescriba esa fila
                 direccionEntidad.setId(idDireccionExistente);
-                // Llamamos al DAO de Dirección (recibe Entidad)
                 daoDireccion.modificarDireccion(direccionEntidad);
-
-                // Preparamos la entidad Huesped con esta dirección
-                Huesped huespedEntidad = MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+                // Vinculamos la dirección actualizada a la entidad huésped
                 huespedEntidad.setDireccion(direccionEntidad);
-
-                // C. Actualizar el Huésped
-                // Llamamos al DAO de Huésped (recibe Entidad)
-                daoHuesped.modificarHuesped(huespedEntidad);
             }
+
+            // 3. Actualizar el Huésped
+            // (El DAO se encarga de borrar e insertar de nuevo emails, teléfonos, etc.)
+            daoHuesped.modificarHuesped(huespedEntidad);
         }
     }
 }

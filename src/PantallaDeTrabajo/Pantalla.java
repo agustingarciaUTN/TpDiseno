@@ -157,6 +157,7 @@ public class Pantalla {
             System.out.println("Usuario: " + nombreUsuarioActual);
             System.out.println("----------------------------------------");
             System.out.println("1. Buscar huesped (CU2)");
+            System.out.println("2. ");
             System.out.println("2. Dar de alta huesped (CU9)");
             System.out.println("3. Dar de baja huesped (CU11) ");
             System.out.println("4. Cerrar sesión");
@@ -180,12 +181,15 @@ public class Pantalla {
                     buscarHuesped();
                     break;
                 case 2:
-                    darAltaDeHuesped();
+                    //reservarHabitacion(); EN PROGRESO
                     break;
                 case 3:
-                    //iniciarBajaHuesped();
+                    darAltaDeHuesped();
                     break;
                 case 4:
+                    //iniciarBajaHuesped();
+                    break;
+                case 5:
                     System.out.print("¿Está seguro que desea cerrar sesión? (SI/NO): ");
                     String confirmar = scanner.nextLine().trim();
                     if (confirmar.equalsIgnoreCase("SI")) {
@@ -265,7 +269,7 @@ public class Pantalla {
                     }
 
 
-                    //Si no existen duplicados, INSERT. Si existe y se selecciono "aceptar igualmente", UPDATE
+                    //Si no existen duplicados, INSERT. Si existe y se seleccionó "aceptar igualmente", UPDATE
                     gestorHuesped.upsertHuesped(datosIngresados);
 
 
@@ -957,7 +961,7 @@ public class Pantalla {
         return NroDocumento;
     }
 
-
+EU PUSHEA
     // --- NUEVO MÉTODO: GRILLA DE DISPONIBILIDAD ---
     public void mostrarGrillaDisponibilidad() {
         System.out.println("\n========================================");
@@ -1164,6 +1168,19 @@ public class Pantalla {
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
     }
+
+    public void reservarHabitacion(){
+
+
+
+
+
+
+
+
+    }
+
+
 
     //CASO DE USO 11
     /*
