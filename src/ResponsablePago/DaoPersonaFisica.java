@@ -53,5 +53,5 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
     }
 
     @Override
-    public PersonaFisica obtenerPorId(int id) { return null; } // TODO
+    public DtoPersonaFisica obtenerPorId(int id) { return null; } // TODO
 }

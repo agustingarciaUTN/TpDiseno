@@ -7,8 +7,8 @@ public interface DaoInterfazFactura {
     boolean persistirFactura(Factura factura) throws PersistenciaException;
     boolean modificarFactura(Factura factura) throws PersistenciaException;
     boolean eliminarFactura(int id);
-    Factura obtenerFacturaPorId(int id);
-    ArrayList<Factura> obtenerTodas();
+    DtoFactura obtenerFacturaPorId(int id);
+    ArrayList<DtoFactura> obtenerTodas();
 
     /*
     ArrayList<Factura> obtenerPorEstadia(int idEstadia);

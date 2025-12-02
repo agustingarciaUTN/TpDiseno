@@ -59,7 +59,7 @@ public class DaoPago implements DaoInterfazPago {
     }
 
     @Override
-    public Pago obtenerPagoPorId(int id) {
+    public DtoPago obtenerPagoPorId(int id) {
         // Implementar con Builder y cargar medios de pago
         return null; // TODO
     }

@@ -98,8 +98,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- BUSCAR POR CRITERIO (TU REQUERIMIENTO) ---
     @Override
-    public ArrayList<Huesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc) {
-        ArrayList<Huesped> lista = new ArrayList<>();
+    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc) {
+        ArrayList<DtoHuesped> lista = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM huesped WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
@@ -127,13 +127,9 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
+            ResultSet rs = ps.executeQuery();
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    // Reutilizamos la lógica de mapeo
-                    lista.add(mapearHuesped(conn, rs));
-                }
-            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -143,7 +139,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- OBTENER TODOS ---
     @Override
     public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
-        ArrayList<Huesped> lista = new ArrayList<>();
+        ArrayList<DtoHuesped> lista = new ArrayList<>();
         String sql = "SELECT * FROM huesped";
         try (Connection conn = Conexion.getConnection();
              Statement stmt = conn.createStatement();
@@ -157,15 +153,14 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- OBTENER INDIVIDUAL ---
     @Override
-    public Huesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
+    public DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
         String sql = "SELECT * FROM huesped WHERE tipo_documento=? AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
             ps.setString(2, nroDocumento);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapearHuesped(conn, rs);
-            }
+            ResultSet rs = ps.executeQuery();
+
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
@@ -241,7 +236,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
-    private Huesped mapearHuesped(Connection conn, ResultSet rs) throws SQLException {
+    private DtoHuesped mapearHuesped(Connection conn, ResultSet rs) throws SQLException {
         // 1. Datos Básicos
         String tipoStr = rs.getString("tipo_documento");
         String nroDoc = rs.getString("numero_documento");
@@ -277,15 +272,14 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
 
         // 3. Cargar Dirección
-        Direccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
+        DtoDireccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
 
         // 4. Construir Objeto
-        return new Huesped.Builder(
-                rs.getString("nombres"),
-                rs.getString("apellido"),
-                TipoDocumento.valueOf(tipoStr),
-                nroDoc
-        )
+        return new DtoHuesped.Builder()
+                .nombres(rs.getString("nombres"))
+                .apellido(rs.getString("apellido"))
+                .tipoDocumento(TipoDocumento.valueOf(tipoStr))
+                .documento(nroDoc)
                 .fechaNacimiento(rs.getDate("fecha_nacimiento"))
                 .nacionalidad(rs.getString("nacionalidad"))
                 .cuit(rs.getString("cuit"))
@@ -299,8 +293,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     @Override
     public int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento) {
-        Huesped h = obtenerHuesped(tipo, nroDocumento);
-        if(h != null && h.getDireccion() != null) return h.getDireccion().getId();
+        DtoHuesped h = obtenerHuesped(tipo, nroDocumento);
+        if(h != null && h.getDtoDireccion() != null) return h.getDtoDireccion().getId();
         return -1;
     }
 

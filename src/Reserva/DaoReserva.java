@@ -49,7 +49,7 @@ public class DaoReserva implements DaoInterfazReserva {
     @Override
     public boolean eliminarReserva(int id) { return false; }
     @Override
-    public Reserva obtenerPorId(int id) { return null; }
+    public DtoReserva obtenerPorId(int id) { return null; }
     @Override
-    public ArrayList<Reserva> obtenerTodas() { return new ArrayList<>(); }
+    public ArrayList<DtoReserva> obtenerTodas() { return new ArrayList<>(); }
 }

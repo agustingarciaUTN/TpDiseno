@@ -66,7 +66,7 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
 
     // Implementar obtener, modificar y eliminar similar a PersonaFisica
     @Override
-    public PersonaJuridica obtenerPorId(int id) { return null; } // TODO: Implementar con Builder
+    public DtoPersonaJuridica obtenerPorId(int id) { return null; } // TODO: Implementar con Builder
     @Override
     public boolean modificarPersonaJuridica(PersonaJuridica pj) throws PersistenciaException { return false; } // TODO
     @Override

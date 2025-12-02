@@ -71,7 +71,7 @@ public class GestorHuesped {
            listaHuespedesEncontrados.add(i, mapearHuesped.mapearDtoAEntidad(listaDtoHuespedesEncontrados.get(i)));
        }
 
-        return listaHuespedesEncontrados;
+        return listaDtoHuespedesEncontrados;
     }
 
     public List<String> validarDatosHuesped(DtoHuesped datos){
@@ -371,7 +371,7 @@ public class GestorHuesped {
      * NIVEL 2.3: Registra en log la eliminación exitosa de un huésped
      */
     private void registrarAuditoriaExitosa(String tipoDocumento, String nroDocumento) {
-        String timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+        String timestamp = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date());
         String mensaje = String.format("[AUDITORÍA] %s - Huésped eliminado: %s %s - Usuario: Sistema",
                 timestamp, tipoDocumento, nroDocumento);
 
@@ -385,7 +385,7 @@ public class GestorHuesped {
      * NIVEL 2.3: Registra en log un intento fallido de eliminación
      */
     private void registrarAuditoriaFallida(String tipoDocumento, String nroDocumento, String motivo) {
-        String timestamp = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+        String timestamp = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date());
         String mensaje = String.format("[AUDITORÍA] %s - Intento fallido de eliminar huésped: %s %s - Motivo: %s",
                 timestamp, tipoDocumento, nroDocumento, motivo);
 
@@ -399,13 +399,13 @@ public class GestorHuesped {
      * NIVEL 2.3: Escribe un mensaje en el archivo de auditoría
      */
     private void escribirLog(String mensaje) {
-        try (FileWriter fw = new FileWriter("auditoria_huespedes.log", true);
-             BufferedWriter bw = new BufferedWriter(fw);
-             PrintWriter out = new PrintWriter(bw)) {
+        try (java.io.FileWriter fw = new java.io.FileWriter("auditoria_huespedes.log", true);
+             java.io.BufferedWriter bw = new java.io.BufferedWriter(fw);
+             java.io.PrintWriter out = new java.io.PrintWriter(bw)) {
 
             out.println(mensaje);
 
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             System.err.println("No se pudo escribir en el archivo de auditoría: " + e.getMessage());
         }
     }
@@ -434,7 +434,7 @@ public class GestorHuesped {
                     // Actualizamos el DTO del Huesped con el ID de la dirección recién creada
                     dtoHuespedModificado.setIdDireccion(direccionNuevaCreada.getId());
                 }
-            } catch (PersistenciaException e) {
+            } catch (Excepciones.PersistenciaException e) {
                 System.err.println("Error al intentar persistir la dirección en la BD: " + e.getMessage());
                 // IMPORTANTE: Si falla la dirección, no debemos continuar con el huésped.
                 return; 
