@@ -53,6 +53,14 @@ public class GestorHabitacion {
         //Obtenemos el dto. Y mapeamos a entidad para devolverla
         return MapearHabitacion.mapearDtoAEntidad(daoHabitacion.obtenerPorNumero(numero)); // Placeholder
     }
+    public ArrayList<Habitacion> obtenerTodas(){
+        ArrayList<DtoHabitacion> listaDtoHabitaciones = daoHabitacion.obtenerTodas();
+        ArrayList<Habitacion> listaEntidadesHabitaciones = new ArrayList<>();
+        for (DtoHabitacion dto : listaDtoHabitaciones){
+            listaEntidadesHabitaciones.add(MapearHabitacion.mapearDtoAEntidad(dto));
+        }
+        return listaEntidadesHabitaciones;
+    }
 
     public void validarRangoFechas(Date inicio, Date fin) throws IllegalArgumentException {
         // 1. Validar Coherencia

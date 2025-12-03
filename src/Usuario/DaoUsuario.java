@@ -20,7 +20,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
 
     @Override
     public boolean persistir(Usuario usuario) throws PersistenciaException {
-        String sql = "INSERT INTO usuario (nombre, hash_contrasenia) VALUES (?, ?)";
+        String sql = "INSERT INTO usuario (nombre, hashConstrasenia) VALUES (?, ?)";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -49,7 +49,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
                     // USO DEL BUILDER con los datos justos y necesarios
                     return new DtoUsuario.Builder()
                             .nombre(rs.getString("nombre"))
-                            .contrasenia(rs.getString("hash_contrasenia"))
+                            .contrasenia(rs.getString("hashContrasenia"))
                             .id(rs.getInt("id_usuario"))
                             .build();
                 }
@@ -63,7 +63,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
     @Override
     public boolean modificar(Usuario usuario) throws PersistenciaException {
         // Por si cambian la contraseña
-        String sql = "UPDATE usuario SET hash_contrasenia = ? WHERE id_usuario = ?";
+        String sql = "UPDATE usuario SET hashConstrasenia = ? WHERE id_usuario = ?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 

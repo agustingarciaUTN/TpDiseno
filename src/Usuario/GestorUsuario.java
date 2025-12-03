@@ -45,7 +45,7 @@ public class GestorUsuario {
             }
 
             //Obtener el usuario de la base de datos
-            DtoUsuario usuarioBDD = daoUsuario.obtenerUsuarioPorNombre(nombre);
+            DtoUsuario usuarioBDD = daoUsuario.buscarPorNombre(nombre);
 
             //Verificar si el usuario existe
             if (usuarioBDD == null) {
@@ -56,8 +56,8 @@ public class GestorUsuario {
             //Generar hash MD5 de la contraseña ingresada
             String hashIngresado = generarHashMD5(contrasenia);
 
-            //Comparar el hash ingresado con el hash almacenado en la BDD
-            String hashAlmacenado = usuarioBDD.getHashContrasenia();
+            //Guardar el hash de la base de datos
+            String hashAlmacenado = usuarioBDD.getContrasenia();
 
             //Verificar si las contraseñas coinciden
             if (hashAlmacenado == null) {

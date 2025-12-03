@@ -27,16 +27,6 @@ public class DtoDireccion {
         this.provincia = builder.provincia;
         this.pais = builder.pais;
     }
-    private DtoDireccion(Builder builder) {
-        this.calle = builder.calle;
-        this.numero = builder.numero;
-        this.departamento = builder.departamento;
-        this.piso = builder.piso;
-        this.codPostal = builder.codPostal;
-        this.localidad = builder.localidad;
-        this.provincia = builder.provincia;
-        this.pais = builder.pais;
-    }
 
 
    // Getters y Setters
