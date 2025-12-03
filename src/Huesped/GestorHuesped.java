@@ -74,35 +74,14 @@ public class GestorHuesped {
         List<String> errores = new ArrayList<>();
 
 
-
-
-
-        if (datos.getNacionalidad() == null || datos.getNacionalidad().trim().isEmpty()) {
-            errores.add("La Nacionalidad es obligatoria.");
-        }
-
-        //Validacion de listas (evita el crash si vienen vacías)
-        List<Long> telefonos = datos.getTelefono();
-        if (datos.getTelefono() == null || datos.getTelefono().isEmpty() || datos.getTelefono().getLast() <= 0) {//evitamos NullPointerException
-            errores.add("El Teléfono es obligatorio.");
-        }
-        List<String> ocupaciones = datos.getOcupacion();
-        if (datos.getOcupacion() == null || datos.getOcupacion().isEmpty() || datos.getOcupacion().getLast() == null || datos.getOcupacion().getLast().isBlank()) {
-            errores.add("La Ocupación es obligatoria.");
-        }
-
         // Regla especial CUIT/IVA
-        //Si la posición IVA es "Responsable Inscripto", obligamos a tener CUIT y validamos su formato con Regex
+        //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vacio, ademas validamos su formato con Regex
         if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
-            } else {
-                // Podríamos añadir una validación básica de formato CUIT aquí si quieres
-                if (!validarFormatoCUIT(datos.getCuit())) {
-                    errores.add("El formato del CUIT ingresado no es válido (formato CUIT: XX-XXXXXXXX-X) .");
-                }
             }
         }
+
 
         return errores;//Lista con los errores que encontramos
     }

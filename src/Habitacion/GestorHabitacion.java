@@ -2,7 +2,6 @@ package Habitacion;
 
 import Dominio.Habitacion;
 import Utils.Mapear.MapearHabitacion;
-import enums.EstadoHabitacion;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,8 +21,6 @@ public class GestorHabitacion {
     private GestorHabitacion() {
         //Obtenemos las instancias de los DAO
         this.daoHabitacion = DaoHabitacion.getInstance();
-        // Referencia al mapearHabitacion
-        MapearHabitacion mapearHabitacion = new MapearHabitacion();
     }
 
     // 3. Metodo de acceso global, synchronized para guardar peligro por multihilos
@@ -58,11 +55,13 @@ public class GestorHabitacion {
     }
 
     public void validarRangoFechas(Date inicio, Date fin) throws IllegalArgumentException {
-
-        // 3. Validar Duración Máxima (Regla de Negocio opcional pero recomendada para UI)
-        // Calculamos la diferencia en días
-        long diferenciaMillies = Math.abs(fin.getTime() - inicio.getTime());
-        long dias = TimeUnit.DAYS.convert(diferenciaMillies, TimeUnit.MILLISECONDS);
+        // 1. Validar Coherencia
+        if (inicio.after(fin)) {
+            throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+        }
+        // 2. Validar Duración Máxima
+        long diferenciaMilisec = Math.abs(fin.getTime() - inicio.getTime());
+        long dias = TimeUnit.DAYS.convert(diferenciaMilisec, TimeUnit.MILLISECONDS);
 
         if (dias > 60) {
             throw new IllegalArgumentException("El rango de fechas no puede superar los 60 días (demasiado grande para mostrar).");
