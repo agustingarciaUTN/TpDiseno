@@ -1028,8 +1028,8 @@ public class Pantalla {
     }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
 
 
-
-    /*// GRILLA, CU 5
+/*
+     GRILLA, CU 5
     public void mostrarGrillaDisponibilidad() {
         System.out.println("\n========================================");
         System.out.println("   CONSULTA DE DISPONIBILIDAD (GRILLA)");
@@ -1148,9 +1148,9 @@ public class Pantalla {
 
     // Versión de pedirFecha que permite fechas futuras (a diferencia de la de nacimiento)
 
-    }*/
+    }
 
-    /*// CU4: Reservar Habitación
+    // CU4: Reservar Habitación
     public void reservarHabitacion() throws PersistenciaException {
         System.out.println("========================================");
         System.out.println("   CU4: RESERVAR HABITACIÓN");
@@ -1299,10 +1299,10 @@ public class Pantalla {
             System.out.println("Detalle: " + e.getMessage());
             pausa();
         }
-    }*/
+    }
 
     //Sobrecarga de pintarGrilla, para actualizarla al seleccionar
-       /* private void pintarHabitacionesReservada (List < Habitacion > habitaciones, Date inicio, Date
+    /* private void pintarHabitacionesReservada (List < Habitacion > habitaciones, Date inicio, Date
         fin, List < DtoReserva > reservasPendientes){
             System.out.println("\n--- GRILLA ACTUALIZADA CON SU SELECCIÓN ---");
 
@@ -1368,8 +1368,8 @@ public class Pantalla {
             }
             imprimirSeparador(habitaciones.size());
             System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [*] SU SELECCIÓN");
-        }*/
-
+        }
+*/
     /**
      * MÉTODO ORQUESTADOR (CEREBRO):
      * Coordina los 3 gestores para construir la matriz de estados en memoria.

@@ -45,7 +45,7 @@ public class DaoReserva implements DaoInterfazReserva {
 
     public boolean hayReservaEnFecha(String numeroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFinal) {
         String sql = "SELECT 1 FROM reserva WHERE id_habitacion = ? " +
-                "AND ? >= fecha_desde AND ? <= fecha_hasta " + // La fecha cae dentro de reserva
+                "AND ? > fecha_desde AND ? < fecha_hasta " + // La fecha cae dentro de reserva
                 "AND estado_reserva = 'ACTIVA' LIMIT 1";
 
         try (Connection conn = Conexion.getConnection();
