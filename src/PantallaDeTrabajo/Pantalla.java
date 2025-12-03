@@ -48,7 +48,7 @@ public class Pantalla {
     }
 
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
-    public void iniciarSistema() throws PersistenciaException {
+    public void iniciarSistema() throws Exception {
         System.out.println("========================================");
         System.out.println("   SISTEMA DE GESTION HOTELERA");
         System.out.println("========================================\n");
@@ -140,7 +140,7 @@ public class Pantalla {
     }
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
-    private void mostrarMenuPrincipal() throws PersistenciaException {
+    private void mostrarMenuPrincipal() throws Exception {
         //Paso 4: El sistema presenta la pantalla principal
         boolean salir = false;
 
@@ -158,7 +158,7 @@ public class Pantalla {
             System.out.println("========================================");
             System.out.print("Ingrese una opción: ");
 
-            int opcion = -1;
+            int opcion;
             try {
                 opcion = scanner.nextInt();
                 scanner.nextLine(); //consumir salto de linea
@@ -175,7 +175,7 @@ public class Pantalla {
                     buscarHuesped();
                     break;
                 case 2:
-                    //reservarHabitacion();
+                    reservarHabitacion();
                     break;
                 case 3:
                     darDeAltaHuesped();
@@ -241,7 +241,7 @@ public class Pantalla {
 
 
                 //aca hay que llamar al gestor para que valide los datos
-                List<String> errores = new ArrayList<>();
+                List<String> errores;
                 //Metodo que retorna una lista de todos los errores en la validacion de negocio
                 errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
@@ -389,7 +389,7 @@ public class Pantalla {
 
         String paisDireccion = pedirStringTexto("Pais: ");
 
-        Long telefono = pedirTelefono("Teléfono: ");
+        Long telefono = pedirTelefono();
 
         String email = pedirEmail();
 
@@ -523,7 +523,7 @@ public class Pantalla {
         return valor;
     }
 
-    private Long pedirTelefono(String mensaje) {
+    private Long pedirTelefono() {
         Long valor = null;
         boolean valido = false;
 
@@ -531,7 +531,7 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            System.out.print(mensaje);
+            System.out.print("Teléfono: ");
             String entrada = scanner.nextLine().trim();
 
             if (entrada.isEmpty()) {
@@ -622,7 +622,6 @@ public class Pantalla {
 
             if (fechaStr.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
-                continue;
             } else {
                 try {
                     fecha = formatoFecha.parse(fechaStr);
@@ -661,11 +660,10 @@ public class Pantalla {
         opciones.append("): ");
 
         while (!valido) {
-            System.out.print(opciones.toString());
+            System.out.print(opciones);
             String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
             if (tipoDocStr.isEmpty()) {
                 System.out.println("Error: El tipo de documento es obligatorio.");
-                continue;
             } else {
                 try {
                     tipoDoc = TipoDocumento.valueOf(tipoDocStr);
@@ -739,7 +737,11 @@ public class Pantalla {
         boolean valido = false;
 
         while (!valido) {
-            System.out.println("Posición frente al IVA (1.Consumidor Final (por defecto)," + '\n' + " 2.Monotributista, " + '\n' + "3.Responsable Inscripto, " + '\n' + "4.Excento)");
+            System.out.println("""
+                    Posición frente al IVA (1.Consumidor Final (por defecto),
+                     2.Monotributista,\s
+                    3.Responsable Inscripto,\s
+                    4.Excento)""");
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
@@ -789,7 +791,7 @@ public class Pantalla {
     }
 
     //CU2
-    public void buscarHuesped() throws PersistenciaException {
+    public void buscarHuesped() {
         System.out.println("========================================");
         System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
         System.out.println("========================================");
@@ -893,7 +895,7 @@ public class Pantalla {
     }//NO SE DE QUE SON ESTOS METODOS
 
 
-    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
+    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) {
 
         // CAMBIO: Mensaje para CU10
         System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
