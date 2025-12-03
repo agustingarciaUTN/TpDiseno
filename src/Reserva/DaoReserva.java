@@ -44,21 +44,24 @@ public class DaoReserva implements DaoInterfazReserva {
     }
 
     public boolean hayReservaEnFecha(String numeroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFinal) {
+        // CORRECCIÓN: Detecta cualquier tipo de solapamiento
         String sql = "SELECT 1 FROM reserva WHERE id_habitacion = ? " +
-                "AND ? >= fecha_desde AND ? <= fecha_hasta " + // La fecha cae dentro de reserva
+                "AND fecha_desde < ? AND fecha_hasta > ? " +
                 "AND estado_reserva = 'ACTIVA' LIMIT 1";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            java.sql.Date fechaInicio = new java.sql.Date(fechaInicial.getTime());
-            java.sql.Date fechaFin = new java.sql.Date(fechaFinal.getTime());
+            java.sql.Date fechaInicioSql = new java.sql.Date(fechaInicial.getTime());
+            java.sql.Date fechaFinSql = new java.sql.Date(fechaFinal.getTime());
+
             ps.setString(1, numeroHabitacion);
-            ps.setDate(2, fechaInicio);
-            ps.setDate(3, fechaFin);
+            // OJO: Cruzamos los parámetros para cumplir la lógica
+            ps.setDate(2, fechaFinSql);    // fecha_desde < NUEVO_FIN
+            ps.setDate(3, fechaInicioSql); // fecha_hasta > NUEVO_INICIO
 
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // True si encontró al menos una
+                return rs.next();
             }
         } catch (SQLException e) {
             return false;

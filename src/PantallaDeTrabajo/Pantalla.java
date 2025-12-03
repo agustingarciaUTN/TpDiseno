@@ -1,19 +1,24 @@
 package PantallaDeTrabajo;
+import Dominio.Habitacion;
 import Dominio.Huesped;
 import Estadia.GestorEstadia;
 import Habitacion.GestorHabitacion;
 import Huesped.*;
+import Reserva.DtoReserva;
 import Reserva.GestorReserva;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
+
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import Excepciones.PersistenciaException;
 
@@ -44,7 +49,7 @@ public class Pantalla {
     }
 
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
-    public void iniciarSistema() throws PersistenciaException {
+    public void iniciarSistema() throws Exception {
         System.out.println("========================================");
         System.out.println("   SISTEMA DE GESTION HOTELERA");
         System.out.println("========================================\n");
@@ -136,7 +141,7 @@ public class Pantalla {
     }
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
-    private void mostrarMenuPrincipal() throws PersistenciaException {
+    private void mostrarMenuPrincipal() throws Exception {
         //Paso 4: El sistema presenta la pantalla principal
         boolean salir = false;
 
@@ -154,7 +159,7 @@ public class Pantalla {
             System.out.println("========================================");
             System.out.print("Ingrese una opción: ");
 
-            int opcion = -1;
+            int opcion;
             try {
                 opcion = scanner.nextInt();
                 scanner.nextLine(); //consumir salto de linea
@@ -171,7 +176,7 @@ public class Pantalla {
                     buscarHuesped();
                     break;
                 case 2:
-                    //reservarHabitacion();
+                    reservarHabitacion();
                     break;
                 case 3:
                     darDeAltaHuesped();
@@ -237,7 +242,7 @@ public class Pantalla {
 
 
                 //aca hay que llamar al gestor para que valide los datos
-                List<String> errores = new ArrayList<>();
+                List<String> errores;
                 //Metodo que retorna una lista de todos los errores en la validacion de negocio
                 errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
@@ -385,7 +390,7 @@ public class Pantalla {
 
         String paisDireccion = pedirStringTexto("Pais: ");
 
-        Long telefono = pedirTelefono("Teléfono: ");
+        Long telefono = pedirTelefono();
 
         String email = pedirEmail();
 
@@ -519,7 +524,7 @@ public class Pantalla {
         return valor;
     }
 
-    private Long pedirTelefono(String mensaje) {
+    private Long pedirTelefono() {
         Long valor = null;
         boolean valido = false;
 
@@ -527,7 +532,7 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            System.out.print(mensaje);
+            System.out.print("Teléfono: ");
             String entrada = scanner.nextLine().trim();
 
             if (entrada.isEmpty()) {
@@ -618,7 +623,6 @@ public class Pantalla {
 
             if (fechaStr.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
-                continue;
             } else {
                 try {
                     fecha = formatoFecha.parse(fechaStr);
@@ -657,11 +661,10 @@ public class Pantalla {
         opciones.append("): ");
 
         while (!valido) {
-            System.out.print(opciones.toString());
+            System.out.print(opciones);
             String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
             if (tipoDocStr.isEmpty()) {
                 System.out.println("Error: El tipo de documento es obligatorio.");
-                continue;
             } else {
                 try {
                     tipoDoc = TipoDocumento.valueOf(tipoDocStr);
@@ -735,7 +738,11 @@ public class Pantalla {
         boolean valido = false;
 
         while (!valido) {
-            System.out.println("Posicion frente al IVA (1.Consumidor Final (por defecto)," + '\n' + " 2.Monotributista, " + '\n' + "3.Responsable Inscripto, " + '\n' + "4.Excento)");
+            System.out.println("""
+                    Posición frente al IVA (1.Consumidor Final (por defecto),
+                     2.Monotributista,\s
+                    3.Responsable Inscripto,\s
+                    4.Excento)""");
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
@@ -785,7 +792,7 @@ public class Pantalla {
     }
 
     //CU2
-    public void buscarHuesped() throws PersistenciaException {
+    public void buscarHuesped() {
         System.out.println("========================================");
         System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
         System.out.println("========================================");
@@ -888,47 +895,8 @@ public class Pantalla {
         }
     }//NO SE DE QUE SON ESTOS METODOS
 
-    private String validarYLeerNumeroDocumento(TipoDocumento tipoDoc) {
-        while (true) {
-            System.out.print("Número de Documento: ");
-            String numeroStr = scanner.nextLine().trim();
 
-            if (numeroStr.isEmpty()) {
-                return ""; // Se devuelve 0 si se omite
-            }
-
-            try {
-
-
-                // VALIDACIÓN DE RANGO SEGÚN TIPO DE DOCUMENTO
-                if (tipoDoc == TipoDocumento.DNI) {
-                    long numero = Long.parseLong(numeroStr.trim());
-                    if (numero < 0 || numero > 99999999) {
-                        System.out.println("El DNI debe estar entre 0 y 99.999.999. Intente nuevamente.");
-                        continue;
-                    }
-                } else if (tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
-                    long numero = Long.parseLong(numeroStr.trim());
-                    if (numero < 0 || numero > 99999999) {
-                        System.out.println("La " + tipoDoc.name() + " debe estar entre 0 y 99.999.999. Intente nuevamente.");
-                        continue;
-                    }
-                } else if (tipoDoc == TipoDocumento.PASAPORTE) {
-                    if (numeroStr.isBlank()) {
-                        System.out.println("Debe ingresar un Pasaporte. Intente nuevamente.");
-                        continue;
-                    }
-                }
-
-                return numeroStr;
-
-            } catch (NumberFormatException e) {
-                System.out.println("⚠ El número de documento debe ser un valor numérico. Intente nuevamente.");
-            }
-        }
-    }//NO SE DE QUE SON ESTOS METODOS
-
-    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
+    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) {
 
         // CAMBIO: Mensaje para CU10
         System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
@@ -1022,364 +990,22 @@ public class Pantalla {
         }
     }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
 
-
-
-    /*// GRILLA, CU 5
-    public void mostrarGrillaDisponibilidad() {
-        System.out.println("\n========================================");
-        System.out.println("   CONSULTA DE DISPONIBILIDAD (GRILLA)");
-        System.out.println("========================================\n");
-
-        // A. Pedir Fechas (Usamos un helper que permita fechas futuras)
-        System.out.println("Ingrese el rango de fechas a consultar:");
-        Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
-        Date fechaFin = pedirFechaFutura("Fecha de Fin");
-
-        // B. Validar Lógica de Negocio (Rango coherente)
-        try {
-            // Delegamos la validación al Gestor
-            gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error en el rango de fechas: " + e.getMessage());
-            pausa();
-            return;
-        }
-
-        // C. Obtener Columnas (Habitaciones)
-        ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodasLasHabitaciones();
-
-        if (habitaciones.isEmpty()) {
-            System.out.println("No hay habitaciones registradas en el sistema.");
-            pausa();
-            return;
-        }
-
-        System.out.println("\nCargando disponibilidad...\n");
-
-        // D. Dibujar la Grilla
-        dibujarGrilla(habitaciones, fechaInicio, fechaFin);
-
-        pausa();
-    }
-
-
-    public String obtenerEstadoParaFecha(Habitacion habitacion, Date fecha) {
-        String estado;
-        if (habitacion.getEstadoHabitacion().name().equals("FUERA DE SERVICIO")) {
-            estado = "FUERA DE SERVICIO";
-        } else if (gestorEstadia.estaOcupadaEnFecha(habitacion.getNumero(), fecha, fecha)) {
-            estado = "OCUPADA";
-        } else if (gestorReserva.estaReservadaEnFecha(habitacion.getNumero(), fecha, fecha)) {
-            estado = "RESERVADA";
-        } else {
-            estado = "LIBRE";
-        }
-        return estado;
-    }
-
-    private void dibujarGrilla(List<Habitacion> habitaciones, Date inicio, Date fin) {
-        String formatoFecha = "%-12s";
-        String formatoCelda = "| %-9s ";
-
-        // Conversión a LocalDate para iterar cómodamente
-        LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        // 1. Imprimir Encabezado (Habitaciones)
-        System.out.print("             "); // Espacio para la columna de fecha
-        for (Habitacion hab : habitaciones) {
-            System.out.printf(formatoCelda, "Hab " + hab.getNumero());
-        }
-        System.out.println("|");
-
-        imprimirSeparador(habitaciones.size());
-
-        // 2. Bucle Principal (Días)
-        LocalDate actual = inicioLocal;
-        while (!actual.isAfter(finLocal)) {
-            // Imprimir Fecha (Fila)
-            System.out.printf(formatoFecha, actual.format(formateador));
-
-            // Convertir fecha actual a Date para consultar al Gestor
-            Date fechaConsulta = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-            // 3. Bucle Interno (Celdas/Habitaciones)
-            for (Habitacion hab : habitaciones) {
-                // ORQUESTACIÓN: La pantalla pregunta el estado para esa celda específica
-                String estado = obtenerEstadoParaFecha(hab, fechaConsulta);
-
-                // Mapeo visual
-                String visual = switch (estado) {
-                    case "OCUPADA" -> "[ X ]";     // Ocupación Real
-                    case "RESERVADA" -> "[ R ]";   // Reserva Futura
-                    case "FUERA DE SERVICIO" -> "[ - ]"; // Rota
-                    case "LIBRE" -> "[ L ]";       // Disponible
-                    default -> "[ ? ]";
-                };
-
-                // visual = colorizarEstado(visual, estado);
-
-                System.out.printf(formatoCelda, visual);
-            }
-            System.out.println("|"); // Fin de fila
-
-            actual = actual.plusDays(1); // Siguiente día
-        }
-
-        imprimirSeparador(habitaciones.size());
-        System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [-]Fuera de Servicio");
-    }
-
-    // --- Helpers Auxiliares ---
-
-    private void imprimirSeparador(int columnas) {
-        System.out.print("------------"); // Ancho columna fecha
-        for (int i = 0; i < columnas; i++) {
-            System.out.print("+-----------"); // Ancho columna celda
-        }
-        System.out.println("+");
-    }
-
-    // Versión de pedirFecha que permite fechas futuras (a diferencia de la de nacimiento)
-
-    }*/
-
-    /*// CU4: Reservar Habitación
-    public void reservarHabitacion() throws PersistenciaException {
-        System.out.println("========================================");
-        System.out.println("   CU4: RESERVAR HABITACIÓN");
-        System.out.println("========================================\n");
-
-        // 1. Solicitar rango de fechas
-        System.out.println("-- Consultando Disponibilidad --");
-        Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
-        Date fechaFin = pedirFechaFutura("Fecha de Fin");
-
-        // Validar lógica de fechas (regla de negocio)
-        try {
-            gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error en fechas: " + e.getMessage());
-            return;
-        }
-
-        // 2. Mostrar la grilla inicial (Estado actual de la BDD)
-        ArrayList<Habitacion> todasLasHabitaciones = gestorHabitacion.obtenerTodasLasHabitaciones();
-        if (todasLasHabitaciones.isEmpty()) {
-            System.out.println("No hay habitaciones registradas en el sistema.");
-            return;
-        }
-
-        System.out.println("\n--- Disponibilidad Actual ---");
-        dibujarGrilla(todasLasHabitaciones, fechaInicio, fechaFin);
-
-        // Lista para acumular las reservas que el usuario va seleccionando en memoria
-        List<DtoReserva> listaReservasSolicitadas = new ArrayList<>();
-
-
-        // 3. Bucle de Selección
-        while (true) {
-            System.out.println("\n¿Desea seleccionar una habitación para reservar? (SI/NO): ");
-            String respuesta = scanner.nextLine().trim();
-
-            if (!respuesta.equalsIgnoreCase("SI")) {
-                break; // Sale del bucle para proceder a confirmar o pintar
-            }
-
-            // A -> C: seleccionarHabitacion(...)
-            System.out.print("Ingrese Número de Habitación a reservar: ");
-            String nroHabitacion = scanner.nextLine().trim();
-
-            // Verificar que la habitación existe en la lista cargada
-            Habitacion habSeleccionada = todasLasHabitaciones.stream()
-                    .filter(h -> h.getNumero().equals(nroHabitacion))
-                    .findFirst()
-                    .orElse(null);
-
-            if (habSeleccionada == null) {
-                System.out.println("Error: La habitación ingresada no existe.");
-                continue;
-            }
-
-            // C -> C: validarDisponibilidadDeSeleccion(...)
-            // Verificamos si está ocupada en BDD (Estadía o Reserva) o si está rota
-            boolean ocupadaPorEstadia = gestorEstadia.estaOcupadaEnFecha(nroHabitacion, fechaInicio, fechaFin);
-            boolean ocupadaPorReserva = gestorReserva.estaReservadaEnFecha(nroHabitacion, fechaInicio, fechaFin);
-            boolean fueraDeServicio = habSeleccionada.getEstadoHabitacion().name().equals("FUERA_DE_SERVICIO");
-
-            // También verificamos si YA la seleccionamos en este mismo proceso (para no duplicar)
-            boolean yaSeleccionadaAhora = listaReservasSolicitadas.stream()
-                    .anyMatch(r -> r.getIdHabitacion().equals(nroHabitacion));
-
-            if (ocupadaPorEstadia || ocupadaPorReserva || fueraDeServicio || yaSeleccionadaAhora) {
-                // C -> A: mostrarError("Habitaciones seleccionadas no están Disponibles")
-                System.out.println("ERROR: La habitación seleccionada NO está disponible en esas fechas (o ya fue seleccionada).");
-            } else {
-                // Si está libre, creamos el DTO temporal y lo guardamos en la lista
-                DtoReserva dto = new DtoReserva.Builder()
-                        .idHabitacion(nroHabitacion)
-                        .fechaDesde(fechaInicio)
-                        .fechaHasta(fechaFin)
-                        .estado(EstadoReserva.ACTIVA)
-                        .fechaReserva(new Date()) // Fecha de hoy
-                        .build();
-
-                listaReservasSolicitadas.add(dto);
-                System.out.println(">> Habitación " + nroHabitacion + " agregada a su selección temporal.");
-            }
-        }
-
-        // Si no seleccionó nada, terminamos
-        if (listaReservasSolicitadas.isEmpty()) {
-            System.out.println("No se seleccionaron habitaciones. Finalizando caso de uso.");
-            return;
-        }
-
-        // 4. ACTUALIZACIÓN VISUAL (Lo que pediste específicamente)
-        // C -> C: pintarHabitacionesReservada(...)
-        // Se vuelve a dibujar la grilla, pero ahora mostrando las habitaciones seleccionadas con [ * ]
-        pintarHabitacionesReservada(todasLasHabitaciones, fechaInicio, fechaFin, listaReservasSolicitadas);
-
-        // Mostrar resumen textual
-        System.out.println("\n--- Resumen de Reservas a Generar ---");
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        for (DtoReserva r : listaReservasSolicitadas) {
-            System.out.println("Habitación: " + r.getIdHabitacion());
-            System.out.println(" - Ingreso: " + sdf.format(r.getFechaDesde()) + " 12:00hs");
-            System.out.println(" - Egreso:  " + sdf.format(r.getFechaHasta()) + " 10:00hs");
-            System.out.println("-------------------------------------");
-        }
-
-        // 5. Confirmación (Botones ACEPTAR / RECHAZAR)
-        System.out.println("¿Confirma la operación?");
-        System.out.println("1. ACEPTAR");
-        System.out.println("2. RECHAZAR");
-        System.out.print("Ingrese opción: ");
-        int opcion = leerOpcionNumerica();
-
-        if (opcion != 1) {
-            // RECHAZAR: Limpiamos y salimos
-            System.out.println("Operación Rechazada. Se cancelan las selecciones.");
-            return;
-        }
-
-        // 6. Solicitar Datos del Responsable (si presionó ACEPTAR)
-        System.out.println("\n--- Datos del Responsable de la Reserva ---");
-
-        // Usamos métodos de entrada
-        String apellidoResponsable = pedirStringTexto("Apellido: ");
-        String nombreResponsable = pedirStringTexto("Nombre: ");
-        Long tel = pedirTelefono("Teléfono: ");
-        String telefonoResponsable = String.valueOf(tel);
-
-        // Actualizamos todos los DTO de la lista con estos datos comunes
-        for (DtoReserva dto : listaReservasSolicitadas) {
-            dto.setApellidoHuespedResponsable(apellidoResponsable);
-            dto.setNombreHuespedResponsable(nombreResponsable);
-            dto.setTelefonoHuespedResponsable(telefonoResponsable);
-        }
-
-        // 7. Persistir (Llamada al Gestor)
-        System.out.println("Guardando reservas en el sistema...");
-        try {
-            // C -> GR: crearReserva(lista)
-            gestorReserva.crearReservas(listaReservasSolicitadas);
-
-            System.out.println("\n¡Reservas creadas con ÉXITO!");
-            pausa();
-
-        } catch (Exception e) {
-            System.out.println("\n*** ERROR AL GUARDAR ***");
-            System.out.println("Detalle: " + e.getMessage());
-            pausa();
-        }
-    }*/
-
-    //Sobrecarga de pintarGrilla, para actualizarla al seleccionar
-       /* private void pintarHabitacionesReservada (List < Habitacion > habitaciones, Date inicio, Date
-        fin, List < DtoReserva > reservasPendientes){
-            System.out.println("\n--- GRILLA ACTUALIZADA CON SU SELECCIÓN ---");
-
-            // Formatos de impresión
-            String formatoFecha = "%-12s";
-            String formatoCelda = "| %-9s ";
-            DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-            // Conversión de fechas
-            LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-            // 1. Encabezado
-            System.out.print("             ");
-            for (Habitacion hab : habitaciones) {
-                System.out.printf(formatoCelda, "Hab " + hab.getNumero());
-            }
-            System.out.println("|");
-            imprimirSeparador(habitaciones.size());
-
-            // 2. Días
-            LocalDate actual = inicioLocal;
-            while (!actual.isAfter(finLocal)) {
-                // Imprimir Fecha
-                System.out.printf(formatoFecha, actual.format(formateador));
-
-                Date fechaConsulta = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-                // 3. Habitaciones
-                for (Habitacion hab : habitaciones) {
-                    String visual = "[ ? ]"; // Default
-
-                    // A. VERIFICAR SI ESTÁ EN LA LISTA DE PENDIENTES (Lógica de pintar)
-                    boolean esPendiente = false;
-                    for (DtoReserva dto : reservasPendientes) {
-                        if (dto.getIdHabitacion().equals(hab.getNumero())) {
-                            // Chequear si la fecha actual cae dentro del rango de la reserva pendiente
-                            if (!fechaConsulta.before(dto.getFechaDesde()) && fechaConsulta.before(dto.getFechaHasta())) {
-                                esPendiente = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (esPendiente) {
-                        // SE PINTA COMO "RESERVADA" (o Seleccionada)
-                        visual = "[ * ]"; // Usamos * para destacar la selección actual
-                    } else {
-                        // B. SI NO ES PENDIENTE, CONSULTAR ESTADO REAL
-                        String estado = obtenerEstadoParaFecha(hab, fechaConsulta);
-                        visual = switch (estado) {
-                            case "OCUPADA" -> "[ X ]";
-                            case "RESERVADA" -> "[ R ]";
-                            case "FUERA DE SERVICIO" -> "[ - ]";
-                            case "LIBRE" -> "[ L ]";
-                            default -> visual;
-                        };
-                    }
-                    System.out.printf(formatoCelda, visual);
-                }
-                System.out.println("|");
-                actual = actual.plusDays(1);
-            }
-            imprimirSeparador(habitaciones.size());
-            System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [*] SU SELECCIÓN");
-        }*/
-
     /**
-     * MÉTODO ORQUESTADOR (CEREBRO):
-     * Coordina los 3 gestores para construir la matriz de estados en memoria.
+     * METODO ORQUESTADOR
+     * Coordina los 3 gestores para construir la matriz de estados.
      */
-   /* private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
+    private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
 
         // 1. Pantalla pide habitaciones al GestorHabitacion
         ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodas();
 
         // Estructura para guardar los estados: Habitación -> (Fecha -> Estado)
-        // Usamos LinkedHashMap para mantener el orden visual
+        // Usamos LinkedHashMap
         Map<Habitacion, Map<Date, String>> grilla = new LinkedHashMap<>();
 
-        // Ordenamos las habitaciones (opcional, por número)
-        habitaciones.sort(Comparator.comparing(Habitacion::getNumero));
+        // Ordenamos las habitaciones
+        habitaciones.sort(Comparator.comparing(Habitacion::getTipoHabitacion)
+                            .thenComparing(Habitacion::getNumero));
 
         // 2. Pantalla itera y consulta a los otros Gestores
         for (Habitacion dtoHab : habitaciones) {
@@ -1394,7 +1020,7 @@ public class Pantalla {
 
                 String estado = "LIBRE"; // Estado por defecto
 
-                // A. Verificar estado propio de la habitación
+                // A. Verificar estado de la habitación
                 if (dtoHab.getEstadoHabitacion() != null &&
                         "FUERA_DE_SERVICIO".equals(dtoHab.getEstadoHabitacion().name())) {
                     estado = "FUERA DE SERVICIO";
@@ -1419,9 +1045,8 @@ public class Pantalla {
     public void reservarHabitacion() throws Exception {
         System.out.println("\n--- INICIO CU4: RESERVA ---");
 
-        // 1. LLAMADA AL CU5 (Como pide el diagrama)
-        // La pantalla usa su propio método para obtener los datos ya procesados
-        Map<DtoHabitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
+        // 1. LLAMADA AL CU5
+        Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
 
         if (grilla == null) return; // Si falló el CU5 o canceló
 
@@ -1440,8 +1065,8 @@ public class Pantalla {
             String nro = scanner.nextLine().trim().toUpperCase();
 
             // Buscar habitación en el mapa (que actúa como caché de lo que vemos)
-            DtoHabitacion habSeleccionada = null;
-            for (DtoHabitacion h : grilla.keySet()) {
+            Habitacion habSeleccionada = null;
+            for (Habitacion h : grilla.keySet()) {
                 if (h.getNumero().equals(nro)) {
                     habSeleccionada = h;
                     break;
@@ -1453,7 +1078,7 @@ public class Pantalla {
                 continue;
             }
 
-            // Validar disponibilidad consultando el MAPA (no a la BD de nuevo)
+            // Validar disponibilidad consultando el MAPA
             boolean disponible = true;
             Map<Date, String> estados = grilla.get(habSeleccionada);
 
@@ -1492,15 +1117,11 @@ public class Pantalla {
         gestorReserva.crearReservas(seleccion);
     }
 
-    private void imprimirGrilla(Map<DtoHabitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
+    private void imprimirGrilla(Map<Habitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String formatoCelda = "| %-9s ";
 
-        ArrayList<Habitacion> listaHabitaciones = new ArrayList<>();
-        for(DtoHabitacion dto : grilla.keySet()){
-            listaHabitaciones.add(MapearHabitacion.mapearDtoAEntidad(dto));
-        }
 
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
 
@@ -1508,7 +1129,7 @@ public class Pantalla {
         System.out.print("             ");
 
 
-        for (Habitacion hab : listaHabitaciones) {
+        for (Habitacion hab : grilla.keySet()) {
             System.out.printf(formatoCelda, "Hab " + hab.getNumero());
         }
         System.out.println("|");
@@ -1560,8 +1181,8 @@ public class Pantalla {
     }
 
     // CU5: Mostrar Estado de Habitaciones
-    // Retorna el mapa con los datos para que el CU4 (Reservar) pueda reutilizarlos
-    public Map<DtoHabitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
+    // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
+    public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
         System.out.println("========================================");
         System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
         System.out.println("========================================\n");
@@ -1581,7 +1202,6 @@ public class Pantalla {
         System.out.println("\nProcesando estados...");
 
         // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
-        // (Este método 'generarGrillaEstados' es el privado que te pasé antes)
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
@@ -1592,7 +1212,7 @@ public class Pantalla {
         // 3. Visualización (Pintar la grilla base sin selección)
         imprimirGrilla(grilla, fechaInicio, fechaFin, null);
 
-        return grilla; // Retornamos los datos para que quien lo llame (ej: CU4) los use
+        return grilla; // Retornamos los datos para que CU4 los use
     }
 
 
@@ -1615,5 +1235,5 @@ public class Pantalla {
                 System.out.println("Error: Formato inválido. Use dd/MM/yyyy.");
             }
         }
-    }*/
+    }
 }
