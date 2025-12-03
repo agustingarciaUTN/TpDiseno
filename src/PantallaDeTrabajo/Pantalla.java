@@ -1426,7 +1426,7 @@ public class Pantalla {
 
         // 1. LLAMADA AL CU5 (Como pide el diagrama)
         // La pantalla usa su propio método para obtener los datos ya procesados
-        Map<DtoHabitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
+        Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
 
         if (grilla == null) return; // Si falló el CU5 o canceló
 
@@ -1445,8 +1445,8 @@ public class Pantalla {
             String nro = scanner.nextLine().trim().toUpperCase();
 
             // Buscar habitación en el mapa (que actúa como caché de lo que vemos)
-            DtoHabitacion habSeleccionada = null;
-            for (DtoHabitacion h : grilla.keySet()) {
+            Habitacion habSeleccionada = null;
+            for (Habitacion h : grilla.keySet()) {
                 if (h.getNumero().equals(nro)) {
                     habSeleccionada = h;
                     break;
@@ -1497,24 +1497,11 @@ public class Pantalla {
         gestorReserva.crearReservas(seleccion);
     }
 
-    private void imprimirGrilla(Map<DtoHabitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
+    private void imprimirGrilla(Map<Habitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String formatoCelda = "| %-9s ";
 
-        ArrayList<Habitacion> listaHabitaciones = new ArrayList<>();
-        Map<Habitacion, Map<Date, String>> nuevaGrilla = new LinkedHashMap<>();
-
-        for (Map.Entry<DtoHabitacion, Map<Date, String>> entry : grilla.entrySet()) {
-            // Mapear el DtoHabitacion a la entidad Habitacion
-            Habitacion habitacion = MapearHabitacion.mapearDtoAEntidad(entry.getKey());
-
-            // Agregar la habitación a la lista
-            listaHabitaciones.add(habitacion);
-
-            // Asignar la entidad y el valor correspondiente al nuevo mapa
-            nuevaGrilla.put(habitacion, entry.getValue());
-        }
 
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
 
@@ -1522,7 +1509,7 @@ public class Pantalla {
         System.out.print("             ");
 
 
-        for (Habitacion hab : listaHabitaciones) {
+        for (Habitacion hab : grilla.keySet()) {
             System.out.printf(formatoCelda, "Hab " + hab.getNumero());
         }
         System.out.println("|");
@@ -1536,7 +1523,7 @@ public class Pantalla {
             System.out.printf("%-12s", actual.format(dtf));
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            for (Map.Entry<Habitacion, Map<Date, String>> entry : nuevaGrilla.entrySet()) {
+            for (Map.Entry<Habitacion, Map<Date, String>> entry : grilla.entrySet()) {
                 Habitacion hab = entry.getKey();
                 String visual = "[ ? ]";
 
@@ -1575,7 +1562,7 @@ public class Pantalla {
 
     // CU5: Mostrar Estado de Habitaciones
     // Retorna el mapa con los datos para que el CU4 (Reservar) pueda reutilizarlos
-    public Map<DtoHabitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
+    public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
         System.out.println("========================================");
         System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
         System.out.println("========================================\n");
