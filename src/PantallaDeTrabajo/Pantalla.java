@@ -417,7 +417,7 @@ public class Pantalla {
                 .documento(numeroDocumento)
                 .cuit(cuit)
                 .posicionIva(PosIva.valueOf(posIva))
-                .fechaNacimiento(fechaNacimiento) 
+                .fechaNacimiento(fechaNacimiento)
                 .email(Collections.singletonList(email))
                 .ocupacion(Collections.singletonList(ocupacion))
                 .nacionalidad(nacionalidad)
@@ -994,7 +994,7 @@ public class Pantalla {
         System.out.println("-----------------------------------------------------------------");
     }
 
-    private int leerOpcionNumerica() {/
+    private int leerOpcionNumerica() {
         try {
             return scanner.nextInt();
         } catch (InputMismatchException e) {
