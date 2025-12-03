@@ -6,11 +6,12 @@ import Habitacion.GestorHabitacion;
 import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
-
+import Habitacion.DtoHabitacion;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,7 +49,7 @@ public class Pantalla {
     }
 
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
-    public void iniciarSistema() throws Exception {
+    public void iniciarSistema() throws PersistenciaException {
         System.out.println("========================================");
         System.out.println("   SISTEMA DE GESTION HOTELERA");
         System.out.println("========================================\n");
@@ -140,7 +141,7 @@ public class Pantalla {
     }
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
-    private void mostrarMenuPrincipal() throws Exception {
+    private void mostrarMenuPrincipal() throws PersistenciaException {
         //Paso 4: El sistema presenta la pantalla principal
         boolean salir = false;
 
@@ -153,12 +154,12 @@ public class Pantalla {
             System.out.println("1. Buscar huesped (CU2)");
             System.out.println("2. Reservar Habitación (CU4)");
             System.out.println("3. Dar de alta huesped (CU9)");
-            System.out.println("4. Ocupar Habitación (CU15) ");
+            System.out.println("4. Dar de baja huesped (CU11) ");
             System.out.println("5. Cerrar sesión");
             System.out.println("========================================");
             System.out.print("Ingrese una opción: ");
 
-            int opcion;
+            int opcion = -1;
             try {
                 opcion = scanner.nextInt();
                 scanner.nextLine(); //consumir salto de linea
@@ -175,13 +176,13 @@ public class Pantalla {
                     buscarHuesped();
                     break;
                 case 2:
-                    reservarHabitacion();
+                    //reservarHabitacion();
                     break;
                 case 3:
                     darDeAltaHuesped();
                     break;
                 case 4:
-                    //cu 15
+                    //iniciarBajaHuesped();
                     break;
                 case 5:
                     System.out.print("¿Está seguro que desea cerrar sesión? (SI/NO): ");
@@ -241,7 +242,7 @@ public class Pantalla {
 
 
                 //aca hay que llamar al gestor para que valide los datos
-                List<String> errores;
+                List<String> errores = new ArrayList<>();
                 //Metodo que retorna una lista de todos los errores en la validacion de negocio
                 errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
@@ -389,7 +390,7 @@ public class Pantalla {
 
         String paisDireccion = pedirStringTexto("Pais: ");
 
-        Long telefono = pedirTelefono();
+        Long telefono = pedirTelefono("Teléfono: ");
 
         String email = pedirEmail();
 
@@ -523,7 +524,7 @@ public class Pantalla {
         return valor;
     }
 
-    private Long pedirTelefono() {
+    private Long pedirTelefono(String mensaje) {
         Long valor = null;
         boolean valido = false;
 
@@ -531,7 +532,7 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            System.out.print("Teléfono: ");
+            System.out.print(mensaje);
             String entrada = scanner.nextLine().trim();
 
             if (entrada.isEmpty()) {
@@ -622,6 +623,7 @@ public class Pantalla {
 
             if (fechaStr.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
+                continue;
             } else {
                 try {
                     fecha = formatoFecha.parse(fechaStr);
@@ -660,10 +662,11 @@ public class Pantalla {
         opciones.append("): ");
 
         while (!valido) {
-            System.out.print(opciones);
+            System.out.print(opciones.toString());
             String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
             if (tipoDocStr.isEmpty()) {
                 System.out.println("Error: El tipo de documento es obligatorio.");
+                continue;
             } else {
                 try {
                     tipoDoc = TipoDocumento.valueOf(tipoDocStr);
@@ -737,11 +740,7 @@ public class Pantalla {
         boolean valido = false;
 
         while (!valido) {
-            System.out.println("""
-                    Posición frente al IVA (1.Consumidor Final (por defecto),
-                     2.Monotributista,\s
-                    3.Responsable Inscripto,\s
-                    4.Excento)""");
+            System.out.println("Posicion frente al IVA (1.Consumidor Final (por defecto)," + '\n' + " 2.Monotributista, " + '\n' + "3.Responsable Inscripto, " + '\n' + "4.Excento)");
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
@@ -892,7 +891,47 @@ public class Pantalla {
                 System.out.println("Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, LIBRETA DE ENROLAMIENTO Y LIBRETA CIVICA.");
             }
         }
-    }
+    }//NO SE DE QUE SON ESTOS METODOS
+
+    private String validarYLeerNumeroDocumento(TipoDocumento tipoDoc) {
+        while (true) {
+            System.out.print("Número de Documento: ");
+            String numeroStr = scanner.nextLine().trim();
+
+            if (numeroStr.isEmpty()) {
+                return ""; // Se devuelve 0 si se omite
+            }
+
+            try {
+
+
+                // VALIDACIÓN DE RANGO SEGÚN TIPO DE DOCUMENTO
+                if (tipoDoc == TipoDocumento.DNI) {
+                    long numero = Long.parseLong(numeroStr.trim());
+                    if (numero < 0 || numero > 99999999) {
+                        System.out.println("El DNI debe estar entre 0 y 99.999.999. Intente nuevamente.");
+                        continue;
+                    }
+                } else if (tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
+                    long numero = Long.parseLong(numeroStr.trim());
+                    if (numero < 0 || numero > 99999999) {
+                        System.out.println("La " + tipoDoc.name() + " debe estar entre 0 y 99.999.999. Intente nuevamente.");
+                        continue;
+                    }
+                } else if (tipoDoc == TipoDocumento.PASAPORTE) {
+                    if (numeroStr.isBlank()) {
+                        System.out.println("Debe ingresar un Pasaporte. Intente nuevamente.");
+                        continue;
+                    }
+                }
+
+                return numeroStr;
+
+            } catch (NumberFormatException e) {
+                System.out.println("⚠ El número de documento debe ser un valor numérico. Intente nuevamente.");
+            }
+        }
+    }//NO SE DE QUE SON ESTOS METODOS
 
     private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
 
@@ -987,7 +1026,7 @@ public class Pantalla {
             scanner.nextLine(); // Limpia el buffer del scanner
         }
     }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
-    
+
     /**
      * METODO ORQUESTADOR
      * Coordina los 3 gestores para construir la matriz de estados.
@@ -1108,10 +1147,10 @@ public class Pantalla {
             return;
         }
 
-        // 3. ACTUALIZAR (Pintar selección sobre la grilla)
+        // 3. ACTUALIZAR VISUALIZACIÓN (Pintar selección sobre la grilla base)
         imprimirGrilla(grilla, fechaInicio, fechaFin, seleccion);
 
-        //Lógica de Confirmación y Persistencia
+        // ... Lógica de Confirmación y Persistencia (Igual que tenías) ...
         gestorReserva.crearReservas(seleccion);
     }
 
@@ -1145,7 +1184,7 @@ public class Pantalla {
                 Habitacion hab = entry.getKey();
                 String visual = "[ ? ]";
 
-                // 1. ¿Está seleccionada por el usuario AHORA?
+                // 1. ¿Está seleccionada por el usuario AHORA? (Prioridad visual)
                 boolean esSeleccion = false;
                 if (seleccion != null) {
                     for (DtoReserva res : seleccion) {
@@ -1159,7 +1198,7 @@ public class Pantalla {
                 if (esSeleccion) {
                     visual = "[ * ]"; // Selección actual
                 } else {
-                    // 2. Estado proveniente de la orquestación
+                    // 2. Estado proveniente de la orquestación (BD)
                     String estado = entry.getValue().get(fechaFila);
                     if (estado == null) estado = "LIBRE";
 
@@ -1179,7 +1218,7 @@ public class Pantalla {
     }
 
     // CU5: Mostrar Estado de Habitaciones
-    // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
+    // Retorna el mapa con los datos para que el CU4 (Reservar) pueda reutilizarlos
     public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
         System.out.println("========================================");
         System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
@@ -1200,6 +1239,7 @@ public class Pantalla {
         System.out.println("\nProcesando estados...");
 
         // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
+        // (Este metodo 'generarGrillaEstados' es el privado que te pasé antes)
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
@@ -1207,10 +1247,10 @@ public class Pantalla {
             return null;
         }
 
-        // 3. Visualización (Pintar la grilla sin selección)
+        // 3. Visualización (Pintar la grilla base sin selección)
         imprimirGrilla(grilla, fechaInicio, fechaFin, null);
 
-        return grilla; // Retornamos los datos para que CU4 los use
+        return grilla; // Retornamos los datos para que quien lo llame (ej: CU4) los use
     }
 
 
