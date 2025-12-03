@@ -42,24 +42,22 @@ public class GestorReserva {
     public List<String> validarDatosReserva(List<DtoReserva> reservas) {
         List<String> errores = new ArrayList<>();
 
-        if (reservas == null || reservas.isEmpty()) {
-            errores.add("No se han seleccionado habitaciones para reservar.");
-            return errores;
-        }
+        for (DtoReserva dto : reservas) {
+            if (dto == null) {
+                errores.add("No se han seleccionado habitaciones para reservar.");
+                return errores;
+            }
 
-        // Validamos datos del responsable (son iguales para todas en este CU)
-        DtoReserva primera = reservas.getFirst();
-
-        if (primera.getNombreHuespedResponsable() == null || primera.getNombreHuespedResponsable().trim().isEmpty()) {
-            errores.add("El nombre del responsable es obligatorio.");
+            if (dto.getNombreHuespedResponsable() == null || dto.getNombreHuespedResponsable().trim().isEmpty()) {
+                errores.add("El nombre del responsable es obligatorio.");
+            }
+            if (dto.getApellidoHuespedResponsable() == null || dto.getApellidoHuespedResponsable().trim().isEmpty()) {
+                errores.add("El apellido del responsable es obligatorio.");
+            }
+            if (dto.getTelefonoHuespedResponsable() == null || dto.getTelefonoHuespedResponsable().trim().isEmpty()) {
+                errores.add("El teléfono del responsable es obligatorio.");
+            }
         }
-        if (primera.getApellidoHuespedResponsable() == null || primera.getApellidoHuespedResponsable().trim().isEmpty()) {
-            errores.add("El apellido del responsable es obligatorio.");
-        }
-        if (primera.getTelefonoHuespedResponsable() == null || primera.getTelefonoHuespedResponsable().trim().isEmpty()) {
-            errores.add("El teléfono del responsable es obligatorio.");
-        }
-
         return errores;
     }
 

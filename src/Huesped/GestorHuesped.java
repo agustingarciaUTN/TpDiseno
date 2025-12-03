@@ -73,7 +73,6 @@ public class GestorHuesped {
     public List<String> validarDatosHuesped(DtoHuesped datos){
         List<String> errores = new ArrayList<>();
 
-
         // Regla especial CUIT/IVA
         //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vacio, ademas validamos su formato con Regex
         if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
@@ -82,15 +81,9 @@ public class GestorHuesped {
             }
         }
 
-
         return errores;//Lista con los errores que encontramos
     }
 
-    private boolean validarFormatoCUIT(String cuit) {
-        if (cuit == null) return false;
-        // Expresión regular básica: 2 dígitos, guion, 8 dígitos, guion, 1 dígito
-        return cuit.matches("^\\d{2}-\\d{8}-\\d$");
-    }
 
     //buscarPorTipoYNumeroDocumento  <- nombre en Diag de Secuencia
     //Esto tambien es una validacion de negocio. El Tipo y Numero de documento ingresado, no puede existir en el sistema
