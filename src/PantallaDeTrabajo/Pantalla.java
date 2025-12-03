@@ -341,7 +341,7 @@ public class Pantalla {
                     System.out.println("Alta cancelada.");
                     continuarCargando = false;//termina el bucle
                 }
-                //si ingresa NO, el bucle se repite y vuelve a pedir los datos (no se si esta bien que tenga que ingresar desde 0)
+                //si ingresa NO, el bucle se repite y vuelve a pedir los datos (no sé si está bien que tenga que ingresar desde 0)
             }
         }//fin while
 
@@ -353,11 +353,11 @@ public class Pantalla {
 
         System.out.println('\n' + "INGRESE LOS DATOS DEL HUÉSPED A REGISTRAR");
 
-        //Cada uno de estos metodos solicita por teclado el ingreso de cada campo del formulario
-        //Ademas, se hace una VALIDACION DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida)
+        //Cada uno de estos métodos solicita por teclado el ingreso de cada campo del formulario
+        //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida)
         //en el momento, evitando datos sin sentido
 
-        //Las validaciones de negocio las realizara el Gestor
+        //Las validaciones de negocio las realizará el Gestor
 
         String apellido = pedirStringTexto("Apellido: ");
 
@@ -401,7 +401,7 @@ public class Pantalla {
         int numeroDireccionPrimitivo = numeroDireccion;
         int codPostalDireccionPrimitivo = codPostalDireccion;
 
-        // Crear los DTO  (aún no tenemos el ID de dirección, no fuimos a la DB todavia, se inicia en NULL por defecto en la clase)
+        // Crear los DTO (aún no tenemos el ID de dirección, no fuimos a la DB todavia, se inicia en NULL por defecto en la clase)
         // Crear DtoDireccion usando Builder
         DtoDireccion direccionDto = new DtoDireccion.Builder(calleDireccion, numeroDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion)
                 .departamento(departamentoDireccion)
@@ -432,6 +432,7 @@ public class Pantalla {
 
     }
 
+
     //=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
@@ -450,7 +451,7 @@ public class Pantalla {
         }
     }
 
-    //Solicitar y Validar String simple (nombres, apellidos, etc)
+    //Solicitar y Validar String simple (nombres, apellidos, pais)
     private String pedirStringTexto(String mensaje) {
         String entrada;
         while (true) {
@@ -509,7 +510,7 @@ public class Pantalla {
             }
             try {
                 int num = Integer.parseInt(entrada);
-                if (num <= 0) {
+                if (num < 0) {
                     System.out.println("Error: Ingrese un número positivo.");
                 } else {
                     valor = num;
@@ -547,7 +548,7 @@ public class Pantalla {
     private String pedirCUIT() {
         String cuit;
         // Expresion para CUIT: 2 dígitos, un guión o barrita, 8 dígitos, un guión o barrita, 1 dígito.
-        String expresionCUIT = "^\\d{2}-\\d{8}-\\d{1}$";
+        String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
         while (true) {
             System.out.print("CUIT (opcional, formato XX-XXXXXXXX-X, presione Enter para omitir): ");
@@ -613,7 +614,7 @@ public class Pantalla {
                     }
                     valida = true; // Formato válido
                 } catch (ParseException e) {
-                    System.out.println("Error: Formato de fecha inválido. Use dd/MM/yyyy o presione Enter para omitir.");
+                    System.out.println("Error: Formato de fecha inválido. Use dd/MM/yyyy.");
                 }
             }
         }
@@ -1044,62 +1045,6 @@ public class Pantalla {
         pausa();
     }
 
-    /**
-     * Solicita la fecha de inicio en bucle hasta que sea válida (formato y >= hoy).
-     */
-    private Date validarFechaInicio() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        sdf.setLenient(false);
-
-        while (true) {
-            System.out.print("Ingrese Fecha de Inicio (dd/MM/yyyy): ");
-            String input = scanner.nextLine().trim();
-
-            try {
-                Date fecha = sdf.parse(input);
-
-                // Validar que no sea anterior a hoy (para disponibilidad futura)
-                if (fecha.before(getStartOfDay(new Date()))) {
-                    System.out.println("La fecha de inicio no puede ser anterior al día de hoy.");
-                    continue;
-                }
-                return fecha;
-
-            } catch (ParseException e) {
-                System.out.println("Formato inválido. Use dd/MM/yyyy.");
-            }
-        }
-    }
-
-    /**
-     * Solicita la fecha de fin en bucle y valida lógica de negocio con el Gestor.
-     */
-    private Date validarFechaFin(Date fechaInicio) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        sdf.setLenient(false);
-
-        while (true) {
-            System.out.print("Ingrese Fecha de Fin (dd/MM/yyyy): ");
-            String input = scanner.nextLine().trim();
-
-            try {
-                Date fechaFin = sdf.parse(input);
-
-                // Validar lógica de negocio con el Gestor (Rango válido, no excesivo, etc)
-                try {
-                    gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
-                    // Si no lanza excepción, el rango es válido, retornamos la fecha.
-                    return fechaFin;
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Error de lógica: " + e.getMessage());
-                }
-
-            } catch (ParseException e) {
-                System.out.println("Formato inválido. Use dd/MM/yyyy.");
-            }
-        }
-    }
-
 
     public String obtenerEstadoParaFecha(Habitacion habitacion, Date fecha) {
         String estado;
@@ -1199,16 +1144,6 @@ public class Pantalla {
                 System.out.println("Error: Formato inválido. Use dd/MM/yyyy.");
             }
         }
-    }
-
-    private Date getStartOfDay(Date date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
     }
 
     // CU4: Reservar Habitación
@@ -1371,7 +1306,6 @@ public class Pantalla {
             // Formatos de impresión
             String formatoFecha = "%-12s";
             String formatoCelda = "| %-9s ";
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             // Conversión de fechas
@@ -1416,20 +1350,13 @@ public class Pantalla {
                     } else {
                         // B. SI NO ES PENDIENTE, CONSULTAR ESTADO REAL
                         String estado = obtenerEstadoParaFecha(hab, fechaConsulta);
-                        switch (estado) {
-                            case "OCUPADA":
-                                visual = "[ X ]";
-                                break;
-                            case "RESERVADA":
-                                visual = "[ R ]";
-                                break;
-                            case "FUERA DE SERVICIO":
-                                visual = "[ - ]";
-                                break;
-                            case "LIBRE":
-                                visual = "[ L ]";
-                                break;
-                        }
+                        visual = switch (estado) {
+                            case "OCUPADA" -> "[ X ]";
+                            case "RESERVADA" -> "[ R ]";
+                            case "FUERA DE SERVICIO" -> "[ - ]";
+                            case "LIBRE" -> "[ L ]";
+                            default -> visual;
+                        };
                     }
                     System.out.printf(formatoCelda, visual);
                 }

@@ -73,53 +73,10 @@ public class GestorHuesped {
     public List<String> validarDatosHuesped(DtoHuesped datos){
         List<String> errores = new ArrayList<>();
 
-        // Campos Obligatorios según CU09 especificación
-        if (datos.getApellido() == null || datos.getApellido().trim().isEmpty()) {
-            errores.add("El Apellido es obligatorio.");
-        }
-        if (datos.getNombres() == null || datos.getNombres().trim().isEmpty()) {
-            errores.add("Los Nombres son obligatorios.");
-        }
-        if (datos.getTipoDocumento() == null) {
-            errores.add("El Tipo de Documento es obligatorio.");
-        }
-        if (datos.getNroDocumento().isEmpty()) {
-            errores.add("El Número de Documento es obligatorio.");
-        }
-        if (datos.getFechaNacimiento() == null) {
-            errores.add("La Fecha de Nacimiento es obligatoria.");
-        } else {
-            //regla de que la fecha no puede ser futura
-            if (datos.getFechaNacimiento().after(new Date())) { // new Date() es la fecha/hora actual
-                errores.add("La Fecha de Nacimiento no puede ser futura.");
-            }
 
-        }
 
-        // Validación de Dirección
-        DtoDireccion direccion = datos.getDtoDireccion();
-        if (direccion == null) {
-            errores.add("Los datos de la Dirección son obligatorios.");
-        } else {
-            if (direccion.getCalle() == null || direccion.getCalle().trim().isEmpty()) {
-                errores.add("La Calle de la dirección es obligatoria.");
-            }
-            if (direccion.getNumero() <= 0) {
-                errores.add("El Número de la dirección es obligatorio y debe ser positivo.");
-            }
-            if (direccion.getLocalidad() == null || direccion.getLocalidad().trim().isEmpty()) {
-                errores.add("La Localidad de la dirección es obligatoria.");
-            }
-            if (direccion.getProvincia() == null || direccion.getProvincia().trim().isEmpty()) {
-                errores.add("La Provincia de la dirección es obligatoria.");
-            }
-            if (direccion.getPais() == null || direccion.getPais().trim().isEmpty()) {
-                errores.add("El País de la dirección es obligatorio.");
-            }
-            if (direccion.getCodPostal() <= 0) {
-                errores.add("El Código Postal es obligatorio y debe ser positivo.");
-            }
-        }
+
+
         if (datos.getNacionalidad() == null || datos.getNacionalidad().trim().isEmpty()) {
             errores.add("La Nacionalidad es obligatoria.");
         }

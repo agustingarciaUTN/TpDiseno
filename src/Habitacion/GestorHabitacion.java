@@ -58,15 +58,6 @@ public class GestorHabitacion {
     }
 
     public void validarRangoFechas(Date inicio, Date fin) throws IllegalArgumentException {
-        // 1. Validar Nulos
-        if (inicio == null || fin == null) {
-            throw new IllegalArgumentException("Las fechas de inicio y fin son obligatorias.");
-        }
-
-        // 2. Validar Orden Cronológico
-        if (inicio.after(fin)) {
-            throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
-        }
 
         // 3. Validar Duración Máxima (Regla de Negocio opcional pero recomendada para UI)
         // Calculamos la diferencia en días
