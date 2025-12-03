@@ -1503,8 +1503,17 @@ public class Pantalla {
         String formatoCelda = "| %-9s ";
 
         ArrayList<Habitacion> listaHabitaciones = new ArrayList<>();
-        for(DtoHabitacion dto : grilla.keySet()){
-            listaHabitaciones.add(MapearHabitacion.mapearDtoAEntidad(dto));
+        Map<Habitacion, Map<Date, String>> nuevaGrilla = new LinkedHashMap<>();
+
+        for (Map.Entry<DtoHabitacion, Map<Date, String>> entry : grilla.entrySet()) {
+            // Mapear el DtoHabitacion a la entidad Habitacion
+            Habitacion habitacion = MapearHabitacion.mapearDtoAEntidad(entry.getKey());
+
+            // Agregar la habitación a la lista
+            listaHabitaciones.add(habitacion);
+
+            // Asignar la entidad y el valor correspondiente al nuevo mapa
+            nuevaGrilla.put(habitacion, entry.getValue());
         }
 
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
@@ -1527,7 +1536,7 @@ public class Pantalla {
             System.out.printf("%-12s", actual.format(dtf));
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            for (Map.Entry<Habitacion, Map<Date, String>> entry : grilla.entrySet()) {
+            for (Map.Entry<Habitacion, Map<Date, String>> entry : nuevaGrilla.entrySet()) {
                 Habitacion hab = entry.getKey();
                 String visual = "[ ? ]";
 
@@ -1586,7 +1595,7 @@ public class Pantalla {
         System.out.println("\nProcesando estados...");
 
         // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
-        // (Este método 'generarGrillaEstados' es el privado que te pasé antes)
+        // (Este metodo 'generarGrillaEstados' es el privado que te pasé antes)
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
