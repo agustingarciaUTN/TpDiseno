@@ -6,12 +6,11 @@ import Habitacion.GestorHabitacion;
 import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
-import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
-import Habitacion.DtoHabitacion;
+
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -740,7 +739,7 @@ public class Pantalla {
         boolean valido = false;
 
         while (!valido) {
-            System.out.println("Posicion frente al IVA (1.Consumidor Final (por defecto)," + '\n' + " 2.Monotributista, " + '\n' + "3.Responsable Inscripto, " + '\n' + "4.Excento)");
+            System.out.println("Posición frente al IVA (1.Consumidor Final (por defecto)," + '\n' + " 2.Monotributista, " + '\n' + "3.Responsable Inscripto, " + '\n' + "4.Excento)");
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
@@ -1210,7 +1209,7 @@ public class Pantalla {
         // 3. Visualización (Pintar la grilla base sin selección)
         imprimirGrilla(grilla, fechaInicio, fechaFin, null);
 
-        return grilla; // Retornamos los datos para que quien lo llame (ej: CU4) los use
+        return grilla; // Retornamos los datos para que CU4 los use
     }
 
 
