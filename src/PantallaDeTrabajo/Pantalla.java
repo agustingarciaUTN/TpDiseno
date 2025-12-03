@@ -893,45 +893,6 @@ public class Pantalla {
         }
     }//NO SE DE QUE SON ESTOS METODOS
 
-    private String validarYLeerNumeroDocumento(TipoDocumento tipoDoc) {
-        while (true) {
-            System.out.print("Número de Documento: ");
-            String numeroStr = scanner.nextLine().trim();
-
-            if (numeroStr.isEmpty()) {
-                return ""; // Se devuelve 0 si se omite
-            }
-
-            try {
-
-
-                // VALIDACIÓN DE RANGO SEGÚN TIPO DE DOCUMENTO
-                if (tipoDoc == TipoDocumento.DNI) {
-                    long numero = Long.parseLong(numeroStr.trim());
-                    if (numero < 0 || numero > 99999999) {
-                        System.out.println("El DNI debe estar entre 0 y 99.999.999. Intente nuevamente.");
-                        continue;
-                    }
-                } else if (tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
-                    long numero = Long.parseLong(numeroStr.trim());
-                    if (numero < 0 || numero > 99999999) {
-                        System.out.println("La " + tipoDoc.name() + " debe estar entre 0 y 99.999.999. Intente nuevamente.");
-                        continue;
-                    }
-                } else if (tipoDoc == TipoDocumento.PASAPORTE) {
-                    if (numeroStr.isBlank()) {
-                        System.out.println("Debe ingresar un Pasaporte. Intente nuevamente.");
-                        continue;
-                    }
-                }
-
-                return numeroStr;
-
-            } catch (NumberFormatException e) {
-                System.out.println("⚠ El número de documento debe ser un valor numérico. Intente nuevamente.");
-            }
-        }
-    }//NO SE DE QUE SON ESTOS METODOS
 
     private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) throws PersistenciaException {
 
@@ -1218,7 +1179,7 @@ public class Pantalla {
     }
 
     // CU5: Mostrar Estado de Habitaciones
-    // Retorna el mapa con los datos para que el CU4 (Reservar) pueda reutilizarlos
+    // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
     public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
         System.out.println("========================================");
         System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
@@ -1239,7 +1200,6 @@ public class Pantalla {
         System.out.println("\nProcesando estados...");
 
         // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
-        // (Este metodo 'generarGrillaEstados' es el privado que te pasé antes)
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
