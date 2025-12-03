@@ -298,6 +298,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         return -1;
     }
 
+
+    //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
     @Override
     public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
         String sql = "SELECT 1 FROM huesped WHERE tipo_documento=? AND numero_documento=?";

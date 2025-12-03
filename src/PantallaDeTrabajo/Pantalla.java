@@ -260,6 +260,7 @@ public class Pantalla {
                     //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
                     //Le pasamos al gestorHuesped un DTO con el huesped ingresado
                     DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                    //Si chequearDuplicado retorna NULL, no hay duplicado
 
                     if (duplicado != null) {//si encuentra duplicado
                         System.out.println("----------------------------------------------------------------");
@@ -372,7 +373,7 @@ public class Pantalla {
 
         Date fechaNacimiento = pedirFecha();
 
-        String calleDireccion = pedirStringValidado("Calle: ");
+        String calleDireccion = pedirStringComplejo("Calle: ");
 
         Integer numeroDireccion = pedirEntero("Número de calle: ");
 
@@ -382,9 +383,9 @@ public class Pantalla {
 
         Integer codPostalDireccion = pedirEntero("Código Postal: ");
 
-        String localidadDireccion = pedirStringValidado("Localidad: ");
+        String localidadDireccion = pedirStringComplejo("Localidad: ");
 
-        String provinciaDireccion = pedirStringValidado("Provincia: ");
+        String provinciaDireccion = pedirStringComplejo("Provincia: ");
 
         String paisDireccion = pedirStringTexto("Pais: ");
 
@@ -400,13 +401,14 @@ public class Pantalla {
         int numeroDireccionPrimitivo = numeroDireccion;
         int codPostalDireccionPrimitivo = codPostalDireccion;
 
-        // Crear los DTO  (aún no tenemos el ID de dirección)
+        // Crear los DTO  (aún no tenemos el ID de dirección, no fuimos a la DB todavia, se inicia en NULL por defecto en la clase)
         // Crear DtoDireccion usando Builder
         DtoDireccion direccionDto = new DtoDireccion.Builder(calleDireccion, numeroDireccionPrimitivo, localidadDireccion, provinciaDireccion, paisDireccion)
                 .departamento(departamentoDireccion)
                 .piso(pisoDireccion)
                 .codPostal(codPostalDireccionPrimitivo)
                 .build();
+        //Creamos el DtoHuesped usando el Builder
         DtoHuesped huespedDto = new DtoHuesped.Builder()
                 .nombres(nombres)
                 .apellido(apellido)
@@ -415,7 +417,7 @@ public class Pantalla {
                 .documento(numeroDocumento)
                 .cuit(cuit)
                 .posicionIva(PosIva.valueOf(posIva))
-                .fechaNacimiento(fechaNacimiento)
+                .fechaNacimiento(fechaNacimiento) 
                 .email(Collections.singletonList(email))
                 .ocupacion(Collections.singletonList(ocupacion))
                 .nacionalidad(nacionalidad)
@@ -430,15 +432,17 @@ public class Pantalla {
 
     }
 
-    //metodos para pedir Y VALIDAR cada tipo de dato, CU9
-    private String pedirStringValidado(String mensaje) {
+    //=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
+
+    //Solicitar y Validar String complejo (calle, provincia, localidad)
+    private String pedirStringComplejo(String mensaje) {
         String entrada;
         while (true) {
             System.out.print(mensaje);
             entrada = scanner.nextLine();
             if (entrada.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
-            } else if (!entrada.matches("^[a-zA-Z0-9 ]+$")) { // Solo letras, números y espacios
+            } else if (!entrada.matches("^[\\\\p{L}0-9 ]+$")) { // Letras Unicode + Números + Espacios
                 System.out.println("Error: Solo se admiten letras, números y espacios. No se permiten caracteres especiales.");
             } else {
                 return entrada.trim();
@@ -446,26 +450,28 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar String simple (nombres, apellidos, etc)
     private String pedirStringTexto(String mensaje) {
         String entrada;
         while (true) {
             System.out.print(mensaje);
             entrada = scanner.nextLine();
 
-            if (entrada.trim().isEmpty()) {
+            if (entrada.trim().isEmpty()) {//Validamos obligatoriedad del campo
                 System.out.println("Error: Este campo es obligatorio.");
 
                 // Esta expresion ^[\p{L} ]+$ permite cualquier letra de cualquier idioma
                 // y espacios, pero no números ni caracteres especiales.
-            } else if (!entrada.matches("^[\\p{L} ]+$")) {
+            } else if (!entrada.matches("^[\\p{L} ]+$")) {//cualquier letra Unicode
                 System.out.println("Error: Solo se admiten letras y espacios.");
 
             } else {
-                return entrada.trim();
+                return entrada.trim();//Elimina los caracteres de espacio en blanco al principio y al final de la cadena
             }
         }
     }
 
+    //Solicitar y Validar String opcional (dpto, piso)
     private String pedirStringOpcional(String mensaje) {
         String entrada;
         // La expresion permite letras (a-z, A-Z), números (0-9) y espacios.
@@ -492,23 +498,25 @@ public class Pantalla {
     private Integer pedirEntero(String mensaje) {
         Integer valor = null; // Usamos la clase wrapper para permitir null
         boolean valido = false;
+
         while (!valido) {
             System.out.print(mensaje);
-            String entrada = scanner.nextLine(); // leemos siempre como String
-            int validez = Integer.parseInt(entrada);
+            String entrada = scanner.nextLine().trim(); // leemos siempre como String
 
-            if (entrada.trim().isEmpty()) {
+            if (entrada.isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio. No se puede omitir.");
                 continue;
-            } else if (validez <= 0) {
-                System.out.println("Error: ingreser un numero positivo por favor.");
-            } else {
-                try {
-                    valor = Integer.parseInt(entrada); // intentamos convertir el String a int
-                    valido = true;      // Si funciona, es válido
-                } catch (NumberFormatException e) {
-                    System.out.println("Error: Ingrese un número entero válido o presione Enter para omitir.");
+            }
+            try {
+                int num = Integer.parseInt(entrada);
+                if (num <= 0) {
+                    System.out.println("Error: Ingrese un número positivo.");
+                } else {
+                    valor = num;
+                    valido = true;
                 }
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Debe ingresar un número entero válido.");
             }
         }
         return valor;
@@ -629,19 +637,76 @@ public class Pantalla {
 
         while (!valido) {
             System.out.print(opciones.toString());
-            String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios
+            String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
             if (tipoDocStr.isEmpty()) {
-                valido = true; // Omitir es válido
+                System.out.println("Error: El tipo de documento es obligatorio.");
+                continue;
             } else {
                 try {
                     tipoDoc = TipoDocumento.valueOf(tipoDocStr);
                     valido = true; // Opción válida
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Error: Tipo de documento inválido. Ingrese una de las opciones o Enter para omitir.");
+                    System.out.println("Error: Tipo de documento inválido. Ingrese una de las opciones.");
                 }
             }
         }
         return tipoDoc;
+    }
+
+    private String pedirDocumento(TipoDocumento tipo) {
+        String NroDocumento = null;
+        boolean valido = false;
+
+        // Definimos las reglas (Regex)
+        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
+        String regexNumerico = "^\\d{7,8}$";
+        // Pasaporte: Letras y números, entre 6 y 15 caracteres
+        String regexPasaporte = "^[A-Z0-9]{6,15}$";
+        // Otro: Cualquier cosa entre 4 y 20 caracteres
+        String regexOtro = "^.{4,20}$";
+
+        while (!valido) {
+            System.out.print("Número de Documento: ");
+            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
+
+            if (entrada.isEmpty()) {
+                // Si es obligatorio (que lo es), no dejamos pasar vacío
+                System.out.println("Error: El documento es obligatorio.");
+                continue;
+            }
+
+            // Validamos según el tipo seleccionado
+            switch (tipo) {
+                case DNI:
+                case LE:
+                case LC:
+                    if (entrada.matches(regexNumerico)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
+                    }
+                    break;
+                case PASAPORTE:
+                    if (entrada.matches(regexPasaporte)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
+                    }
+                    break;
+                default: // OTRO
+                    if (entrada.matches(regexOtro)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Formato inválido.");
+                    }
+                    break;
+            }
+
+            if (valido) {
+                NroDocumento = entrada;
+            }
+        }
+        return NroDocumento;
     }
 
     private String pedirPosIva() {
@@ -690,6 +755,9 @@ public class Pantalla {
         }
         return posIva;
     }
+
+    //==== FIN METODOS CU9 ====
+
 
     //METODO AUXILIAR PARA PAUSAR
     public void pausa() {
@@ -926,7 +994,7 @@ public class Pantalla {
         System.out.println("-----------------------------------------------------------------");
     }
 
-    private int leerOpcionNumerica() {
+    private int leerOpcionNumerica() {/
         try {
             return scanner.nextInt();
         } catch (InputMismatchException e) {
@@ -934,64 +1002,8 @@ public class Pantalla {
         } finally {
             scanner.nextLine(); // Limpia el buffer del scanner
         }
-    }
+    }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
 
-
-    private String pedirDocumento(TipoDocumento tipo) {
-        String NroDocumento = null;
-        boolean valido = false;
-
-        // Definimos las reglas (Regex)
-        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
-        String regexNumerico = "^\\d{7,8}$";
-        // Pasaporte: Letras y números, entre 6 y 15 caracteres
-        String regexPasaporte = "^[A-Z0-9]{6,15}$";
-        // Otro: Cualquier cosa entre 4 y 20 caracteres
-        String regexOtro = "^.{4,20}$";
-
-        while (!valido) {
-            System.out.print("Número de Documento: ");
-            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
-
-            if (entrada.isEmpty()) {
-                // Si es obligatorio (que lo es), no dejamos pasar vacío
-                System.out.println("Error: El documento es obligatorio.");
-                continue;
-            }
-
-            // Validamos según el tipo seleccionado
-            switch (tipo) {
-                case DNI:
-                case LE:
-                case LC:
-                    if (entrada.matches(regexNumerico)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
-                    }
-                    break;
-                case PASAPORTE:
-                    if (entrada.matches(regexPasaporte)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
-                    }
-                    break;
-                default: // OTRO
-                    if (entrada.matches(regexOtro)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato inválido.");
-                    }
-                    break;
-            }
-
-            if (valido) {
-                NroDocumento = entrada;
-            }
-        }
-        return NroDocumento;
-    }
 
 
     // GRILLA, CU 5

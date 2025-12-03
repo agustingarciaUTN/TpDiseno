@@ -68,6 +68,8 @@ public class GestorHuesped {
         return listaHuespedesEncontrados;
     }
 
+
+    //Validacion de negocios de los datos ingresados en el formulario del CU9
     public List<String> validarDatosHuesped(DtoHuesped datos){
         List<String> errores = new ArrayList<>();
 
@@ -82,7 +84,6 @@ public class GestorHuesped {
             errores.add("El Tipo de Documento es obligatorio.");
         }
         if (datos.getNroDocumento().isEmpty()) {
-            // Asumiendo que Documento ahora es Long y lo pediste con pedirLongOpcional
             errores.add("El Número de Documento es obligatorio.");
         }
         if (datos.getFechaNacimiento() == null) {
@@ -92,7 +93,7 @@ public class GestorHuesped {
             if (datos.getFechaNacimiento().after(new Date())) { // new Date() es la fecha/hora actual
                 errores.add("La Fecha de Nacimiento no puede ser futura.");
             }
-            // Podríamos añadir validación de mayoría de edad si es necesario aca
+
         }
 
         // Validación de Dirección
@@ -119,19 +120,22 @@ public class GestorHuesped {
                 errores.add("El Código Postal es obligatorio y debe ser positivo.");
             }
         }
-        List<Long> telefonos = datos.getTelefono();
-        if (telefonos.getLast() <= 0) {
-            errores.add("El Teléfono es obligatorio.");
-        }
-        List<String> ocupaciones = datos.getOcupacion();
-        if (ocupaciones.getLast() == null || ocupaciones.getLast().trim().isEmpty()) {
-            errores.add("La Ocupación es obligatoria.");
-        }
         if (datos.getNacionalidad() == null || datos.getNacionalidad().trim().isEmpty()) {
             errores.add("La Nacionalidad es obligatoria.");
         }
 
+        //Validacion de listas (evita el crash si vienen vacías)
+        List<Long> telefonos = datos.getTelefono();
+        if (datos.getTelefono() == null || datos.getTelefono().isEmpty() || datos.getTelefono().getLast() <= 0) {//evitamos NullPointerException
+            errores.add("El Teléfono es obligatorio.");
+        }
+        List<String> ocupaciones = datos.getOcupacion();
+        if (datos.getOcupacion() == null || datos.getOcupacion().isEmpty() || datos.getOcupacion().getLast() == null || datos.getOcupacion().getLast().isBlank()) {
+            errores.add("La Ocupación es obligatoria.");
+        }
+
         // Regla especial CUIT/IVA
+        //Si la posición IVA es "Responsable Inscripto", obligamos a tener CUIT y validamos su formato con Regex
         if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
@@ -143,7 +147,7 @@ public class GestorHuesped {
             }
         }
 
-        return errores;
+        return errores;//Lista con los errores que encontramos
     }
 
     private boolean validarFormatoCUIT(String cuit) {
@@ -152,6 +156,8 @@ public class GestorHuesped {
         return cuit.matches("^\\d{2}-\\d{8}-\\d$");
     }
 
+    //buscarPorTipoYNumeroDocumento  <- nombre en Diag de Secuencia
+    //Esto tambien es una validacion de negocio. El Tipo y Numero de documento ingresado, no puede existir en el sistema
     public DtoHuesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
         // La validación de null ya se hizo en el paso anterior (validarDatosHuesped)
         if(daoHuesped.existeHuesped(datos.getTipoDocumento(), datos.getNroDocumento())){return datos;}
