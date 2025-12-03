@@ -23,7 +23,8 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- PERSISTIR (CREATE) ---
     @Override
     public boolean persistirHuesped(Huesped huesped) throws PersistenciaException {
-        String sqlHuesped = "INSERT INTO huesped (tipo_documento, numero_documento, apellido, nombres, fecha_nacimiento, nacionalidad, id_direccion, pos_iva, cuit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlHuesped = "INSERT INTO huesped (tipo_documento, numero_documento, apellido, nombres, fecha_nacimiento, nacionalidad, id_direccion, pos_iva, cuit) " +
+                "VALUES (?::\"Tipo_Documento\", ?, ?, ?, ?, ?, ?, ?::\"Pos_IVA\", ?)";
 
         Connection conn = null;
         try {
@@ -39,7 +40,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 ps.setDate(5, new java.sql.Date(huesped.getFechaNacimiento().getTime()));
                 ps.setString(6, huesped.getNacionalidad());
                 ps.setInt(7, huesped.getDireccion().getId()); // La dirección ya debe existir (se crea antes)
-                ps.setString(8, huesped.getPosicionIva().name());
+                ps.setString(8, huesped.getPosicionIva().toString());
                 ps.setString(9, huesped.getCuit());
                 ps.executeUpdate();
             }
@@ -61,8 +62,9 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- MODIFICAR (UPDATE) ---
     @Override
     public boolean modificarHuesped(Huesped huesped) throws PersistenciaException {
-        String sqlUpdate = "UPDATE huesped SET apellido=?, nombres=?, fecha_nacimiento=?, nacionalidad=?, id_direccion=?, pos_iva=?, cuit=? WHERE tipo_documento=? AND numero_documento=?";
-
+        String sqlUpdate = "UPDATE huesped SET apellido=?, nombres=?, fecha_nacimiento=?, nacionalidad=?, id_direccion=?, " +
+                "pos_iva=?::\"Pos_IVA\", cuit=? " +
+                "WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?";
         Connection conn = null;
         try {
             conn = Conexion.getConnection();
@@ -74,7 +76,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 ps.setDate(3, new java.sql.Date(huesped.getFechaNacimiento().getTime()));
                 ps.setString(4, huesped.getNacionalidad());
                 ps.setInt(5, huesped.getDireccion().getId());
-                ps.setString(6, huesped.getPosicionIva().name());
+                ps.setString(6, huesped.getPosicionIva().toString());
                 ps.setString(7, huesped.getCuit());
                 // WHERE
                 ps.setString(8, huesped.getTipoDocumento().name());
@@ -113,7 +115,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             params.add(nombre + "%");
         }
         if (tipo != null) {
-            sql.append(" AND tipo_documento = ?");
+            sql.append(" AND tipo_documento = ?::\"Tipo_Documento\"");
             params.add(tipo.name());
         }
         if (nroDoc != null && !nroDoc.isEmpty()) {
@@ -154,7 +156,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- OBTENER INDIVIDUAL ---
     @Override
     public DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT * FROM huesped WHERE tipo_documento=? AND numero_documento=?";
+        String sql = "SELECT * FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
@@ -169,7 +171,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     @Override
     public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {
         // Nota: Los satélites deberían borrarse por CASCADE en la BD, si no, hay que hacerlo manual aquí
-        String sql = "DELETE FROM huesped WHERE tipo_documento=? AND numero_documento=?";
+        String sql = "DELETE FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
@@ -189,33 +191,46 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
         // Teléfonos
         if (h.getTelefono() != null && !h.getTelefono().isEmpty()) {
-            String sql = "INSERT INTO telefono_huesped (tipo_documento, numero_documento, telefono) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO telefono_huesped (tipo_documento, nro_documento, telefono) VALUES (?::\"Tipo_Documento\", ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 for (Long t : h.getTelefono()) {
                     ps.setString(1, tipo);
                     ps.setString(2, nro);
-                    ps.setString(3, String.valueOf(t));
+                    ps.setLong(3, t);
                     ps.addBatch();
                 }
                 ps.executeBatch();
             }
         }
+
         // Emails
-        if (h.getEmail() != null && !h.getEmail().isEmpty()) {
-            String sql = "INSERT INTO email_huesped (tipo_documento, numero_documento, email) VALUES (?, ?, ?)";
+        if (h.getEmail() != null && !h.getEmail().isEmpty()) {//verificamos que exista la lista
+
+            String sql = "INSERT INTO email_huesped (tipo_documento, nro_documento, email) VALUES (?::\"Tipo_Documento\", ?, ?)";
+
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                boolean hayDatos = false; // Bandera para saber si agregamos algo
+
                 for (String e : h.getEmail()) {
-                    ps.setString(1, tipo);
-                    ps.setString(2, nro);
-                    ps.setString(3, e);
-                    ps.addBatch();
+                    // 2. VALIDACIÓN: Que el string individual no sea null ni vacío
+                    if (e != null && !e.isBlank()) {
+                        ps.setString(1, tipo);
+                        ps.setString(2, nro);
+                        ps.setString(3, e.trim());
+                        ps.addBatch();
+                        hayDatos = true;
+                    }
                 }
-                ps.executeBatch();
+
+                // 3. Solo ejecutamos si realmente cargamos algún email válido
+                if (hayDatos) {
+                    ps.executeBatch();
+                }
             }
         }
         // Ocupaciones
         if (h.getOcupacion() != null && !h.getOcupacion().isEmpty()) {
-            String sql = "INSERT INTO ocupacion_huesped (tipo_documento, numero_documento, ocupacion) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO ocupacion_huesped (tipo_documento, nro_documento, ocupacion) VALUES (?::\"Tipo_Documento\", ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 for (String o : h.getOcupacion()) {
                     ps.setString(1, tipo);
@@ -230,9 +245,9 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     private void borrarSatelites(Connection conn, String tipo, String nro) throws SQLException {
         try (Statement st = conn.createStatement()) {
-            st.executeUpdate("DELETE FROM telefono_huesped WHERE tipo_documento='" + tipo + "' AND numero_documento='" + nro + "'");
-            st.executeUpdate("DELETE FROM email_huesped WHERE tipo_documento='" + tipo + "' AND numero_documento='" + nro + "'");
-            st.executeUpdate("DELETE FROM ocupacion_huesped WHERE tipo_documento='" + tipo + "' AND numero_documento='" + nro + "'");
+            st.executeUpdate("DELETE FROM telefono_huesped WHERE tipo_documento='" + tipo + "'::\"Tipo_Documento\" AND nro_documento='" + nro + "'");
+            st.executeUpdate("DELETE FROM email_huesped WHERE tipo_documento='" + tipo + "'::\"Tipo_Documento\" AND nro_documento='" + nro + "'");
+            st.executeUpdate("DELETE FROM ocupacion_huesped WHERE tipo_documento='" + tipo + "'::\"Tipo_Documento\" AND nro_documento='" + nro + "'");
         }
     }
 
@@ -247,7 +262,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         List<String> ocups = new ArrayList<>();
 
         // Ejemplo Teléfonos
-        try (PreparedStatement ps = conn.prepareStatement("SELECT telefono FROM telefono_huesped WHERE tipo_documento=? AND numero_documento=?")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT telefono FROM telefono_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
             try (ResultSet rsSub = ps.executeQuery()) {
@@ -255,7 +270,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
         }
         // Ejemplo Emails
-        try (PreparedStatement ps = conn.prepareStatement("SELECT email FROM email_huesped WHERE tipo_documento=? AND numero_documento=?")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT email FROM email_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
             try (ResultSet rsSub = ps.executeQuery()) {
@@ -263,7 +278,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
         }
         // Ejemplo Ocupaciones
-        try (PreparedStatement ps = conn.prepareStatement("SELECT ocupacion FROM ocupacion_huesped WHERE tipo_documento=? AND numero_documento=?")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT ocupacion FROM ocupacion_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
             try (ResultSet rsSub = ps.executeQuery()) {
@@ -302,7 +317,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
     @Override
     public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=? AND numero_documento=?";
+        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());

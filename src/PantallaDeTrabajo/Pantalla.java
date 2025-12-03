@@ -1,24 +1,19 @@
 package PantallaDeTrabajo;
-import Dominio.Habitacion;
 import Dominio.Huesped;
 import Estadia.GestorEstadia;
 import Habitacion.GestorHabitacion;
 import Huesped.*;
-import Reserva.DtoReserva;
 import Reserva.GestorReserva;
-import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
-import Habitacion.DtoHabitacion;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import Excepciones.PersistenciaException;
 
@@ -766,7 +761,7 @@ public class Pantalla {
                         valido = true;
                         break;
                     case 4:
-                        posIva = PosIva.Excento.name();
+                        posIva = PosIva.Exento.name();
                         valido = true;
                         break;
                     default:
@@ -1374,7 +1369,7 @@ public class Pantalla {
      * MÉTODO ORQUESTADOR (CEREBRO):
      * Coordina los 3 gestores para construir la matriz de estados en memoria.
      */
-    private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
+   /* private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
 
         // 1. Pantalla pide habitaciones al GestorHabitacion
         ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodas();
@@ -1620,5 +1615,5 @@ public class Pantalla {
                 System.out.println("Error: Formato inválido. Use dd/MM/yyyy.");
             }
         }
-    }
+    }*/
 }
