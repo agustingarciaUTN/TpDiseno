@@ -1242,15 +1242,14 @@ public class Pantalla {
 
         // Lista para acumular las reservas que el usuario va seleccionando en memoria
         List<DtoReserva> listaReservasSolicitadas = new ArrayList<>();
-        boolean continuarSeleccionando = true;
+
 
         // 3. Bucle de Selección
-        while (continuarSeleccionando) {
+        while (true) {
             System.out.println("\n¿Desea seleccionar una habitación para reservar? (SI/NO): ");
             String respuesta = scanner.nextLine().trim();
 
             if (!respuesta.equalsIgnoreCase("SI")) {
-                continuarSeleccionando = false;
                 break; // Sale del bucle para proceder a confirmar o pintar
             }
 
