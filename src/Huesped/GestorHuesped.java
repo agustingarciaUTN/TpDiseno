@@ -46,11 +46,15 @@ public class GestorHuesped {
 
        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huéspedes
 
-       if (criterios != null) {
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios.getApellido(),
-                   criterios.getNombres(), criterios.getTipoDocumento(), criterios.getNroDocumento());
+       // 1. Decidimos qué método del DAO llamar
+       // Si el criterio NO es nulo Y NO está vacío (tiene al menos un dato real)...
+       if (criterios != null && !criterios.estanVacios()) {
+           System.out.println("Buscando coincidencias...");
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
        }
        else {
+           // Si es null o está "vacío" (todo Enter), traemos TODO
+           System.out.println("Sin filtro: Trayendo todos los huéspedes...");
            listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
        }
 

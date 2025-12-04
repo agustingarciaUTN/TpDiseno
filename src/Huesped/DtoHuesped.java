@@ -170,4 +170,16 @@ public class DtoHuesped {
             return new DtoHuesped(this);
         }
     }
+
+    public boolean estanVacios() {
+        boolean apellidoVacio = (apellido == null || apellido.trim().isEmpty());
+        boolean nombresVacio = (nombres == null || nombres.trim().isEmpty());
+        boolean tipoDocVacio = (tipoDocumento == null);
+
+        // onsideramos vacío si es null, blanco O si es "0"
+        boolean docVacio = (nroDocumento == null || nroDocumento.trim().isEmpty() || nroDocumento.equals("0"));
+
+        // Retorna TRUE solo si TODOS los campos son "vacíos"
+        return apellidoVacio && nombresVacio && tipoDocVacio && docVacio;
+    }
 }
