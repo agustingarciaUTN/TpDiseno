@@ -1235,7 +1235,7 @@ public class Pantalla {
         } catch (NumberFormatException e) {
             return -1; // Si escribió letras o símbolos, devolvemos -1 (inválido)
         }
-        // Nota: Ya no hace falta el scanner.nextLine() en finally porque ya consumimos la línea arriba.
+
     }
 
     /**
