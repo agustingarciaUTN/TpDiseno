@@ -19,7 +19,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
     @Override
     public boolean persistirEstadia(Estadia estadia) throws PersistenciaException {
         String sql = "INSERT INTO estadia (fecha_inicio, fecha_fin, valor_estadia, id_reserva, id_habitacion) VALUES (?, ?, ?, ?, ?)";
-        String sqlRel = "INSERT INTO estadia_huesped (id_estadia, tipo_documento, numero_documento) VALUES (?, ?, ?)";
+        String sqlRel = "INSERT INTO estadia_huesped (id_estadia, tipo_documento, nro_documento) VALUES (?, ?, ?)";
 
         Connection conn = null;
         try {

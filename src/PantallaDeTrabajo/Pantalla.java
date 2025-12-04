@@ -7,6 +7,7 @@ import Habitacion.GestorHabitacion;
 import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -768,7 +769,7 @@ public class Pantalla {
                         valido = true;
                         break;
                     case 4:
-                        posIva = PosIva.Excento.name();
+                        posIva = PosIva.Exento.name();
                         valido = true;
                         break;
                     default:

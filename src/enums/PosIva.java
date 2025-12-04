@@ -3,10 +3,10 @@ package enums;
 import java.text.Normalizer;
 
 public enum PosIva {
-    ConsumidorFinal("Consumidor Final"),
-    Monotributista("Monotributista"),
-    ResponsableInscripto("Responsable inscripto"),
-    Excento("Exento");
+    ConsumidorFinal("CONSUMIDOR FINAL"),
+    Monotributista("MONOTRIBUTISTA"),
+    ResponsableInscripto("RESPONSABLE INSCRIPTO"),
+    Exento("EXENTO");
 
     private final String descripicion;
 
