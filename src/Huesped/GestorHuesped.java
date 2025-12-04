@@ -46,7 +46,7 @@ public class GestorHuesped {
 
        ArrayList<DtoHuesped> listaDtoHuespedesEncontrados; //datos de huéspedes
 
-       // 1. Decidimos qué método del DAO llamar
+       // 1. Decidimos qué metodo del DAO llamar
        // Si el criterio NO es nulo Y NO está vacío (tiene al menos un dato real)...
        if (criterios != null && !criterios.estanVacios()) {
            System.out.println("Buscando coincidencias...");
