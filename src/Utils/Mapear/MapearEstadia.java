@@ -8,11 +8,6 @@ import java.util.ArrayList;
 
 public class MapearEstadia {
 
-    // Composición de mappers
-    private static MapearReserva mapearReserva = new MapearReserva();
-    private static MapearHuesped mapearHuesped = new MapearHuesped();
-
-
     public static Estadia mapearDtoAEntidad(DtoEstadia dto) {
         if (dto == null) return null;
 
@@ -21,12 +16,17 @@ public class MapearEstadia {
                 .fechaCheckOut(dto.getFechaCheckOut())
                 .valorEstadia(dto.getValorEstadia());
 
-        // 1. Mapear Reserva
+        // 1. Mapear Reserva (si existe)
         if (dto.getDtoReserva() != null) {
             builder.reserva(MapearReserva.mapearDtoAEntidad(dto.getDtoReserva()));
         }
 
-        // 2. Mapear Lista de Huéspedes
+        // 2. Mapear Habitación (CORRECCIÓN IMPORTANTE: ESTO FALTABA)
+        if (dto.getDtoHabitacion() != null) {
+            builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion()));
+        }
+
+        // 3. Mapear Lista de Huéspedes
         if (dto.getDtoHuespedes() != null) {
             for (DtoHuesped dtoH : dto.getDtoHuespedes()) {
                 builder.agregarHuesped(MapearHuesped.mapearDtoAEntidad(dtoH));
@@ -35,7 +35,6 @@ public class MapearEstadia {
 
         return builder.build();
     }
-
 
     public static DtoEstadia mapearEntidadADto(Estadia entidad) {
         if (entidad == null) return null;
@@ -51,7 +50,12 @@ public class MapearEstadia {
             builder.dtoReserva(MapearReserva.mapearEntidadADto(entidad.getReserva()));
         }
 
-        // 2. Mapear Lista de Huéspedes
+        // 2. Mapear Habitación (Agregamos esto también por completitud)
+        if (entidad.getHabitacion() != null) {
+            builder.dtoHabitacion(MapearHabitacion.mapearEntidadADto(entidad.getHabitacion()));
+        }
+
+        // 3. Mapear Lista de Huéspedes
         if (entidad.getHuespedes() != null) {
             ArrayList<DtoHuesped> listaDtos = new ArrayList<>();
             for (Huesped h : entidad.getHuespedes()) {

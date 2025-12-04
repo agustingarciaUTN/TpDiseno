@@ -165,7 +165,7 @@ public class Pantalla {
             System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " 🔍 Buscar huésped (CU2)");
             System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " 🛏️  Reservar Habitación (CU4)");
             System.out.println(Colores.AMARILLO + "   [3]" + Colores.RESET + " 📝 Dar de alta huésped (CU9)");
-            System.out.println(Colores.AMARILLO + "   [4]" + Colores.RESET + " 🗑️  Dar de baja huésped (CU11)");
+            System.out.println(Colores.AMARILLO + "   [4]" + Colores.RESET + " 🗑️  Ocupar una Habitacion (CU15)");
             System.out.println(Colores.AMARILLO + "   [5]" + Colores.RESET + " 🚪 Cerrar sesión");
 
             System.out.println(Colores.CYAN + "======================================================" + Colores.RESET);
@@ -203,7 +203,7 @@ public class Pantalla {
                     darDeAltaHuesped();
                     break;
                 case 4:
-                    //iniciarBajaHuesped();
+                    ocuparHabitacion();
                     break;
                 case 5:
                     System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
@@ -1235,7 +1235,6 @@ public class Pantalla {
         } catch (NumberFormatException e) {
             return -1; // Si escribió letras o símbolos, devolvemos -1 (inválido)
         }
-        // Nota: Ya no hace falta el scanner.nextLine() en finally porque ya consumimos la línea arriba.
     }
 
     /**
@@ -1733,8 +1732,10 @@ public class Pantalla {
                     System.out.println("Error: La habitación figura OCUPADA en el sistema.");
                 } else if (reservadaBD) {
                     System.out.println("AVISO: Habitación RESERVADA. ¿Es el titular?");
+                    System.out.println("\n" + "Ingrese una opcion numerica:");
                     System.out.println("1. SI (OCUPAR) / 2. NO (CANCELAR)");
-                    if (leerOpcionNumerica() == 1) habSeleccionada = candidata;
+                    int opcionNumerica = leerOpcionNumerica();
+                    if (opcionNumerica == 1) {habSeleccionada = candidata;}
                 } else {
                     habSeleccionada = candidata; // Libre y fechas válidas -> ÉXITO
                 }
