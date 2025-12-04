@@ -7,6 +7,7 @@ import enums.PosIva;
 import enums.TipoDocumento;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DaoHuesped implements DaoHuespedInterfaz {
@@ -99,41 +100,100 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- BUSCAR POR CRITERIO ---
     @Override
-    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(String apellido, String nombre, TipoDocumento tipo, String nroDoc) {
+    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM huesped WHERE 1=1");
+
+        // 1. QUERY ROBUSTA: Usamos la misma base que en 'obtenerTodos' para traer Email y Dirección
+        StringBuilder sql = new StringBuilder(
+                "SELECT h.apellido, h.nombres, h.tipo_documento, h.numero_documento, h.telefono, h.cuit, h.nacionalidad, " +
+                        "h.fecha_nacimiento, h.id_direccion, h.pos_iva, h.ocupacion, MAX(e.email) as email " +
+                        "FROM huesped h " +
+                        "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND h.numero_documento = e.nro_documento " +
+                        "WHERE 1=1");
+
         List<Object> params = new ArrayList<>();
 
-        // Construcción dinámica de la query
-        if (apellido != null && !apellido.isEmpty()) {
-            sql.append(" AND apellido LIKE ?");
-            params.add(apellido + "%"); // Búsqueda por inicial/comienzo
-        }
-        if (nombre != null && !nombre.isEmpty()) {
-            sql.append(" AND nombres LIKE ?");
-            params.add(nombre + "%");
-        }
-        if (tipo != null) {
-            sql.append(" AND tipo_documento = ?::\"Tipo_Documento\"");
-            params.add(tipo.name());
-        }
-        if (nroDoc != null && !nroDoc.isEmpty()) {
-            sql.append(" AND numero_documento LIKE ?");
-            params.add(nroDoc + "%");
+        // 2. FILTROS DINÁMICOS
+        if (criterios.getApellido() != null && !criterios.getApellido().isEmpty()) {
+            sql.append(" AND h.apellido ILIKE ?"); // ILIKE en Postgres ignora mayúsculas/minúsculas
+            params.add(criterios.getApellido() + "%");
         }
 
+        if (criterios.getNombres() != null && !criterios.getNombres().isEmpty()) {
+            sql.append(" AND h.nombres ILIKE ?");
+            params.add(criterios.getNombres() + "%");
+        }
+
+        if (criterios.getTipoDocumento() != null) {
+            // Casteo explícito al ENUM de Postgres si es necesario
+            sql.append(" AND h.tipo_documento = ?::\"Tipo_Documento\"");
+            params.add(criterios.getTipoDocumento().name());
+        }
+
+        // Validación del Documento: Ignoramos si es nulo, vacío o "0"
+        if (criterios.getNroDocumento() != null && !criterios.getNroDocumento().isEmpty() && !criterios.getNroDocumento().equals("0")) {
+            sql.append(" AND h.numero_documento LIKE ?");
+            params.add(criterios.getNroDocumento() + "%");
+        }
+
+        // Agrupar es obligatorio al usar MAX(email)
+        sql.append(" GROUP BY h.tipo_documento, h.numero_documento, h.apellido, h.nombres, h.telefono, h.cuit, h.nacionalidad, h.fecha_nacimiento, h.id_direccion, h.pos_iva, h.ocupacion");
+
+        // 3. EJECUCIÓN Y MAPEO
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
+            // Asignar parámetros dinámicamente
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-            ResultSet rs = ps.executeQuery();
 
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DtoHuesped dto = new DtoHuesped();
+
+                    // Mapeo manual (Igual que en obtenerTodos)
+                    dto.setApellido(rs.getString("apellido"));
+                    dto.setNombres(rs.getString("nombres"));
+                    dto.setNroDocumento(rs.getString("numero_documento"));
+                    dto.setTelefono(Collections.singletonList(rs.getLong("telefono")));
+                    dto.setCuit(rs.getString("cuit"));
+                    dto.setNacionalidad(rs.getString("nacionalidad"));
+                    dto.setOcupacion(Collections.singletonList(rs.getString("ocupacion")));
+                    dto.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
+                    dto.setEmail(Collections.singletonList(rs.getString("email")));
+
+                    int idDir = rs.getInt("id_direccion");
+
+                    if (!rs.wasNull() && idDir > 0) {
+                        // 1. Creamos un DTO de dirección auxiliar solo para transportar el ID
+                        DtoDireccion dtoDirTemp = new DtoDireccion();
+                        dtoDirTemp.setId(idDir);
+
+                        // 2. Se lo asignamos al huésped
+                        dto.setDtoDireccion(dtoDirTemp);
+                    }
+
+                    // Enums
+                    try {
+                        dto.setPosicionIva(PosIva.valueOf(rs.getString("pos_iva")));
+                        String tipoDocStr = rs.getString("tipo_documento");
+                        if (tipoDocStr != null) {
+                            dto.setTipoDocumento(TipoDocumento.valueOf(tipoDocStr.toUpperCase()));
+                        }
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Error mapeando enums: " + e.getMessage());
+                    }
+
+                    lista.add(dto);
+                }
+            }
 
         } catch (SQLException e) {
+            System.err.println("Error en la búsqueda: " + e.getMessage());
             e.printStackTrace();
         }
+
         return lista;
     }
 
