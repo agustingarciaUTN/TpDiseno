@@ -1,28 +1,28 @@
 package Huesped;
 
-import java.util.ArrayList;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
 import enums.TipoDocumento;
+import java.util.ArrayList;
 
 public interface DaoHuespedInterfaz {
-    //persistir datos
-    boolean persistirHuesped(DtoHuesped dto) throws PersistenciaException;
-    boolean modificarHuesped(DtoHuesped dtoHuespedOriginal, DtoHuesped dtoHuespedModificado);
-    boolean eliminarHuesped(String tipoDocumento, String nroDocumento);
-    ArrayList<DtoHuesped> obtenerTodosLosHuespedes ();
+
+    // Persistencia (Recibe Entidad completa y valida)
+    boolean persistirHuesped(Huesped huesped) throws PersistenciaException;
+    boolean modificarHuesped(Huesped huesped) throws PersistenciaException;
+    boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento);
+
+
+    // Búsquedas (Devuelven Entidades completas)
+    DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento);
+    ArrayList<DtoHuesped> obtenerTodosLosHuespedes();
+
+    // Búsqueda por Criterio (Recibe filtros sueltos para no forzar una Entidad inválida)
     ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios);
-    boolean docExistente(DtoHuesped criterios);
-    int obtenerIdDireccion(String tipoDocumento, String nroDocumento);
-    boolean eliminarDireccion(int idDireccion);
-    boolean eliminarEmailsHuesped(String tipoDocumento, String nroDocumento);
-    DtoHuesped buscarPorTipoYNumeroDocumento(TipoDocumento tipoDoc, String numDoc) throws PersistenciaException;
-    boolean crearEmailHuesped(DtoHuesped dto) throws PersistenciaException;
 
-    //Para crear la entidad como indica el diagrama de secuencia de CU2
-    Huesped crearHuesped(DtoHuesped datos);
+    // Métodos auxiliares necesarios
+    int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento);
+    boolean existeHuesped(TipoDocumento tipo, String nroDocumento);
 
-}
 
-//queremos tener diferentes metodos para devolver por ej una lista de dto?
-//tenemos que controlar excepciones
+    }

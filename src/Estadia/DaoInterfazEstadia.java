@@ -1,21 +1,24 @@
 package Estadia;
-
 import Dominio.Estadia;
-import Dominio.Huesped;
 import Excepciones.PersistenciaException;
-
-
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 
 public interface DaoInterfazEstadia {
-
-    boolean modificarEstadia(DtoEstadia dto);
+    boolean persistirEstadia(Estadia estadia) throws PersistenciaException;
+    boolean modificarEstadia(Estadia estadia) throws PersistenciaException;
     boolean eliminarEstadia(int idEstadia);
     DtoEstadia obtenerEstadiaPorId(int idEstadia);
     ArrayList<DtoEstadia> obtenerTodasLasEstadias();
-    boolean persistirEstadia(Estadia estadia, List<Huesped> huespedes) throws PersistenciaException;
+    ArrayList<DtoEstadia> obtenerEstadiasEnPeriodo(java.util.Date inicio, java.util.Date fin);
+    boolean hayEstadiaEnFecha(String numeroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFin);
+    //Validar si una persona ya está alojada (para acompañantes)
+    boolean esHuespedActivo(String tipoDoc, String nroDoc, Date fechaInicio, Date fechaFin);
 
-    // Método específico para validar si un huésped tiene estadías (CU11)
-    boolean huespedTieneEstadias(String tipoDocumento, String nroDocumento);
+
+    // Obtener estadías de una reserva específica
+    //ArrayList<Estadia> obtenerPorReserva(int dtoReserva);
+    // Obtener estadías activas (sin fecha fin)
+   // ArrayList<Estadia> obtenerEstadiasActivas();
+
 }

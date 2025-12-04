@@ -1,177 +1,78 @@
 package Usuario;
 
+import BaseDedatos.Conexion;
 import Dominio.Usuario;
-import BaseDedatos.Coneccion;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import Excepciones.PersistenciaException;
+import java.sql.*;
 
 public class DaoUsuario implements DaoUsuarioInterfaz {
 
+    // 1. SINGLETON
+    private static DaoUsuario instancia;
+    private DaoUsuario() {}
+
+    public static synchronized DaoUsuario getInstance() {
+        if (instancia == null) {
+            instancia = new DaoUsuario();
+        }
+        return instancia;
+    }
+
     @Override
-    public DtoUsuario obtenerUsuario(int idUsuario){
-        String sql = "SELECT id_usuario, nombre, contrasena FROM usuario WHERE id_usuario = ?";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+    public boolean persistir(Usuario usuario) throws PersistenciaException {
+        String sql = "INSERT INTO usuario (nombre, hashConstrasenia) VALUES (?, ?)";
 
-        try {
-            conn = Coneccion.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, idUsuario);
-            rs = ps.executeQuery();
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            if(rs.next()){
-                DtoUsuario dto = new DtoUsuario();
-                dto.setIdUsuario(rs.getInt("id_usuario"));
-                dto.setNombre(rs.getString("nombre"));
-                dto.setHashContrasenia(rs.getString("contrasena"));
-                return dto;
-            }
+            pstmt.setString(1, usuario.getNombre());
+            pstmt.setString(2, usuario.getHashContrasenia());
 
-            return null;
+            return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("Error al obtener usuario por ID: " + e.getMessage());
-            return null;
-        } finally {
-            cerrarRecursos(conn, ps, rs);
+            throw new PersistenciaException("Error al guardar usuario", e);
         }
     }
 
     @Override
-    public DtoUsuario obtenerUsuarioPorNombre(String nombre){
-        String sql = "SELECT id_usuario, nombre, contrasena FROM usuario WHERE nombre = ?";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+    public DtoUsuario buscarPorNombre(String nombre) throws PersistenciaException {
+        String sql = "SELECT * FROM usuario WHERE nombre = ?";
 
-        try {
-            conn = Coneccion.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, nombre);
-            rs = ps.executeQuery();
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            if(rs.next()){
-                DtoUsuario dto = new DtoUsuario();
-                dto.setIdUsuario(rs.getInt("id_usuario"));
-                dto.setNombre(rs.getString("nombre"));
-                dto.setHashContrasenia(rs.getString("contrasena"));
-                return dto;
+            pstmt.setString(1, nombre);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // USO DEL BUILDER con los datos justos y necesarios
+                    return new DtoUsuario.Builder()
+                            .nombre(rs.getString("nombre"))
+                            .contrasenia(rs.getString("hashContrasenia"))
+                            .id(rs.getInt("id_usuario"))
+                            .build();
+                }
             }
-
-            return null;
-
         } catch (SQLException e) {
-            System.err.println("Error al obtener usuario por nombre: " + e.getMessage());
-            return null;
-        } finally {
-            cerrarRecursos(conn, ps, rs);
+            throw new PersistenciaException("Error al buscar usuario", e);
         }
+        return null;
     }
 
     @Override
-    public boolean crearUsuario(String nombre, String contrasenia, int idUsuario){
-        String sql = "INSERT INTO usuario (id_usuario, nombre, contrasena) VALUES (?, ?, ?)";
-        Connection conn = null;
-        PreparedStatement ps = null;
+    public boolean modificar(Usuario usuario) throws PersistenciaException {
+        // Por si cambian la contraseña
+        String sql = "UPDATE usuario SET hashConstrasenia = ? WHERE id_usuario = ?";
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        try {
-            conn = Coneccion.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, idUsuario);
-            ps.setString(2, nombre);
-            ps.setString(3, contrasenia);
+            pstmt.setString(1, usuario.getHashContrasenia());
+            pstmt.setInt(2, usuario.getIdUsuario());
 
-            int filasAfectadas = ps.executeUpdate();
-
-            if(filasAfectadas > 0){
-                System.out.println("Usuario creado exitosamente: " + nombre);
-                return true;
-            }
-            return false;
-
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al crear usuario: " + e.getMessage());
-            return false;
-        } finally {
-            cerrarRecursos(conn, ps, null);
-        }
-    }
-
-    @Override
-    public boolean modificarUsuario(int idUsuario){
-        String sql = "UPDATE usuario SET nombre = ?, contrasena = ? WHERE id_usuario = ?";
-        Connection conn = null;
-        PreparedStatement ps = null;
-
-        try {
-            conn = Coneccion.getConnection();
-            ps = conn.prepareStatement(sql);
-
-            int filasAfectadas = ps.executeUpdate();
-            return filasAfectadas > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Error al modificar usuario: " + e.getMessage());
-            return false;
-        } finally {
-            cerrarRecursos(conn, ps, null);
-        }
-    }
-
-    @Override
-    public boolean eliminarUsuario(int idUsuario){
-        String sql = "DELETE FROM usuario WHERE id_usuario = ?";
-        Connection conn = null;
-        PreparedStatement ps = null;
-
-        try {
-            conn = Coneccion.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, idUsuario);
-
-            int filasAfectadas = ps.executeUpdate();
-
-            if(filasAfectadas > 0){
-                System.out.println("Usuario eliminado exitosamente");
-                return true;
-            }
-            return false;
-
-        } catch (SQLException e) {
-            System.err.println("Error al eliminar usuario: " + e.getMessage());
-            return false;
-        } finally {
-            cerrarRecursos(conn, ps, null);
-        }
-    }
-
-    private void cerrarRecursos(Connection conn, PreparedStatement ps, ResultSet rs){
-        try {
-            if(rs != null && !rs.isClosed()) {
-                rs.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar ResultSet");
-        }
-
-        try {
-            if(ps != null && !ps.isClosed()) {
-                ps.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar PreparedStatement");
-        }
-
-        try {
-            if(conn != null && !conn.isClosed()) {
-                conn.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar Connection");
+            throw new PersistenciaException("Error al modificar usuario", e);
         }
     }
 }

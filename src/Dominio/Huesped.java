@@ -1,26 +1,30 @@
 package Dominio;
 
+import Utils.Mapear.MapearHuesped;
 import enums.TipoDocumento;
 import enums.PosIva;
+import Huesped.DtoHuesped;
 import java.util.Date;
 import java.util.List;
-
-import Huesped.DaoDireccion;
-import Huesped.DtoDireccion;
 
 public class Huesped {
     private String nombres;
     private String apellido;
-    private long telefono;
     private TipoDocumento tipoDocumento;
-    private long documento;
+    private String nroDocumento;
     private String cuit;
     private PosIva posicionIva;
     private Date fechaNacimiento;
-    private String email;
-    private String ocupacion;
     private String nacionalidad;
-    private Direccion direccion;// CUAL DE LOS DOS
+
+
+    // traemos todos porque si necesitamos solo uno, después lo filtramos y el acceso a la tabla intermedia es solo 1
+    private List<String> email;
+    private List<String> ocupacion;
+    private List<Long> telefono;
+
+    // relaciones
+    private Direccion direccion;
     private List<Estadia> estadias;
 
 
@@ -28,40 +32,23 @@ public class Huesped {
     public Huesped() {
     }
 
-    // Constructor con todos los datos
-    public Huesped(String nombres, String apellido, int telefono,
-                   TipoDocumento tipoDocumento, long documento, String cuit,
-                   PosIva posicionIva, Date fechaNacimiento, String email,
-                   String ocupacion, String nacionalidad, Direccion direccion, List<Estadia> estadias) {
-
-        this.nombres = nombres;
-        this.apellido = apellido;
-        this.telefono = telefono;
-        this.tipoDocumento = tipoDocumento;
-        this.documento = documento;
-        this.cuit = cuit;
-        this.posicionIva = posicionIva;
-        this.fechaNacimiento = fechaNacimiento;
-        this.email = email;
-        this.ocupacion = ocupacion;
-        this.nacionalidad = nacionalidad;
-        this.direccion = direccion;
-        this.estadias = estadias;
+    // Constructor Privado: Solo el Builder puede instanciar
+    private Huesped(Builder builder) {
+        this.nombres = builder.nombres;
+        this.apellido = builder.apellido;
+        this.telefono = builder.telefono;
+        this.tipoDocumento = builder.tipoDocumento;
+        this.nroDocumento = builder.nroDocumento;
+        this.cuit = builder.cuit;
+        this.posicionIva = builder.posicionIva;
+        this.fechaNacimiento = builder.fechaNacimiento;
+        this.email = builder.email;
+        this.ocupacion = builder.ocupacion;
+        this.nacionalidad = builder.nacionalidad;
+        this.direccion = builder.direccion;
+        this.estadias = builder.estadias;
     }
-    // Constructor con los datos más importantes
-    public Huesped(String nombres, String apellido, TipoDocumento tipoDocumento,
-                   long documento, PosIva posicionIva, Direccion direccion) {
-        if (direccion == null) {
-            throw new IllegalArgumentException("El huésped debe tener una dirección válida");
-        }
 
-        this.nombres = nombres;
-        this.apellido = apellido;
-        this.tipoDocumento = tipoDocumento;
-        this.documento = documento;
-        this.posicionIva = posicionIva;
-        this.direccion = direccion;
-    }
     // Getters y Setters
     public String getNombres() {
         return nombres;
@@ -75,10 +62,10 @@ public class Huesped {
     public void setApellido(String apellido) {
         this.apellido = apellido;
     }
-    public long getTelefono() {
+    public List<Long> getTelefono() {
         return telefono;
     }
-    public void setTelefono(long telefono) {
+    public void setTelefono(List<Long> telefono) {
         this.telefono = telefono;
     }
     public TipoDocumento getTipoDocumento() {
@@ -87,11 +74,11 @@ public class Huesped {
     public void setTipoDocumento(TipoDocumento tipoDocumento) {
         this.tipoDocumento = tipoDocumento;
     }
-    public long getNroDocumento() {
-        return documento;
+    public String getNroDocumento() {
+        return nroDocumento;
     }
-    public void setNroDocumento(long documento) {
-        this.documento = documento;
+    public void setNroDocumento(String documento) {
+        this.nroDocumento = documento;
     }
     public String getCuit() {
         return cuit;
@@ -111,16 +98,16 @@ public class Huesped {
     public void setFechaNacimiento(Date fechaNacimiento) {
         this.fechaNacimiento = fechaNacimiento;
     }
-    public String getEmail() {
+    public List<String> getEmail() {
         return email;
     }
-    public void setEmail(String email) {
+    public void setEmail(List<String> email) {
         this.email = email;
     }
-    public String getOcupacion() {
+    public List<String> getOcupacion() {
         return ocupacion;
     }
-    public void setOcupacion(String ocupacion) {
+    public void setOcupacion(List<String> ocupacion) {
         this.ocupacion = ocupacion;
     }
     public String getNacionalidad() {
@@ -144,4 +131,50 @@ public class Huesped {
     public void setEstadias(List<Estadia> estadias){
         this.estadias = estadias;
     }
+
+    public Huesped crearSinPersistirHuesped(DtoHuesped dtoHuesped, Direccion direccion){
+        return MapearHuesped.mapearDtoAEntidadSinDireccion(dtoHuesped, direccion);
+    }
+
+    // --- CLASE BUILDER ---
+    public static class Builder {
+        private String nombres;
+        private String apellido;
+        private TipoDocumento tipoDocumento;
+        private String nroDocumento;
+        // Valores por defecto u opcionales
+        private List<Long> telefono;
+        private String cuit;
+        private PosIva posicionIva;
+        private Date fechaNacimiento;
+        private List<String> email;
+        private List<String> ocupacion;
+        private String nacionalidad;
+        private Direccion direccion;
+        private List<Estadia> estadias;
+
+        // Constructor del Builder con los datos OBLIGATORIOS (mínimos para existir)
+        public Builder(String nombres, String apellido, TipoDocumento tipoDocumento, String documento) {
+            this.nombres = nombres;
+            this.apellido = apellido;
+            this.tipoDocumento = tipoDocumento;
+            this.nroDocumento = documento;
+        }
+
+        // Métodos para el resto
+        public Builder telefono(List<Long> val) { telefono = val; return this; }
+        public Builder cuit(String val) { cuit = val; return this; }
+        public Builder posicionIva(PosIva val) { posicionIva = val; return this; }
+        public Builder fechaNacimiento(Date val) { fechaNacimiento = val; return this; }
+        public Builder email(List<String> val) { email = val; return this; }
+        public Builder ocupacion(List<String> val) { ocupacion = val; return this; }
+        public Builder nacionalidad(String val) { nacionalidad = val; return this; }
+        public Builder direccion(Direccion val) { direccion = val; return this; }
+        public Builder estadias(List<Estadia> val) { estadias = val; return this; }
+
+        public Huesped build() {
+            return new Huesped(this);
+        }
+    }
+
 }

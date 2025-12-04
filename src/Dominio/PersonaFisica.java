@@ -1,36 +1,41 @@
 package Dominio;
 
-import java.util.ArrayList;
-import enums.TipoDocumento;
-
 public class PersonaFisica extends ResponsablePago {
 
-    private TipoDocumento tipoDocumento;
-    private String numeroDocumento;
-    
-    public PersonaFisica( TipoDocumento tipoDocumento, String numeroDocumento, int idResponsablePago, ArrayList<Factura> facturas) {
-        super(idResponsablePago, facturas);
-        if(numeroDocumento == null || numeroDocumento.isEmpty()) {
-            throw new IllegalArgumentException("El número de documento no puede estar vacío.");
-        }
-        if(tipoDocumento == null) {
-            throw new IllegalArgumentException("El tipo de documento no puede ser nulo.");
-        }
-        this.tipoDocumento = tipoDocumento;
-        this.numeroDocumento = numeroDocumento;
+    private Huesped huesped;
+
+    // --- CONSTRUCTOR PRIVADO ---
+    private PersonaFisica(Builder builder) {
+        super(builder.idResponsablePago);
+        this.huesped = builder.huesped;
     }
 
-    // Getters y Setters
-    public TipoDocumento getTipoDocumento() {
-        return tipoDocumento;
+    // Constructor por defecto
+    public PersonaFisica() {
+        super(0);
     }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
-    }
-    public String getNumeroDocumento() {
-        return numeroDocumento;
-    }
-    public void setNumeroDocumento(String numeroDocumento) {
-        this.numeroDocumento = numeroDocumento;
+
+    // --- GETTERS Y SETTERS ---
+    public Huesped getHuesped() { return huesped; }
+    public void setHuesped(Huesped huesped) { this.huesped = huesped; }
+
+
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private Huesped huesped;
+        private int idResponsablePago = 0;
+
+        public Builder(Huesped huesped) {
+            this.huesped = huesped;
+        }
+
+        public Builder idResponsablePago(int val) { idResponsablePago = val; return this; }
+
+        public PersonaFisica build() {
+            if (huesped == null) {
+                throw new IllegalArgumentException("La persona física debe ser un huésped.");
+            }
+            return new PersonaFisica(this);
+        }
     }
 }

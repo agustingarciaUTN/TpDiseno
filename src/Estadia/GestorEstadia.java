@@ -1,159 +1,81 @@
 package Estadia;
 
 import Dominio.Estadia;
-import Dominio.Huesped;
 import Excepciones.PersistenciaException;
+import Huesped.DtoHuesped;
+import Utils.Mapear.MapearEstadia;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class GestorEstadia {
+
+
+    // 1. La única instancia (static y private)
+    private static GestorEstadia instancia;
+
+    // Referencias a los DAO que necesita
     private final DaoInterfazEstadia daoEstadia;
 
-    public GestorEstadia(DaoInterfazEstadia dao) {
-        this.daoEstadia = dao;
+    // 2. Constructor PRIVADO
+    // Nadie puede hacer new GestorEstadia() desde fuera.
+    private GestorEstadia() {
+        //Obtenemos las instancias de los DAO
+        this.daoEstadia = DaoEstadia.getInstance();
     }
 
+    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
+    public static synchronized GestorEstadia getInstance() {
+        if (instancia == null) {
+            instancia = new GestorEstadia();
+        }
+        return instancia;
+    }
+
+
+    public boolean estaOcupadaEnFecha(String nroHabitacion, java.util.Date fechaInicio, java.util.Date fechaFin) {
+        return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fechaInicio, fechaFin);
+    }
+    public List<DtoEstadia> buscarEstadiasEnFecha(Date inicio, Date fin) {
+        return ((DaoEstadia) daoEstadia).obtenerEstadiasEnPeriodo(inicio, fin);
+    }
     /**
-     * Verifica si un huésped se ha alojado alguna vez en el hotel
-     * @param tipoDocumento Tipo de documento del huésped
-     * @param nroDocumento Número de documento del huésped
-     * @return true si el huésped tiene al menos una estadía registrada
+     * CU15: Crear Estadía (con validación de roles)
      */
-    public boolean huespedSeAlojoAlgunaVez(String tipoDocumento, String nroDocumento) {
-        if (tipoDocumento == null || tipoDocumento.trim().isEmpty()) {
-            return false;
-        }
+    public void crearEstadia(DtoEstadia dtoEstadia) throws Exception {
 
-        if (nroDocumento.isEmpty()) {
-            return false;
-        }
+        List<DtoHuesped> huespedes = dtoEstadia.getDtoHuespedes();
 
-        return daoEstadia.huespedTieneEstadias(tipoDocumento, nroDocumento);
-    }
-
-
-    public Estadia crearEstadia(DtoEstadia dtoEstadia){
-        if (dtoEstadia == null) {
-            return null;
-        }
-
-        Estadia estadia = new Estadia();
-
-        // Intentar asignar id si existe en el DTO
-        try {
-            // Si el DTO expone un id entero
-            if (dtoEstadia.getIdEstadia() > 0) {
-                estadia.setId(dtoEstadia.getIdEstadia());
-            }
-        } catch (Exception ignored) {}
-
-        // Fechas
-        try {
-            estadia.setFechaCheckIn(dtoEstadia.getFechaCheckIn());
-        } catch (Exception ignored) {}
-        try {
-            estadia.setFechaCheckOut(dtoEstadia.getFechaCheckOut());
-        } catch (Exception ignored) {}
-
-
-        try {
-            estadia.setValorEstadia(dtoEstadia.getValorEstadia());
-
-        } catch (Exception ignored) {}
-
-        // Observaciones u otros campos opcionales
-
-
-        return estadia;
-    }
-
-
-    /**
-     * Crea una nueva estadía
-     * @param estadia Datos de la estadía
-     * @param huespedes Lista de huespedes asociados
-     * @return true si se creó exitosamente
-     */
-    public boolean crearYPersistirEstadia(Estadia estadia, List<Huesped> huespedes) {
-        if (estadia == null) {
-            System.err.println("La estadía no puede ser nula");
-            return false;
-        }
-
+        // Validación básica
         if (huespedes == null || huespedes.isEmpty()) {
-            System.err.println("Debe haber al menos un huésped");
-            return false;
-        }
-        if (estadia.getFechaCheckIn() == null) {
-            System.err.println("La fecha de inicio es obligatoria");
-            return false;
+            throw new IllegalArgumentException("La estadía debe tener al menos un huésped asignado (El Responsable).");
         }
 
-        if (estadia.getValorEstadia() <= 0) {
-            System.err.println("El valor de la estadía debe ser mayor a 0");
-            return false;
+        // --- VALIDACIÓN DE REGLA DE NEGOCIO ---
+        // Iteramos desde 1 porque el 0 es el Responsable que SÍ puede repetir habitación.
+        // Los acompañantes >= 1 NO pueden estar en otra habitación simultáneamente.
+
+        for (int i = 1; i < huespedes.size(); i++) {
+            DtoHuesped acompanantes = huespedes.get(i);
+
+            boolean estaOcupado = daoEstadia.esHuespedActivo(
+                    acompanantes.getTipoDocumento().name(),
+                    acompanantes.getNroDocumento(),
+                    dtoEstadia.getFechaCheckIn(),
+                    dtoEstadia.getFechaCheckOut()
+            );
+
+            if (estaOcupado) {
+                throw new Exception("El acompañante " + acompanantes.getApellido() + " " + acompanantes.getNombres() +
+                        " (" + acompanantes.getNroDocumento() + ") ya figura alojado en otra habitación en estas fechas.");
+            }
         }
+        // Mapeo y Persistencia
+        Estadia estadiaEntidad = MapearEstadia.mapearDtoAEntidad(dtoEstadia);
+        boolean exito = daoEstadia.persistirEstadia(estadiaEntidad);
 
-        try {
-            return daoEstadia.persistirEstadia(estadia, huespedes);
-        } catch (PersistenciaException e) {
-            System.err.println("Error al crear la estadía: " + e.getMessage());
-            return false;
+        if (!exito) {
+            throw new PersistenciaException("Error crítico al guardar la estadía en base de datos.", null);
         }
-    }
-
-    /**
-     * Modifica una estadía existente
-     * @param dto Datos actualizados de la estadía
-     * @return true si se modificó exitosamente
-     */
-    public boolean modificarEstadia(DtoEstadia dto) {
-        if (dto == null) {
-            System.err.println("Los datos de la estadía no pueden ser nulos");
-            return false;
-        }
-
-        if (dto.getIdEstadia() <= 0) {
-            System.err.println("El ID de la estadía no es válido");
-            return false;
-        }
-
-        return daoEstadia.modificarEstadia(dto);
-    }
-
-    /**
-     * Elimina una estadía
-     * @param idEstadia ID de la estadía a eliminar
-     * @return true si se eliminó exitosamente
-     */
-    public boolean eliminarEstadia(int idEstadia) {
-        if (idEstadia <= 0) {
-            System.err.println("El ID de la estadía no es válido");
-            return false;
-        }
-
-        return daoEstadia.eliminarEstadia(idEstadia);
-    }
-
-    /**
-     * Obtiene una estadía por su ID
-     * @param idEstadia ID de la estadía
-     * @return DtoEstadia con los datos o null si no existe
-     */
-    public DtoEstadia obtenerEstadiaPorId(int idEstadia) {
-        if (idEstadia <= 0) {
-            return null;
-        }
-
-        return daoEstadia.obtenerEstadiaPorId(idEstadia);
-    }
-
-    /**
-     * Obtiene todas las estadías
-     * @return Lista de estadías
-     */
-    public ArrayList<DtoEstadia> obtenerTodasLasEstadias() {
-        return daoEstadia.obtenerTodasLasEstadias();
     }
 }
