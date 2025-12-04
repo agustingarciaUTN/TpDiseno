@@ -352,7 +352,7 @@ public class Pantalla {
                                     // Pedimos solo los campos conflictivos
                                     try {
                                         TipoDocumento nuevoTipo = pedirTipoDocumento();
-                                        String nuevoDoc = pedirDocumento(nuevoTipo);
+                                        String nuevoDoc = pedirDocumento(nuevoTipo, false);
 
                                         // Actualizamos el DTO existente (Mantenemos nombre, dir, etc)
                                         datosIngresados.setTipoDocumento(nuevoTipo);
@@ -459,7 +459,7 @@ public class Pantalla {
 
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
-        String numeroDocumento = pedirDocumento(tipoDocumento);
+        String numeroDocumento = pedirDocumento(tipoDocumento, false);
 
         // Posición IVA
         String posIva = pedirPosIva();
@@ -831,59 +831,87 @@ public class Pantalla {
         return tipoDoc;
     }
 
-    private String pedirDocumento(TipoDocumento tipo) throws CancelacionException {
-        String NroDocumento = null;
+    /**
+     * Metodo unificado para pedir documentos.
+     * @param tipo El tipo seleccionado (null si se omitió en búsqueda).
+     * @param esOpcional Si es true, permite salir con Enter vacío.
+     */
+    private String pedirDocumento(TipoDocumento tipo, boolean esOpcional) throws CancelacionException {
+        String nroDocumento = null;
         boolean valido = false;
 
-        // Definimos las reglas (Regex)
+        // --- REGLAS DE VALIDACIÓN (REGEX) ---
+        // DNI, LE, LC: Solo números, 7 u 8 dígitos.
         String regexNumerico = "^\\d{7,8}$";
+
+        // Pasaporte: Letras y números, 6 a 15 caracteres.
         String regexPasaporte = "^[A-Z0-9]{6,15}$";
+
+        // Otro: Alfanumérico, 4 a 20 caracteres
         String regexOtro = "^.{4,20}$";
 
         while (!valido) {
-            // Prompt en Verde
-            System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
-            String entrada = scanner.nextLine().trim().toUpperCase();
-
-            chequearCancelacion(entrada);
-
-            if (entrada.isEmpty()) {
-                System.out.println(Colores.ROJO + "     ❌ Error: El documento es obligatorio." + Colores.RESET);
-                continue;
+            // Prompt visual
+            if (esOpcional) {
+                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
+            } else {
+                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
             }
 
-            // Validamos según el tipo seleccionado
-            switch (tipo) {
-                case DNI:
-                case LE:
-                case LC:
-                    if (entrada.matches(regexNumerico)) {
-                        valido = true;
-                    } else {
-                        System.out.println(Colores.ROJO + "     ❌ Error: Para " + tipo + " debe ingresar entre 7 y 8 números." + Colores.RESET);
-                    }
-                    break;
-                case PASAPORTE:
-                    if (entrada.matches(regexPasaporte)) {
-                        valido = true;
-                    } else {
-                        System.out.println(Colores.ROJO + "     ❌ Error: Formato de Pasaporte inválido (solo letras y números)." + Colores.RESET);
-                    }
-                    break;
-                default: // OTRO
-                    if (entrada.matches(regexOtro)) {
-                        valido = true;
-                    } else {
-                        System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido." + Colores.RESET);
-                    }
-                    break;
+            String entrada = scanner.nextLine().trim().toUpperCase();
+
+            // Manejo de cancelación dentro del bucle
+            chequearCancelacion(entrada);
+
+
+            // --- CASO 1: ENTRADA VACÍA ---
+            if (entrada.isEmpty()) {
+                if (esOpcional) {
+                    return "0"; // Retorno especial para "sin filtro"
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: El documento es obligatorio." + Colores.RESET);
+                    continue;
+                }
+            }
+
+            // --- CASO 2: VALIDACIÓN DE FORMATO ---
+            if (tipo != null) {
+                // VALIDACIÓN ESPECÍFICA (Cuando eligió un tipo)
+                switch (tipo) {
+                    case DNI:
+                    case LE:
+                    case LC:
+                        if (entrada.matches(regexNumerico)) valido = true;
+                        else System.out.println(Colores.ROJO + "     ❌ Error: Para " + tipo + " debe ingresar 7 u 8 números." + Colores.RESET);
+                        break;
+                    case PASAPORTE:
+                        if (entrada.matches(regexPasaporte)) valido = true;
+                        else System.out.println(Colores.ROJO + "     ❌ Error: Formato de Pasaporte inválido." + Colores.RESET);
+                        break;
+                    default: // OTRO
+                        if (entrada.matches(regexOtro)) valido = true;
+                        else System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido." + Colores.RESET);
+                        break;
+                }
+            } else {
+                // VALIDACIÓN GENÉRICA (Cuando NO eligió tipo - Búsqueda)
+                // Que matchee con al menos una validación
+
+                boolean pareceDNI = entrada.matches(regexNumerico);
+                boolean parecePasaporte = entrada.matches(regexPasaporte);
+
+                if (pareceDNI || parecePasaporte) {
+                    valido = true;
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: El número ingresado no corresponde a un formato de documento válido (DNI o Pasaporte)." + Colores.RESET);
+                }
             }
 
             if (valido) {
-                NroDocumento = entrada;
+                nroDocumento = entrada;
             }
         }
-        return NroDocumento;
+        return nroDocumento;
     }
 
     private String pedirPosIva() throws CancelacionException {
@@ -945,95 +973,84 @@ public class Pantalla {
 
     //METODO AUXILIAR PARA PAUSAR
     public void pausa() {
-        System.out.print("Presione ENTER para continuar...");
+        System.out.print("\n" + Colores.AMARILLO + "⏹️  Presione ENTER para continuar..." + Colores.RESET);
         scanner.nextLine();
         System.out.println();
     }
 
     //CU2
     public void buscarHuesped() {
-        System.out.println("========================================");
-        System.out.println("        BÚSQUEDA DE HUÉSPED 🔎");
-        System.out.println("========================================");
+        System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║           🔎 BÚSQUEDA DE HUÉSPED (CU2)             ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
         DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
-        // CAMBIO: El gestor ahora devuelve ArrayList<Huesped>
+
+        System.out.println(Colores.AZUL + "\n🔄 Buscando en la base de datos..." + Colores.RESET);
+
+
         ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
 
         if (huespedesEncontrados.isEmpty()) {
-            System.out.println("\nNo se encontraron huéspedes con los criterios especificados.");
-            this.darDeAltaHuesped(); //CU 9
+            System.out.println(Colores.AMARILLO + "\n⚠️  No se encontraron huéspedes con los criterios especificados." + Colores.RESET);
+            System.out.print("¿Desea dar de alta un nuevo huésped? (SI/NO): ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
+                this.darDeAltaHuesped(); // Deriva al CU 9
+            }
         } else {
-            // CAMBIO: Llamamos a seleccionarHuespedDeLista con DtoHuesped
+            // Mostramos la tabla y luego el menú de selección
             mostrarListaDatosEspecificos(huespedesEncontrados);
             this.seleccionarHuespedDeLista(huespedesEncontrados);
+
         }
         pausa();
     }
 
     private DtoHuesped solicitarCriteriosDeBusqueda() {
         DtoHuesped criterios = new DtoHuesped();
-        System.out.println("Ingrese uno o más criterios (presione ENTER para omitir).");
 
-        // VALIDACIÓN DE APELLIDO
+        System.out.println("\nIngrese uno o más criterios " + Colores.CYAN + "(Presione ENTER para omitir)" + Colores.RESET + ":");
+
+        // --- 1. APELLIDO ---
         while (true) {
-            System.out.print("Apellido que comience con: ");
+            System.out.print(Colores.VERDE + "   > Apellido (comienza con): " + Colores.RESET);
             String apellido = scanner.nextLine().trim();
 
-            if (apellido.isEmpty()) {
-                break; // Usuario omite este criterio
-            }
+            if (apellido.isEmpty()) break; // Omitir
 
-            // Validar longitud
-            if (apellido.length() >= 2) {
-                System.out.println("⚠ Inserte solo la letra con la que comienza el apellido.");
-                continue;
-            }
-
-
-            // Validar que solo contenga letras, espacios y caracteres válidos (á, é, í, ó, ú, ñ)
+            // Validación: Solo letras
             if (!apellido.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
-                System.out.println("⚠ El apellido solo puede contener letras y espacios. Intente nuevamente.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
                 continue;
             }
-
             criterios.setApellido(apellido);
             break;
         }
 
-        // VALIDACIÓN DE NOMBRES
+        // --- 2. NOMBRES ---
         while (true) {
-            System.out.print("Nombres que comiencen con: ");
+            System.out.print(Colores.VERDE + "   > Nombres (comienza con): " + Colores.RESET);
             String nombres = scanner.nextLine().trim();
 
-            if (nombres.isEmpty()) {
-                break; // Usuario omite este criterio
-            }
+            if (nombres.isEmpty()) break; // Omitir
 
-            // Validar longitud
-            if (nombres.length() >= 2) {
-                System.out.println("⚠ Inserte solo la letra con la que comienza el nombre.");
-                continue;
-            }
-
-
-            // Validar que solo contenga letras, espacios y caracteres válidos
             if (!nombres.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
-                System.out.println("⚠ Los nombres solo pueden contener letras y espacios. Intente nuevamente.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
                 continue;
             }
-
             criterios.setNombres(nombres);
             break;
         }
 
-        // VALIDACIÓN DE TIPO DE DOCUMENTO (sin cambios, ya está bien)
+        // --- 3. TIPO DE DOCUMENTO ---
         criterios.setTipoDocumento(validarYLeerTipoDocumento());
 
-        // VALIDACIÓN DE NÚMERO DE DOCUMENTO
-        if (criterios.getTipoDocumento() != null) {
-            criterios.setNroDocumento(pedirDocumentoSinExcepcion(criterios.getTipoDocumento()));
-        }
+        // --- 4. NÚMERO DE DOCUMENTO ---
+        // Usamos un metodo especial que permite validación flexible si no hay tipo seleccionado
+        try{String nroDoc = pedirDocumento(criterios.getTipoDocumento(), true);
+            criterios.setNroDocumento(nroDoc);}
+        catch (CancelacionException _){};
+
 
         return criterios;
     }
@@ -1041,102 +1058,129 @@ public class Pantalla {
 
     private TipoDocumento validarYLeerTipoDocumento() {
         while (true) {
-            System.out.print("Tipo de Documento (DNI, Pasaporte, Libreta de Enrolamiento (LE), Libreta Civica(LC)): ");
+            System.out.print(Colores.VERDE + "   > Tipo Doc " + Colores.CYAN + "[DNI/LE/LC/PASAPORTE/OTRO]" + Colores.VERDE + ": " + Colores.RESET);
             String tipoStr = scanner.nextLine().trim().toUpperCase();
+
             if (tipoStr.isEmpty()) {
-                return null; // El usuario omitió este criterio.
+                return null; // Omitir
             }
             try {
-                return TipoDocumento.valueOf(tipoStr); // Intenta convertir el String al enum.
+                return TipoDocumento.valueOf(tipoStr);
             } catch (IllegalArgumentException e) {
-                System.out.println("Error: Tipo de documento no válido. Los valores posibles son DNI, PASAPORTE, LIBRETA DE ENROLAMIENTO Y LIBRETA CIVICA.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Tipo inválido. Ingrese uno de los valores mostrados." + Colores.RESET);
             }
         }
-    }//NO SE DE QUE SON ESTOS METODOS
+    }
 
 
-    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaDtoHuespedes) {
+    private void seleccionarHuespedDeLista(ArrayList<Huesped> listaEntidadesHuespedes) {
 
-        // CAMBIO: Mensaje para CU10
-        System.out.print("Ingrese el ID del huésped para **modificar/eliminar**, o 0 para dar de alta uno nuevo: ");
+        System.out.println("\nAcciones disponibles:");
+        System.out.println(Colores.AMARILLO + "   [ID]" + Colores.RESET + " Ingrese el número de ID para " + Colores.NEGRILLA + "MODIFICAR/ELIMINAR" + Colores.RESET);
+        System.out.println(Colores.AMARILLO + "   [0]" + Colores.RESET + "  Dar de alta uno " + Colores.VERDE + "NUEVO" + Colores.RESET);
+
+        System.out.print("\n>> Su selección: ");
         int seleccion = leerOpcionNumerica();
-        System.out.print("SIGUIENTE: presione cualquier botón...");
-        scanner.nextLine();
-        System.out.println();
 
-        //Mapear lista entidades a dto
-        ArrayList<DtoHuesped> listaHuespedes = new ArrayList<>();
-        for (int i = 0; i < listaDtoHuespedes.size(); i++) {
-            listaHuespedes.add(i, MapearHuesped.mapearEntidadADto(listaDtoHuespedes.get(i)));
+        // Mapear lista entidades a dto
+        ArrayList<DtoHuesped> listaHuespedesDto = new ArrayList<>();
+        for (Huesped listaEHuespedes : listaEntidadesHuespedes) {
+
+            listaHuespedesDto.add(MapearHuesped.mapearEntidadADto(listaEHuespedes));
         }
 
-        //Sigue el flujo
-        if (seleccion > 0 && seleccion <= listaDtoHuespedes.size()) {
-            DtoHuesped huespedDtoSeleccionado = listaHuespedes.get(seleccion - 1);
+        // Sigue el flujo
+        if (seleccion > 0 && seleccion <= listaEntidadesHuespedes.size()) {
+            DtoHuesped huespedDtoSeleccionado = listaHuespedesDto.get(seleccion - 1);
+
+            System.out.println(Colores.AZUL + "\n⏳ Cargando datos del huésped seleccionado..." + Colores.RESET);
+
+            // lógica de negocio
             Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
-            System.out.println("FUNCIONALIDAD CASO DE USO 10 EN PROGRESO...");
+
+            // Mensaje temporal
+            System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+            System.out.println("║   🚧 FUNCIONALIDAD CASO DE USO 10 EN PROGRESO 🚧   ║");
+            System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+
         } else if (seleccion == 0) {
+            System.out.println(Colores.AZUL + "--> Redirigiendo al Alta de Huésped..." + Colores.RESET);
             this.darDeAltaHuesped(); // CU 9
         } else {
-            System.out.println("Opción inválida. Volviendo al menú principal.");
+            System.out.println(Colores.ROJO + "❌ Opción inválida. Volviendo al menú principal." + Colores.RESET);
         }
     }
 
     private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
-
-        System.out.println("\n--- OPCIONES DE ORDENAMIENTO ---");
-        System.out.println("Seleccione la columna:");
-        System.out.println("1. Apellido");
-        System.out.println("2. Nombre");
-        System.out.println("3. Tipo de Documento");
-        System.out.println("4. Número de Documento");
-        System.out.print("Ingrese opción: ");
+        // --- MENÚ DE ORDENAMIENTO ---
+        System.out.println(Colores.CYAN + "\n   --- 📊 OPCIONES DE ORDENAMIENTO ---" + Colores.RESET);
+        System.out.println("   1. Apellido            3. Tipo Documento");
+        System.out.println("   2. Nombre              4. Número Documento");
+        System.out.print(Colores.VERDE + "   >> Ordenar por (Enter para default): " + Colores.RESET);
 
         int columna = leerOpcionNumerica();
         if (columna < 1 || columna > 4) {
-            System.out.println("Opción inválida. No se ordenará la lista.");
+            // Mensaje sutil si no elige nada (default)
+            if (columna != -1) System.out.println(Colores.ROJO + "     (Opción inválida, se usará el orden por defecto)" + Colores.RESET);
         }
 
-        System.out.println("Seleccione el orden:");
-        System.out.println("1. Ascendente (A-Z / Menor a Mayor)");
-        System.out.println("2. Descendente (Z-A / Mayor a Menor)");
-        System.out.print("Ingrese opción: ");
+        System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
+        System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
 
         int orden = leerOpcionNumerica();
         boolean ascendente = (orden == 1);
 
-        // Definimos el comparador para el DTO Huesped
+        // Definimos el comparador para la ENTIDAD Huesped
         Comparator<Huesped> comparador = switch (columna) {
             case 1 -> // Apellido
                     Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
             case 2 -> // Nombre
                     Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
             case 3 -> // Tipo de Documento (Enum)
-                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z"); // Si es null, lo mandamos al final
-            case 4 -> // Número de Documento (String en DTO)
+                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z");
+            case 4 -> // Número de Documento (long en Entidad)
                     Comparator.comparing(Huesped::getNroDocumento);
-            default -> null; // Si es inválido, no se ordena
+            default -> null;
         };
 
         if (comparador != null) {
             if (!ascendente) {
                 comparador = comparador.reversed();
             }
-            // Sort en la lista de DtoHuesped
             listaHuespedes.sort(comparador);
         }
 
-        System.out.println("\n-- Huéspedes Encontrados --");
-        System.out.printf("%-5s %-20s %-20s %s%n", "ID", "APELLIDO", "NOMBRES", "DOCUMENTO");
-        System.out.println("-----------------------------------------------------------------");
-        //Por cada huesped obtenemos los 4 datos necesarios y mostramos esos.
+        // --- TABLA DE RESULTADOS ---
+        System.out.println("\n" + Colores.VERDE + "✅ Se encontraron " + listaHuespedes.size() + " resultados:" + Colores.RESET);
+
+        // Encabezado de tabla con caracteres de caja
+        System.out.println("┌──────┬──────────────────────┬──────────────────────┬────────────────────┐");
+        System.out.printf("│ %-4s │ %-20s │ %-20s │ %-18s │%n", "ID", "APELLIDO", "NOMBRES", "DOCUMENTO");
+        System.out.println("├──────┼──────────────────────┼──────────────────────┼────────────────────┤");
+
         for (int i = 0; i < listaHuespedes.size(); i++) {
             Huesped h = listaHuespedes.get(i);
-            String tipoDoc = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "N/A");
-            String docCompleto = tipoDoc + " " + (h.getNroDocumento() != null ? h.getNroDocumento() : "");
-            System.out.printf("[%d]   %-20s %-20s %s%n", i + 1, h.getApellido(), h.getNombres(), docCompleto);
+            String tipoDoc = (h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "-");
+            // Convertimos el long a String para mostrarlo
+            String nroDoc = String.valueOf(h.getNroDocumento());
+            String docCompleto = tipoDoc + " " + nroDoc;
+
+            // Imprimimos la fila formateada
+            // Nota: Usamos una función auxiliar 'cortar' para que no rompa la tabla si el nombre es larguísimo
+            System.out.printf("│ %-4d │ %-20s │ %-20s │ %-18s │%n",
+                    (i + 1),
+                    cortar(h.getApellido()),
+                    cortar(h.getNombres()),
+                    docCompleto);
         }
-        System.out.println("-----------------------------------------------------------------");
+        System.out.println("└──────┴──────────────────────┴──────────────────────┴────────────────────┘");
+    }
+
+    // Metodo auxiliar para evitar que textos largos rompan la tabla
+    private String cortar(String texto) {
+        if (texto == null) return "";
+        if (texto.length() <= 20) return texto;
+        return texto.substring(0, 20 - 3) + "...";
     }
 
     private int leerOpcionNumerica() {
@@ -1147,7 +1191,7 @@ public class Pantalla {
         } finally {
             scanner.nextLine(); // Limpia el buffer del scanner
         }
-    }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
+    }
 
     /**
      * METODO ORQUESTADOR
