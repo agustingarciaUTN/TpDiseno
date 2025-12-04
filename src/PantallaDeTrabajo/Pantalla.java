@@ -170,14 +170,23 @@ public class Pantalla {
             System.out.println(Colores.CYAN + "======================================================" + Colores.RESET);
             System.out.print(">> Ingrese una opción: ");
 
-            int opcion;
+            int opcion = -1;
             try {
-                opcion = scanner.nextInt();
-                scanner.nextLine(); //consumir salto de linea
-            } catch (Exception e) {
-                scanner.nextLine(); //limpiar buffer
+                // CORRECCIÓN: Leemos toda la línea como String
+                String entrada = scanner.nextLine().trim();
+
+                // Si dió Enter vacío, lanzamos error manualmente para que caiga en el catch
+                if (entrada.isEmpty()) {
+                    throw new NumberFormatException();
+                }
+
+                // Intentamos convertir a entero
+                opcion = Integer.parseInt(entrada);
+
+            } catch (NumberFormatException e) {
+                // Captura tanto texto no numérico como el Enter vacío
                 System.out.println(Colores.ROJO + "\n❌ Opción inválida. Debe ingresar un número.\n" + Colores.RESET);
-                continue;
+                continue; // Vuelve a mostrar el menú
             }
 
             System.out.println();
@@ -219,9 +228,11 @@ public class Pantalla {
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
         System.out.println(Colores.AMARILLO + " ℹ️  Nota: Escriba 'CANCELAR' en cualquier campo para salir." + Colores.RESET + "\n");
 
-        boolean continuarCargando = true;//bandera que representa la condicion del loop principal
+        boolean continuarCargando = true; //bandera que representa la condicion del loop principal
 
-        while (continuarCargando) {//loop principal
+        // [BUCLE 1]: Controla el ciclo completo de carga.
+        // Se repite cada vez que el usuario termina de cargar un huésped y responde "SI" a "¿Desea cargar otro?".
+        while (continuarCargando) {
 
             DtoHuesped datosIngresados = null;
 
@@ -229,7 +240,6 @@ public class Pantalla {
             //Envolvemos la carga en un try-catch para capturar la cancelación
             try {
                 //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
-                // (Asumimos que este método imprime sus propios prompts, idealmente también deberían tener colores)
                 datosIngresados = mostrarYPedirDatosFormulario();
             } catch (CancelacionException e) {
                 // Si el usuario escribió "CANCELAR" durante el formulario:
@@ -248,6 +258,9 @@ public class Pantalla {
             // Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar
             boolean decisionPendiente = true;
 
+            // [BUCLE 2]: Menú de Acciones Post-Formulario.
+            // Mantiene al usuario en la pantalla de decisión ("Siguiente" o "Cancelar") hasta que elija una opción válida.
+            // Evita que el programa se cierre si el usuario se equivoca al elegir una opción.
             while (decisionPendiente) {
                 System.out.println(Colores.CYAN + "\n────────── Fin del Formulario ──────────" + Colores.RESET);
                 System.out.println("Acciones disponibles:");
@@ -282,59 +295,87 @@ public class Pantalla {
                         }
                         System.out.println("\nPor favor, ingrese los datos nuevamente.");
                         decisionPendiente = false;//Salimos del bucle de decisión para recargar datos
-                        continue; //fuerza al inicio del while
+                        continue; //fuerza al inicio del while principal
                     }
 
                     //Si no hubo errores de validacion de negocio, seguimos
                     try {
-                        //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
-                        //Le pasamos al gestorHuesped un DTO con el huesped ingresado
-                        DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
-                        //Si chequearDuplicado retorna NULL, no hay duplicado
+                        boolean verificacionPendiente = true;
 
-                        if (duplicado != null) {//si encuentra duplicado
-                            // Caja amarilla de advertencia
-                            System.out.println("\n" + Colores.AMARILLO + "╔══════════════════════════════════════════════════════════════╗");
-                            System.out.println("║ ⚠️  ADVERTENCIA DE DUPLICADO                                 ║");
-                            System.out.println("╠══════════════════════════════════════════════════════════════╣");
-                            System.out.println("║ El tipo y número de documento ya existen en el sistema.      ║");
-                            System.out.println("║ Huésped existente: " + String.format("%-41s", duplicado.getNombres() + " " + duplicado.getApellido()) + " ║");
-                            System.out.println("╚══════════════════════════════════════════════════════════════╝" + Colores.RESET);
+                        // [BUCLE 3]: Verificación y Corrección de Duplicados.
+                        // Este bucle permite que, si el usuario elige "CORREGIR", se pidan de nuevo SOLO los datos conflictivos
+                        // y se vuelva a verificar la duplicidad sin perder el resto de la información cargada.
+                        while (verificacionPendiente) {
 
-                            //Parámetros para bucle interno
-                            int opcionDuplicado = -1;
-                            boolean opcionValida2 = false;
+                            //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
+                            DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                            //Si chequearDuplicado retorna NULL, no hay duplicado
 
-                            //Bucle para validar la entrada ACEPTAR IGUALMENTE o CORREGIR
-                            while (!opcionValida2) {
-                                System.out.println("Opciones:");
-                                System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " ACEPTAR IGUALMENTE (Sobreescribir/Actualizar)");
-                                System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS");
-                                System.out.print(">> Ingrese una opción: ");
+                            if (duplicado != null) {//si encuentra duplicado
+                                // Caja amarilla de advertencia
+                                System.out.println("\n" + Colores.AMARILLO + "╔══════════════════════════════════════════════════════════════╗");
+                                System.out.println("║ ⚠️  ADVERTENCIA DE DUPLICADO                                 ║");
+                                System.out.println("╠══════════════════════════════════════════════════════════════╣");
+                                System.out.println("║ El tipo y número de documento ya existen en el sistema.      ║");
+                                System.out.println("║ Huésped existente: " + String.format("%-41s", duplicado.getNombres() + " " + duplicado.getApellido()) + " ║");
+                                System.out.println("╚══════════════════════════════════════════════════════════════╝" + Colores.RESET);
 
-                                try {
-                                    String entrada = scanner.nextLine();
-                                    opcionDuplicado = Integer.parseInt(entrada);
+                                //Parámetros para bucle interno de decisión
+                                int opcionDuplicado = -1;
+                                boolean opcionValida2 = false;
 
-                                    if (opcionDuplicado == 1 || opcionDuplicado == 2) {
-                                        opcionValida2 = true; // Salimos del bucle
-                                    } else {
-                                        System.out.println(Colores.ROJO + "⚠️ Opción inválida." + Colores.RESET);
+                                // [BUCLE 4]: Menú de Resolución de Duplicados.
+                                // Valida que el usuario elija 1 o 2 correctamente.
+                                while (!opcionValida2) {
+                                    System.out.println("Opciones:");
+                                    System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " ACEPTAR IGUALMENTE (Sobreescribir/Actualizar)");
+                                    System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS (Solo documento)");
+                                    System.out.print(">> Ingrese una opción: ");
+
+                                    try {
+                                        String entrada = scanner.nextLine();
+                                        opcionDuplicado = Integer.parseInt(entrada);
+
+                                        if (opcionDuplicado == 1 || opcionDuplicado == 2) {
+                                            opcionValida2 = true; // Salimos del bucle de validación
+                                        } else {
+                                            System.out.println(Colores.ROJO + "⚠️ Opción inválida." + Colores.RESET);
+                                        }
+                                    } catch (NumberFormatException e) {
+                                        System.out.println(Colores.ROJO + "⚠️ Debe ingresar un número." + Colores.RESET);
                                     }
-                                } catch (NumberFormatException e) {
-                                    System.out.println(Colores.ROJO + "⚠️ Debe ingresar un número." + Colores.RESET);
                                 }
-                            }
 
-                            if (opcionDuplicado == 2) { // Eligió CORREGIR
-                                System.out.println(Colores.AZUL + "↩️ Seleccionó CORREGIR. Vuelva a ingresar los datos." + Colores.RESET);
-                                decisionPendiente = false; // Salimos de este bucle
-                                continue; // Vuelve al inicio del while para pedir de nuevo
-                            }
-                            // Si elige 1 (ACEPTAR IGUALMENTE), no hacemos nada y el código sigue
-                        }
+                                if (opcionDuplicado == 2) { // Eligió CORREGIR
+                                    System.out.println(Colores.AZUL + "\n📝 Ingrese los nuevos datos de identificación:" + Colores.RESET);
 
-                        //Si no existen duplicados, INSERT. Si existe (y se seleccionó "aceptar igualmente"), UPDATE
+                                    // Pedimos solo los campos conflictivos
+                                    try {
+                                        TipoDocumento nuevoTipo = pedirTipoDocumento();
+                                        String nuevoDoc = pedirDocumento(nuevoTipo);
+
+                                        // Actualizamos el DTO existente (Mantenemos nombre, dir, etc)
+                                        datosIngresados.setTipoDocumento(nuevoTipo);
+                                        datosIngresados.setNroDocumento(nuevoDoc);
+
+                                        System.out.println(Colores.AZUL + "🔄 Re-verificando duplicados..." + Colores.RESET);
+                                        continue; // Vuelve al inicio del Bucle 3 para verificar de nuevo
+                                    } catch (CancelacionException e) {
+                                        System.out.println(Colores.ROJO + "Corrección cancelada. Volviendo al menú anterior..." + Colores.RESET);
+                                        // Si cancela la corrección, volvemos a mostrar la advertencia
+                                        continue;
+                                    }
+                                }
+                                // Si elige 1 (ACEPTAR IGUALMENTE), salimos del bucle 3 y guardamos
+                                verificacionPendiente = false;
+
+                            } else {
+                                // Si no hay duplicados, salimos del bucle 3 y guardamos
+                                verificacionPendiente = false;
+                            }
+                        } // Fin bucle verificacionPendiente
+
+                        //Si no existen duplicados (o se aceptaron), INSERT/UPDATE
                         gestorHuesped.upsertHuesped(datosIngresados);
                         System.out.println("\n" + Colores.VERDE + "✅ ¡El huésped ha sido guardado exitosamente!" + Colores.RESET);
 
@@ -348,7 +389,7 @@ public class Pantalla {
                             ingresoOtroHuesped = scanner.nextLine();
                         }
 
-                        //si ingreso NO termina el bucle, si ingreso SI se repite
+                        //si ingreso NO termina el bucle principal, si ingreso SI se repite
                         if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
                             continuarCargando = false;
                         } else {
@@ -420,11 +461,11 @@ public class Pantalla {
 
         String numeroDocumento = pedirDocumento(tipoDocumento);
 
-        // CUIT (Opcional)
-        String cuit = pedirCUIT();
-
         // Posición IVA
         String posIva = pedirPosIva();
+
+        // CUIT (Opcional)
+        String cuit = pedirCUIT(posIva);
 
         Date fechaNacimiento = pedirFecha();
 
@@ -655,24 +696,37 @@ public class Pantalla {
         return valor;
     }
 
-    private String pedirCUIT() throws CancelacionException {
+    private String pedirCUIT(String posIvaSeleccionada) throws CancelacionException {
         String cuit;
-        // Expresion para CUIT: 2 dígitos, un guión o barrita, 8 dígitos, un guión o barrita, 1 dígito.
         String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
-        while (true) {
-            // Prompt con formato en cian para destacar la ayuda visual
-            System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional, formato XX-XXXXXXXX-X)" + Colores.VERDE + ": " + Colores.RESET);
-            cuit = scanner.nextLine();
+        // Verificamos si es Responsable Inscripto usando el Enum
+        boolean esResponsableInscripto = posIvaSeleccionada != null &&
+                posIvaSeleccionada.equals(PosIva.ResponsableInscripto.name());
 
+        while (true) {
+            // Cambiamos el mensaje según la obligatoriedad
+            if (esResponsableInscripto) {
+                System.out.print(Colores.VERDE + "   > CUIT " + Colores.ROJO + "(Obligatorio por ser Resp. Inscripto)" + Colores.VERDE + ": " + Colores.RESET);
+            } else {
+                System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
+            }
+
+            cuit = scanner.nextLine().trim();
             chequearCancelacion(cuit);
 
-            //Si está vacío, es válido (opcional)
-            if (cuit.trim().isEmpty()) {
-                return null;
-                //Si no está vacío, valida el formato
+            // CASO 1: Está vacío
+            if (cuit.isEmpty()) {
+                if (esResponsableInscripto) {
+                    //No dejamos avanzar si es RI y no pone CUIT
+                    System.out.println(Colores.ROJO + "     ❌ Error: El CUIT es obligatorio para Responsables Inscriptos." + Colores.RESET);
+                } else {
+                    return null; // Es válido que sea null (será Factura B)
+                }
+
+                // CASO 2: Escribió algo, validamos formato
             } else if (!cuit.matches(expresionCUIT)) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Formato de CUIT incorrecto. Debe ser XX-XXXXXXXX-X" + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato incorrecto. Debe ser XX-XXXXXXXX-X" + Colores.RESET);
             } else {
                 return cuit;
             }
