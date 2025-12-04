@@ -1419,7 +1419,11 @@ public class Pantalla {
             System.out.println(Colores.VERDE + "✅ ¡Reservas registradas con ÉXITO!" + Colores.RESET);
         } catch (Exception e) {
             System.out.println(Colores.ROJO + "❌ Error al guardar: " + e.getMessage() + Colores.RESET);
+            if (e.getCause() != null) {
+                System.out.println(Colores.ROJO + "   Causa interna: " + e.getCause().getMessage() + Colores.RESET);
+            }
         }
+        System.out.println("Volviendo a Menu Principal...");
         pausa();
     }
 
