@@ -13,6 +13,7 @@ import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
 import Habitacion.DtoHabitacion;
+import Utils.PantallaHelper;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -1283,66 +1284,86 @@ public class Pantalla {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String formatoCelda = "| %-9s ";
 
-
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
 
-        // Encabezado
-        System.out.print("             ");
+        // Convertimos el KeySet a lista para poder recorrerla ordenadamente en el header
+        List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
 
+        // 1. IMPRIMIR ENCABEZADO AGRUPADO POR TIPO (NUEVO)
+        imprimirEncabezadoTipos(habitacionesOrdenadas);
 
-        for (Habitacion hab : grilla.keySet()) {
+        // 2. Imprimir fila de Números de Habitación
+        System.out.print("   FECHA     ");
+        for (Habitacion hab : habitacionesOrdenadas) {
             System.out.printf(formatoCelda, "Hab " + hab.getNumero());
         }
         System.out.println("|");
 
-        // Filas (Días)
+        // Línea separadora simple
+        System.out.print("-------------");
+        for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
+        System.out.println("+");
+
+
+        // 3. Filas (Días) - El cuerpo de la grilla sigue igual
         LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         LocalDate actual = inicioLocal;
         while (!actual.isAfter(finLocal)) {
-            System.out.printf("%-12s", actual.format(dtf));
+            System.out.printf("%-12s ", actual.format(dtf)); // Fecha
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            for (Map.Entry<Habitacion, Map<Date, String>> entry : grilla.entrySet()) {
-                Habitacion hab = entry.getKey();
-                String visual = "[ ? ]";
+            for (Habitacion hab : habitacionesOrdenadas) {
+                String visual = "   ?   ";
+                String color = Colores.RESET;
 
-                // 1. ¿Está seleccionada por el usuario AHORA? (Prioridad visual)
+                // Lógica de visualización (Selección vs Estado BDD)
                 boolean esSeleccion = false;
                 if (seleccion != null) {
                     for (DtoReserva res : seleccion) {
                         if (res.getIdHabitacion().equals(hab.getNumero())) {
-                            esSeleccion = true;
-                            break;
+                            esSeleccion = true; break;
                         }
                     }
                 }
 
                 if (esSeleccion) {
-                    visual = (Colores.CYAN + "[ * ]" + Colores.RESET); // Selección actual
+                    visual = "   * ";
+                    color = Colores.VERDE; // Verde para lo que está seleccionando el usuario
                 } else {
-                    // 2. Estado proveniente de la orquestación (BD)
-                    String estado = entry.getValue().get(fechaFila);
+                    Map<Date, String> mapaEstados = grilla.get(hab);
+                    String estado = (mapaEstados != null) ? mapaEstados.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
 
-                    switch (estado) {
-                        case "OCUPADA" -> visual = (Colores.ROJO + "[ X ]" + Colores.RESET);
-                        case "RESERVADA" -> visual = (Colores.AMARILLO + "[ R ]" + Colores.RESET);
-                        case "FUERA DE SERVICIO" -> visual = (Colores.AZUL + "[ - ]"+ Colores.RESET);
-                        case "LIBRE" -> visual = (Colores.VERDE + "[ L ]" + Colores.RESET);
-                    }
+                    color = switch (estado) {
+                        case "OCUPADA" -> {
+                            visual = "   X   ";
+                            yield Colores.ROJO;
+                        }
+                        case "RESERVADA" -> {
+                            visual = "   R   ";
+                            yield Colores.AMARILLO;
+                        }
+                        case "FUERA DE SERVICIO" -> {
+                            visual = "   -   ";
+                            yield Colores.CYAN;
+                        }
+                        case "LIBRE" -> {
+                            visual = "   L   ";
+                            yield Colores.RESET;
+                        }
+                        default -> color;
+                    };
                 }
-                System.out.printf(formatoCelda, visual);
+                System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
             }
             System.out.println("|");
             actual = actual.plusDays(1);
         }
-        System.out.println("REFERENCIAS: " + Colores.VERDE + "[L]ibre" + Colores.RESET + " | "
-                + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
-                + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | "
-                + Colores.AZUL + "[-]Fuera Servicio" + Colores.RESET + " | "
-                + Colores.CYAN + "[*]  Tu Selección" + Colores.RESET);
+        System.out.println("REF: [L]ibre | " + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
+                + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | " + Colores.VERDE + "[*] Tu Selección" + Colores.RESET
+                + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
     }
 
     // CU5: Mostrar Estado de Habitaciones
@@ -1595,68 +1616,79 @@ public class Pantalla {
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String formatoCelda = "| %-9s ";
+
+        // Lista ordenada
+        List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
 
         System.out.println("\n--- GRILLA DE OCUPACIÓN (CHECK-IN) ---");
 
-        // Encabezado
-        System.out.print("             ");
-        for (Habitacion hab : grilla.keySet()) {
-            System.out.printf(formatoCelda, "Hab " + hab.getNumero());
+        // 1. ENCABEZADO DE TIPOS (NUEVO)
+        imprimirEncabezadoTipos(habitacionesOrdenadas);
+
+        // 2. Encabezado de Números
+        System.out.print("   FECHA     ");
+        for (Habitacion hab : habitacionesOrdenadas) {
+            // Marca visual si es la habitación actual del bucle
+            if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
+                System.out.print("|" + Colores.VERDE + String.format(" %-9s ", "Hab " + hab.getNumero()) + Colores.RESET);
+            } else {
+                System.out.print("|" + String.format(" %-9s ", "Hab " + hab.getNumero()));
+            }
         }
         System.out.println("|");
 
-        // Barrido de días
+        // Línea separadora
+        System.out.print("-------------");
+        for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
+        System.out.println("+");
+
+        // 3. Cuerpo de la grilla (Misma lógica que antes, pero ajustada al nuevo ancho)
         LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         LocalDate actual = inicioLocal;
         while (!actual.isAfter(finLocal)) {
-            System.out.printf("%-12s", actual.format(dtf));
+            System.out.printf("%-12s ", actual.format(dtf));
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            for (Map.Entry<Habitacion, Map<Date, String>> entry : grilla.entrySet()) {
-                Habitacion hab = entry.getKey();
-                String visual = "[ ? ]";
-
-                // --- LÓGICA VISUAL CU15 ---
+            for (Habitacion hab : habitacionesOrdenadas) {
+                String visual = "   ?   ";
+                String color = Colores.RESET;
                 boolean esSeleccion = false;
 
-                // 1. Chequear si es la que acabo de elegir (Actual)
+                // Lógica de selección CU15
                 if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
                     esSeleccion = true;
                 }
-
-                // 2. Chequear si ya está en la lista de "Confirmadas" (del bucle anterior)
                 if (!esSeleccion && estadiasConfirmadas != null) {
                     for (DtoEstadia dto : estadiasConfirmadas) {
                         if (dto.getDtoHabitacion().getNumero().equals(hab.getNumero())) {
-                            esSeleccion = true;
-                            break;
+                            esSeleccion = true; break;
                         }
                     }
                 }
 
                 if (esSeleccion) {
-                    visual = "[ * ]"; // Marca de selección visual
+                    visual = "   * ";
+                    color = Colores.VERDE;
                 } else {
-                    // 3. Estado original de la BDD
-                    String estado = entry.getValue().get(fechaFila);
+                    // Estado base
+                    Map<Date, String> mapa = grilla.get(hab);
+                    String estado = (mapa != null) ? mapa.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
 
                     switch (estado) {
-                        case "OCUPADA" -> visual = "[ X ]";
-                        case "RESERVADA" -> visual = "[ R ]";
-                        case "FUERA DE SERVICIO" -> visual = "[ - ]";
-                        case "LIBRE" -> visual = "[ L ]";
+                        case "OCUPADA" -> { visual = "   X   "; color = Colores.ROJO; }
+                        case "RESERVADA" -> { visual = "   R   "; color = Colores.AMARILLO; }
+                        case "FUERA DE SERVICIO" -> { visual = "   -   "; color = Colores.ROJO; }
+                        case "LIBRE" -> visual = "   L   ";
                     }
                 }
-                System.out.printf(formatoCelda, visual);
+                System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
             }
             System.out.println("|");
             actual = actual.plusDays(1);
         }
-        System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [*] SU SELECCIÓN ACTUAL");
     }
 
     private String pedirDocumentoSinExcepcion(TipoDocumento tipo){
@@ -1715,5 +1747,56 @@ public class Pantalla {
         }
         return NroDocumento;
     }
+
+    // Método que imprime la fila superior con los TIPOS agrupados
+    public void imprimirEncabezadoTipos(List<Habitacion> habitacionesOrdenadas) {
+        // Espacio vacío sobre la columna de fechas (13 espacios)
+        System.out.print("             ");
+
+        int i = 0;
+        while (i < habitacionesOrdenadas.size()) {
+            Habitacion actual = habitacionesOrdenadas.get(i);
+            String tipoActual = actual.getTipoHabitacion().getDescripcion(); // O .name() si prefieres
+
+            // Contar cuántas habitaciones consecutivas son de este mismo tipo
+            int contador = 0;
+            for (int j = i; j < habitacionesOrdenadas.size(); j++) {
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) {
+                    contador++;
+                } else {
+                    break;
+                }
+            }
+
+            // Calcular el ancho total de este grupo
+            // Cada celda de habitación ocupa 12 caracteres: "| " (2) + 9 (texto) + " " (1)
+            int anchoGrupo = contador * 12;
+
+            // Imprimir el nombre del tipo centrado en ese ancho, con bordes
+            // Usamos CYAN para destacar el tipo
+            System.out.print(Colores.CYAN + "|" + PantallaHelper.centrarTexto(tipoActual, anchoGrupo - 1) + Colores.RESET);
+
+            // Saltar el índice
+            i += contador;
+        }
+        System.out.println("|"); // Cerrar la línea
+
+        // Imprimir una línea separadora decorativa debajo de los tipos
+        System.out.print("             ");
+        i = 0;
+        while (i < habitacionesOrdenadas.size()) {
+            Habitacion actual = habitacionesOrdenadas.get(i);
+            int contador = 0;
+            for (int j = i; j < habitacionesOrdenadas.size(); j++) {
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
+                else break;
+            }
+            // Dibuja "-----------"
+            System.out.print("+" + "-".repeat((contador * 12) - 1));
+            i += contador;
+        }
+        System.out.println("+");
+    }
+
 
 }
