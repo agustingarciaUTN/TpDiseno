@@ -1167,6 +1167,7 @@ public class Pantalla {
                             .thenComparing(Habitacion::getNumero));
 
         // 2. Pantalla itera y consulta a los otros Gestores
+        int contador = 1;
         for (Habitacion dtoHab : habitaciones) {
             Map<Date, String> estadosDia = new HashMap<>();
 
@@ -1196,6 +1197,7 @@ public class Pantalla {
                 estadosDia.put(fechaActual, estado);
             }
             grilla.put(dtoHab, estadosDia);
+            System.out.println("Habitacion " + dtoHab.getNumero() + " procesada" );
         }
         return grilla;
     }
@@ -1350,6 +1352,7 @@ public class Pantalla {
         boolean flagFechas = false;
         Date fechaInicio = null;
         Date fechaFin = null;
+
         while(!flagFechas) {
             // 1. Pedir y Validar Fechas (Bucle del diagrama)
             Date fechaReferencia = new Date(Long.MIN_VALUE);
@@ -1398,22 +1401,16 @@ public class Pantalla {
                         LocalDate hoy = LocalDate.now();
                         LocalDate fechaMinima = LocalDate.of(1900, 1, 1); // posterior a 31/12/1899
 
-                        // Validar que sea anterior a hoy y posterior al 31/12/1899
-                        if (!fechaLocal.isBefore(hoy) || fechaLocal.isBefore(fechaMinima)) {
-
-                            System.out.println(Colores.ROJO + "     ❌ Error: La fecha debe ser anterior a hoy y posterior a 1900." + Colores.RESET);
-                            continue;
+                        if(fecha.after(fechaInicio)){
+                            valida = true; //FechaFin después de FechaInicio
+                        }else {
+                            System.out.println(Colores.ROJO + "     ❌ Error: La Fecha de Fin de la selección debe ser futura a la de Inicio." + Colores.RESET);
                         }
-                        // Formato válido
                     } catch (ParseException e) {
                         System.out.println(Colores.ROJO + "     ❌ Error: Formato de fecha inválido. Use dd/MM/yyyy." + Colores.RESET);
                     }
                 }
-                if(fecha.after(fechaInicio)){
-                    valida = true; //FechaFin después de FechaInicio
-                }else {
-                    System.out.println(Colores.ROJO + "     ❌ Error: La Fecha de Fin de la selección debe ser futura a la de Inicio." + Colores.RESET);
-                }
+
             }
 
 
