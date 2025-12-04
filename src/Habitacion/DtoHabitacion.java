@@ -1,6 +1,5 @@
 package Habitacion;
 
-import Dominio.Reserva;
 import enums.EstadoHabitacion;
 import enums.TipoHabitacion;
 import Reserva.DtoReserva;

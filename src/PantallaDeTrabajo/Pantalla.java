@@ -7,7 +7,6 @@ import Habitacion.GestorHabitacion;
 import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
-import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -216,7 +215,7 @@ public class Pantalla {
 
             DtoHuesped datosIngresados = null;
 
-            // 1. INTENTO DE CARGA DE DATOS (creamos una excepcion para manejar la opcion de CANCELAR en cualquier momento del formulario)
+            // 1. INTENTO DE CARGA DE DATOS (creamos una excepción para manejar la opcion de CANCELAR en cualquier momento del formulario)
             //Envolvemos la carga en un try-catch para capturar la cancelación
             try {
                 //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
@@ -319,7 +318,7 @@ public class Pantalla {
                         gestorHuesped.upsertHuesped(datosIngresados);
                         System.out.println("El huésped ha sido satisfactoriamente cargado/actualizado.");
 
-                        // AQUI VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
+                        // AQUÍ VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
                         System.out.println("¿Desea cargar otro huésped? (SI/NO): ");
 
                         //validacion de ingreso correcto
@@ -339,7 +338,6 @@ public class Pantalla {
                         System.out.println("ERROR DE BASE DE DATOS: " + e.getMessage());
                         e.printStackTrace();
                         decisionPendiente = false; // Volver a empezar
-                        continue;
                     }
 
                 } else if (opcionBoton == 2) { // presiono CANCELAR
@@ -1334,7 +1332,7 @@ public class Pantalla {
                 }
 
                 // Validar Estado
-                Map<Date, String> estados = grilla.get(habSeleccionada);
+                Map<Date, String> estados = grilla.get(candidata);
                 String estado = estados.get(fechaInicio);
                 if (estado == null) estado = "LIBRE";
 
@@ -1344,8 +1342,8 @@ public class Pantalla {
                 } else if ("RESERVADA".equals(estado)) {
                     System.out.println("AVISO: Habitación RESERVADA. 1. OCUPAR IGUAL / 2. VOLVER");
                     if (leerOpcionNumerica() == 1){
-                        pintarHabitacionOcupada(grilla, fechaInicio, fechaFin, estadiasParaProcesar, habSeleccionada);
                         habSeleccionada = candidata;
+                        pintarHabitacionOcupada(grilla, fechaInicio, fechaFin, estadiasParaProcesar, habSeleccionada);
                     }
                 } else {
                     habSeleccionada = candidata;
@@ -1413,13 +1411,12 @@ public class Pantalla {
             }
 
             System.out.println("1. Buscar Huésped existente");
-            System.out.println("2. Alta Rápida de Huésped");
-            if (!lista.isEmpty()) System.out.println("3. Finalizar carga para esta habitación");
+            if (!lista.isEmpty()) System.out.println("2. Finalizar carga para esta habitación");
 
             System.out.print("Opción: ");
             int op = leerOpcionNumerica();
 
-            if (op == 3 && !lista.isEmpty()) break;
+            if (op == 2 && !lista.isEmpty()) break;
 
             DtoHuesped seleccionado = null;
 
@@ -1433,19 +1430,8 @@ public class Pantalla {
                     System.out.print("ID a seleccionar (0 cancelar): ");
                     int id = leerOpcionNumerica();
                     if (id > 0 && id <= res.size()) {
-                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id-1));
+                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
                     }
-                }
-            } else if (op == 2) { // Alta
-
-                //aca no seria mejor mandarlo al caso de uso 9 completo?
-                System.out.println(">> Alta Rápida <<");
-                seleccionado = mostrarYPedirDatosFormulario();//no se por que se usa este metodo aca
-                try {
-                    gestorHuesped.upsertHuesped(seleccionado);
-                } catch (Exception e) {
-                    System.out.println("Error al crear: " + e.getMessage());
-                    seleccionado = null;
                 }
             }
 

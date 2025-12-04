@@ -1,11 +1,7 @@
 package Utils.Mapear;
 
 import Dominio.Habitacion;
-import Dominio.Cama;
 import Habitacion.DtoHabitacion;
-import Habitacion.DtoCama;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MapearHabitacion  {
 

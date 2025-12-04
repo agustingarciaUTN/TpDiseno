@@ -17,7 +17,7 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
     public boolean persistirPersonaFisica(PersonaFisica persona) throws PersistenciaException {
         String sqlPadre = "INSERT INTO responsable_pago DEFAULT VALUES";
         String sqlHija = "INSERT INTO persona_fisica (id_responsable, tipo_documento, nro_documento) VALUES (?, ?, ?)";
-        String sqlTel = "INSERT INTO telefono_personaFisica (id_responsable, telefonos) VALUES (?, ?) ";
+
 
         Connection conn = null;
         try {
@@ -42,14 +42,13 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
             }
 
 
-
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
             throw new PersistenciaException("Error persistir Persona Fisica", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
         }
     }
 

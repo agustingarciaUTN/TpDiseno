@@ -1,6 +1,5 @@
 package MedioDePago;
 
-import Dominio.Cheque;
 import enums.Moneda;
 
 import java.util.Date;

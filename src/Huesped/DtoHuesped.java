@@ -16,7 +16,7 @@ public class DtoHuesped {
     private Date fechaNacimiento;
     private String nacionalidad;
 
-    // traemos todos porque si necesitamos solo uno, despues lo filtramos y el acceso a la tabla intermedia es solo 1
+    // traemos todos porque si necesitamos solo uno, después lo filtramos y el acceso a la tabla intermedia es solo 1
     private List<String> email;
     private List<String> ocupacion;
     private List<Long> telefono;

@@ -4,7 +4,6 @@ import BaseDedatos.Conexion;
 import Dominio.Factura;
 import Excepciones.PersistenciaException;
 import java.sql.*;
-import java.util.ArrayList;
 
 public class DaoFactura implements DaoInterfazFactura {
     private static DaoFactura instancia;
@@ -51,7 +50,7 @@ public class DaoFactura implements DaoInterfazFactura {
         }
     }
 
-    // Implementar resto de métodos CRUD...
+    /*// Implementar resto de métodos CRUD...
     @Override
     public boolean modificarFactura(Factura factura) throws PersistenciaException { return false; }
     @Override
@@ -59,5 +58,5 @@ public class DaoFactura implements DaoInterfazFactura {
     @Override
     public DtoFactura obtenerFacturaPorId(int id) { return null; }
     @Override
-    public ArrayList<DtoFactura> obtenerTodas() { return new ArrayList<>(); }
+    public ArrayList<DtoFactura> obtenerTodas() { return new ArrayList<>(); }*/
 }

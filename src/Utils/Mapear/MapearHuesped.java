@@ -3,7 +3,7 @@ package Utils.Mapear;
 import Dominio.Direccion;
 import Dominio.Huesped;
 import Huesped.DtoHuesped;
-import enums.PosIva;
+
 
 public class MapearHuesped  {
 
@@ -29,7 +29,7 @@ public class MapearHuesped  {
                 .ocupacion(dto.getOcupacion())
                 .nacionalidad(dto.getNacionalidad())
                 // AQUÍ USAMOS EL OTRO MAPPER
-                .direccion(mapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion()))
+                .direccion(MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion()))
                 .build();
     }
 
@@ -72,7 +72,7 @@ public class MapearHuesped  {
                 .ocupacion(entidad.getOcupacion())
                 .nacionalidad(entidad.getNacionalidad())
                 // AQUÍ USAMOS EL OTRO MAPPER
-                .direccion(mapearDireccion.mapearEntidadADto(entidad.getDireccion()))
+                .direccion(MapearDireccion.mapearEntidadADto(entidad.getDireccion()))
                 .build();
     }
 }

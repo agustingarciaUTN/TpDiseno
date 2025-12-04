@@ -23,13 +23,13 @@ public class MapearEstadia {
 
         // 1. Mapear Reserva
         if (dto.getDtoReserva() != null) {
-            builder.reserva(mapearReserva.mapearDtoAEntidad(dto.getDtoReserva()));
+            builder.reserva(MapearReserva.mapearDtoAEntidad(dto.getDtoReserva()));
         }
 
         // 2. Mapear Lista de Huéspedes
         if (dto.getDtoHuespedes() != null) {
             for (DtoHuesped dtoH : dto.getDtoHuespedes()) {
-                builder.agregarHuesped(mapearHuesped.mapearDtoAEntidad(dtoH));
+                builder.agregarHuesped(MapearHuesped.mapearDtoAEntidad(dtoH));
             }
         }
 
@@ -48,14 +48,14 @@ public class MapearEstadia {
 
         // 1. Mapear Reserva
         if (entidad.getReserva() != null) {
-            builder.dtoReserva(mapearReserva.mapearEntidadADto(entidad.getReserva()));
+            builder.dtoReserva(MapearReserva.mapearEntidadADto(entidad.getReserva()));
         }
 
         // 2. Mapear Lista de Huéspedes
         if (entidad.getHuespedes() != null) {
             ArrayList<DtoHuesped> listaDtos = new ArrayList<>();
             for (Huesped h : entidad.getHuespedes()) {
-                listaDtos.add(mapearHuesped.mapearEntidadADto(h));
+                listaDtos.add(MapearHuesped.mapearEntidadADto(h));
             }
             builder.dtoHuespedes(listaDtos);
         }

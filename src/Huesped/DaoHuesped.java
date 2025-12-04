@@ -2,7 +2,6 @@ package Huesped;
 
 import BaseDedatos.Conexion;
 import Dominio.Huesped;
-import Dominio.Direccion;
 import Excepciones.PersistenciaException;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -52,10 +51,10 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             return true;
 
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
             throw new PersistenciaException("Error al persistir huésped", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
         }
     }
 
@@ -91,10 +90,10 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
             throw new PersistenciaException("Error al modificar huésped", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
         }
     }
 

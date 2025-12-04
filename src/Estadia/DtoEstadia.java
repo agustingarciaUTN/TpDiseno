@@ -91,9 +91,8 @@ public class DtoEstadia {
             return this;
         }
 
-        public Builder dtoReserva(DtoReserva val) {
+        public void dtoReserva(DtoReserva val) {
             this.dtoReserva = val;
-            return this;
         }
 
         public Builder dtoHuespedes(ArrayList<DtoHuesped> val) {
@@ -111,11 +110,6 @@ public class DtoEstadia {
             this.dtoHuespedes.add(val);
             return this;
         }
-
-        /*public Builder facturas(ArrayList<DtoFactura> val) {
-            this.facturas = val;
-            return this;
-        }*/
 
         public DtoEstadia build() {
             return new DtoEstadia(this);

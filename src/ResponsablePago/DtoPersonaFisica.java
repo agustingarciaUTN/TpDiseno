@@ -1,7 +1,6 @@
 package ResponsablePago;
 
 import Dominio.Huesped;
-import enums.TipoDocumento;
 
 public class DtoPersonaFisica {
     private int idResponsablePago;

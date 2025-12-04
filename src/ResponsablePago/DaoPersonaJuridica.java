@@ -57,10 +57,10 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
             throw new PersistenciaException("Error persistir PJ", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
         }
     }
 

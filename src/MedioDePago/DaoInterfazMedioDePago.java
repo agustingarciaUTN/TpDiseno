@@ -1,6 +1,5 @@
 package MedioDePago;
 import Dominio.MedioPago;
-import Excepciones.PersistenciaException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
