@@ -1216,32 +1216,32 @@ public class Pantalla {
         return grilla;
     }
 
-    // CU4: Reservar Habitación
+    // CU4: Reservar Habitación (ACTUALIZADO)
     public void reservarHabitacion() throws Exception {
-        System.out.println("\n--- INICIO CU4: RESERVA ---");
+        System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║           🛏️  RESERVAR HABITACIÓN (CU4)            ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        // 1. LLAMADA AL CU5
-        Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
+        // 1. LLAMADA AL CU5 (Para ver el panorama general primero)
+        System.out.println("Visualice el rango general para buscar disponibilidad:");
+        Map<Habitacion, Map<Date, String>> grillaVista = mostrarEstadoHabitaciones();
 
-        if (grilla == null) return; // Si falló el CU5 o canceló
+        if (grillaVista == null) return; // Cancelado o sin datos
 
-        // Recuperamos las fechas del mapa para validaciones posteriores
-        Date fechaInicio = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
-        Date fechaFin = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
-
-        List<DtoReserva> seleccion = new ArrayList<>();
+        List<DtoReserva> listaParaReservar = new ArrayList<>();
+        boolean seguirAgregando = true;
 
         // 2. Bucle de Selección
-        while (true) {
-            System.out.println("\n¿Desea seleccionar una habitación? (SI/NO): ");
-            if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) break;
+        while (seguirAgregando) {
+            System.out.println("\n" + Colores.AMARILLO + "--- Nueva Selección ---" + Colores.RESET);
 
-            System.out.print("Ingrese Nro Habitación: ");
+            // A. Selección de Habitación
+            System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
             String nro = scanner.nextLine().trim().toUpperCase();
 
-            // Buscar habitación en el mapa (que actúa como caché de lo que vemos)
+            // Validar que la habitación exista en la grilla que estamos viendo (o en la BD)
             Habitacion habSeleccionada = null;
-            for (Habitacion h : grilla.keySet()) {
+            for (Habitacion h : grillaVista.keySet()) {
                 if (h.getNumero().equals(nro)) {
                     habSeleccionada = h;
                     break;
@@ -1249,47 +1249,134 @@ public class Pantalla {
             }
 
             if (habSeleccionada == null) {
-                System.out.println("Error: Habitación no encontrada en la lista actual.");
+                System.out.println(Colores.ROJO + "   ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
                 continue;
             }
 
-            // Validar disponibilidad consultando el MAPA
-            boolean disponible = true;
-            Map<Date, String> estados = grilla.get(habSeleccionada);
+            // B. Selección de Fechas ESPECÍFICAS para esta reserva
+            System.out.println(Colores.CYAN + "   Define el rango específico para la habitación " + nro + ":" + Colores.RESET);
 
-            for (String estado : estados.values()) {
-                if (!"LIBRE".equals(estado)) {
-                    disponible = false;
-                    break;
-                }
+            Date fechaInicioReserva;
+            Date fechaFinReserva;
+
+            try {
+                // 1. Pedir Fecha Inicio: Debe ser posterior a "ayer" (es decir, de hoy en adelante)
+                // Usamos Calendar para restar un día de forma segura y permitir seleccionar "HOY"
+                // Calculamos la menor fecha presente en la vista (inicioGrilla)
+                Date inicioGrilla;
+                Optional<Date> minFechaOpt = grillaVista.values().stream()
+                        .flatMap(m -> m.keySet().stream())
+                        .min(Date::compareTo);
+                inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
+
+                fechaInicioReserva = pedirFechaPosteriorA(
+                        "   > Fecha Inicio (dd/MM/yyyy): ",
+                        inicioGrilla,
+                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
+                );
+
+                // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
+                fechaFinReserva = pedirFechaPosteriorA(
+                        "   > Fecha Fin (dd/MM/yyyy): ",
+                        fechaInicioReserva,
+                        "La fecha de fin debe ser posterior a la fecha de inicio."
+                );
+
+            } catch (CancelacionException e) {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            // C. Validaciones de Negocio (Usando tus Gestores)
+
+            // 1. Validar coherencia de fechas (GestorHabitacion)
+            if (!gestorHabitacion.validarRangoFechas(fechaInicioReserva, fechaFinReserva)) {
+                continue;
             }
 
-            // Validar duplicado en selección actual
-            boolean yaEnLista = seleccion.stream().anyMatch(r -> r.getIdHabitacion().equals(nro));
+            // 2. Validar disponibilidad REAL en BD (GestorReserva y GestorEstadia)
+            boolean ocupada = gestorEstadia.estaOcupadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
+            boolean reservada = gestorReserva.estaReservadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
 
-            if (!disponible || yaEnLista) {
-                System.out.println("ERROR: La habitación no está 100% disponible en el rango o ya fue seleccionada.");
-            } else {
-                DtoReserva dto = new DtoReserva.Builder()
-                        .idHabitacion(nro)
-                        .fechaDesde(fechaInicio)
-                        .fechaHasta(fechaFin)
-                        .build();
-                seleccion.add(dto);
-                System.out.println(">> Habitación " + nro + " agregada.");
+            if (ocupada) {
+                System.out.println(Colores.ROJO + "   ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
+                continue;
+            }
+            if (reservada) {
+                System.out.println(Colores.ROJO + "   ❌ Error: La habitación ya tiene una RESERVA confirmada en esas fechas." + Colores.RESET);
+                continue;
+            }
+
+            // 3. Validar que no la haya seleccionado ya en este mismo proceso (Lista temporal)
+            boolean yaEnLista = false;
+            for(DtoReserva dto : listaParaReservar) {
+                if(dto.getIdHabitacion().equals(nro)) {
+                    // Check simple: si es la misma habitación, no dejamos (para simplificar UX)
+                    yaEnLista = true; break;
+                }
+            }
+            if (yaEnLista) {
+                System.out.println(Colores.ROJO + "   ❌ Ya has seleccionado esta habitación en esta sesión." + Colores.RESET);
+                continue;
+            }
+
+            System.out.println(Colores.VERDE + "   ✅ ¡Habitación disponible!" + Colores.RESET);
+
+            // D. Solicitar Datos del Responsable (Requerido por DtoReserva y GestorReserva)
+            // Esto es crucial porque DtoReserva lo pide obligatorio en GestorReserva.validarDatosReserva
+            System.out.println(Colores.AMARILLO + "\n   Datos del Responsable de la Reserva:" + Colores.RESET);
+            String nombreResp, apellidoResp, telefonoResp;
+            try {
+                apellidoResp = pedirStringTexto("   > Apellido: ");
+                nombreResp = pedirStringTexto("   > Nombre: ");
+                // pedirTelefono devuelve Long, DtoReserva pide String. Hacemos la conversión.
+                telefonoResp = String.valueOf(pedirTelefono());
+            } catch (CancelacionException e) {
+                System.out.println("Reserva cancelada.");
+                return;
+            }
+
+            // E. Crear DTO y agregar a la lista
+            DtoReserva nuevaReserva = new DtoReserva.Builder()
+                    .idHabitacion(nro)
+                    .fechaDesde(fechaInicioReserva)
+                    .fechaHasta(fechaFinReserva)
+                    .nombreResponsable(nombreResp)
+                    .apellidoResponsable(apellidoResp)
+                    .telefonoResponsable(telefonoResp)
+                    .build();
+
+            listaParaReservar.add(nuevaReserva);
+
+            // F. Actualizar Visualización (Pintamos lo que seleccionó el usuario)
+            // Necesitamos pasar las fechas de la vista original para mantener el marco de referencia
+            Date inicioVista = grillaVista.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
+            Date finVista = grillaVista.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
+
+            imprimirGrilla(grillaVista, inicioVista, finVista, listaParaReservar);
+
+            // G. Preguntar si sigue
+            System.out.print("\n¿Desea reservar otra habitación? (SI/NO): ");
+            String resp = scanner.nextLine().trim();
+            if (!resp.equalsIgnoreCase("SI")) {
+                seguirAgregando = false;
             }
         }
 
-        if (seleccion.isEmpty()) {
-            System.out.println("Finalizando sin reservas.");
+        if (listaParaReservar.isEmpty()) {
+            System.out.println("Finalizando sin generar reservas.");
             return;
         }
 
-        // 3. ACTUALIZAR VISUALIZACIÓN (Pintar selección sobre la grilla base)
-        imprimirGrilla(grilla, fechaInicio, fechaFin, seleccion);
-
-        // ... Lógica de Confirmación y Persistencia (Igual que tenías) ...
-        gestorReserva.crearReservas(seleccion);
+        // 3. Confirmación y Persistencia
+        System.out.println(Colores.CYAN + "\nGuardando reservas..." + Colores.RESET);
+        try {
+            // Llamamos al gestor existente
+            gestorReserva.crearReservas(listaParaReservar);
+            System.out.println(Colores.VERDE + "✅ ¡Reservas registradas con ÉXITO!" + Colores.RESET);
+        } catch (Exception e) {
+            System.out.println(Colores.ROJO + "❌ Error al guardar: " + e.getMessage() + Colores.RESET);
+        }
+        pausa();
     }
 
     private void imprimirGrilla(Map<Habitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
@@ -1299,10 +1386,9 @@ public class Pantalla {
 
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
 
-        // Convertimos el KeySet a lista para poder recorrerla ordenadamente en el header
         List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
 
-        // 1. IMPRIMIR ENCABEZADO AGRUPADO POR TIPO (NUEVO)
+        // 1. IMPRIMIR ENCABEZADO AGRUPADO POR TIPO
         imprimirEncabezadoTipos(habitacionesOrdenadas);
 
         // 2. Imprimir fila de Números de Habitación
@@ -1317,8 +1403,7 @@ public class Pantalla {
         for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
         System.out.println("+");
 
-
-        // 3. Filas (Días) - El cuerpo de la grilla sigue igual
+        // 3. Filas (Días)
         LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
@@ -1331,20 +1416,29 @@ public class Pantalla {
                 String visual = "   ?   ";
                 String color = Colores.RESET;
 
-                // Lógica de visualización (Selección vs Estado BDD)
+                // --- Lógica de Pintado ACTUALIZADA ---
                 boolean esSeleccion = false;
+
                 if (seleccion != null) {
                     for (DtoReserva res : seleccion) {
+                        // Coincide Habitación
                         if (res.getIdHabitacion().equals(hab.getNumero())) {
-                            esSeleccion = true; break;
+                            // Coincide Rango de Fechas ( fechaFila >= desde Y fechaFila <= hasta )
+                            // Usamos compareTo: >= 0 es posterior/igual, <= 0 es anterior/igual
+                            if (!fechaFila.before(res.getFechaDesde()) && !fechaFila.after(res.getFechaHasta())) {
+                                esSeleccion = true;
+                                break;
+                            }
                         }
                     }
                 }
+                // -------------------------------------
 
                 if (esSeleccion) {
-                    visual = "   * ";
-                    color = Colores.VERDE; // Verde para lo que está seleccionando el usuario
+                    visual = "   * "; // Marca visual de "Tu Selección"
+                    color = Colores.VERDE;
                 } else {
+                    // Si no es selección nuestra, miramos la base de datos (cacheada en grilla)
                     Map<Date, String> mapaEstados = grilla.get(hab);
                     String estado = (mapaEstados != null) ? mapaEstados.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
@@ -1394,8 +1488,8 @@ public class Pantalla {
         while(!flagFechas) {
             // 1. Pedir y Validar Fechas (Bucle del diagrama)
             Date fechaReferencia = new Date(Long.MIN_VALUE);
-            fechaInicio = pedirFechaFutura("Desde fecha dd/mm/aaaa ", fechaReferencia );
-            fechaFin = pedirFechaFutura("Hasta Fecha dd/mm/aaaa ", fechaInicio);
+            fechaInicio = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
+            fechaFin = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
 
             // Validar lógica de negocio (Rango coherente)
             flagFechas = gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
@@ -1417,43 +1511,46 @@ public class Pantalla {
     }
 
 
-    private Date pedirFechaFutura(String mensaje, Date fechaInicio) throws CancelacionException {
-            Date fecha = null;
-            boolean valida = false;
-            SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
-            formatoFecha.setLenient(false);
+    /**
+     * Pide una fecha que sea posterior (o igual en términos de día) a una fecha base.
+     * @param mensaje El texto para pedir el dato.
+     * @param fechaBase La fecha contra la cual comparar.
+     * @param mensajeError El mensaje a mostrar si la validación falla.
+     */
+    private Date pedirFechaPosteriorA(String mensaje, Date fechaBase, String mensajeError) throws CancelacionException {
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+        formatoFecha.setLenient(false);
 
-            while (!valida) {
-                System.out.print(Colores.VERDE + mensaje + Colores.RESET);
-                String fechaStr = scanner.nextLine();
-                chequearCancelacion(fechaStr);
-                if (fechaStr.trim().isEmpty()) {
-                    System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
-                } else {
-                    try {
-                        fecha = formatoFecha.parse(fechaStr);
-                        // Convertir a LocalDate para comparar solo la fecha (sin hora)
-                        LocalDate fechaLocal = Instant.ofEpochMilli(fecha.getTime())
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate();
-                        LocalDate hoy = LocalDate.now();
-                        LocalDate fechaMinima = LocalDate.of(1900, 1, 1); // posterior a 31/12/1899
+        // Convertimos la fecha base a LocalDate para ignorar horas/minutos/segundos
+        LocalDate baseLocal = fechaBase.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-                        if(fecha.after(fechaInicio)){
-                            valida = true; //FechaFin después de FechaInicio
-                        }else {
-                            System.out.println(Colores.ROJO + "     ❌ Error: La Fecha de Fin de la selección debe ser futura a la de Inicio." + Colores.RESET);
-                        }
-                    } catch (ParseException e) {
-                        System.out.println(Colores.ROJO + "     ❌ Error: Formato de fecha inválido. Use dd/MM/yyyy." + Colores.RESET);
-                    }
-                }
+        while (true) {
+            System.out.print(Colores.VERDE + mensaje + Colores.RESET);
+            String fechaStr = scanner.nextLine().trim();
+            chequearCancelacion(fechaStr);
 
+            if (fechaStr.isEmpty()) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
+                continue;
             }
 
+            try {
+                Date fechaIngresada = formatoFecha.parse(fechaStr);
+                LocalDate ingresadaLocal = fechaIngresada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-            return fecha;
+                // Validamos: La fecha ingresada debe ser estrictamente posterior a la base
+                // TRUCO: Si quieres permitir el MISMO día, cambia 'isAfter' por '!ingresadaLocal.isBefore(baseLocal)'
+                if (ingresadaLocal.isAfter(baseLocal)) {
+                    return fechaIngresada;
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: " + mensajeError + Colores.RESET);
+                }
+
+            } catch (ParseException e) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido. Use dd/MM/yyyy." + Colores.RESET);
+            }
         }
+    }
 
 
 
@@ -1463,30 +1560,33 @@ public class Pantalla {
         System.out.println("   CU15: OCUPAR HABITACIÓN");
         System.out.println("========================================\n");
 
-        // 1. Mostrar Grilla Base (CU5)
-        // Nota: Pedimos un rango amplio inicial solo para visualizar el estado general
-        System.out.println("--- Visualización General ---");
-        Date fechaRef = new Date(); // Hoy
+        // 1. Mostrar Grilla Base
+        System.out.println("--- Disponibilidad Actual ---");
         Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
 
         if (grilla == null) return;
 
+        // Límites visuales
+        Date fechaInicioGrilla = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
+        Date fechaFinGrilla = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
         List<DtoEstadia> estadiasParaProcesar = new ArrayList<>();
         boolean deseaCargarOtra = true;
 
-        // --- BUCLE PRINCIPAL ---
+        // --- FASE 1: SELECCIÓN DE HABITACIONES ---
         while (deseaCargarOtra) {
 
             Habitacion habSeleccionada = null;
             Date fechaInicioOcupacion = null;
             Date fechaFinOcupacion = null;
 
-            // --- BUCLE DE SELECCIÓN DE HABITACIÓN Y FECHAS ---
+            // Sub-Bucle: Validar selección individual
             while (habSeleccionada == null) {
                 System.out.print("\nIngrese Nro Habitación a Ocupar: ");
                 String nro = scanner.nextLine().trim().toUpperCase();
 
-                // Buscar habitación en memoria
+                // 1. Validar existencia en la lista
                 Habitacion candidata = null;
                 for (Habitacion h : grilla.keySet()) {
                     if (h.getNumero().equals(nro)) {
@@ -1496,74 +1596,69 @@ public class Pantalla {
                 }
 
                 if (candidata == null) {
-                    System.out.println("Error: Habitación no encontrada en la lista.");
+                    System.out.println("Error: Habitación no encontrada.");
                     continue;
                 }
 
-                // --- NUEVO: Pedir Fechas para ESTA habitación ---
-                System.out.println(">> Ingrese el rango de ocupación para la habitación " + nro + ":");
-                fechaInicioOcupacion = pedirFechaFutura("   Fecha Desde (dd/mm/aaaa): ", new Date(Long.MIN_VALUE));
-                fechaFinOcupacion = pedirFechaFutura("   Fecha Hasta (dd/mm/aaaa): ", fechaInicioOcupacion);
+                // 2. INMEDIATAMENTE PEDIR FECHAS (Esto es lo que faltaba)
+                System.out.println(">> Defina el rango para la habitación " + nro + ":");
 
-                // Validar Disponibilidad en ese rango específico
-                if (!gestorHabitacion.validarRangoFechas(fechaInicioOcupacion, fechaFinOcupacion)) {
-                    continue; // Fechas incoherentes
+                // Truco: Usamos fechas muy antiguas/lejanas como límites para que 'pedirFechaFutura'
+                // solo valide el formato, y nosotros validamos la lógica de negocio abajo.
+                Date fechaReferencia = new Date(Long.MIN_VALUE);
+                fechaInicioOcupacion = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
+                fechaFinOcupacion = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicioOcupacion, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioOcupacion + ".");
+
+                // 3. Validar que esté dentro de lo que vemos en pantalla
+                if (fechaInicioOcupacion.before(fechaInicioGrilla) || fechaFinOcupacion.after(fechaFinGrilla)) {
+                    System.out.println(Colores.ROJO + "⚠️ Error: Las fechas deben estar dentro del rango visualizado (" +
+                            sdf.format(fechaInicioGrilla) + " - " + sdf.format(fechaFinGrilla) + ")." + Colores.RESET);
+                    continue; // Vuelve a pedir habitación
                 }
 
-                // Validar Estado contra la Grilla (o BDD)
-                // Nota: Como la grilla tiene un rango fijo visual, validamos contra el Gestor directamente para mayor seguridad
-                boolean estaOcupada = gestorEstadia.estaOcupadaEnFecha(candidata.getNumero(), fechaInicioOcupacion, fechaFinOcupacion);
-                boolean estaReservada = gestorReserva.estaReservadaEnFecha(candidata.getNumero(), fechaInicioOcupacion, fechaFinOcupacion);
+                // 4. Validar Disponibilidad (BD y Memoria)
+                boolean ocupadaBD = gestorEstadia.estaOcupadaEnFecha(candidata.getNumero(), fechaInicioOcupacion, fechaFinOcupacion);
+                boolean reservadaBD = gestorReserva.estaReservadaEnFecha(candidata.getNumero(), fechaInicioOcupacion, fechaFinOcupacion);
 
-                if (estaOcupada) {
-                    System.out.println("Error: La habitación ya está OCUPADA en esas fechas. Seleccione otra.");
-                } else if (estaReservada) {
-                    System.out.println("AVISO: Habitación RESERVADA en esas fechas.");
-                    System.out.println("1. OCUPAR IGUAL (Es el titular)");
-                    System.out.println("2. VOLVER");
-                    if (leerOpcionNumerica() == 1) {
-                        habSeleccionada = candidata;
+                boolean ocupadaEnLote = false;
+                for (DtoEstadia previa : estadiasParaProcesar) {
+                    if (previa.getDtoHabitacion().getNumero().equals(candidata.getNumero())) {
+                        if (fechaInicioOcupacion.before(previa.getFechaCheckOut()) && fechaFinOcupacion.after(previa.getFechaCheckIn())) {
+                            ocupadaEnLote = true; break;
+                        }
                     }
+                }
+
+                if (ocupadaEnLote) {
+                    System.out.println("Error: Ya seleccionó esta habitación en este proceso.");
+                } else if (ocupadaBD) {
+                    System.out.println("Error: La habitación figura OCUPADA en el sistema.");
+                } else if (reservadaBD) {
+                    System.out.println("AVISO: Habitación RESERVADA. ¿Es el titular?");
+                    System.out.println("1. SI (OCUPAR) / 2. NO (CANCELAR)");
+                    if (leerOpcionNumerica() == 1) habSeleccionada = candidata;
                 } else {
-                    // Libre
-                    habSeleccionada = candidata;
+                    habSeleccionada = candidata; // Libre y fechas válidas -> ÉXITO
                 }
             }
-            // --- FIN SELECCIÓN ---
 
-            // A. ACTUALIZACIÓN VISUAL INMEDIATA
-            // Mostramos la grilla actualizada con el rango seleccionado marcado
-            // Nota: Pasamos las fechas de la ocupación actual para que el método sepa dónde pintar
-            pintarHabitacionOcupada(grilla, fechaInicioOcupacion, fechaFinOcupacion, estadiasParaProcesar, habSeleccionada);
+            // 5. Guardar en lista temporal
+            DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
+            DtoEstadia dtoEstadia = new DtoEstadia.Builder()
+                    .dtoHabitacion(dtoHab)
+                    .fechaCheckIn(fechaInicioOcupacion)
+                    .fechaCheckOut(fechaFinOcupacion)
+                    .valorEstadia(habSeleccionada.getCostoPorNoche())
+                    .build();
 
-            System.out.println("\n>> Habitación " + habSeleccionada.getNumero() + " seleccionada del " +
-                    new SimpleDateFormat("dd/MM").format(fechaInicioOcupacion) + " al " +
-                    new SimpleDateFormat("dd/MM").format(fechaFinOcupacion));
+            estadiasParaProcesar.add(dtoEstadia);
+            System.out.println(">> Selección guardada.");
 
-            System.out.println("Presione ENTER para cargar los huéspedes...");
-            scanner.nextLine();
+            // 6. REIMPRIMIR LA GRILLA (Tu requerimiento)
+            // Mostramos todo lo acumulado hasta ahora + la nueva selección
+            pintarHabitacionOcupada(grilla, null, null, estadiasParaProcesar, null);
 
-            // B. CARGA DE HUÉSPEDES
-            ArrayList<DtoHuesped> grupoHuespedes = seleccionarGrupoHuespedes();
-
-            if (!grupoHuespedes.isEmpty()) {
-                DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
-
-                DtoEstadia dtoEstadia = new DtoEstadia.Builder()
-                        .dtoHabitacion(dtoHab)
-                        .fechaCheckIn(fechaInicioOcupacion)   // Usamos las fechas ingresadas
-                        .fechaCheckOut(fechaFinOcupacion)     // Usamos las fechas ingresadas
-                        .valorEstadia(habSeleccionada.getCostoPorNoche())
-                        .dtoHuespedes(grupoHuespedes)
-                        .build();
-
-                estadiasParaProcesar.add(dtoEstadia);
-                System.out.println("--> Datos guardados temporalmente.");
-            } else {
-                System.out.println("--> Carga cancelada (sin huéspedes).");
-            }
-
-            System.out.println("\n¿Desea cargar OTRA habitación? (SI/NO): ");
+            System.out.println("\n¿Desea ocupar OTRA habitación? (SI/NO): ");
             if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) {
                 deseaCargarOtra = false;
             }
@@ -1571,13 +1666,36 @@ public class Pantalla {
 
         if (estadiasParaProcesar.isEmpty()) return;
 
-        // 3. PERSISTENCIA
-        System.out.println("\nGuardando cambios en el sistema...");
+        System.out.println(Colores.AMARILLO + "\n⚠️ Procediendo a la carga de datos de los huéspedes..." + Colores.RESET);
+        pausa();
+
+        // --- FASE 2: CARGA DE HUÉSPEDES ---
+        List<DtoEstadia> estadiasFinales = new ArrayList<>();
+
+        for (DtoEstadia dto : estadiasParaProcesar) {
+            System.out.println("\n--------------------------------------------------");
+            System.out.println("🏠 Completando datos para: Habitación " + dto.getDtoHabitacion().getNumero());
+            System.out.println("--------------------------------------------------");
+
+            ArrayList<DtoHuesped> grupo = seleccionarGrupoHuespedes();
+
+            if (!grupo.isEmpty()) {
+                dto.setDtoHuespedes(grupo);
+                estadiasFinales.add(dto);
+            } else {
+                System.out.println(Colores.ROJO + "❌ Se omitirá esta habitación." + Colores.RESET);
+            }
+        }
+
+        if (estadiasFinales.isEmpty()) return;
+
+        // --- FASE 3: PERSISTENCIA ---
+        System.out.println("\nGuardando...");
         try {
-            for (DtoEstadia dto : estadiasParaProcesar) {
+            for (DtoEstadia dto : estadiasFinales) {
                 gestorEstadia.crearEstadia(dto);
             }
-            System.out.println("\n¡Check-in realizado con ÉXITO!");
+            System.out.println("\n" + Colores.VERDE + "✅ ¡Check-in masivo realizado con ÉXITO!" + Colores.RESET);
             pausa();
         } catch (Exception e) {
             System.out.println("\n*** ERROR AL GUARDAR ***");
@@ -1647,25 +1765,32 @@ public class Pantalla {
     }
 
     private void pintarHabitacionOcupada(Map<Habitacion, Map<Date, String>> grilla,
-                                         Date inicioOcupacion, Date finOcupacion, // Fechas de la selección actual
+                                         Date inicioOcupacion, Date finOcupacion, // Fechas de la selección actual (pueden ser null)
                                          List<DtoEstadia> estadiasConfirmadas,
-                                         Habitacion seleccionActual) {
+                                         Habitacion seleccionActual) { // Puede ser null
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // Obtenemos el rango visual de la grilla original (para no romper el dibujo)
+        // 1. Obtener límites de la grilla original para no romper el dibujo
+        if (grilla == null || grilla.isEmpty()) return;
+
         Date inicioGrilla = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
         Date finGrilla = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
 
+        // Convertimos a lista para mantener el orden
         List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
+        // Aseguramos el orden visual
+        habitacionesOrdenadas.sort(Comparator.comparing(Habitacion::getTipoHabitacion).thenComparing(Habitacion::getNumero));
 
         System.out.println("\n--- GRILLA ACTUALIZADA (PRE-VISUALIZACIÓN) ---");
+
+        // 2. Encabezados
         imprimirEncabezadoTipos(habitacionesOrdenadas);
 
-        // Encabezado
         System.out.print("   FECHA     ");
         for (Habitacion hab : habitacionesOrdenadas) {
+            // Resaltar la columna de la habitación que se está eligiendo ahora
             if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
                 System.out.print("|" + Colores.VERDE + String.format(" %-9s ", "Hab " + hab.getNumero()) + Colores.RESET);
             } else {
@@ -1674,11 +1799,11 @@ public class Pantalla {
         }
         System.out.println("|");
 
-        // Separador
         System.out.print("-------------");
-        for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
         System.out.println("+");
 
+        // 3. Cuerpo de la grilla
         LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = finGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
@@ -1692,18 +1817,22 @@ public class Pantalla {
                 String color = Colores.RESET;
                 boolean esSeleccion = false;
 
-                // 1. Chequear si es la habitación actual Y si la fecha cae dentro del rango seleccionado
+                // A. Verificar si es la SELECCIÓN ACTUAL (la que estoy escribiendo ahora)
                 if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
-                    // Verificar si la fecha de la fila está dentro del rango [inicioOcupacion, finOcupacion)
-                    if (!fechaFila.before(inicioOcupacion) && fechaFila.before(finOcupacion)) {
-                        esSeleccion = true;
+                    if (inicioOcupacion != null && finOcupacion != null) {
+                        // Pintamos solo si la fecha cae en el rango ingresado
+                        // (!before && before para intervalo [inicio, fin))
+                        if (!fechaFila.before(inicioOcupacion) && fechaFila.before(finOcupacion)) {
+                            esSeleccion = true;
+                        }
                     }
                 }
 
-                // 2. Chequear confirmadas (lógica igual)
+                // B. Verificar si está en la lista de CONFIRMADAS (las del bucle anterior)
                 if (!esSeleccion && estadiasConfirmadas != null) {
                     for (DtoEstadia dto : estadiasConfirmadas) {
                         if (dto.getDtoHabitacion().getNumero().equals(hab.getNumero())) {
+                            // Pintamos el rango de ese DTO
                             if (!fechaFila.before(dto.getFechaCheckIn()) && fechaFila.before(dto.getFechaCheckOut())) {
                                 esSeleccion = true;
                                 break;
@@ -1716,6 +1845,7 @@ public class Pantalla {
                     visual = "   * ";
                     color = Colores.VERDE;
                 } else {
+                    // C. Estado original de la base de datos
                     Map<Date, String> mapa = grilla.get(hab);
                     String estado = (mapa != null) ? mapa.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
@@ -1724,7 +1854,7 @@ public class Pantalla {
                         case "OCUPADA" -> { visual = "   X   "; color = Colores.ROJO; }
                         case "RESERVADA" -> { visual = "   R   "; color = Colores.AMARILLO; }
                         case "FUERA DE SERVICIO" -> { visual = "   -   "; color = Colores.ROJO; }
-                        case "LIBRE" -> visual = "   L   ";
+                        case "LIBRE" -> { visual = "   L   "; color = Colores.RESET; }
                     }
                 }
                 System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
@@ -1732,6 +1862,7 @@ public class Pantalla {
             System.out.println("|");
             actual = actual.plusDays(1);
         }
+        System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [*] Selección Actual");
     }
 
     private String pedirDocumentoSinExcepcion(TipoDocumento tipo){

@@ -13,7 +13,7 @@ public class MapearReserva {
         // Creamos una Habitación "referencia" solo con el ID para la Entidad
         Habitacion habRef = null;
         if (dto.getIdHabitacion() != null) {
-            habRef = new Habitacion.Builder(dto.getIdHabitacion(), null, 0).build();
+            habRef = new Habitacion.Builder(dto.getIdHabitacion(), null, 1).build();
         }
 
         return new Reserva.Builder(dto.getFechaDesde(), dto.getFechaHasta(), habRef)
