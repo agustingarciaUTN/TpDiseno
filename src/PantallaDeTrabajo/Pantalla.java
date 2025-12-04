@@ -1287,23 +1287,24 @@ public class Pantalla {
 
     // CU5: Mostrar Estado de Habitaciones
     // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
-    public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() {
+    public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() throws CancelacionException {
         System.out.println("========================================");
         System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
         System.out.println("========================================\n");
 
-        // 1. Pedir y Validar Fechas (Bucle del diagrama)
-        Date fechaInicio = pedirFechaFutura("Fecha de Inicio");
-        Date fechaFin = pedirFechaFutura("Fecha de Fin");
+        //chequeo de fechas
+        boolean flagFechas = false;
+        Date fechaInicio = null;
+        Date fechaFin = null;
+        while(!flagFechas) {
+            // 1. Pedir y Validar Fechas (Bucle del diagrama)
+            Date fechaReferencia = new Date(Long.MIN_VALUE);
+            fechaInicio = pedirFechaFutura("Desde fecha dd/mm/aaaa ", fechaReferencia );
+            fechaFin = pedirFechaFutura("Hasta Fecha dd/mm/aaaa ", fechaInicio);
 
-        // Validar lógica de negocio (Rango coherente)
-        try {
-            gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-            return null;
+            // Validar lógica de negocio (Rango coherente)
+            flagFechas = gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
         }
-
         System.out.println("\nProcesando estados...");
 
         // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
@@ -1321,26 +1322,50 @@ public class Pantalla {
     }
 
 
-    private Date pedirFechaFutura(String mensaje) {
-        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
-        formatoFecha.setLenient(false);
+    private Date pedirFechaFutura(String mensaje, Date fechaInicio) throws CancelacionException {
+            Date fecha = null;
+            boolean valida = false;
+            SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+            formatoFecha.setLenient(false);
 
-        while (true) {
-            System.out.print(mensaje + " (dd/MM/yyyy): ");
-            String entrada = scanner.nextLine().trim();
+            while (!valida) {
+                System.out.print(Colores.VERDE + mensaje + Colores.RESET);
+                String fechaStr = scanner.nextLine();
+                chequearCancelacion(fechaStr);
+                if (fechaStr.trim().isEmpty()) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
+                } else {
+                    try {
+                        fecha = formatoFecha.parse(fechaStr);
+                        // Convertir a LocalDate para comparar solo la fecha (sin hora)
+                        LocalDate fechaLocal = Instant.ofEpochMilli(fecha.getTime())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+                        LocalDate hoy = LocalDate.now();
+                        LocalDate fechaMinima = LocalDate.of(1900, 1, 1); // posterior a 31/12/1899
 
-            if (entrada.isEmpty()) {
-                System.out.println("Error: La fecha es obligatoria.");
-                continue;
+                        // Validar que sea anterior a hoy y posterior al 31/12/1899
+                        if (!fechaLocal.isBefore(hoy) || fechaLocal.isBefore(fechaMinima)) {
+
+                            System.out.println(Colores.ROJO + "     ❌ Error: La fecha debe ser anterior a hoy y posterior a 1900." + Colores.RESET);
+                            continue;
+                        }
+                        // Formato válido
+                    } catch (ParseException e) {
+                        System.out.println(Colores.ROJO + "     ❌ Error: Formato de fecha inválido. Use dd/MM/yyyy." + Colores.RESET);
+                    }
+                }
+                if(fecha.after(fechaInicio)){
+                    valida = true; //FechaFin después de FechaInicio
+                }else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: La Fecha de Fin de la selección debe ser futura a la de Inicio." + Colores.RESET);
+                }
             }
 
-            try {
-                return formatoFecha.parse(entrada);
-            } catch (ParseException e) {
-                System.out.println("Error: Formato inválido. Use dd/MM/yyyy.");
-            }
+
+            return fecha;
         }
-    }
+
 
 
     // --- CU15: OCUPAR HABITACIÓN ---
