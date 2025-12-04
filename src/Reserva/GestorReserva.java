@@ -34,7 +34,9 @@ public class GestorReserva {
     public boolean estaReservadaEnFecha(String nroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFin) {
         return daoReserva.hayReservaEnFecha(nroHabitacion, fechaInicial, fechaFin);
     }
-
+    public List<DtoReserva> buscarReservasEnFecha(Date inicio, Date fin) {
+        return ((DaoReserva) daoReserva).obtenerReservasEnPeriodo(inicio, fin);
+    }
     /**
      * Valida los datos de una lista de reservas antes de seguir.
      * Verifica campos obligatorios del responsable.

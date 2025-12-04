@@ -58,14 +58,14 @@ public class DaoHabitacion implements DaoInterfazHabitacion {
     private DtoHabitacion mapearHabitacion(Connection conn, ResultSet rs) throws SQLException {
         String numero = rs.getString("numero");
         String tipoStr = rs.getString("tipo_habitacion");
-        TipoHabitacion tipo = tipoStr != null ? TipoHabitacion.valueOf(tipoStr) : null;
+        TipoHabitacion tipo = tipoStr != null ? TipoHabitacion.fromString(tipoStr) : null;
         int capacidad = rs.getInt("capacidad");
 
         DtoHabitacion.Builder builder = new DtoHabitacion.Builder(numero, tipo, capacidad);
 
         String estadoStr = rs.getString("estado_habitacion");
         if (estadoStr != null) {
-            builder.estado(EstadoHabitacion.valueOf(estadoStr));
+            builder.estado(EstadoHabitacion.fromString(estadoStr));
         }
 
         // getFloat devuelve 0.0 si es NULL; si quieres distinguir NULL usa rs.wasNull()

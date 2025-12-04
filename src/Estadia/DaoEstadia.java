@@ -4,6 +4,8 @@ import BaseDedatos.Conexion;
 import Dominio.Estadia;
 import Dominio.Huesped;
 import Excepciones.PersistenciaException;
+import Habitacion.DtoHabitacion;
+
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -79,9 +81,9 @@ public class DaoEstadia implements DaoInterfazEstadia {
         // 2. Y (La fecha fin es nula O la fecha consultada es menor a la fecha fin)
         //    (Es decir, o no se fue todavía, o se va después de hoy)
 
-        String sql = "SELECT 1 FROM estadia WHERE id_habitacion = ? " +
-                "AND ? >= fecha_inicio " +
-                "AND (fecha_fin IS NULL OR ? <= fecha_fin) LIMIT 1";
+        String sql = "SELECT 1 FROM estadia WHERE numero_habitacion = ? " +
+                "AND ? >= \"fecha_check-in\" " +
+                "AND (\"fecha_check-out\" IS NULL OR ? <= \"fecha_check-out\") LIMIT 1";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -101,6 +103,40 @@ public class DaoEstadia implements DaoInterfazEstadia {
             System.err.println("Error al verificar disponibilidad de estadía: " + e.getMessage());
             return false; // Ante la duda, asumimos libre o manejas la excepción
         }
+    }
+
+    // Nuevo método optimizado
+    @Override
+    public ArrayList<DtoEstadia> obtenerEstadiasEnPeriodo(java.util.Date inicio, java.util.Date fin) {
+        ArrayList<DtoEstadia> lista = new ArrayList<>();
+        // Trae estadías activas en el rango
+        String sql = "SELECT * FROM estadia WHERE " +
+                "\"fecha_check-in\" < ? AND (\"fecha_check-out\" IS NULL OR \"fecha_check-out\" > ?)";
+
+        try (Connection conn = BaseDedatos.Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, new java.sql.Date(fin.getTime()));
+            ps.setDate(2, new java.sql.Date(inicio.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Mapeo básico para la grilla
+                    DtoHabitacion hab = new DtoHabitacion.Builder(rs.getString("numero_habitacion"), null, 0).build();
+
+                    DtoEstadia dto = new DtoEstadia.Builder()
+                            .idEstadia(rs.getInt("id_estadia"))
+                            .dtoHabitacion(hab)
+                            .fechaCheckIn(rs.getDate("fecha_check-in"))
+                            .fechaCheckOut(rs.getDate("fecha_check-out"))
+                            .build();
+                    lista.add(dto);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lista;
     }
 
     @Override
