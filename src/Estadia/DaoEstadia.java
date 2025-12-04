@@ -79,9 +79,9 @@ public class DaoEstadia implements DaoInterfazEstadia {
         // 2. Y (La fecha fin es nula O la fecha consultada es menor a la fecha fin)
         //    (Es decir, o no se fue todavía, o se va después de hoy)
 
-        String sql = "SELECT 1 FROM estadia WHERE id_habitacion = ? " +
-                "AND ? >= fecha_inicio " +
-                "AND (fecha_fin IS NULL OR ? <= fecha_fin) LIMIT 1";
+        String sql = "SELECT 1 FROM estadia WHERE numero_habitacion = ? " +
+                "AND ? >= \"fecha_check-in\" " +
+                "AND (\"fecha_check-out\" IS NULL OR ? <= \"fecha_check-out\") LIMIT 1";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

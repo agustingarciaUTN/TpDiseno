@@ -1147,7 +1147,7 @@ public class Pantalla {
         } finally {
             scanner.nextLine(); // Limpia el buffer del scanner
         }
-    }//VER CUANDO SE UTILIZA ESTO, EN EL CU9 NO LO USE
+    }
 
     /**
      * METODO ORQUESTADOR
