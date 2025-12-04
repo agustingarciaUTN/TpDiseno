@@ -1273,7 +1273,7 @@ public class Pantalla {
                     }
                 }
 
-                if (habSeleccionada == null) {
+                if (candidata == null) {
                     System.out.println("Error: Habitación no encontrada.");
                     continue;
                 }
