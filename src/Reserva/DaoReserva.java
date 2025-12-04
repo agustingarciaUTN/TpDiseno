@@ -16,38 +16,68 @@ public class DaoReserva implements DaoInterfazReserva {
 
     @Override
     public boolean persistirReserva(Reserva reserva) throws PersistenciaException {
-        String sql = "INSERT INTO reserva (fecha_reserva, fecha_desde, fecha_hasta, estado_reserva, \"NombreHuespedResponsable\", \"ApellidoHuespedResponsable\", \"TelefonoHuespedResponsable\", id_habitacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        // SQL corregido con comillas para mayúsculas y casteo de Enum
+        String sql = "INSERT INTO reserva (fecha_reserva, fecha_desde, fecha_hasta, estado_reserva, \"NombreHuespedResponsable\", \"ApellidoHuespedResponsable\", \"TelefonoHuespedResponsable\", id_habitacion) " +
+                "VALUES (?, ?, ?, ?::\"Estado_Reserva\", ?, ?, ?, ?)";
 
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        Connection conn = null;
 
-            ps.setDate(1, new java.sql.Date(reserva.getFechaReserva().getTime()));
-            ps.setDate(2, new java.sql.Date(reserva.getFechaDesde().getTime()));
-            ps.setDate(3, new java.sql.Date(reserva.getFechaHasta().getTime()));
-            ps.setString(4, reserva.getEstadoReserva().toString());
-            ps.setString(5, reserva.getNombreHuespedResponsable());
-            ps.setString(6, reserva.getApellidoHuespedResponsable());
-            ps.setString(7, reserva.getTelefonoHuespedResponsable());
-            ps.setString(8, reserva.getHabitacion().getNumero());
+        try {
+            conn = Conexion.getConnection();
+            conn.setAutoCommit(false); // 1. INICIO TRANSACCIÓN MANUAL
 
-            int res = ps.executeUpdate();
-            if (res > 0) {
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) reserva.setIdReserva(rs.getInt(1));
+            try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+                ps.setDate(1, new java.sql.Date(reserva.getFechaReserva().getTime()));
+                ps.setDate(2, new java.sql.Date(reserva.getFechaDesde().getTime()));
+                ps.setDate(3, new java.sql.Date(reserva.getFechaHasta().getTime()));
+
+                // Enum a String
+                ps.setString(4, reserva.getEstadoReserva().name());
+
+                ps.setString(5, reserva.getNombreHuespedResponsable());
+                ps.setString(6, reserva.getApellidoHuespedResponsable());
+                ps.setString(7, reserva.getTelefonoHuespedResponsable());
+                ps.setString(8, reserva.getHabitacion().getNumero());
+
+                int res = ps.executeUpdate();
+
+                if (res > 0) {
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            reserva.setIdReserva(rs.getInt(1));
+                        }
+                    }
+                    conn.commit(); // 2. CONFIRMAR CAMBIOS (GUARDAR REALMENTE)
+                    return true;
+                } else {
+                    conn.rollback(); // Si no se insertó nada, deshacer
+                    return false;
                 }
-                return true;
             }
-            return false;
+
         } catch (SQLException e) {
-            throw new PersistenciaException("Error persistir reserva", e);
+            // Si hay error, deshacemos cualquier cambio pendiente
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            throw new PersistenciaException("Error SQL al insertar Reserva: " + e.getMessage(), e);
+        } finally {
+            // Cerramos la conexión ordenadamente
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true); // Restaurar default
+                    conn.close();
+                } catch (SQLException ex) { ex.printStackTrace(); }
+            }
         }
     }
 
+    @Override
     public boolean hayReservaEnFecha(String numeroHabitacion, java.util.Date fechaInicial, java.util.Date fechaFinal) {
-        // CORRECCIÓN: Detecta cualquier tipo de solapamiento
         String sql = "SELECT 1 FROM reserva WHERE id_habitacion = ? " +
                 "AND fecha_desde < ? AND fecha_hasta > ? " +
-                "AND estado_reserva = 'ACTIVA' LIMIT 1";
+                "AND estado_reserva = 'ACTIVA'::\"Estado_Reserva\" LIMIT 1";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -56,27 +86,25 @@ public class DaoReserva implements DaoInterfazReserva {
             java.sql.Date fechaFinSql = new java.sql.Date(fechaFinal.getTime());
 
             ps.setString(1, numeroHabitacion);
-            // OJO: Cruzamos los parámetros para cumplir la lógica
-            ps.setDate(2, fechaFinSql);    // fecha_desde < NUEVO_FIN
-            ps.setDate(3, fechaInicioSql); // fecha_hasta > NUEVO_INICIO
+            ps.setDate(2, fechaFinSql);
+            ps.setDate(3, fechaInicioSql);
 
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
+            System.err.println("Error al verificar reserva: " + e.getMessage());
             return false;
         }
     }
 
-    // Nuevo método optimizado
     @Override
     public ArrayList<DtoReserva> obtenerReservasEnPeriodo(java.util.Date inicio, java.util.Date fin) {
         ArrayList<DtoReserva> lista = new ArrayList<>();
-        // Trae todas las reservas que se solapen con el rango (Inicio < FinBusqueda) Y (Fin > InicioBusqueda)
-        String sql = "SELECT * FROM reserva WHERE estado_reserva = 'ACTIVA' " +
+        String sql = "SELECT * FROM reserva WHERE estado_reserva = 'ACTIVA'::\"Estado_Reserva\" " +
                 "AND fecha_desde < ? AND fecha_hasta > ?";
 
-        try (Connection conn = BaseDedatos.Conexion.getConnection();
+        try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setDate(1, new java.sql.Date(fin.getTime()));
@@ -84,12 +112,17 @@ public class DaoReserva implements DaoInterfazReserva {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Mapeo rápido (puedes usar tu Mapper si prefieres, aquí lo hago manual por brevedad)
                     DtoReserva dto = new DtoReserva.Builder()
                             .id(rs.getInt("id_reserva"))
-                            .idHabitacion(rs.getString("numero_habitacion")) // Asegúrate que la columna coincida
+                            .idHabitacion(rs.getString("id_habitacion"))
                             .fechaDesde(rs.getDate("fecha_desde"))
                             .fechaHasta(rs.getDate("fecha_hasta"))
+                            // Nombres de columnas con mayúsculas escapadas no son necesarias en el ResultSet.getString
+                            // a menos que Postgres sea muy estricto, pero generalmente getString es case-insensitive.
+                            // Si falla, prueba poniendo rs.getString("\"NombreHuespedResponsable\"")
+                            .nombreResponsable(rs.getString("NombreHuespedResponsable"))
+                            .apellidoResponsable(rs.getString("ApellidoHuespedResponsable"))
+                            .telefonoResponsable(rs.getString("TelefonoHuespedResponsable"))
                             .build();
                     lista.add(dto);
                 }
@@ -100,13 +133,9 @@ public class DaoReserva implements DaoInterfazReserva {
         return lista;
     }
 
-    // Implementar CRUD restante...
-    @Override
-    public boolean modificarReserva(Reserva reserva) throws PersistenciaException { return false; }
-    @Override
-    public boolean eliminarReserva(int id) { return false; }
-    @Override
-    public DtoReserva obtenerPorId(int id) { return null; }
-    @Override
-    public ArrayList<DtoReserva> obtenerTodas() { return new ArrayList<>(); }
+    // Métodos restantes
+    @Override public boolean modificarReserva(Reserva reserva) throws PersistenciaException { return false; }
+    @Override public boolean eliminarReserva(int id) { return false; }
+    @Override public DtoReserva obtenerPorId(int id) { return null; }
+    @Override public ArrayList<DtoReserva> obtenerTodas() { return new ArrayList<>(); }
 }
