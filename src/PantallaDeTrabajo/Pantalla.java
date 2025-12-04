@@ -1050,7 +1050,7 @@ public class Pantalla {
         // Usamos un metodo especial que permite validación flexible si no hay tipo seleccionado
         try{String nroDoc = pedirDocumento(criterios.getTipoDocumento(), true);
             criterios.setNroDocumento(nroDoc);}
-        catch (CancelacionException _){};
+        catch (CancelacionException _){}
 
 
         return criterios;
@@ -1357,9 +1357,15 @@ public class Pantalla {
                         .min(Date::compareTo);
                 inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
 
+                // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
+                // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
+                LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate limiteAnterior = inicioLocal.minusDays(1);
+                Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
                 fechaInicioReserva = pedirFechaPosteriorA(
                         "   > Fecha Inicio (dd/MM/yyyy): ",
-                        inicioGrilla,
+                        fechaLimiteParaPedir,
                         "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
                 );
 
