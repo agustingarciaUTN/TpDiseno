@@ -31,7 +31,7 @@ public class GestorHabitacion {
         return instancia;
     }
 
-    public ArrayList<Habitacion> obtenerTodasLasHabitaciones() {
+    public ArrayList<Habitacion> obtenerTodasLasHabitacionesOrdenadas() {
         ArrayList<DtoHabitacion> entidades = daoHabitacion.obtenerTodas();
         ArrayList<Habitacion> dtos = new ArrayList<>();
 
@@ -62,18 +62,23 @@ public class GestorHabitacion {
         return listaEntidadesHabitaciones;
     }
 
-    public void validarRangoFechas(Date inicio, Date fin) throws IllegalArgumentException {
+    public boolean validarRangoFechas(Date inicio, Date fin) throws IllegalArgumentException {
         // 1. Validar Coherencia
         if (inicio.after(fin)) {
-            throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+            System.out.println("La fecha de fin debe ser anterior a la fecha de inicio.");
+            System.out.println("Por favor reingrese ambas fechas.");
+            return false;
         }
         // 2. Validar Duración Máxima
         long diferenciaMilisec = Math.abs(fin.getTime() - inicio.getTime());
         long dias = TimeUnit.DAYS.convert(diferenciaMilisec, TimeUnit.MILLISECONDS);
 
         if (dias > 60) {
-            throw new IllegalArgumentException("El rango de fechas no puede superar los 60 días (demasiado grande para mostrar).");
+            System.out.println("El rango de fechas no puede superar los 60 días (demasiado grande para mostrar).");
+            System.out.println("Por favor reingrese ambas fechas.");
+            return false;
         }
+        return true;
     }
 
 

@@ -1,6 +1,4 @@
-// java
 
-import Excepciones.PersistenciaException;
 import PantallaDeTrabajo.Pantalla;
 
 public class Main {
