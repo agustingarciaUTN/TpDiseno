@@ -68,7 +68,7 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
 
     private int persistirEfectivo(Efectivo e, Connection conn) throws SQLException {
         // Efectivo tiene sus propios datos: monto, moneda, fecha
-        String sql = "INSERT INTO efectivo (monto, moneda, fecha_pago) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO efectivo (monto, moneda, fecha_de_pago) VALUES (?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setDouble(1, e.getMonto());
@@ -85,7 +85,7 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
     }
 
     private String persistirCheque(Cheque c, Connection conn) throws SQLException {
-        String sql = "INSERT INTO cheque (numero_cheque, banco, plaza, monto, fecha_cobro, fecha_pago) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO cheque (numero_cheque, banco, plaza, monto, fecha_cobro, fecha_de_pago, moneda) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, c.getNumeroCheque()); // PK manual
@@ -94,6 +94,7 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
             ps.setDouble(4, c.getMonto());
             ps.setDate(5, new java.sql.Date(c.getFechaCobro().getTime()));
             ps.setDate(6, new java.sql.Date(c.getFechaDePago().getTime()));
+            ps.setString(7, c.getMoneda().name());
 
             ps.executeUpdate();
             return c.getNumeroCheque(); // Retorna la PK
@@ -101,7 +102,9 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
     }
 
     private String persistirTarjetaDebito(TarjetaDebito td, Connection conn) throws SQLException {
-        String sql = "INSERT INTO tarjeta_debito (numero_tarjeta, banco, fecha_vencimiento, cod_seguridad, monto, moneda, fecha_pago, red_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO tarjeta (numero_tarjeta, banco, fecha_vencimiento, codigo_seg, monto, moneda, fecha_pago, Red_de_pago, tipo_tarjeta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlTjDebito = "INSERT INTO tarjeta_debito (numero_tarjeta) VALUES (?)";
+
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, td.getNumeroDeTarjeta()); // PK
@@ -112,15 +115,23 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
             ps.setString(6, td.getMoneda().name());
             ps.setDate(7, new java.sql.Date(td.getFechaDePago().getTime()));
             ps.setString(8, td.getRedDePago().name());
-
+            ps.setString(9, "D");
             ps.executeUpdate();
-            return td.getNumeroDeTarjeta();
         }
-    }
+        try (PreparedStatement ps = conn.prepareStatement(sqlTjDebito)) {
+            ps.setString(1, td.getNumeroDeTarjeta());
+            ps.executeUpdate();
+        }
+        conn.commit();
+        return td.getNumeroDeTarjeta();
+        }
+
 
     private String persistirTarjetaCredito(TarjetaCredito tc, Connection conn) throws SQLException {
         // Igual que débito pero con cuotas
-        String sql = "INSERT INTO tarjeta_credito (numero_tarjeta, banco, fecha_vencimiento, cod_seguridad, monto, moneda, fecha_pago, red_pago, cuotas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO tarjeta (numero_tarjeta, banco, fecha_vencimiento, cod_seguridad, monto, moneda, fecha_pago, Red_de_pago, tipo_tarjeta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlTjCredito = "INSERT INTO tarjeta_credito (numero_tarjeta, cuotas) VALUES (?, ?)";
+
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tc.getNumeroDeTarjeta()); // PK
@@ -131,10 +142,18 @@ public class DaoMedioDePago implements DaoInterfazMedioDePago {
             ps.setString(6, tc.getMoneda().name());
             ps.setDate(7, new java.sql.Date(tc.getFechaDePago().getTime()));
             ps.setString(8, tc.getRedDePago().name());
-            ps.setInt(9, tc.getCuotasCantidad());
+            ps.setString(9, "C");
 
             ps.executeUpdate();
-            return tc.getNumeroDeTarjeta();
+
         }
+        try (PreparedStatement ps = conn.prepareStatement(sqlTjCredito)) {
+            ps.setString(1, tc.getNumeroDeTarjeta());
+            ps.setInt(2, tc.getCuotasCantidad());
+            ps.executeUpdate();
+        }
+
+        conn.commit();
+        return tc.getNumeroDeTarjeta();
     }
 }

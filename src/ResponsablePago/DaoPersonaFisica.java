@@ -16,9 +16,8 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
     @Override
     public boolean persistirPersonaFisica(PersonaFisica persona) throws PersistenciaException {
         String sqlPadre = "INSERT INTO responsable_pago DEFAULT VALUES";
-        String sqlHija = "INSERT INTO persona_fisica (id_persona_fisica, tipo_documento, nro_documento) VALUES (?, ?, ?)";
-        // SQL telefono si tienes tabla satelite para esto:
-        // String sqlTel = "INSERT INTO telefono_persona_fisica ...";
+        String sqlHija = "INSERT INTO persona_fisica (id_responsable, tipo_documento, nro_documento) VALUES (?, ?, ?)";
+        String sqlTel = "INSERT INTO telefono_personaFisica (id_responsable, telefonos) VALUES (?, ?) ";
 
         Connection conn = null;
         try {
@@ -41,6 +40,8 @@ public class DaoPersonaFisica implements DaoInterfazPersonaFisica {
                 ps.setString(3, persona.getHuesped().getNroDocumento());
                 ps.executeUpdate();
             }
+
+
 
             conn.commit();
             return true;

@@ -17,8 +17,8 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
     @Override
     public boolean persistirPersonaJuridica(PersonaJuridica pj) throws PersistenciaException {
         String sqlPadre = "INSERT INTO responsable_pago DEFAULT VALUES";
-        String sqlHija = "INSERT INTO persona_juridica (id_persona_juridica, razon_social, cuit, id_direccion) VALUES (?, ?, ?, ?)";
-        String sqlTel = "INSERT INTO telefono_persona_juridica (id_persona_juridica, telefono) VALUES (?, ?)";
+        String sqlHija = "INSERT INTO persona_juridica (id_responsable, razon_social, cuit, id_direccion) VALUES (?, ?, ?, ?)";
+        String sqlTel = "INSERT INTO telefono_personaJuridica (id_responsable, telefonos) VALUES (?, ?)";
 
         Connection conn = null;
         try {

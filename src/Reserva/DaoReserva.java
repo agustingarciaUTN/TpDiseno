@@ -16,7 +16,7 @@ public class DaoReserva implements DaoInterfazReserva {
 
     @Override
     public boolean persistirReserva(Reserva reserva) throws PersistenciaException {
-        String sql = "INSERT INTO reserva (fecha_reserva, fecha_desde, fecha_hasta, estado_reserva, nombre_huesped, apellido_huesped, telefono_huesped, id_habitacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO reserva (fecha_reserva, fecha_desde, fecha_hasta, estado_reserva, NombreHuespedResponsable, ApellidoHuespedResponsable, TelefonoHuespedResponsable, id_habitacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
