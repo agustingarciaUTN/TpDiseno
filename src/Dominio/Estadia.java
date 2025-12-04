@@ -29,30 +29,6 @@ public class Estadia {
         this.huespedes = builder.huespedes;
     }
 
-    /*
-
-    public Estadia(int idEstadia, Date fechaCheckIn, Reserva reserva, Date fechaCheckOut, double valorEstadia, List<Huesped> huespedes, ArrayList<Factura> facturas) {
-        if (fechaCheckIn == null) {
-            throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
-        }
-        if (idEstadia <= 0) {
-            throw new IllegalArgumentException("El ID de estadía debe ser mayor a 0");
-        }
-        if(huespedes == null){
-            throw new IllegalArgumentException("La estadia debe tener asignada al menos un huesped.");
-        }
-        if(facturas == null){
-            throw new IllegalArgumentException("La estadia debe tener asignada al menos una factura.");
-        }
-        this.facturas = facturas;
-        this.idEstadia = idEstadia;
-        this.fechaCheckIn = new Date(fechaCheckIn.getTime());
-        this.reserva = reserva;
-        this.fechaCheckOut = (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
-        this.valorEstadia = valorEstadia;
-        this.huespedes = huespedes;
-    }*/
-
     public int getIdEstadia() {
         return idEstadia;
     }
@@ -118,10 +94,9 @@ public class Estadia {
 
         // Métodos para listas (puedes pasar la lista entera o agregar uno a uno)
         public Builder huespedes(ArrayList<Huesped> val) { huespedes = val; return this; }
-        public Builder agregarHuesped(Huesped val) {
+        public void agregarHuesped(Huesped val) {
             if (this.huespedes == null) this.huespedes = new ArrayList<>();
             this.huespedes.add(val);
-            return this;
         }
 
         public Estadia build() {

@@ -1,7 +1,5 @@
 package Dominio;
 
-import java.util.ArrayList;
-
 public class NotaDeCredito {
 
     private String numeroNotaCredito;

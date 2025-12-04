@@ -37,7 +37,7 @@ public class PersonaJuridica extends ResponsablePago {
     public void setTelefono(long telefono) { this.telefono = telefono; }
 
     public Direccion getDireccion() { return direccion; }
-    public void setDireccion(Direccion idDireccion) { this.direccion = direccion; }
+    public void setDireccion(Direccion direccion) { this.direccion = direccion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

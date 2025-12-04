@@ -3,7 +3,7 @@ package Dominio;
 public class Usuario {
 
     private int idUsuario;
-    private String nombre; // Este actúa como "Nombre de Usuario" para el login
+    private String nombre;
     private String hashContrasenia; // SOLO el hash
 
     // --- CONSTRUCTOR PRIVADO ---
