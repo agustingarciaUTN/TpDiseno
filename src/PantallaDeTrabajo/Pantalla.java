@@ -7,6 +7,7 @@ import Habitacion.GestorHabitacion;
 import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
+import Utils.Colores;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -53,26 +54,28 @@ public class Pantalla {
 
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
     public void iniciarSistema() throws Exception {
-        System.out.println("========================================");
-        System.out.println("   SISTEMA DE GESTION HOTELERA");
-        System.out.println("========================================\n");
+        System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║         🏨 SISTEMA DE GESTION HOTELERA             ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+        System.out.println("");
 
         //Primero autenticar
         if (autenticarUsuario()) {
             //Si la autenticacion es exitosa, mostrar menu principal
             mostrarMenuPrincipal();
         } else {
-            System.out.println("No se pudo acceder al sistema.");
+            System.out.println(Colores.ROJO + "❌ No se pudo acceder al sistema." + Colores.RESET);
         }
 
-        System.out.println("\n========================================");
-        System.out.println("   FIN DEL SISTEMA");
-        System.out.println("========================================");
+        System.out.println("\n" + Colores.CYAN + "========================================");
+        System.out.println("        👋 FIN DEL SISTEMA");
+        System.out.println("========================================" + Colores.RESET);
     }
 
     //METODO PARA CU AUTENTICAR USUARIO
     private boolean autenticarUsuario() {
-        System.out.println("-- AUTENTICACION DE USUARIO --\n");
+        System.out.println(Colores.NEGRILLA + "🔐 AUTENTICACION DE USUARIO" + Colores.RESET);
+        System.out.println(Colores.CYAN + "   -------------------------" + Colores.RESET + "\n");
 
         boolean autenticacionExitosa = false;
 
@@ -81,10 +84,10 @@ public class Pantalla {
             System.out.println("Por favor, ingrese sus credenciales:");
 
             //Paso 3: El actor ingresa su nombre (en forma visible) y su contraseña (oculta)
-            System.out.print("Nombre de usuario: ");
+            System.out.print(Colores.VERDE + "   👤 Usuario: " + Colores.RESET);
             String nombre = scanner.nextLine().trim();
 
-            System.out.print("Contraseña: ");
+            System.out.print(Colores.VERDE + "   🔑 Contraseña: " + Colores.RESET);
             String contrasenia = scanner.nextLine(); //en consola no se puede ocultar realmente
 
             //Validar con el gestor
@@ -94,17 +97,17 @@ public class Pantalla {
                 //Autenticacion exitosa
                 this.usuarioAutenticado = true;
                 this.nombreUsuarioActual = nombre;
-                System.out.println("\n¡Autenticación exitosa! Bienvenido, " + nombre + "\n");
+                System.out.println("\n" + Colores.VERDE + "✅ ¡Autenticación exitosa! Bienvenido, " + nombre + Colores.RESET + "\n");
                 autenticacionExitosa = true;
             } else {
                 //Paso 3.A: El usuario o la contraseña son inválidos
                 //Paso 3.A.1: El sistema muestra el mensaje de error
-                System.out.println("\n*** ERROR ***");
-                System.out.println("El usuario o la contraseña no son válidos");
-                System.out.println("*************\n");
+                System.out.println("\n" + Colores.ROJO + "╔═════════════════════════════════════════════╗");
+                System.out.println("║ ❌ ERROR: Usuario o contraseña inválidos    ║");
+                System.out.println("╚═════════════════════════════════════════════╝" + Colores.RESET + "\n");
 
                 //Paso 3.A.2: El actor cierra la pantalla de error
-                System.out.print("Presione ENTER para continuar...");
+                System.out.print("Presione " + Colores.NEGRILLA + "ENTER" + Colores.RESET + " para continuar...");
                 System.out.print("\033[H\033" +
                         "[2J");
                 System.out.flush();
@@ -114,9 +117,9 @@ public class Pantalla {
 
                 //Preguntar qué desea hacer
                 System.out.println("\n¿Qué desea hacer?");
-                System.out.println("1. Volver a ingresar credenciales");
-                System.out.println("2. Cerrar el sistema");
-                System.out.print("Ingrese una opción: ");
+                System.out.println(Colores.AMARILLO + " [1]" + Colores.RESET + " 🔄 Volver a ingresar credenciales");
+                System.out.println(Colores.AMARILLO + " [2]" + Colores.RESET + " 🚪 Cerrar el sistema");
+                System.out.print(">> Ingrese una opción: ");
 
                 int opcion;
                 try {
@@ -124,7 +127,7 @@ public class Pantalla {
                     scanner.nextLine(); //consumir salto de linea
                 } catch (Exception e) {
                     scanner.nextLine(); //limpiar buffer
-                    System.out.println("\nOpción inválida. Intente nuevamente.\n");
+                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
                     continue;
                 }
 
@@ -132,10 +135,10 @@ public class Pantalla {
                     System.out.println("\nCerrando el sistema...");
                     return false; //Sale sin autenticar
                 } else if (opcion == 1) {
-                    System.out.println("\n-- Intente nuevamente --\n");
+                    System.out.println(Colores.AZUL + "\n-- Intente nuevamente --\n" + Colores.RESET);
                     //Paso 3.A.4: El CU continua en el paso 2 (se repite el while)
                 } else {
-                    System.out.println("\nOpción inválida. Intente nuevamente.\n");
+                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
                 }
             }
         }
@@ -149,18 +152,23 @@ public class Pantalla {
         boolean salir = false;
 
         while (!salir && usuarioAutenticado) {
-            System.out.println("========================================");
-            System.out.println("        MENU PRINCIPAL");
-            System.out.println("========================================");
-            System.out.println("Usuario: " + nombreUsuarioActual);
-            System.out.println("----------------------------------------");
-            System.out.println("1. Buscar huesped (CU2)");
-            System.out.println("2. Reservar Habitación (CU4)");
-            System.out.println("3. Dar de alta huesped (CU9)");
-            System.out.println("4. Dar de baja huesped (CU11) ");
-            System.out.println("5. Cerrar sesión");
-            System.out.println("========================================");
-            System.out.print("Ingrese una opción: ");
+            System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+            System.out.println("║                MENU PRINCIPAL                      ║");
+            System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+
+            // Datos del usuario con ícono
+            System.out.println(Colores.VERDE + "   👤 Usuario activo: " + Colores.NEGRILLA + nombreUsuarioActual + Colores.RESET);
+            System.out.println(Colores.CYAN + "   ──────────────────────────────────────────────────" + Colores.RESET);
+
+            // Opciones con colores y emojis
+            System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " 🔍 Buscar huésped (CU2)");
+            System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " 🛏️  Reservar Habitación (CU4)");
+            System.out.println(Colores.AMARILLO + "   [3]" + Colores.RESET + " 📝 Dar de alta huésped (CU9)");
+            System.out.println(Colores.AMARILLO + "   [4]" + Colores.RESET + " 🗑️  Dar de baja huésped (CU11)");
+            System.out.println(Colores.AMARILLO + "   [5]" + Colores.RESET + " 🚪 Cerrar sesión");
+
+            System.out.println(Colores.CYAN + "======================================================" + Colores.RESET);
+            System.out.print(">> Ingrese una opción: ");
 
             int opcion;
             try {
@@ -168,7 +176,7 @@ public class Pantalla {
                 scanner.nextLine(); //consumir salto de linea
             } catch (Exception e) {
                 scanner.nextLine(); //limpiar buffer
-                System.out.println("\nOpción inválida. Intente nuevamente.\n");
+                System.out.println(Colores.ROJO + "\n❌ Opción inválida. Debe ingresar un número.\n" + Colores.RESET);
                 continue;
             }
 
@@ -188,16 +196,16 @@ public class Pantalla {
                     //iniciarBajaHuesped();
                     break;
                 case 5:
-                    System.out.print("¿Está seguro que desea cerrar sesión? (SI/NO): ");
+                    System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
                     String confirmar = scanner.nextLine().trim();
                     if (confirmar.equalsIgnoreCase("SI")) {
-                        System.out.println("\nCerrando sesión...\n");
+                        System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
                         salir = true;
                         usuarioAutenticado = false;
                     }
                     break;
                 default:
-                    System.out.println("Opción inválida. Intente nuevamente.\n");
+                    System.out.println(Colores.ROJO + "❌ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
             }
         }
         //Paso 5: El CU termina
@@ -205,9 +213,11 @@ public class Pantalla {
 
     // CU9
     public void darDeAltaHuesped() {
-        //Mensaje de principio de ejecucion del CU9
-        System.out.println('\n' + "-- Iniciando CU9 'dar de alta huesped' --");
-        System.out.println("(Nota: Puede escribir 'CANCELAR' en cualquier campo para detener la carga)");
+        //Mensaje de principio de ejecucion del CU9 con Estética de Título
+        System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║           📝 DAR DE ALTA HUÉSPED (CU9)             ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+        System.out.println(Colores.AMARILLO + " ℹ️  Nota: Escriba 'CANCELAR' en cualquier campo para salir." + Colores.RESET + "\n");
 
         boolean continuarCargando = true;//bandera que representa la condicion del loop principal
 
@@ -219,16 +229,17 @@ public class Pantalla {
             //Envolvemos la carga en un try-catch para capturar la cancelación
             try {
                 //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
+                // (Asumimos que este método imprime sus propios prompts, idealmente también deberían tener colores)
                 datosIngresados = mostrarYPedirDatosFormulario();
             } catch (CancelacionException e) {
                 // Si el usuario escribió "CANCELAR" durante el formulario:
-                System.out.println("\n¿Está seguro que desea cancelar la carga actual? (SI/NO): ");
+                System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
                 String confir = scanner.nextLine();
                 if (confir.equalsIgnoreCase("SI")) {
-                    System.out.println("Carga cancelada. Volviendo al menú principal...");
+                    System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
                     return; // Sale del metodo completamente
                 } else {
-                    System.out.println("Reiniciando formulario...");
+                    System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
                     continue; // Vuelve al inicio del while (Lamentablemente reinicia el form, es complejo reanudar en consola)
                 }
             }
@@ -238,21 +249,23 @@ public class Pantalla {
             boolean decisionPendiente = true;
 
             while (decisionPendiente) {
-                System.out.println("\n--- Fin Formulario ---");
-                System.out.println("Acciones: 1 = SIGUIENTE, 2 = CANCELAR");
-                System.out.print("Ingrese una opción: ");
+                System.out.println(Colores.CYAN + "\n────────── Fin del Formulario ──────────" + Colores.RESET);
+                System.out.println("Acciones disponibles:");
+                System.out.println(Colores.VERDE + "   [1]" + Colores.RESET + " 💾 GUARDAR / SIGUIENTE");
+                System.out.println(Colores.ROJO  + "   [2]" + Colores.RESET + " ❌ CANCELAR OPERACIÓN");
+                System.out.print(">> Ingrese una opción: ");
 
                 int opcionBoton = -1;
                 try {//validacion mas robusta
                     String entrada = scanner.nextLine();
                     opcionBoton = Integer.parseInt(entrada);
                 } catch (NumberFormatException e) {
-                    System.out.println("Debe ingresar un número.");
+                    System.out.println(Colores.ROJO + "⚠️  Error: Debe ingresar un número." + Colores.RESET);
                     continue;
                 }
 
                 if (opcionBoton == 1) { // presiono SIGUIENTE
-                    System.out.println("Procesando datos...");
+                    System.out.println(Colores.AZUL + "⏳ Procesando datos..." + Colores.RESET);
 
                     //aca hay que llamar al gestor para que valide los datos
                     List<String> errores;
@@ -261,11 +274,13 @@ public class Pantalla {
 
                     //Actuamos en consecuencia, dependiendo si hubo errores o no
                     if (!errores.isEmpty()) {
-                        System.out.println("ERROR: Se encontraron los siguientes errores: ");
+                        System.out.println(Colores.ROJO + "\n╔══════════════════════════════════════════╗");
+                        System.out.println("║ ❌ ERROR DE VALIDACIÓN DE DATOS          ║");
+                        System.out.println("╚══════════════════════════════════════════╝" + Colores.RESET);
                         for (String error : errores) {
-                            System.out.println("- " + error);
+                            System.out.println(Colores.ROJO + "  • " + error + Colores.RESET);
                         }
-                        System.out.println("Por favor, ingrese los datos nuevamente");
+                        System.out.println("\nPor favor, ingrese los datos nuevamente.");
                         decisionPendiente = false;//Salimos del bucle de decisión para recargar datos
                         continue; //fuerza al inicio del while
                     }
@@ -278,10 +293,13 @@ public class Pantalla {
                         //Si chequearDuplicado retorna NULL, no hay duplicado
 
                         if (duplicado != null) {//si encuentra duplicado
-                            System.out.println("----------------------------------------------------------------");
-                            System.out.println("   ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
-                            System.out.println("   Huésped existente: " + duplicado.getNombres() + " " + duplicado.getApellido());
-                            System.out.println("----------------------------------------------------------------");
+                            // Caja amarilla de advertencia
+                            System.out.println("\n" + Colores.AMARILLO + "╔══════════════════════════════════════════════════════════════╗");
+                            System.out.println("║ ⚠️  ADVERTENCIA DE DUPLICADO                                 ║");
+                            System.out.println("╠══════════════════════════════════════════════════════════════╣");
+                            System.out.println("║ El tipo y número de documento ya existen en el sistema.      ║");
+                            System.out.println("║ Huésped existente: " + String.format("%-41s", duplicado.getNombres() + " " + duplicado.getApellido()) + " ║");
+                            System.out.println("╚══════════════════════════════════════════════════════════════╝" + Colores.RESET);
 
                             //Parámetros para bucle interno
                             int opcionDuplicado = -1;
@@ -289,8 +307,10 @@ public class Pantalla {
 
                             //Bucle para validar la entrada ACEPTAR IGUALMENTE o CORREGIR
                             while (!opcionValida2) {
-                                System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
-                                System.out.print("Ingrese una opción: ");
+                                System.out.println("Opciones:");
+                                System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " ACEPTAR IGUALMENTE (Sobreescribir/Actualizar)");
+                                System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS");
+                                System.out.print(">> Ingrese una opción: ");
 
                                 try {
                                     String entrada = scanner.nextLine();
@@ -299,15 +319,15 @@ public class Pantalla {
                                     if (opcionDuplicado == 1 || opcionDuplicado == 2) {
                                         opcionValida2 = true; // Salimos del bucle
                                     } else {
-                                        System.out.println("Opción inválida. Ingrese 1 (ACEPTAR IGUALMENTE) o 2 (CORREGIR).");
+                                        System.out.println(Colores.ROJO + "⚠️ Opción inválida." + Colores.RESET);
                                     }
                                 } catch (NumberFormatException e) {
-                                    System.out.println("Debe ingresar un número.");
+                                    System.out.println(Colores.ROJO + "⚠️ Debe ingresar un número." + Colores.RESET);
                                 }
                             }
 
                             if (opcionDuplicado == 2) { // Eligió CORREGIR
-                                System.out.println("Seleccionó CORREGIR. Vuelva a ingresar los datos.");
+                                System.out.println(Colores.AZUL + "↩️ Seleccionó CORREGIR. Vuelva a ingresar los datos." + Colores.RESET);
                                 decisionPendiente = false; // Salimos de este bucle
                                 continue; // Vuelve al inicio del while para pedir de nuevo
                             }
@@ -316,109 +336,130 @@ public class Pantalla {
 
                         //Si no existen duplicados, INSERT. Si existe (y se seleccionó "aceptar igualmente"), UPDATE
                         gestorHuesped.upsertHuesped(datosIngresados);
-                        System.out.println("El huésped ha sido satisfactoriamente cargado/actualizado.");
+                        System.out.println("\n" + Colores.VERDE + "✅ ¡El huésped ha sido guardado exitosamente!" + Colores.RESET);
 
                         // AQUÍ VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
-                        System.out.println("¿Desea cargar otro huésped? (SI/NO): ");
+                        System.out.print(Colores.CYAN + "\n🔄 ¿Desea cargar otro huésped? (SI/NO): " + Colores.RESET);
 
                         //validacion de ingreso correcto
                         String ingresoOtroHuesped = scanner.nextLine();
                         while (!ingresoOtroHuesped.equalsIgnoreCase("NO") && !ingresoOtroHuesped.equalsIgnoreCase("SI")) {
-                            System.out.println("Ingreso invalido. ¿Desea cargar otro huésped? (SI/NO): ");
+                            System.out.print(Colores.ROJO + "⚠️ Ingreso inválido. " + Colores.RESET + "¿Desea cargar otro huésped? (SI/NO): ");
                             ingresoOtroHuesped = scanner.nextLine();
                         }
 
                         //si ingreso NO termina el bucle, si ingreso SI se repite
                         if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
                             continuarCargando = false;
+                        } else {
+                            System.out.println(Colores.AZUL + "\n--- Nuevo Formulario ---\n" + Colores.RESET);
                         }
                         decisionPendiente = false; // Salimos del bucle de decisión ya que terminamos
 
                     } catch (PersistenciaException e) {
-                        System.out.println("ERROR DE BASE DE DATOS: " + e.getMessage());
+                        System.out.println(Colores.ROJO + "❌ ERROR DE BASE DE DATOS: " + e.getMessage() + Colores.RESET);
                         e.printStackTrace();
                         decisionPendiente = false; // Volver a empezar
                     }
 
                 } else if (opcionBoton == 2) { // presiono CANCELAR
-                    System.out.println("¿Desea cancelar el alta del huésped? (SI/NO): ");
+                    System.out.print(Colores.ROJO + "¿Realmente desea cancelar el alta del huésped? (SI/NO): " + Colores.RESET);
 
                     //validación de ingreso correcto
                     String ingresoCancelarAlta = scanner.nextLine();
                     while (!ingresoCancelarAlta.equalsIgnoreCase("NO") && !ingresoCancelarAlta.equalsIgnoreCase("SI")) {
-                        System.out.println("Ingreso invalido. ¿Desea cancelar el alta de huésped? (SI/NO): ");
+                        System.out.print("Ingreso invalido. ¿Desea cancelar? (SI/NO): ");
                         ingresoCancelarAlta = scanner.nextLine();
                     }
 
                     if (ingresoCancelarAlta.equalsIgnoreCase("SI")) {
-                        System.out.println("Alta cancelada.");
+                        System.out.println(Colores.ROJO + "❌ Alta cancelada." + Colores.RESET);
                         continuarCargando = false;//termina el bucle principal
                         decisionPendiente = false; // Sale del bucle de decisión
                     } else {
                         // El bucle 'decisionPendiente' se repite y vuelve a mostrar "Acciones: 1=SIGUIENTE..."
                         // Los datos NO se pierden.
-                        System.out.println("Regresando al menú de acciones...");
+                        System.out.println(Colores.AZUL + "Regresando al menú de acciones..." + Colores.RESET);
                     }
                 } else {
-                    System.out.println("Opción inválida.");
+                    System.out.println(Colores.ROJO + "Opción inválida." + Colores.RESET);
                 }
             } // Fin while decisionPendiente
         } // Fin while continuarCargando
 
-        System.out.println("-- Fin CU9 'dar de alta huesped' ---");
+        System.out.println(Colores.CYAN + "--- Fin CU9 'Dar de alta huésped' ---" + Colores.RESET + "\n");
     }
 
 
     //metodo privado para pedir los datos del huesped a dar de alta, CU9 (formulario)
-    private DtoHuesped mostrarYPedirDatosFormulario() throws CancelacionException{
+    private DtoHuesped mostrarYPedirDatosFormulario() throws CancelacionException {
 
-        System.out.println('\n' + "INGRESE LOS DATOS DEL HUÉSPED A REGISTRAR");
+        // Encabezado del Formulario
+        System.out.println(Colores.CYAN + "\n   ┌──────────────────────────────────────────────────┐");
+        System.out.println("   │         📝 FORMULARIO DE REGISTRO                │");
+        System.out.println("   └──────────────────────────────────────────────────┘" + Colores.RESET);
 
         //Cada uno de estos métodos solicita por teclado el ingreso de cada campo del formulario
         //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida)
         //en el momento, evitando datos sin sentido
 
         //Las validaciones de negocio las realizará el Gestor
-
         // Todos los métodos 'pedir...' pueden lanzar la excepción si el usuario escribe "CANCELAR"
 
-        String apellido = pedirStringTexto("Apellido: ");
+        // --- SECCIÓN 1: DATOS PERSONALES ---
+        System.out.println(Colores.AMARILLO + "\n   === 👤 DATOS PERSONALES ===" + Colores.RESET);
 
-        String nombres = pedirStringTexto("Nombres: ");
+        // Agregamos colores y sangría (espacios) a los mensajes
+        String apellido = pedirStringTexto(Colores.VERDE + "   > Apellido: " + Colores.RESET);
+
+        String nombres = pedirStringTexto(Colores.VERDE + "   > Nombres: " + Colores.RESET);
+
+        // Asumo que este metodo imprime su propio menú, así que solo lo llamamos
 
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
         String numeroDocumento = pedirDocumento(tipoDocumento);
 
+        // CUIT (Opcional)
         String cuit = pedirCUIT();
 
+        // Posición IVA
         String posIva = pedirPosIva();
 
         Date fechaNacimiento = pedirFecha();
 
-        String calleDireccion = pedirStringComplejo("Calle: ");
+        String nacionalidad = pedirStringTexto(Colores.VERDE + "   > Nacionalidad: " + Colores.RESET);
 
-        Integer numeroDireccion = pedirEntero("Número de calle: ");
+        String ocupacion = pedirStringTexto(Colores.VERDE + "   > Ocupación: " + Colores.RESET);
 
-        String departamentoDireccion = pedirStringOpcional("Departamento (opcional, presione Enter para omitir): ");
 
-        String pisoDireccion = pedirStringOpcional("Piso (opcional, presione Enter para omitir): ");
+        // --- SECCIÓN 2: DOMICILIO ---
+        System.out.println(Colores.AMARILLO + "\n   === 🏠 DOMICILIO ===" + Colores.RESET);
 
-        Integer codPostalDireccion = pedirEntero("Código Postal: ");
+        String calleDireccion = pedirStringComplejo(Colores.VERDE + "   > Calle: " + Colores.RESET);
 
-        String localidadDireccion = pedirStringComplejo("Localidad: ");
+        Integer numeroDireccion = pedirEntero(Colores.VERDE + "   > Número: " + Colores.RESET);
 
-        String provinciaDireccion = pedirStringComplejo("Provincia: ");
+        String pisoDireccion = pedirStringOpcional(Colores.VERDE + "   > Piso " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
 
-        String paisDireccion = pedirStringTexto("Pais: ");
+        String departamentoDireccion = pedirStringOpcional(Colores.VERDE + "   > Departamento " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
 
-        Long telefono = pedirTelefono();
+        Integer codPostalDireccion = pedirEntero(Colores.VERDE + "   > Código Postal: " + Colores.RESET);
+
+        String localidadDireccion = pedirStringComplejo(Colores.VERDE + "   > Localidad: " + Colores.RESET);
+
+        String provinciaDireccion = pedirStringComplejo(Colores.VERDE + "   > Provincia: " + Colores.RESET);
+
+        String paisDireccion = pedirStringTexto(Colores.VERDE + "   > País: " + Colores.RESET);
+
+
+        // --- SECCIÓN 3: CONTACTO ---
+        System.out.println(Colores.AMARILLO + "\n   === 📞 CONTACTO ===" + Colores.RESET);
+
+        Long telefono = pedirTelefono(); // Asumo que dentro pide el dato con su propio mensaje, o podemos pasarle uno si el método lo permite
 
         String email = pedirEmail();
 
-        String ocupacion = pedirStringTexto("Ocupación: ");
-
-        String nacionalidad = pedirStringTexto("Nacionalidad: ");
 
         //casteo los wrappers (necesarios para las validaciones) a primitivos para su posterior uso en la app
         int numeroDireccionPrimitivo = numeroDireccion;
@@ -450,9 +491,11 @@ public class Pantalla {
         //asociamos la direccion con el huesped
         huespedDto.setDtoDireccion(direccionDto);
 
-        System.out.println("--- Fin Formulario ---");
-        return huespedDto; // Devolver el DTO con los datos cargados (incluyendo la direccion correspondiente)
+        System.out.println(Colores.CYAN + "\n   ──────────────────────────────────────────────────");
+        System.out.println("   ✅ Datos recolectados correctamente");
+        System.out.println("   ──────────────────────────────────────────────────" + Colores.RESET);
 
+        return huespedDto; // Devolver el DTO con los datos cargados (incluyendo la direccion correspondiente)
     }
 
 
@@ -464,7 +507,7 @@ public class Pantalla {
         }
     }
 
-    //=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
+//=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
     private String pedirStringComplejo(String mensaje) throws CancelacionException {
@@ -476,9 +519,9 @@ public class Pantalla {
             chequearCancelacion(entrada);
 
             if (entrada.trim().isEmpty()) {
-                System.out.println("Error: Este campo es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
             } else if (!entrada.matches("^[\\p{L}0-9 ]+$")) { // Letras Unicode + Números + Espacios
-                System.out.println("Error: Solo se admiten letras, números y espacios. No se permiten caracteres especiales.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras, números y espacios." + Colores.RESET);
             } else {
                 return entrada.trim();
             }
@@ -495,12 +538,12 @@ public class Pantalla {
             chequearCancelacion(entrada);
 
             if (entrada.trim().isEmpty()) {//Validamos obligatoriedad del campo
-                System.out.println("Error: Este campo es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
 
                 // Esta expresion ^[\p{L} ]+$ permite cualquier letra de cualquier idioma
                 // y espacios, pero no números ni caracteres especiales.
             } else if (!entrada.matches("^[\\p{L} ]+$")) {//cualquier letra Unicode
-                System.out.println("Error: Solo se admiten letras y espacios.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
 
             } else {
                 return entrada.trim();//Elimina los caracteres de espacio en blanco al principio y al final de la cadena
@@ -526,7 +569,7 @@ public class Pantalla {
 
                 //Si no está vacío, valida el formato
             } else if (!entrada.matches(str)) {
-                System.out.println("Error: Solo se admiten letras, números y espacios. No se permiten caracteres especiales.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo letras, números y espacios." + Colores.RESET);
 
             } else {
                 return entrada;
@@ -545,19 +588,19 @@ public class Pantalla {
             chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
-                System.out.println("Error: Este campo es obligatorio. No se puede omitir.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
                 continue;
             }
             try {
                 int num = Integer.parseInt(entrada);
                 if (num <= 0) {
-                    System.out.println("Error: Ingrese un número positivo.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: Ingrese un número positivo." + Colores.RESET);
                 } else {
                     valor = num;
                     valido = true;
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Error: Debe ingresar un número entero válido.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Debe ingresar un número entero válido." + Colores.RESET);
             }
         }
         return valor;
@@ -571,18 +614,19 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            System.out.print("Teléfono: ");
+            // Prompt con color verde
+            System.out.print(Colores.VERDE + "   > Teléfono: " + Colores.RESET);
             String entrada = scanner.nextLine().trim();
 
             chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
-                System.out.println("Error: El teléfono es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: El teléfono es obligatorio." + Colores.RESET);
                 continue;
             }
 
             if (!entrada.matches(regexTelefono)) {
-                System.out.println("Error: Caracteres inválidos. Use números, espacios, guiones, '+' o '()'.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Caracteres inválidos. Use números, espacios, guiones, '+' o '()'." + Colores.RESET);
                 continue;
             }
 
@@ -593,19 +637,19 @@ public class Pantalla {
 
             try {
                 if (soloNumeros.isEmpty()) {
-                    System.out.println("Error: No ingresó ningún número.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: No ingresó ningún número." + Colores.RESET);
                     continue;
                 }
                 valor = Long.parseLong(soloNumeros);
 
                 // Validación de longitud entre 6 y 15 números
                 if (soloNumeros.length() < 6 || soloNumeros.length() > 15) {
-                    System.out.println("Error: El número parece demasiado corto o largo.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: El número parece demasiado corto o largo (6-15 dígitos)." + Colores.RESET);
                 } else {
                     valido = true;
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Error: El número es demasiado largo para el sistema.");
+                System.out.println(Colores.ROJO + "     ❌ Error: El número es demasiado largo para el sistema." + Colores.RESET);
             }
         }
         return valor;
@@ -617,7 +661,8 @@ public class Pantalla {
         String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
         while (true) {
-            System.out.print("CUIT (opcional, formato XX-XXXXXXXX-X, presione Enter para omitir): ");
+            // Prompt con formato en cian para destacar la ayuda visual
+            System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional, formato XX-XXXXXXXX-X)" + Colores.VERDE + ": " + Colores.RESET);
             cuit = scanner.nextLine();
 
             chequearCancelacion(cuit);
@@ -627,7 +672,7 @@ public class Pantalla {
                 return null;
                 //Si no está vacío, valida el formato
             } else if (!cuit.matches(expresionCUIT)) {
-                System.out.println("Error: Formato de CUIT incorrecto. Debe ser XX-XXXXXXXX-X");
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato de CUIT incorrecto. Debe ser XX-XXXXXXXX-X" + Colores.RESET);
             } else {
                 return cuit;
             }
@@ -640,7 +685,8 @@ public class Pantalla {
         String expresionEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
         while (true) {
-            System.out.print("Email (opcional, presione Enter para omitir): ");
+            // Prompt con "(Opcional)" destacado
+            System.out.print(Colores.VERDE + "   > Email " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
             email = scanner.nextLine();
 
             chequearCancelacion(email);
@@ -649,7 +695,7 @@ public class Pantalla {
                 return null; // Válido (opcional)
 
             } else if (!email.matches(expresionEmail)) {
-                System.out.println("Error: Formato de email no válido.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato de email no válido." + Colores.RESET);
 
             } else {
                 return email; // Válido
@@ -664,11 +710,11 @@ public class Pantalla {
         formatoFecha.setLenient(false);
 
         while (!valida) {
-            System.out.print("Fecha de Nacimiento " + " (formato dd/MM/yyyy): ");
+            System.out.print(Colores.VERDE + "   > Fecha de Nacimiento (dd/MM/yyyy): " + Colores.RESET);
             String fechaStr = scanner.nextLine();
             chequearCancelacion(fechaStr);
             if (fechaStr.trim().isEmpty()) {
-                System.out.println("Error: Este campo es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
             } else {
                 try {
                     fecha = formatoFecha.parse(fechaStr);
@@ -682,12 +728,12 @@ public class Pantalla {
                     // Validar que sea anterior a hoy y posterior al 31/12/1899
                     if (!fechaLocal.isBefore(hoy) || fechaLocal.isBefore(fechaMinima)) {
 
-                        System.out.println("Error: La fecha debe ser anterior a hoy. Ingrese una fecha pasada.");
+                        System.out.println(Colores.ROJO + "     ❌ Error: La fecha debe ser anterior a hoy y posterior a 1900." + Colores.RESET);
                         continue;
                     }
                     valida = true; // Formato válido
                 } catch (ParseException e) {
-                    System.out.println("Error: Formato de fecha inválido. Use dd/MM/yyyy.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: Formato de fecha inválido. Use dd/MM/yyyy." + Colores.RESET);
                 }
             }
         }
@@ -698,29 +744,33 @@ public class Pantalla {
         TipoDocumento tipoDoc = null;
         boolean valido = false;
 
-        // Mostrar opciones válidas construyendo un String
-        StringBuilder opciones = new StringBuilder("Tipo de Documento (");
+        // Construimos las opciones con un formato más limpio: [DNI / PASAPORTE / ...]
+        // Usamos Cyan para las opciones para que se diferencien del texto de la pregunta
+        StringBuilder opciones = new StringBuilder(Colores.CYAN + "[");
         TipoDocumento[] valores = TipoDocumento.values();
         for (int i = 0; i < valores.length; i++) {
-            opciones.append(valores[i].name()); // .name() devuelve el nombre del enum (DNI, LE, etc.)
+            opciones.append(valores[i].name());
             if (i < valores.length - 1) {
-                opciones.append("/");
+                opciones.append(" / ");
             }
         }
-        opciones.append("): ");
+        opciones.append("]" + Colores.RESET);
 
         while (!valido) {
-            System.out.print(opciones);
-            String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
+            // Prompt en Verde + Opciones en Cyan
+            System.out.print(Colores.VERDE + "   > Tipo de Documento " + opciones + Colores.VERDE + ": " + Colores.RESET);
+
+            String tipoDocStr = scanner.nextLine().toUpperCase().trim();
             chequearCancelacion(tipoDocStr);
+
             if (tipoDocStr.isEmpty()) {
-                System.out.println("Error: El tipo de documento es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: El tipo de documento es obligatorio." + Colores.RESET);
             } else {
                 try {
                     tipoDoc = TipoDocumento.valueOf(tipoDocStr);
-                    valido = true; // Opción válida
+                    valido = true;
                 } catch (IllegalArgumentException e) {
-                    System.out.println("Error: Tipo de documento inválido. Ingrese una de las opciones.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: Tipo inválido. Copie una de las opciones mostradas." + Colores.RESET);
                 }
             }
         }
@@ -732,22 +782,19 @@ public class Pantalla {
         boolean valido = false;
 
         // Definimos las reglas (Regex)
-        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
         String regexNumerico = "^\\d{7,8}$";
-        // Pasaporte: Letras y números, entre 6 y 15 caracteres
         String regexPasaporte = "^[A-Z0-9]{6,15}$";
-        // Otro: Cualquier cosa entre 4 y 20 caracteres
         String regexOtro = "^.{4,20}$";
 
         while (!valido) {
-            System.out.print("Número de Documento: ");
-            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
+            // Prompt en Verde
+            System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
+            String entrada = scanner.nextLine().trim().toUpperCase();
 
             chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
-                // Si es obligatorio (que lo es), no dejamos pasar vacío
-                System.out.println("Error: El documento es obligatorio.");
+                System.out.println(Colores.ROJO + "     ❌ Error: El documento es obligatorio." + Colores.RESET);
                 continue;
             }
 
@@ -759,21 +806,21 @@ public class Pantalla {
                     if (entrada.matches(regexNumerico)) {
                         valido = true;
                     } else {
-                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
+                        System.out.println(Colores.ROJO + "     ❌ Error: Para " + tipo + " debe ingresar entre 7 y 8 números." + Colores.RESET);
                     }
                     break;
                 case PASAPORTE:
                     if (entrada.matches(regexPasaporte)) {
                         valido = true;
                     } else {
-                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
+                        System.out.println(Colores.ROJO + "     ❌ Error: Formato de Pasaporte inválido (solo letras y números)." + Colores.RESET);
                     }
                     break;
                 default: // OTRO
                     if (entrada.matches(regexOtro)) {
                         valido = true;
                     } else {
-                        System.out.println("Error: Formato inválido.");
+                        System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido." + Colores.RESET);
                     }
                     break;
             }
@@ -790,11 +837,14 @@ public class Pantalla {
         boolean valido = false;
 
         while (!valido) {
-            System.out.println("""
-                    Posición frente al IVA (1.Consumidor Final (por defecto),
-                    2.Monotributista,\s
-                    3.Responsable Inscripto,\s
-                    4.Exento)""");
+            // Transformamos el bloque de texto en un menú visualmente agradable
+            System.out.println(Colores.VERDE + "   > Posición frente al IVA:" + Colores.RESET);
+            System.out.println(Colores.AMARILLO + "      [1]" + Colores.RESET + " Consumidor Final (Por defecto)");
+            System.out.println(Colores.AMARILLO + "      [2]" + Colores.RESET + " Monotributista");
+            System.out.println(Colores.AMARILLO + "      [3]" + Colores.RESET + " Responsable Inscripto");
+            System.out.println(Colores.AMARILLO + "      [4]" + Colores.RESET + " Exento");
+            System.out.print(Colores.VERDE + "     >> Selección: " + Colores.RESET);
+
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
@@ -807,11 +857,12 @@ public class Pantalla {
                 }
 
                 switch (opcion) {
-                    case 0:
+                    case 0: // Caso Enter vacío
                     case 1:
-
                         posIva = PosIva.ConsumidorFinal.name();
                         valido = true;
+                        // Feedback visual de la selección por defecto
+                        if(opcion == 0) System.out.println(Colores.CYAN + "        (Seleccionado: Consumidor Final)" + Colores.RESET);
                         break;
                     case 2:
                         posIva = PosIva.Monotributista.name();
@@ -826,10 +877,10 @@ public class Pantalla {
                         valido = true;
                         break;
                     default:
-                        System.out.println("Opción inválida.");
+                        System.out.println(Colores.ROJO + "     ❌ Error: Opción inválida." + Colores.RESET);
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Debe ingresar un número.");
+                System.out.println(Colores.ROJO + "     ❌ Error: Debe ingresar un número." + Colores.RESET);
             }
         }
         return posIva;
