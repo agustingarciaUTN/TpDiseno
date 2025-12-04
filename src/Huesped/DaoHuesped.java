@@ -64,7 +64,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     public boolean modificarHuesped(Huesped huesped) throws PersistenciaException {
         String sqlUpdate = "UPDATE huesped SET apellido=?, nombres=?, fecha_nacimiento=?, nacionalidad=?, id_direccion=?, " +
                 "pos_iva=?::\"Pos_IVA\", cuit=? " +
-                "WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?";
+                "WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         Connection conn = null;
         try {
             conn = Conexion.getConnection();
@@ -161,9 +161,15 @@ public class DaoHuesped implements DaoHuespedInterfaz {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
             ps.setString(2, nroDocumento);
-            ResultSet rs = ps.executeQuery();
-
-        } catch (SQLException e) { e.printStackTrace(); }
+            try (ResultSet rs = ps.executeQuery()) {
+                //Procesar el ResultSet
+                if (rs.next()) {
+                    return mapearHuesped(conn, rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -289,16 +295,36 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         // 3. Cargar Dirección
         DtoDireccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
 
-        // 4. Construir Objeto
+        // 4. Preparar Enumerados de forma segura
+        PosIva pIva = null;
+        try {
+            // AQUÍ ESTÁ EL CAMBIO CLAVE: Usamos fromString para normalizar "EXENTO" -> Exento
+            String posIvaDb = rs.getString("pos_iva");
+            if (posIvaDb != null) {
+                pIva = PosIva.fromString(posIvaDb);
+            }
+        } catch (Exception e) {
+            System.err.println("Advertencia: No se pudo mapear PosIva: " + rs.getString("pos_iva"));
+            // Dejamos pIva como null o asignamos un default si es crítico
+        }
+
+        TipoDocumento tDoc = null;
+        try {
+            tDoc = TipoDocumento.valueOf(tipoStr);
+        } catch (Exception e) {
+            System.err.println("Advertencia: No se pudo mapear TipoDocumento: " + tipoStr);
+        }
+
+        // 5. Construir Objeto
         return new DtoHuesped.Builder()
                 .nombres(rs.getString("nombres"))
                 .apellido(rs.getString("apellido"))
-                .tipoDocumento(TipoDocumento.valueOf(tipoStr))
+                .tipoDocumento(tDoc)
                 .documento(nroDoc)
                 .fechaNacimiento(rs.getDate("fecha_nacimiento"))
                 .nacionalidad(rs.getString("nacionalidad"))
                 .cuit(rs.getString("cuit"))
-                .posicionIva(PosIva.valueOf(rs.getString("pos_iva")))
+                .posicionIva(pIva)
                 .direccion(dir)
                 .telefono(tels)
                 .email(emails)

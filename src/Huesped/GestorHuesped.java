@@ -88,9 +88,11 @@ public class GestorHuesped {
     //buscarPorTipoYNumeroDocumento  <- nombre en Diag de Secuencia
     //Esto tambien es una validacion de negocio. El Tipo y Numero de documento ingresado, no puede existir en el sistema
     public DtoHuesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
-        // La validación de null ya se hizo en el paso anterior (validarDatosHuesped)
-        if(daoHuesped.existeHuesped(datos.getTipoDocumento(), datos.getNroDocumento())){return datos;}
-        else {return null;}
+        // Llamamos al DAO para buscar por tipo y número.
+        // Si existe, nos devolverá el DTO con los datos de la BD (Nombre viejo, apellido viejo, etc).
+
+        // Si obtenerHuesped devuelve algo distinto de null, es el duplicado real.
+        return daoHuesped.obtenerHuesped(datos.getTipoDocumento(), datos.getNroDocumento());
     }
 
     public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped){

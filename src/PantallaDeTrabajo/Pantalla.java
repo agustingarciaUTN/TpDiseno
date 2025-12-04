@@ -34,6 +34,9 @@ public class Pantalla {
     private boolean usuarioAutenticado;
     private String nombreUsuarioActual;
 
+    // Excepción interna para manejar la cancelación en cualquier momento
+    private static class CancelacionException extends Exception {}
+
 
     //constructor
     public Pantalla() {
@@ -203,155 +206,173 @@ public class Pantalla {
 
     // CU9
     public void darDeAltaHuesped() {
-
         //Mensaje de principio de ejecucion del CU9
         System.out.println('\n' + "-- Iniciando CU9 'dar de alta huesped' --");
+        System.out.println("(Nota: Puede escribir 'CANCELAR' en cualquier campo para detener la carga)");
 
         boolean continuarCargando = true;//bandera que representa la condicion del loop principal
 
         while (continuarCargando) {//loop principal
 
-            //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
-            DtoHuesped datosIngresados = mostrarYPedirDatosFormulario();
+            DtoHuesped datosIngresados = null;
 
-            //parametros para manejar la seleccion de SIGUIENTE o CANCELAR
-            int opcionBoton = -1;
-            boolean opcionValida = false;
+            // 1. INTENTO DE CARGA DE DATOS (creamos una excepcion para manejar la opcion de CANCELAR en cualquier momento del formulario)
+            //Envolvemos la carga en un try-catch para capturar la cancelación
+            try {
+                //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
+                datosIngresados = mostrarYPedirDatosFormulario();
+            } catch (CancelacionException e) {
+                // Si el usuario escribió "CANCELAR" durante el formulario:
+                System.out.println("\n¿Está seguro que desea cancelar la carga actual? (SI/NO): ");
+                String confir = scanner.nextLine();
+                if (confir.equalsIgnoreCase("SI")) {
+                    System.out.println("Carga cancelada. Volviendo al menú principal...");
+                    return; // Sale del metodo completamente
+                } else {
+                    System.out.println("Reiniciando formulario...");
+                    continue; // Vuelve al inicio del while (Lamentablemente reinicia el form, es complejo reanudar en consola)
+                }
+            }
 
-            //Luego de la carga de datos, se selecciona la opcion SIGUIENTE o CANCELAR
-            while (!opcionValida) {//Bucle interno para la validacion de la seleccion
+            // 2. MENU DE DECISIÓN (Siguiente / Cancelar)
+            // Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar
+            boolean decisionPendiente = true;
+
+            while (decisionPendiente) {
+                System.out.println("\n--- Fin Formulario ---");
                 System.out.println("Acciones: 1 = SIGUIENTE, 2 = CANCELAR");
                 System.out.print("Ingrese una opción: ");
 
-                try {
-                    String entrada = scanner.nextLine(); // Leemos como String para no renegar con el buffer
-                    opcionBoton = Integer.parseInt(entrada);//Parseamos a integer
-
-                    if (opcionBoton == 1 || opcionBoton == 2) {
-                        opcionValida = true;
-                    } else {
-                        System.out.println("Opción inválida. Ingrese 1 (SIGUIENTE) o 2 (CANCELAR).");
-                    }
-
+                int opcionBoton = -1;
+                try {//validacion mas robusta
+                    String entrada = scanner.nextLine();
+                    opcionBoton = Integer.parseInt(entrada);
                 } catch (NumberFormatException e) {
                     System.out.println("Debe ingresar un número.");
+                    continue;
                 }
-            }
 
-            if (opcionBoton == 1) {//presiono SIGUIENTE
-                System.out.println("Procesando datos...");
+                if (opcionBoton == 1) { // presiono SIGUIENTE
+                    System.out.println("Procesando datos...");
 
+                    //aca hay que llamar al gestor para que valide los datos
+                    List<String> errores;
+                    //Metodo que retorna una lista de todos los errores en la validacion de negocio
+                    errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
-                //aca hay que llamar al gestor para que valide los datos
-                List<String> errores;
-                //Metodo que retorna una lista de todos los errores en la validacion de negocio
-                errores = gestorHuesped.validarDatosHuesped(datosIngresados);
-
-                //Actuamos en consecuencia, dependiendo si hubo errores o no
-                if (!errores.isEmpty()) {
-                    System.out.println("ERROR: Se encontraron los siguientes errores: ");
-                    for (String error : errores) {
-                        System.out.println("- " + error);
+                    //Actuamos en consecuencia, dependiendo si hubo errores o no
+                    if (!errores.isEmpty()) {
+                        System.out.println("ERROR: Se encontraron los siguientes errores: ");
+                        for (String error : errores) {
+                            System.out.println("- " + error);
+                        }
+                        System.out.println("Por favor, ingrese los datos nuevamente");
+                        decisionPendiente = false;//Salimos del bucle de decisión para recargar datos
+                        continue; //fuerza al inicio del while
                     }
-                    System.out.println("Por favor, ingrese los datos nuevamente");
-                    continue; //fuerza al inicio del while
-                }
 
-                //Si no hubo errores de validacion de negocio, seguimos
-                try {
-                    //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
-                    //Le pasamos al gestorHuesped un DTO con el huesped ingresado
-                    DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
-                    //Si chequearDuplicado retorna NULL, no hay duplicado
+                    //Si no hubo errores de validacion de negocio, seguimos
+                    try {
+                        //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
+                        //Le pasamos al gestorHuesped un DTO con el huesped ingresado
+                        DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                        //Si chequearDuplicado retorna NULL, no hay duplicado
 
-                    if (duplicado != null) {//si encuentra duplicado
-                        System.out.println("----------------------------------------------------------------");
-                        System.out.println("   ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
-                        System.out.println("   Huésped existente: " + duplicado.getNombres() + " " + duplicado.getApellido());
-                        System.out.println("----------------------------------------------------------------");
-                        System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
-                        System.out.println("Ingrese una opción: ");
+                        if (duplicado != null) {//si encuentra duplicado
+                            System.out.println("----------------------------------------------------------------");
+                            System.out.println("   ¡CUIDADO! El tipo y número de documento ya existen en el sistema:");
+                            System.out.println("   Huésped existente: " + duplicado.getNombres() + " " + duplicado.getApellido());
+                            System.out.println("----------------------------------------------------------------");
 
-                        //Parámetros para bucle interno
-                        int opcionDuplicado = -1;
-                        boolean opcionValida2 = false;
+                            //Parámetros para bucle interno
+                            int opcionDuplicado = -1;
+                            boolean opcionValida2 = false;
 
-                        //Bucle para validar la entrada ACEPTAR IGUALMENTE o CORREGIR
-                        while (!opcionValida2) {
-                            System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
-                            System.out.print("Ingrese una opción: ");
+                            //Bucle para validar la entrada ACEPTAR IGUALMENTE o CORREGIR
+                            while (!opcionValida2) {
+                                System.out.println("Opciones: 1 = ACEPTAR IGUALMENTE, 2 = CORREGIR");
+                                System.out.print("Ingrese una opción: ");
 
-                            try {
-                                String entrada = scanner.nextLine();
-                                opcionDuplicado = Integer.parseInt(entrada);
+                                try {
+                                    String entrada = scanner.nextLine();
+                                    opcionDuplicado = Integer.parseInt(entrada);
 
-                                if (opcionDuplicado == 1 || opcionDuplicado == 2) {
-                                    opcionValida2 = true; // Salimos del bucle
-                                } else {
-                                    System.out.println("Opción inválida. Ingrese 1 (ACEPTAR IGUALMENTE) o 2 (CORREGIR).");
+                                    if (opcionDuplicado == 1 || opcionDuplicado == 2) {
+                                        opcionValida2 = true; // Salimos del bucle
+                                    } else {
+                                        System.out.println("Opción inválida. Ingrese 1 (ACEPTAR IGUALMENTE) o 2 (CORREGIR).");
+                                    }
+                                } catch (NumberFormatException e) {
+                                    System.out.println("Debe ingresar un número.");
                                 }
-                            } catch (NumberFormatException e) {
-                                System.out.println("Debe ingresar un número.");
                             }
+
+                            if (opcionDuplicado == 2) { // Eligió CORREGIR
+                                System.out.println("Seleccionó CORREGIR. Vuelva a ingresar los datos.");
+                                decisionPendiente = false; // Salimos de este bucle
+                                continue; // Vuelve al inicio del while para pedir de nuevo
+                            }
+                            // Si elige 1 (ACEPTAR IGUALMENTE), no hacemos nada y el código sigue
                         }
 
-                        if (opcionDuplicado == 2) { // Eligió CORREGIR
-                            System.out.println("Seleccionó CORREGIR. Vuelva a ingresar los datos.");
-                            continue; // Vuelve al inicio del while para pedir de nuevo
+                        //Si no existen duplicados, INSERT. Si existe (y se seleccionó "aceptar igualmente"), UPDATE
+                        gestorHuesped.upsertHuesped(datosIngresados);
+                        System.out.println("El huésped ha sido satisfactoriamente cargado/actualizado.");
+
+                        // AQUI VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
+                        System.out.println("¿Desea cargar otro huésped? (SI/NO): ");
+
+                        //validacion de ingreso correcto
+                        String ingresoOtroHuesped = scanner.nextLine();
+                        while (!ingresoOtroHuesped.equalsIgnoreCase("NO") && !ingresoOtroHuesped.equalsIgnoreCase("SI")) {
+                            System.out.println("Ingreso invalido. ¿Desea cargar otro huésped? (SI/NO): ");
+                            ingresoOtroHuesped = scanner.nextLine();
                         }
-                        // Si elige 1 (ACEPTAR IGUALMENTE), no hacemos nada y el código sigue
+
+                        //si ingreso NO termina el bucle, si ingreso SI se repite
+                        if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
+                            continuarCargando = false;
+                        }
+                        decisionPendiente = false; // Salimos del bucle de decisión ya que terminamos
+
+                    } catch (PersistenciaException e) {
+                        System.out.println("ERROR DE BASE DE DATOS: " + e.getMessage());
+                        e.printStackTrace();
+                        decisionPendiente = false; // Volver a empezar
+                        continue;
                     }
 
+                } else if (opcionBoton == 2) { // presiono CANCELAR
+                    System.out.println("¿Desea cancelar el alta del huésped? (SI/NO): ");
 
-                    //Si no existen duplicados, INSERT. Si existe (y se seleccionó "aceptar igualmente"), UPDATE
-                    gestorHuesped.upsertHuesped(datosIngresados);
+                    //validación de ingreso correcto
+                    String ingresoCancelarAlta = scanner.nextLine();
+                    while (!ingresoCancelarAlta.equalsIgnoreCase("NO") && !ingresoCancelarAlta.equalsIgnoreCase("SI")) {
+                        System.out.println("Ingreso invalido. ¿Desea cancelar el alta de huésped? (SI/NO): ");
+                        ingresoCancelarAlta = scanner.nextLine();
+                    }
 
-
-                } catch (PersistenciaException e) {
-                    System.out.println("ERROR DE BASE DE DATOS: No se pudo verificar el duplicado.");
-                    e.printStackTrace();
-                    continue; // Volver a empezar
+                    if (ingresoCancelarAlta.equalsIgnoreCase("SI")) {
+                        System.out.println("Alta cancelada.");
+                        continuarCargando = false;//termina el bucle principal
+                        decisionPendiente = false; // Sale del bucle de decisión
+                    } else {
+                        // El bucle 'decisionPendiente' se repite y vuelve a mostrar "Acciones: 1=SIGUIENTE..."
+                        // Los datos NO se pierden.
+                        System.out.println("Regresando al menú de acciones...");
+                    }
+                } else {
+                    System.out.println("Opción inválida.");
                 }
+            } // Fin while decisionPendiente
+        } // Fin while continuarCargando
 
-                System.out.println("El huésped '" + datosIngresados.getNombres() + " " + datosIngresados.getApellido() + "' ha sido satisfactoriamente cargado al sistema. ¿Desea cargar otro? (SI/NO)");
+        System.out.println("-- Fin CU9 'dar de alta huesped' ---");
+    }
 
-                System.out.println("¿Desea cargar otro huésped? (SI/NO): ");
-
-                //validacion de ingreso correcto
-                String ingresoOtroHuesped = scanner.nextLine();
-                while (!ingresoOtroHuesped.equalsIgnoreCase("NO") && !ingresoOtroHuesped.equalsIgnoreCase("SI")) {
-                    System.out.println("Ingreso invalido. ¿Desea cargar otro huésped? (SI/NO): ");
-                    ingresoOtroHuesped = scanner.nextLine();
-                }
-
-                //si ingreso NO termina el bucle, si ingreso SI se repite
-                if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
-                    continuarCargando = false;
-                }
-
-            } else {//presiono CANCELAR
-                System.out.println("¿Desea cancelar el alta del huésped? (SI/NO): ");
-
-                //validación de ingreso correcto
-                String ingresoCancelarAlta = scanner.nextLine();
-                while (!ingresoCancelarAlta.equalsIgnoreCase("NO") && !ingresoCancelarAlta.equalsIgnoreCase("SI")) {
-                    System.out.println("Ingreso invalido. ¿Desea cancelar el alta de huésped? (SI/NO): ");
-                    ingresoCancelarAlta = scanner.nextLine();
-                }
-
-                if (ingresoCancelarAlta.equalsIgnoreCase("SI")) {
-                    System.out.println("Alta cancelada.");
-                    continuarCargando = false;//termina el bucle
-                }
-                //si ingresa NO, el bucle se repite y vuelve a pedir los datos (no sé si está bien que tenga que ingresar desde 0)
-            }
-        }//fin while
-
-        System.out.println("-- Fin CU9 'dar de alta huésped' ---");
-    }//fin CU9 darDeAltaHuesped
 
     //metodo privado para pedir los datos del huesped a dar de alta, CU9 (formulario)
-    private DtoHuesped mostrarYPedirDatosFormulario() {
+    private DtoHuesped mostrarYPedirDatosFormulario() throws CancelacionException{
 
         System.out.println('\n' + "INGRESE LOS DATOS DEL HUÉSPED A REGISTRAR");
 
@@ -360,6 +381,8 @@ public class Pantalla {
         //en el momento, evitando datos sin sentido
 
         //Las validaciones de negocio las realizará el Gestor
+
+        // Todos los métodos 'pedir...' pueden lanzar la excepción si el usuario escribe "CANCELAR"
 
         String apellido = pedirStringTexto("Apellido: ");
 
@@ -418,7 +441,7 @@ public class Pantalla {
                 .tipoDocumento(tipoDocumento)
                 .documento(numeroDocumento)
                 .cuit(cuit)
-                .posicionIva(PosIva.valueOf(posIva))
+                .posicionIva(posIva != null ? PosIva.fromString(posIva) : null)
                 .fechaNacimiento(fechaNacimiento)
                 .email(Collections.singletonList(email))
                 .ocupacion(Collections.singletonList(ocupacion))
@@ -435,14 +458,25 @@ public class Pantalla {
     }
 
 
+    //Metodo auxiliar clave para verificar cancelación
+    private void chequearCancelacion(String input) throws CancelacionException {
+        // Si el input no es nulo y es "CANCELAR" (ignorando mayúsculas), lanzamos la excepción
+        if (input != null && input.trim().equalsIgnoreCase("CANCELAR")) {
+            throw new CancelacionException();
+        }
+    }
+
     //=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
-    private String pedirStringComplejo(String mensaje) {
+    private String pedirStringComplejo(String mensaje) throws CancelacionException {
         String entrada;
         while (true) {
             System.out.print(mensaje);
             entrada = scanner.nextLine();
+
+            chequearCancelacion(entrada);
+
             if (entrada.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
             } else if (!entrada.matches("^[\\p{L}0-9 ]+$")) { // Letras Unicode + Números + Espacios
@@ -454,11 +488,13 @@ public class Pantalla {
     }
 
     //Solicitar y Validar String simple (nombres, apellidos, pais)
-    private String pedirStringTexto(String mensaje) {
+    private String pedirStringTexto(String mensaje) throws CancelacionException {
         String entrada;
         while (true) {
             System.out.print(mensaje);
             entrada = scanner.nextLine();
+
+            chequearCancelacion(entrada);
 
             if (entrada.trim().isEmpty()) {//Validamos obligatoriedad del campo
                 System.out.println("Error: Este campo es obligatorio.");
@@ -475,7 +511,7 @@ public class Pantalla {
     }
 
     //Solicitar y Validar String opcional (dpto, piso)
-    private String pedirStringOpcional(String mensaje) {
+    private String pedirStringOpcional(String mensaje) throws CancelacionException {
         String entrada;
         // La expresion permite letras (a-z, A-Z), números (0-9) y espacios.
         String str = "^[a-zA-Z0-9 ]+$";
@@ -483,6 +519,8 @@ public class Pantalla {
         while (true) {
             System.out.print(mensaje);
             entrada = scanner.nextLine();
+
+            chequearCancelacion(entrada);
 
             //Si está vacío, es válido (opcional)
             if (entrada.trim().isEmpty()) {
@@ -498,13 +536,15 @@ public class Pantalla {
         }
     }
 
-    private Integer pedirEntero(String mensaje) {
+    private Integer pedirEntero(String mensaje) throws CancelacionException {
         Integer valor = null; // Usamos la clase wrapper para permitir null
         boolean valido = false;
 
         while (!valido) {
             System.out.print(mensaje);
             String entrada = scanner.nextLine().trim(); // leemos siempre como String
+
+            chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio. No se puede omitir.");
@@ -525,7 +565,7 @@ public class Pantalla {
         return valor;
     }
 
-    private Long pedirTelefono() {
+    private Long pedirTelefono() throws CancelacionException {
         Long valor = null;
         boolean valido = false;
 
@@ -535,6 +575,8 @@ public class Pantalla {
         while (!valido) {
             System.out.print("Teléfono: ");
             String entrada = scanner.nextLine().trim();
+
+            chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
                 System.out.println("Error: El teléfono es obligatorio.");
@@ -571,7 +613,7 @@ public class Pantalla {
         return valor;
     }
 
-    private String pedirCUIT() {
+    private String pedirCUIT() throws CancelacionException {
         String cuit;
         // Expresion para CUIT: 2 dígitos, un guión o barrita, 8 dígitos, un guión o barrita, 1 dígito.
         String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
@@ -579,6 +621,9 @@ public class Pantalla {
         while (true) {
             System.out.print("CUIT (opcional, formato XX-XXXXXXXX-X, presione Enter para omitir): ");
             cuit = scanner.nextLine();
+
+            chequearCancelacion(cuit);
+
             //Si está vacío, es válido (opcional)
             if (cuit.trim().isEmpty()) {
                 return null;
@@ -591,7 +636,7 @@ public class Pantalla {
         }
     }
 
-    private String pedirEmail() {
+    private String pedirEmail() throws CancelacionException {
         String email;
         // expresion simple para emails: algo@algo.algo
         String expresionEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
@@ -599,6 +644,8 @@ public class Pantalla {
         while (true) {
             System.out.print("Email (opcional, presione Enter para omitir): ");
             email = scanner.nextLine();
+
+            chequearCancelacion(email);
 
             if (email.trim().isEmpty()) {
                 return null; // Válido (opcional)
@@ -612,7 +659,7 @@ public class Pantalla {
         }
     }
 
-    private Date pedirFecha() {
+    private Date pedirFecha() throws CancelacionException {
         Date fecha = null;
         boolean valida = false;
         SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
@@ -621,7 +668,7 @@ public class Pantalla {
         while (!valida) {
             System.out.print("Fecha de Nacimiento " + " (formato dd/MM/yyyy): ");
             String fechaStr = scanner.nextLine();
-
+            chequearCancelacion(fechaStr);
             if (fechaStr.trim().isEmpty()) {
                 System.out.println("Error: Este campo es obligatorio.");
             } else {
@@ -632,8 +679,11 @@ public class Pantalla {
                             .atZone(ZoneId.systemDefault())
                             .toLocalDate();
                     LocalDate hoy = LocalDate.now();
+                    LocalDate fechaMinima = LocalDate.of(1900, 1, 1); // posterior a 31/12/1899
 
-                    if (!fechaLocal.isBefore(hoy)) {
+                    // Validar que sea anterior a hoy y posterior al 31/12/1899
+                    if (!fechaLocal.isBefore(hoy) || fechaLocal.isBefore(fechaMinima)) {
+
                         System.out.println("Error: La fecha debe ser anterior a hoy. Ingrese una fecha pasada.");
                         continue;
                     }
@@ -646,7 +696,7 @@ public class Pantalla {
         return fecha;
     }
 
-    private TipoDocumento pedirTipoDocumento() {
+    private TipoDocumento pedirTipoDocumento() throws CancelacionException {
         TipoDocumento tipoDoc = null;
         boolean valido = false;
 
@@ -664,6 +714,7 @@ public class Pantalla {
         while (!valido) {
             System.out.print(opciones);
             String tipoDocStr = scanner.nextLine().toUpperCase().trim(); // A mayúsculas y sin espacios al inicio y final
+            chequearCancelacion(tipoDocStr);
             if (tipoDocStr.isEmpty()) {
                 System.out.println("Error: El tipo de documento es obligatorio.");
             } else {
@@ -678,7 +729,7 @@ public class Pantalla {
         return tipoDoc;
     }
 
-    private String pedirDocumento(TipoDocumento tipo) {
+    private String pedirDocumento(TipoDocumento tipo) throws CancelacionException {
         String NroDocumento = null;
         boolean valido = false;
 
@@ -693,6 +744,8 @@ public class Pantalla {
         while (!valido) {
             System.out.print("Número de Documento: ");
             String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
+
+            chequearCancelacion(entrada);
 
             if (entrada.isEmpty()) {
                 // Si es obligatorio (que lo es), no dejamos pasar vacío
@@ -734,19 +787,21 @@ public class Pantalla {
         return NroDocumento;
     }
 
-    private String pedirPosIva() {
+    private String pedirPosIva() throws CancelacionException {
         String posIva = null;
         boolean valido = false;
 
         while (!valido) {
             System.out.println("""
                     Posición frente al IVA (1.Consumidor Final (por defecto),
-                     2.Monotributista,\s
+                    2.Monotributista,\s
                     3.Responsable Inscripto,\s
-                    4.Excento)""");
+                    4.Exento)""");
             try {
                 int opcion = 0;
                 String entrada = scanner.nextLine();
+
+                chequearCancelacion(entrada);
 
                 // Si da enter, es 0 (default)
                 if (!entrada.isBlank()) {
@@ -874,7 +929,7 @@ public class Pantalla {
 
         // VALIDACIÓN DE NÚMERO DE DOCUMENTO
         if (criterios.getTipoDocumento() != null) {
-            criterios.setNroDocumento(pedirDocumento(criterios.getTipoDocumento()));
+            criterios.setNroDocumento(pedirDocumentoSinExcepcion(criterios.getTipoDocumento()));
         }
 
         return criterios;
@@ -1382,8 +1437,10 @@ public class Pantalla {
                     }
                 }
             } else if (op == 2) { // Alta
+
+                //aca no seria mejor mandarlo al caso de uso 9 completo?
                 System.out.println(">> Alta Rápida <<");
-                seleccionado = mostrarYPedirDatosFormulario();
+                seleccionado = mostrarYPedirDatosFormulario();//no se por que se usa este metodo aca
                 try {
                     gestorHuesped.upsertHuesped(seleccionado);
                 } catch (Exception e) {
@@ -1485,5 +1542,61 @@ public class Pantalla {
         System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [*] SU SELECCIÓN ACTUAL");
     }
 
+    private String pedirDocumentoSinExcepcion(TipoDocumento tipo){
+        String NroDocumento = null;
+        boolean valido = false;
+
+        // Definimos las reglas (Regex)
+        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
+        String regexNumerico = "^\\d{7,8}$";
+        // Pasaporte: Letras y números, entre 6 y 15 caracteres
+        String regexPasaporte = "^[A-Z0-9]{6,15}$";
+        // Otro: Cualquier cosa entre 4 y 20 caracteres
+        String regexOtro = "^.{4,20}$";
+
+        while (!valido) {
+            System.out.print("Número de Documento: ");
+            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
+
+
+            if (entrada.isEmpty()) {
+                // Si es obligatorio (que lo es), no dejamos pasar vacío
+                System.out.println("Error: El documento es obligatorio.");
+                continue;
+            }
+
+            // Validamos según el tipo seleccionado
+            switch (tipo) {
+                case DNI:
+                case LE:
+                case LC:
+                    if (entrada.matches(regexNumerico)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
+                    }
+                    break;
+                case PASAPORTE:
+                    if (entrada.matches(regexPasaporte)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
+                    }
+                    break;
+                default: // OTRO
+                    if (entrada.matches(regexOtro)) {
+                        valido = true;
+                    } else {
+                        System.out.println("Error: Formato inválido.");
+                    }
+                    break;
+            }
+
+            if (valido) {
+                NroDocumento = entrada;
+            }
+        }
+        return NroDocumento;
+    }
 
 }
