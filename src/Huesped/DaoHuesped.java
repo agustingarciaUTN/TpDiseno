@@ -102,43 +102,56 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- BUSCAR POR CRITERIO ---
     @Override
     public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios) {
+        return ejecutarConsultaBusqueda(criterios);
+    }
+
+    // --- OBTENER TODOS ---
+    @Override
+    public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
+        // Pasamos null para indicar "sin filtros"
+        return ejecutarConsultaBusqueda(null);
+    }
+
+    // --- METODO COMÚN DE BÚSQUEDA  ---
+    private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(DtoHuesped criterios) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
 
-        // CORRECCIÓN SQL: Joins con telefono y ocupacion
+        // SQL BLINDADO: Usamos LEFT JOINs para traer datos satélite en una sola query.
         StringBuilder sql = new StringBuilder(
                 "SELECT h.apellido, h.nombres, h.tipo_documento, h.numero_documento, h.cuit, h.nacionalidad, " +
                         "h.fecha_nacimiento, h.id_direccion, h.pos_iva, " +
-                        "MAX(t.telefono) as telefono, " +    // Traemos un teléfono cualquiera
-                        "MAX(o.ocupacion) as ocupacion, " +  // Traemos una ocupación cualquiera
-                        "MAX(e.email) as email " +           // Traemos un email cualquiera
+                        "MAX(t.telefono) as telefono, " +
+                        "MAX(o.ocupacion) as ocupacion, " +
+                        "MAX(e.email) as email " +
                         "FROM huesped h " +
-                        "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND h.numero_documento = e.nro_documento " +
-                        "LEFT JOIN telefono_huesped t ON h.tipo_documento = t.tipo_documento AND h.numero_documento = t.nro_documento " +
-                        "LEFT JOIN ocupacion_huesped o ON h.tipo_documento = o.tipo_documento AND h.numero_documento = o.nro_documento " +
+                        // JOINs con condición UPPER para asegurar match aunque haya diferencias de mayúsculas
+                        "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND UPPER(h.numero_documento) = UPPER(e.nro_documento) " +
+                        "LEFT JOIN telefono_huesped t ON h.tipo_documento = t.tipo_documento AND UPPER(h.numero_documento) = UPPER(t.nro_documento) " +
+                        "LEFT JOIN ocupacion_huesped o ON h.tipo_documento = o.tipo_documento AND UPPER(h.numero_documento) = UPPER(o.nro_documento) " +
                         "WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
 
-        // --- FILTROS ---
-        if (criterios.getApellido() != null && !criterios.getApellido().isEmpty()) {
-            sql.append(" AND h.apellido ILIKE ?");
-            params.add(criterios.getApellido() + "%");
-        }
-        if (criterios.getNombres() != null && !criterios.getNombres().isEmpty()) {
-            sql.append(" AND h.nombres ILIKE ?");
-            params.add(criterios.getNombres() + "%");
-        }
-        if (criterios.getTipoDocumento() != null) {
-            sql.append(" AND h.tipo_documento = ?::\"Tipo_Documento\"");
-            params.add(criterios.getTipoDocumento().name());
-        }
-        // Validación del Documento
-        if (criterios.getNroDocumento() != null && !criterios.getNroDocumento().isEmpty() && !criterios.getNroDocumento().equals("0")) {
-            sql.append(" AND h.numero_documento LIKE ?");
-            params.add(criterios.getNroDocumento() + "%");
+        // Aplicar filtros si existen
+        if (criterios != null) {
+            if (criterios.getApellido() != null && !criterios.getApellido().isEmpty()) {
+                sql.append(" AND h.apellido ILIKE ?");
+                params.add(criterios.getApellido().trim() + "%");
+            }
+            if (criterios.getNombres() != null && !criterios.getNombres().isEmpty()) {
+                sql.append(" AND h.nombres ILIKE ?");
+                params.add(criterios.getNombres().trim() + "%");
+            }
+            if (criterios.getTipoDocumento() != null) {
+                sql.append(" AND h.tipo_documento = ?::\"Tipo_Documento\"");
+                params.add(criterios.getTipoDocumento().name());
+            }
+            if (criterios.getNroDocumento() != null && !criterios.getNroDocumento().isEmpty() && !criterios.getNroDocumento().equals("0")) {
+                sql.append(" AND h.numero_documento LIKE ?");
+                params.add(criterios.getNroDocumento().trim() + "%");
+            }
         }
 
-        // CORRECCIÓN GROUP BY: Quitamos telefono y ocupacion de aquí porque usamos MAX()
         sql.append(" GROUP BY h.tipo_documento, h.numero_documento, h.apellido, h.nombres, h.cuit, h.nacionalidad, h.fecha_nacimiento, h.id_direccion, h.pos_iva");
 
         try (Connection conn = Conexion.getConnection();
@@ -150,40 +163,11 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(MapearHuesped.mapearResultSetADto(rs)); // Usamos el helper
+                    lista.add(MapearHuesped.mapearResultSetADto(rs));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error en la búsqueda: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return lista;
-    }
-
-    // --- OBTENER TODOS ---
-    @Override
-    public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
-        ArrayList<DtoHuesped> lista = new ArrayList<>();
-
-        // CORRECCIÓN SQL
-        String sql = "SELECT h.apellido, h.nombres, h.tipo_documento, h.numero_documento, h.cuit, h.nacionalidad, " +
-                "h.fecha_nacimiento, h.id_direccion, h.pos_iva, " +
-                "MAX(t.telefono) as telefono, " +
-                "MAX(o.ocupacion) as ocupacion, " +
-                "MAX(e.email) as email " +
-                "FROM huesped h " +
-                "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND h.numero_documento = e.nro_documento " +
-                "LEFT JOIN telefono_huesped t ON h.tipo_documento = t.tipo_documento AND h.numero_documento = t.nro_documento " +
-                "LEFT JOIN ocupacion_huesped o ON h.tipo_documento = o.tipo_documento AND h.numero_documento = o.nro_documento " +
-                "GROUP BY h.tipo_documento, h.numero_documento, h.apellido, h.nombres, h.cuit, h.nacionalidad, h.fecha_nacimiento, h.id_direccion, h.pos_iva";
-
-        try (Connection conn = Conexion.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                lista.add(MapearHuesped.mapearResultSetADto(rs));
-            }
-        } catch (SQLException e) {
+            System.err.println("Error en búsqueda: " + e.getMessage());
             e.printStackTrace();
         }
         return lista;

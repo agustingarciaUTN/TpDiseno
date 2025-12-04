@@ -8,6 +8,7 @@ import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
 import Utils.Colores;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
@@ -1113,17 +1114,28 @@ public class Pantalla {
     }
 
     private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
+        
         // --- MENÚ DE ORDENAMIENTO ---
-        System.out.println(Colores.CYAN + "\n   --- 📊 OPCIONES DE ORDENAMIENTO ---" + Colores.RESET);
-        System.out.println("   1. Apellido            3. Tipo Documento");
-        System.out.println("   2. Nombre              4. Número Documento");
-        System.out.print(Colores.VERDE + "   >> Ordenar por (Enter para default): " + Colores.RESET);
+        boolean banderaOrdenamiento = true;
+        int columna = 0;
 
-        int columna = leerOpcionNumerica();
-        if (columna < 1 || columna > 4) {
-            // Mensaje sutil si no elige nada (default)
-            if (columna != -1) System.out.println(Colores.ROJO + "     (Opción inválida, se usará el orden por defecto)" + Colores.RESET);
+        while(banderaOrdenamiento){
+            System.out.println(Colores.CYAN + "\n   --- 📊 OPCIONES DE ORDENAMIENTO ---" + Colores.RESET);
+            System.out.println("   1. Apellido            3. Tipo Documento");
+            System.out.println("   2. Nombre              4. Número Documento");
+            System.out.print(Colores.VERDE + "   >> Ordenar por: " + Colores.RESET);
+
+            columna = leerOpcionNumerica();
+
+            if (columna < 1 || columna > 4) {
+                // SIEMPRE avise del error, incluso con Enter vacío
+                System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
+            }
+            else {
+                banderaOrdenamiento = false;
+            }
         }
+        
 
         System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
         System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
@@ -1186,11 +1198,19 @@ public class Pantalla {
 
     private int leerOpcionNumerica() {
         try {
-            return scanner.nextInt();
-        } catch (InputMismatchException e) {
-            return -1; // Devuelve un valor inválido si el usuario no ingresa un número
-        } finally {
-            scanner.nextLine(); // Limpia el buffer del scanner
+            // Leemos toda la línea. Esto captura el "Enter" vacío.
+            String input = scanner.nextLine().trim();
+
+            // Si dio Enter sin escribir nada, devolvemos -1 (inválido)
+            if (input.isEmpty()) {
+                return -1;
+            }
+
+            // Intentamos convertir a entero
+            return Integer.parseInt(input);
+
+        } catch (NumberFormatException e) {
+            return -1; // Si escribió letras o símbolos, devolvemos -1 (inválido)
         }
     }
 
@@ -1591,7 +1611,7 @@ public class Pantalla {
             ArrayList<DtoHuesped> grupoHuespedes = seleccionarGrupoHuespedes();
 
             if (!grupoHuespedes.isEmpty()) {
-                DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
+                DtoHabitacion dtoHab = MapearHabitacion.mapearEntidadADto(habSeleccionada);
 
                 DtoEstadia dtoEstadia = new DtoEstadia.Builder()
                         .dtoHabitacion(dtoHab)
@@ -1664,7 +1684,7 @@ public class Pantalla {
                     System.out.print("ID a seleccionar (0 cancelar): ");
                     int id = leerOpcionNumerica();
                     if (id > 0 && id <= res.size()) {
-                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
+                        seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
                     }
                 }
             }
