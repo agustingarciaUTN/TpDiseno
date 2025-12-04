@@ -109,9 +109,14 @@ public class DaoEstadia implements DaoInterfazEstadia {
     @Override
     public ArrayList<DtoEstadia> obtenerEstadiasEnPeriodo(java.util.Date inicio, java.util.Date fin) {
         ArrayList<DtoEstadia> lista = new ArrayList<>();
-        // Trae estadías activas en el rango
-        String sql = "SELECT * FROM estadia WHERE " +
-                "\"fecha_check-in\" < ? AND (\"fecha_check-out\" IS NULL OR \"fecha_check-out\" > ?)";
+
+        // CORRECCIÓN: Hacemos un JOIN con la tabla 'habitacion' para obtener el tipo y capacidad reales.
+        // Usamos alias 'e' para estadia y 'h' para habitacion.
+        String sql = "SELECT e.*, h.tipo_habitacion, h.capacidad " +
+                "FROM estadia e " +
+                "JOIN habitacion h ON e.numero_habitacion = h.numero " +
+                "WHERE e.\"fecha_check-in\" < ? " +
+                "AND (e.\"fecha_check-out\" IS NULL OR e.\"fecha_check-out\" > ?)";
 
         try (Connection conn = BaseDedatos.Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -121,8 +126,17 @@ public class DaoEstadia implements DaoInterfazEstadia {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Mapeo básico para la grilla
-                    DtoHabitacion hab = new DtoHabitacion.Builder(rs.getString("numero_habitacion"), null, 0).build();
+                    // 1. Recuperar los datos REALES de la habitación desde el resultado del JOIN
+                    String tipoStr = rs.getString("tipo_habitacion");
+                    enums.TipoHabitacion tipoReal = enums.TipoHabitacion.fromString(tipoStr);
+                    int capacidadReal = rs.getInt("capacidad");
+
+                    // 2. Construir el objeto con la información correcta
+                    DtoHabitacion hab = new DtoHabitacion.Builder(
+                            rs.getString("numero_habitacion"),
+                            tipoReal,
+                            capacidadReal
+                    ).build();
 
                     DtoEstadia dto = new DtoEstadia.Builder()
                             .idEstadia(rs.getInt("id_estadia"))
@@ -130,6 +144,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
                             .fechaCheckIn(rs.getDate("fecha_check-in"))
                             .fechaCheckOut(rs.getDate("fecha_check-out"))
                             .build();
+
                     lista.add(dto);
                 }
             }

@@ -80,7 +80,7 @@ public class GestorReserva {
 
             // GR -> R: crearSinPersistirReserva(dtoReserva) (Mapeo DTO -> Entidad)
             Reserva reservaEntidad = MapearReserva.mapearDtoAEntidad(dto);
-
+            Date fechaReserva  = reservaEntidad.getFechaReserva();
             // Aseguramos estado inicial si no vino
             if(reservaEntidad.getEstadoReserva() == null) {
                 reservaEntidad.setEstadoReserva(EstadoReserva.ACTIVA);
