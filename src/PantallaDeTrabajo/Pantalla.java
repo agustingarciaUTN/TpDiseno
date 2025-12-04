@@ -1,6 +1,7 @@
 package PantallaDeTrabajo;
 import Dominio.Habitacion;
 import Dominio.Huesped;
+import Estadia.DtoEstadia;
 import Estadia.GestorEstadia;
 import Habitacion.GestorHabitacion;
 import Huesped.*;
@@ -10,7 +11,7 @@ import Utils.Mapear.MapearHuesped;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
-
+import Habitacion.DtoHabitacion;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -1235,4 +1236,253 @@ public class Pantalla {
             }
         }
     }
+
+
+    // --- CU15: OCUPAR HABITACIÓN ---
+    public void ocuparHabitacion() throws Exception {
+        System.out.println("========================================");
+        System.out.println("   CU15: OCUPAR HABITACIÓN (CHECK-IN)");
+        System.out.println("========================================\n");
+
+        // 1. Mostrar Grilla (CU5)
+        Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
+        if (grilla == null) return;
+
+        Date fechaInicio = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
+        Date fechaFin = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
+
+        List<DtoEstadia> estadiasParaProcesar = new ArrayList<>();
+        boolean deseaCargarOtra = true;
+
+        // Loop Principal
+        while (deseaCargarOtra) {
+            Habitacion habSeleccionada = null;
+
+            // Loop Selección Habitación
+            while (habSeleccionada == null) {
+                System.out.print("\nIngrese Nro Habitación a Ocupar: ");
+                String nro = scanner.nextLine().trim().toUpperCase();
+
+                // Obtener seleccion
+                Habitacion candidata = null;
+                for (Habitacion h : grilla.keySet()) {
+                    if (h.getNumero().equals(nro)) {
+                        candidata = h;
+                        break;
+                    }
+                }
+
+                if (habSeleccionada == null) {
+                    System.out.println("Error: Habitación no encontrada.");
+                    continue;
+                }
+
+                // Validar Estado
+                Map<Date, String> estados = grilla.get(habSeleccionada);
+                String estado = estados.get(fechaInicio);
+                if (estado == null) estado = "LIBRE";
+
+                if ("OCUPADA".equals(estado) || "FUERA DE SERVICIO".equals(estado)) {
+                    System.out.println("Error: Habitación " + estado + ". Elija otra.");
+                    habSeleccionada = null;
+                } else if ("RESERVADA".equals(estado)) {
+                    System.out.println("AVISO: Habitación RESERVADA. 1. OCUPAR IGUAL / 2. VOLVER");
+                    if (leerOpcionNumerica() == 1){
+                        pintarHabitacionOcupada(grilla, fechaInicio, fechaFin, estadiasParaProcesar, habSeleccionada);
+                        habSeleccionada = candidata;
+                    }
+                } else {
+                    habSeleccionada = candidata;
+                    pintarHabitacionOcupada(grilla, fechaInicio, fechaFin, estadiasParaProcesar, habSeleccionada);
+                }
+
+            }
+
+
+            // HUESPEDES
+            System.out.println(">> Cargando huéspedes para Habitación " + habSeleccionada.getNumero() + "...");
+
+            // Loop Selección Huéspedes
+            ArrayList<DtoHuesped> grupoHuespedes = seleccionarGrupoHuespedes();
+
+            if (!grupoHuespedes.isEmpty()) {
+                DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
+                DtoEstadia dtoEstadia = new DtoEstadia.Builder()
+                        .dtoHabitacion(dtoHab)
+                        .fechaCheckIn(fechaInicio)
+                        .fechaCheckOut(fechaFin)
+                        .valorEstadia(habSeleccionada.getCostoPorNoche())
+                        .dtoHuespedes(grupoHuespedes)
+                        .build();
+                estadiasParaProcesar.add(dtoEstadia);
+            } else {
+                System.out.println("Carga de habitación cancelada (sin huéspedes).");
+            }
+
+            System.out.println("\n¿Desea cargar OTRA habitación? (SI/NO): ");
+            if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) {
+                deseaCargarOtra = false;
+            }
+        }
+
+        if (estadiasParaProcesar.isEmpty()) return;
+
+        System.out.println("\nGuardando...");
+        try {
+            for (DtoEstadia dto : estadiasParaProcesar) {
+                // Aquí el gestor validará si los acompañantes ya están ocupados
+                gestorEstadia.crearEstadia(dto);
+            }
+            System.out.println("\n¡Check-in realizado con ÉXITO!");
+            pausa();
+        } catch (Exception e) {
+            System.out.println("ERROR AL GUARDAR: " + e.getMessage());
+            pausa();
+        }
+    }
+
+    // --- SUB-METODO PARA SELECCIONAR HUÉSPEDES (Con distinción visual) ---
+    private ArrayList<DtoHuesped> seleccionarGrupoHuespedes() {
+        ArrayList<DtoHuesped> lista = new ArrayList<>();
+        boolean seguir = true;
+
+        while (seguir) {
+            // Feedback visual del rol
+            if (lista.isEmpty()) {
+                System.out.println("\n--- SELECCIÓN DEL RESPONSABLE (Titular) ---");
+                System.out.println("(Nota: El responsable puede figurar en múltiples habitaciones)");
+            } else {
+                System.out.println("\n--- SELECCIÓN DE ACOMPAÑANTE #" + lista.size() + " ---");
+                System.out.println("(Nota: Los acompañantes NO pueden estar en otra habitación)");
+            }
+
+            System.out.println("1. Buscar Huésped existente");
+            System.out.println("2. Alta Rápida de Huésped");
+            if (!lista.isEmpty()) System.out.println("3. Finalizar carga para esta habitación");
+
+            System.out.print("Opción: ");
+            int op = leerOpcionNumerica();
+
+            if (op == 3 && !lista.isEmpty()) break;
+
+            DtoHuesped seleccionado = null;
+
+            if (op == 1) { // Buscar
+                DtoHuesped criterios = solicitarCriteriosDeBusqueda();
+                ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
+                if (res.isEmpty()) {
+                    System.out.println("No se encontraron huéspedes.");
+                } else {
+                    mostrarListaDatosEspecificos(res);
+                    System.out.print("ID a seleccionar (0 cancelar): ");
+                    int id = leerOpcionNumerica();
+                    if (id > 0 && id <= res.size()) {
+                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id-1));
+                    }
+                }
+            } else if (op == 2) { // Alta
+                System.out.println(">> Alta Rápida <<");
+                seleccionado = mostrarYPedirDatosFormulario();
+                try {
+                    gestorHuesped.upsertHuesped(seleccionado);
+                } catch (Exception e) {
+                    System.out.println("Error al crear: " + e.getMessage());
+                    seleccionado = null;
+                }
+            }
+
+            if (seleccionado != null) {
+                // Verificar duplicado local (en la misma habitación)
+                DtoHuesped finalSeleccionado = seleccionado;
+                boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
+
+                if (yaEsta) {
+                    System.out.println("¡Este huésped ya está en la lista de esta habitación!");
+                } else {
+                    lista.add(seleccionado);
+                    System.out.println(">> Agregado: " + seleccionado.getApellido());
+                }
+            }
+
+            if (!lista.isEmpty()) {
+                System.out.println("\n¿Agregar otro acompañante? (SI/NO)");
+                if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) seguir = false;
+            }
+        }
+        return lista;
+    }
+
+    // Metodo visual específico para CU15
+    private void pintarHabitacionOcupada(Map<Habitacion, Map<Date, String>> grilla,
+                                         Date inicio, Date fin,
+                                         List<DtoEstadia> estadiasConfirmadas,
+                                         Habitacion seleccionActual) {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String formatoCelda = "| %-9s ";
+
+        System.out.println("\n--- GRILLA DE OCUPACIÓN (CHECK-IN) ---");
+
+        // Encabezado
+        System.out.print("             ");
+        for (Habitacion hab : grilla.keySet()) {
+            System.out.printf(formatoCelda, "Hab " + hab.getNumero());
+        }
+        System.out.println("|");
+
+        // Barrido de días
+        LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        LocalDate actual = inicioLocal;
+        while (!actual.isAfter(finLocal)) {
+            System.out.printf("%-12s", actual.format(dtf));
+            Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+            for (Map.Entry<Habitacion, Map<Date, String>> entry : grilla.entrySet()) {
+                Habitacion hab = entry.getKey();
+                String visual = "[ ? ]";
+
+                // --- LÓGICA VISUAL CU15 ---
+                boolean esSeleccion = false;
+
+                // 1. Chequear si es la que acabo de elegir (Actual)
+                if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
+                    esSeleccion = true;
+                }
+
+                // 2. Chequear si ya está en la lista de "Confirmadas" (del bucle anterior)
+                if (!esSeleccion && estadiasConfirmadas != null) {
+                    for (DtoEstadia dto : estadiasConfirmadas) {
+                        if (dto.getDtoHabitacion().getNumero().equals(hab.getNumero())) {
+                            esSeleccion = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (esSeleccion) {
+                    visual = "[ * ]"; // Marca de selección visual
+                } else {
+                    // 3. Estado original de la BDD
+                    String estado = entry.getValue().get(fechaFila);
+                    if (estado == null) estado = "LIBRE";
+
+                    switch (estado) {
+                        case "OCUPADA" -> visual = "[ X ]";
+                        case "RESERVADA" -> visual = "[ R ]";
+                        case "FUERA DE SERVICIO" -> visual = "[ - ]";
+                        case "LIBRE" -> visual = "[ L ]";
+                    }
+                }
+                System.out.printf(formatoCelda, visual);
+            }
+            System.out.println("|");
+            actual = actual.plusDays(1);
+        }
+        System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [*] SU SELECCIÓN ACTUAL");
+    }
+
+
 }

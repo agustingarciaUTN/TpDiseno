@@ -103,6 +103,40 @@ public class DaoEstadia implements DaoInterfazEstadia {
         }
     }
 
+    @Override
+    public boolean esHuespedActivo(String tipoDoc, String nroDoc, java.util.Date fechaInicio, java.util.Date fechaFin) {
+        // Query: Busca si existe alguna estadía solapada temporalmente donde figure esta persona
+        // Lógica de solapamiento: (InicioA < FinB) Y (FinA > InicioB)
+        // Nota: Si fecha_fin es NULL, asumimos que sigue alojado hoy (o hasta fecha lejana)
+
+        String sql = "SELECT 1 FROM estadia e " +
+                "JOIN estadia_huesped eh ON e.id_estadia = eh.id_estadia " +
+                "WHERE eh.tipo_documento = ? AND eh.nro_documento = ? " +
+                "AND e.fecha_inicio < ? AND (e.fecha_fin IS NULL OR e.fecha_fin > ?) " +
+                "LIMIT 1";
+
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            java.sql.Date sqlInicioNuevo = new java.sql.Date(fechaInicio.getTime());
+            java.sql.Date sqlFinNuevo = new java.sql.Date(fechaFin.getTime());
+
+            ps.setString(1, tipoDoc);
+            ps.setString(2, nroDoc);
+            // Parámetros cruzados para la lógica de intervalo
+            ps.setDate(3, sqlFinNuevo);    // e.inicio < NUEVO_FIN
+            ps.setDate(4, sqlInicioNuevo); // e.fin > NUEVO_INICIO
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // True = Ya está en el hotel
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al validar huesped activo: " + e.getMessage());
+            return false; // Ante error, permitimos pasar (o podrías lanzar excepción)
+        }
+    }
+
+
     // Implementar métodos obtener usando Builder
     @Override
     public boolean modificarEstadia(Estadia estadia) throws PersistenciaException { return false; } // TODO
