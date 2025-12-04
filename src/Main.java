@@ -9,6 +9,3 @@ public class Main {
         pantalla.iniciarSistema();
     }
 }
-
-
-

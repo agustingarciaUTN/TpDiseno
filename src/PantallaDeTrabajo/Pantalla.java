@@ -1020,8 +1020,8 @@ public class Pantalla {
             if (apellido.isEmpty()) break; // Omitir
 
             // Validación: Solo letras
-            if (!apellido.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
+            if (!apellido.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$") || apellido.length() > 1) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admite una letra." + Colores.RESET);
                 continue;
             }
             criterios.setApellido(apellido);
@@ -1035,8 +1035,8 @@ public class Pantalla {
 
             if (nombres.isEmpty()) break; // Omitir
 
-            if (!nombres.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
+            if (!nombres.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$") || nombres.length() > 1) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Solo se admite una letra." + Colores.RESET);
                 continue;
             }
             criterios.setNombres(nombres);
@@ -1076,60 +1076,95 @@ public class Pantalla {
 
     private void seleccionarHuespedDeLista(ArrayList<Huesped> listaEntidadesHuespedes) {
 
-        System.out.println("\nAcciones disponibles:");
-        System.out.println(Colores.AMARILLO + "   [ID]" + Colores.RESET + " Ingrese el número de ID para " + Colores.NEGRILLA + "MODIFICAR/ELIMINAR" + Colores.RESET);
-        System.out.println(Colores.AMARILLO + "   [0]" + Colores.RESET + "  Dar de alta uno " + Colores.VERDE + "NUEVO" + Colores.RESET);
+        boolean banderaSeleccion = true;
 
-        System.out.print("\n>> Su selección: ");
-        int seleccion = leerOpcionNumerica();
+        while(banderaSeleccion){
+            System.out.println("\nAcciones disponibles:");
+            System.out.println(Colores.AMARILLO + "   [ID]" + Colores.RESET + " Ingrese el número de ID para " + Colores.NEGRILLA + "MODIFICAR/ELIMINAR" + Colores.RESET);
+            System.out.println(Colores.AMARILLO + "   [0]" + Colores.RESET + "  Dar de alta uno " + Colores.VERDE + "NUEVO" + Colores.RESET);
 
-        // Mapear lista entidades a dto
-        ArrayList<DtoHuesped> listaHuespedesDto = new ArrayList<>();
-        for (Huesped listaEHuespedes : listaEntidadesHuespedes) {
+            System.out.print("\n>> Su selección: ");
+            int seleccion = leerOpcionNumerica();
 
-            listaHuespedesDto.add(MapearHuesped.mapearEntidadADto(listaEHuespedes));
+            // Mapear lista entidades a dto
+            ArrayList<DtoHuesped> listaHuespedesDto = new ArrayList<>();
+            for (Huesped listaEHuespedes : listaEntidadesHuespedes) {
+
+                listaHuespedesDto.add(MapearHuesped.mapearEntidadADto(listaEHuespedes));
+            }
+
+            // Sigue el flujo
+            if (seleccion > 0 && seleccion <= listaEntidadesHuespedes.size()) {
+                DtoHuesped huespedDtoSeleccionado = listaHuespedesDto.get(seleccion - 1);
+
+                System.out.println(Colores.AZUL + "\n⏳ Cargando datos del huésped seleccionado..." + Colores.RESET);
+
+                // lógica de negocio
+                Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
+
+                // Mensaje temporal
+                System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+                System.out.println("║   🚧 FUNCIONALIDAD CASO DE USO 10 EN PROGRESO 🚧   ║");
+                System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+                banderaSeleccion = false;
+
+            } else if (seleccion == 0) {
+                System.out.println(Colores.AZUL + "--> Redirigiendo al Alta de Huésped..." + Colores.RESET);
+                this.darDeAltaHuesped(); // CU 9
+                banderaSeleccion = false;
+            } else {
+                System.out.println(Colores.ROJO + "❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
+
+            }
         }
 
-        // Sigue el flujo
-        if (seleccion > 0 && seleccion <= listaEntidadesHuespedes.size()) {
-            DtoHuesped huespedDtoSeleccionado = listaHuespedesDto.get(seleccion - 1);
 
-            System.out.println(Colores.AZUL + "\n⏳ Cargando datos del huésped seleccionado..." + Colores.RESET);
 
-            // lógica de negocio
-            Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
-
-            // Mensaje temporal
-            System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
-            System.out.println("║   🚧 FUNCIONALIDAD CASO DE USO 10 EN PROGRESO 🚧   ║");
-            System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
-
-        } else if (seleccion == 0) {
-            System.out.println(Colores.AZUL + "--> Redirigiendo al Alta de Huésped..." + Colores.RESET);
-            this.darDeAltaHuesped(); // CU 9
-        } else {
-            System.out.println(Colores.ROJO + "❌ Opción inválida. Volviendo al menú principal." + Colores.RESET);
-        }
     }
 
     private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
         // --- MENÚ DE ORDENAMIENTO ---
-        System.out.println(Colores.CYAN + "\n   --- 📊 OPCIONES DE ORDENAMIENTO ---" + Colores.RESET);
-        System.out.println("   1. Apellido            3. Tipo Documento");
-        System.out.println("   2. Nombre              4. Número Documento");
-        System.out.print(Colores.VERDE + "   >> Ordenar por (Enter para default): " + Colores.RESET);
 
-        int columna = leerOpcionNumerica();
-        if (columna < 1 || columna > 4) {
-            // Mensaje sutil si no elige nada (default)
-            if (columna != -1) System.out.println(Colores.ROJO + "     (Opción inválida, se usará el orden por defecto)" + Colores.RESET);
+        boolean banderaOrdenamiento = true;
+
+        int columna = 0;
+
+        while(banderaOrdenamiento){
+            System.out.println(Colores.CYAN + "\n   --- 📊 OPCIONES DE ORDENAMIENTO ---" + Colores.RESET);
+            System.out.println("   1. Apellido            3. Tipo Documento");
+            System.out.println("   2. Nombre              4. Número Documento");
+            System.out.print(Colores.VERDE + "   >> Ordenar por: " + Colores.RESET);
+
+            columna = leerOpcionNumerica();
+
+            if (columna < 1 || columna > 4) {
+                // Eliminamos el if(columna != -1) para que SIEMPRE avise del error, incluso con Enter vacío
+                System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
+            }
+            else {
+                banderaOrdenamiento = false;
+            }
         }
 
-        System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
-        System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
+        boolean banderaAscendente = true;
+        boolean ascendente = false;
 
-        int orden = leerOpcionNumerica();
-        boolean ascendente = (orden == 1);
+        while(banderaAscendente){
+            System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
+            System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
+
+            int orden = leerOpcionNumerica();
+
+            if(orden < 1 || orden > 2){
+                System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
+                continue;
+            }
+            else{
+                banderaAscendente = false;
+            }
+            ascendente = (orden == 1);
+        }
+
 
         // Definimos el comparador para la ENTIDAD Huesped
         Comparator<Huesped> comparador = switch (columna) {
@@ -1186,12 +1221,21 @@ public class Pantalla {
 
     private int leerOpcionNumerica() {
         try {
-            return scanner.nextInt();
-        } catch (InputMismatchException e) {
-            return -1; // Devuelve un valor inválido si el usuario no ingresa un número
-        } finally {
-            scanner.nextLine(); // Limpia el buffer del scanner
+            // Leemos toda la línea. Esto captura el "Enter" vacío.
+            String input = scanner.nextLine().trim();
+
+            // Si dio Enter sin escribir nada, devolvemos -1 (inválido)
+            if (input.isEmpty()) {
+                return -1;
+            }
+
+            // Intentamos convertir a entero
+            return Integer.parseInt(input);
+
+        } catch (NumberFormatException e) {
+            return -1; // Si escribió letras o símbolos, devolvemos -1 (inválido)
         }
+        // Nota: Ya no hace falta el scanner.nextLine() en finally porque ya consumimos la línea arriba.
     }
 
     /**
