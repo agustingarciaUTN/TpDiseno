@@ -64,10 +64,10 @@ public class DaoEstadia implements DaoInterfazEstadia {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
-            throw new PersistenciaException("Error al persistir estadia", e);
+            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
+            throw new PersistenciaException("Error al persistir estadía", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
         }
     }
 
@@ -90,7 +90,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
             java.sql.Date fechaFinal = new java.sql.Date(fechaFin.getTime());
             java.sql.Date fechaInicio = new java.sql.Date(fechaInicial.getTime());
 
-            ps.setString(1, numeroHabitacion); // Ojo: Asegúrate que la columna en tu BD se llama id_habitacion o numero_habitacion
+            ps.setString(1, numeroHabitacion); // Ojo: Asegúrate que la columna en tu BD se llama id_habitación o numero_habitación
             ps.setDate(2, fechaInicio);
             ps.setDate(3, fechaFinal);
 
