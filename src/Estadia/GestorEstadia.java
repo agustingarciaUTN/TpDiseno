@@ -5,6 +5,7 @@ import Excepciones.PersistenciaException;
 import Huesped.DtoHuesped;
 import Utils.Mapear.MapearEstadia;
 
+import java.util.Date;
 import java.util.List;
 
 public class GestorEstadia {
@@ -35,7 +36,9 @@ public class GestorEstadia {
     public boolean estaOcupadaEnFecha(String nroHabitacion, java.util.Date fechaInicio, java.util.Date fechaFin) {
         return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fechaInicio, fechaFin);
     }
-
+    public List<DtoEstadia> buscarEstadiasEnFecha(Date inicio, Date fin) {
+        return ((DaoEstadia) daoEstadia).obtenerEstadiasEnPeriodo(inicio, fin);
+    }
     /**
      * CU15: Crear Estadía (con validación de roles)
      */

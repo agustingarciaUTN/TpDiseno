@@ -68,6 +68,38 @@ public class DaoReserva implements DaoInterfazReserva {
         }
     }
 
+    // Nuevo método optimizado
+    @Override
+    public ArrayList<DtoReserva> obtenerReservasEnPeriodo(java.util.Date inicio, java.util.Date fin) {
+        ArrayList<DtoReserva> lista = new ArrayList<>();
+        // Trae todas las reservas que se solapen con el rango (Inicio < FinBusqueda) Y (Fin > InicioBusqueda)
+        String sql = "SELECT * FROM reserva WHERE estado_reserva = 'ACTIVA' " +
+                "AND fecha_desde < ? AND fecha_hasta > ?";
+
+        try (Connection conn = BaseDedatos.Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, new java.sql.Date(fin.getTime()));
+            ps.setDate(2, new java.sql.Date(inicio.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Mapeo rápido (puedes usar tu Mapper si prefieres, aquí lo hago manual por brevedad)
+                    DtoReserva dto = new DtoReserva.Builder()
+                            .id(rs.getInt("id_reserva"))
+                            .idHabitacion(rs.getString("numero_habitacion")) // Asegúrate que la columna coincida
+                            .fechaDesde(rs.getDate("fecha_desde"))
+                            .fechaHasta(rs.getDate("fecha_hasta"))
+                            .build();
+                    lista.add(dto);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
     // Implementar CRUD restante...
     @Override
     public boolean modificarReserva(Reserva reserva) throws PersistenciaException { return false; }
