@@ -1320,17 +1320,17 @@ public class Pantalla {
                 }
 
                 if (esSeleccion) {
-                    visual = "[ * ]"; // Selección actual
+                    visual = (Colores.CYAN + "[ * ]" + Colores.RESET); // Selección actual
                 } else {
                     // 2. Estado proveniente de la orquestación (BD)
                     String estado = entry.getValue().get(fechaFila);
                     if (estado == null) estado = "LIBRE";
 
                     switch (estado) {
-                        case "OCUPADA" -> visual = "[ X ]";
-                        case "RESERVADA" -> visual = "[ R ]";
-                        case "FUERA DE SERVICIO" -> visual = "[ - ]";
-                        case "LIBRE" -> visual = "[ L ]";
+                        case "OCUPADA" -> visual = (Colores.ROJO + "[ X ]" + Colores.RESET);
+                        case "RESERVADA" -> visual = (Colores.AMARILLO + "[ R ]" + Colores.RESET);
+                        case "FUERA DE SERVICIO" -> visual = (Colores.AZUL + "[ - ]"+ Colores.RESET);
+                        case "LIBRE" -> visual = (Colores.VERDE + "[ L ]" + Colores.RESET);
                     }
                 }
                 System.out.printf(formatoCelda, visual);
@@ -1338,7 +1338,11 @@ public class Pantalla {
             System.out.println("|");
             actual = actual.plusDays(1);
         }
-        System.out.println("REFERENCIAS: [L]ibre | [R]eservada | [X]Ocupada | [-]Fuera Servicio | [*] Tu Selección");
+        System.out.println("REFERENCIAS: " + Colores.VERDE + "[L]ibre" + Colores.RESET + " | "
+                + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
+                + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | "
+                + Colores.AZUL + "[-]Fuera Servicio" + Colores.RESET + " | "
+                + Colores.CYAN + "[*]  Tu Selección" + Colores.RESET);
     }
 
     // CU5: Mostrar Estado de Habitaciones
