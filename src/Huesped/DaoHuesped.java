@@ -123,10 +123,11 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                         "MAX(o.ocupacion) as ocupacion, " +
                         "MAX(e.email) as email " +
                         "FROM huesped h " +
-                        // JOINs con condición UPPER para asegurar match aunque haya diferencias de mayúsculas
-                        "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND UPPER(h.numero_documento) = UPPER(e.nro_documento) " +
-                        "LEFT JOIN telefono_huesped t ON h.tipo_documento = t.tipo_documento AND UPPER(h.numero_documento) = UPPER(t.nro_documento) " +
-                        "LEFT JOIN ocupacion_huesped o ON h.tipo_documento = o.tipo_documento AND UPPER(h.numero_documento) = UPPER(o.nro_documento) " +
+
+                        "LEFT JOIN email_huesped e ON UPPER(h.tipo_documento::text) = UPPER(e.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(e.nro_documento) " +
+                        "LEFT JOIN telefono_huesped t ON UPPER(h.tipo_documento::text) = UPPER(t.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(t.nro_documento) " +
+                        "LEFT JOIN ocupacion_huesped o ON UPPER(h.tipo_documento::text) = UPPER(o.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(o.nro_documento) " +
+
                         "WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
@@ -183,13 +184,13 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             try (ResultSet rs = ps.executeQuery()) {
                 //Procesar el ResultSet
                 if (rs.next()) {
-                    return mapearHuesped(conn, rs);//Mapeamos de result set a dto
+                    return mapearHuesped(conn, rs);//Mapeamos de result set a dto y Retornamos el dto del huesped encontrado en la bdd
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;//Retornamos el dto del huesped encontrado en la bdd
+        return null;
     }
 
     // --- ELIMINAR ---
