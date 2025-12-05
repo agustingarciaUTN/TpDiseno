@@ -9,6 +9,7 @@ import Reserva.DtoReserva;
 import Reserva.GestorReserva;
 import Utils.Colores;
 import Utils.Mapear.MapearHuesped;
+import enums.EstadoHabitacion;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
@@ -1336,7 +1337,10 @@ public class Pantalla {
                     break;
                 }
             }
-
+            if(habSeleccionada.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
+                System.out.println(Colores.ROJO + "   ❌ Error: La habitacion esta fuera de servicio." + Colores.RESET);
+                continue;
+            }
             if (habSeleccionada == null) {
                 System.out.println(Colores.ROJO + "   ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
                 continue;
