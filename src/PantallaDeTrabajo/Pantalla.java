@@ -1713,7 +1713,7 @@ public class Pantalla {
             String fechaReferenciaStr = sdfEsp.format(fechaReferencia);
 
             fechaInicio = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferenciaStr + "." );
-
+            String fechaInicioStr = sdfEsp.format(fechaInicio);
 
             fechaFin = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
 
@@ -2045,55 +2045,52 @@ public class Pantalla {
                 System.out.println("(Nota: Los acompañantes NO pueden estar en otra habitación)");
             }
 
-            System.out.println("1. Buscar Huésped existente");
-            if (!lista.isEmpty()) System.out.println("2. Finalizar carga para esta habitación");
-
-            System.out.print("Opción: ");
-            int op = leerOpcionNumerica();
-
-            if (op == 2 && !lista.isEmpty()) break;
-
             DtoHuesped seleccionado = null;
 
-            if (op == 1) { // Buscar
-                DtoHuesped criterios = solicitarCriteriosDeBusqueda();
-                ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
-                if (res.isEmpty()) {
-                    System.out.println("No se encontraron huéspedes.");
-                } else {
-                    mostrarListaDatosEspecificos(res);
-                    System.out.print("ID a seleccionar (0 cancelar): ");
-                    int id = leerOpcionNumerica();
-                    while (true) {
-                        if (id == 0) break; // Cancelar
-                        if (id > 0 && id <= res.size()) {
-                            seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
-                            break;
+            System.out.println("1. Buscar Huésped existente");
+            if (!lista.isEmpty()) {
+                System.out.println("2. Finalizar carga para esta habitación");
+
+                System.out.print("Opción: ");
+                int op = leerOpcionNumerica();
+
+                if (op == 2) break;
+
+                seleccionado = null;
+
+                if (op == 1) { // Buscar
+                    DtoHuesped criterios = solicitarCriteriosDeBusqueda();
+                    ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
+                    if (res.isEmpty()) {
+                        System.out.println("No se encontraron huéspedes.");
+                    } else {
+                        mostrarListaDatosEspecificos(res);
+                        System.out.print("ID a seleccionar (0 cancelar): ");
+                        int id = leerOpcionNumerica();
+                        while (true) {
+                            if (id == 0) break; // Cancelar
+                            if (id > 0 && id <= res.size()) {
+                                seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
+                                break;
+                            }
+                            System.out.print(Colores.ROJO + "   ❌ ID inválido." + Colores.RESET + "\n" + "Ingrese un ID entre 1 y " + res.size() + " o 0 para cancelar: " + Colores.RESET);
+                            id = leerOpcionNumerica();
                         }
-                        System.out.print(Colores.ROJO + "   ❌ ID inválido." + Colores.RESET + "\n" + "Ingrese un ID entre 1 y " + res.size() + " o 0 para cancelar: " + Colores.RESET);
-                        id = leerOpcionNumerica();
                     }
                 }
             }
-
-            if (seleccionado != null) {
                 // Verificar duplicado local (en la misma habitación)
-                DtoHuesped finalSeleccionado = seleccionado;
-                boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
-
-                if (yaEsta) {
-                    System.out.println("¡Este huésped ya está en la lista de esta habitación!");
-                } else {
-                    lista.add(seleccionado);
-                    System.out.println(">> Agregado: " + seleccionado.getApellido());
-                }
-            }
-
-            if (!lista.isEmpty()) {
-                System.out.println("\n¿Agregar otro acompañante? (SI/NO)");
-                if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) seguir = false;
+            DtoHuesped finalSeleccionado = seleccionado;
+            boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
+            if (yaEsta) {
+                System.out.println("¡Este huésped ya está en la lista de esta habitación!");
+            } else {
+                lista.add(seleccionado);
+                System.out.println(">> Agregado: " + seleccionado.getApellido());
             }
         }
+        System.out.println("\n¿Agregar otro acompañante? (SI/NO)");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) seguir = false;
         return lista;
     }
 
