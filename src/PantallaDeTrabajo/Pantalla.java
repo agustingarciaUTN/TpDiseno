@@ -8,6 +8,7 @@ import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
 import Utils.Colores;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
 import enums.EstadoHabitacion;
 import enums.PosIva;
@@ -80,20 +81,19 @@ public class Pantalla {
         System.out.println(Colores.NEGRILLA + "🔐 AUTENTICACION DE USUARIO" + Colores.RESET);
         System.out.println(Colores.CYAN + "   -------------------------" + Colores.RESET + "\n");
 
-        boolean autenticacionExitosa = false;
+        boolean autenticacionExitosa = false;//Bandera para while de autenticacion
 
         while (!autenticacionExitosa) {
-            //Paso 2: El sistema presenta la pantalla para autenticar al usuario
             System.out.println("Por favor, ingrese sus credenciales:");
 
-            //Paso 3: El actor ingresa su nombre (en forma visible) y su contraseña (oculta)
+            //El actor ingresa su nombre y su contraseña
             System.out.print(Colores.VERDE + "   👤 Usuario: " + Colores.RESET);
-            String nombre = scanner.nextLine().trim();
+            String nombre = scanner.nextLine().trim();//Ingreso de nombre de usuario
 
             System.out.print(Colores.VERDE + "   🔑 Contraseña: " + Colores.RESET);
-            String contrasenia = scanner.nextLine(); //en consola no se puede ocultar realmente
+            String contrasenia = scanner.nextLine(); //Ingreso de contraseña
 
-            //Validar con el gestor
+            //Validar con el gestor las credenciales ingresadas
             boolean credencialesValidas = gestorUsuario.autenticarUsuario(nombre, contrasenia);
 
             if (credencialesValidas) {
@@ -101,47 +101,55 @@ public class Pantalla {
                 this.usuarioAutenticado = true;
                 this.nombreUsuarioActual = nombre;
                 System.out.println("\n" + Colores.VERDE + "✅ ¡Autenticación exitosa! Bienvenido, " + nombre + Colores.RESET + "\n");
-                autenticacionExitosa = true;
+                autenticacionExitosa = true;//Para salir del while
             } else {
-                //Paso 3.A: El usuario o la contraseña son inválidos
-                //Paso 3.A.1: El sistema muestra el mensaje de error
+                //El usuario o la contraseña son inválidos
+                //El sistema muestra un mensaje de error
                 System.out.println("\n" + Colores.ROJO + "╔═════════════════════════════════════════════╗");
                 System.out.println("║ ❌ ERROR: Usuario o contraseña inválidos    ║");
                 System.out.println("╚═════════════════════════════════════════════╝" + Colores.RESET + "\n");
 
-                //Paso 3.A.2: El actor cierra la pantalla de error
-                System.out.print("Presione " + Colores.NEGRILLA + "ENTER" + Colores.RESET + " para continuar...");
-                System.out.print("\033[H\033" +
-                        "[2J");
-                System.out.flush();
-                scanner.nextLine();
 
-                //Paso 3.A.3: El sistema blanquea los campos (se hace automáticamente al repetir el ciclo)
+                int opcion = -1;
+                boolean opcionValida = false;
 
-                //Preguntar qué desea hacer
-                System.out.println("\n¿Qué desea hacer?");
-                System.out.println(Colores.AMARILLO + " [1]" + Colores.RESET + " 🔄 Volver a ingresar credenciales");
-                System.out.println(Colores.AMARILLO + " [2]" + Colores.RESET + " 🚪 Cerrar el sistema");
-                System.out.print(">> Ingrese una opción: ");
+                // Seguimos preguntando hasta que ingrese 1 o 2
+                while (!opcionValida) {
+                    System.out.println("\n¿Qué desea hacer?");
+                    System.out.println(Colores.AMARILLO + " [1]" + Colores.RESET + " 🔄 Volver a ingresar credenciales");
+                    System.out.println(Colores.AMARILLO + " [2]" + Colores.RESET + " 🚪 Cerrar el sistema");
+                    System.out.print(">> Ingrese una opción: ");
 
-                int opcion;
-                try {
-                    opcion = scanner.nextInt();
-                    scanner.nextLine(); //consumir salto de linea
-                } catch (Exception e) {
-                    scanner.nextLine(); //limpiar buffer
-                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
-                    continue;
+                    try {
+                        String entrada = scanner.nextLine().trim();
+
+                        if (entrada.isEmpty()) {
+                            // Si da Enter vacío, avisamos y repetimos
+                            System.out.println(Colores.ROJO + "⚠️  Debe ingresar una opción." + Colores.RESET);
+                            continue;
+                        }
+
+                        opcion = Integer.parseInt(entrada);
+
+                        if (opcion == 1 || opcion == 2) {
+                            opcionValida = true; //Salimos del bucle
+                        } else {
+                            System.out.println(Colores.ROJO + "⚠️  Opción inválida. Ingrese 1 o 2." + Colores.RESET);
+                        }
+
+                    } catch (NumberFormatException e) {
+                        System.out.println(Colores.ROJO + "⚠️  Error: Debe ingresar un número." + Colores.RESET);
+                    }
                 }
 
+                //Accion final
                 if (opcion == 2) {
-                    System.out.println("\nCerrando el sistema...");
-                    return false; //Sale sin autenticar
-                } else if (opcion == 1) {
-                    System.out.println(Colores.AZUL + "\n-- Intente nuevamente --\n" + Colores.RESET);
-                    //Paso 3.A.4: El CU continua en el paso 2 (se repite el while)
+                    System.out.println(Colores.AZUL + "\nCerrando el sistema..." + Colores.RESET);
+                    return false; // Sale del metodo y cierra
                 } else {
-                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
+                    // Opción 1
+                    System.out.println(Colores.AZUL + "\n-- Intente nuevamente --\n" + Colores.RESET);
+                    //Vuelve a ingresar credenciales
                 }
             }
         }
@@ -151,19 +159,19 @@ public class Pantalla {
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
     private void mostrarMenuPrincipal() throws Exception {
-        //Paso 4: El sistema presenta la pantalla principal
-        boolean salir = false;
+
+        boolean salir = false;//Bandera para ejecucion del while. Ademas, para entrar, debe estar autorizado
 
         while (!salir && usuarioAutenticado) {
             System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
             System.out.println("║                MENU PRINCIPAL                      ║");
             System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-            // Datos del usuario con ícono
+            // Datos del usuario
             System.out.println(Colores.VERDE + "   👤 Usuario activo: " + Colores.NEGRILLA + nombreUsuarioActual + Colores.RESET);
             System.out.println(Colores.CYAN + "   ──────────────────────────────────────────────────" + Colores.RESET);
 
-            // Opciones con colores y emojis
+            // Opciones de CU
             System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " 🔍 Buscar huésped (CU2)");
             System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " 🛏️  Reservar Habitación (CU4)");
             System.out.println(Colores.AMARILLO + "   [3]" + Colores.RESET + " 📝 Dar de alta huésped (CU9)");
@@ -175,7 +183,7 @@ public class Pantalla {
 
             int opcion = -1;
             try {
-                // CORRECCIÓN: Leemos toda la línea como String
+                //Leemos toda la línea como String
                 String entrada = scanner.nextLine().trim();
 
                 // Si dió Enter vacío, lanzamos error manualmente para que caiga en el catch
@@ -194,7 +202,7 @@ public class Pantalla {
 
             System.out.println();
 
-            switch (opcion) {
+            switch (opcion) {//Switch para derivar a la ejecucion de cada caso de uso
                 case 1:
                     buscarHuesped();
                     break;
@@ -207,23 +215,23 @@ public class Pantalla {
                 case 4:
                     ocuparHabitacion();
                     break;
-                case 5:
+                case 5://Caso de cerrar sesion
                     System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
                     String confirmar = scanner.nextLine().trim();
                     if (confirmar.equalsIgnoreCase("SI")) {
                         System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
                         salir = true;
-                        usuarioAutenticado = false;
+                        usuarioAutenticado = false;//Reestablecemos la variable de autenticacion
                     }
                     break;
                 default:
-                    System.out.println(Colores.ROJO + "❌ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
+                    System.out.println(Colores.ROJO + "❌ Opción inválida. Intente nuevamente.\n" + Colores.RESET);//vuelve al while
             }
         }
-        //Paso 5: El CU termina
+
     }
 
-    // CU9
+    // =================================== CU9 ===========================================
     public void darDeAltaHuesped() {
         //Mensaje de principio de ejecucion del CU9 con Estética de Título
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
@@ -1292,7 +1300,7 @@ public class Pantalla {
                     } else {
                         // C. Buscar en lista de Reservas (Memoria)
                         boolean reservada = reservasHab.stream().anyMatch(r ->
-                                        fechaActual.after(r.getFechaDesde()) && fechaActual.before(r.getFechaHasta())
+                                        !fechaActual.before(r.getFechaDesde()) && fechaActual.before(r.getFechaHasta())
                                 // O ajusta la lógica de fechas exacta según tu regla de negocio (< vs <=)
                         );
 
@@ -1349,7 +1357,7 @@ public class Pantalla {
             // B. Selección de Fechas ESPECÍFICAS para esta reserva
             System.out.println(Colores.CYAN + "   Define el rango de fechas específico para reservar la habitacion " + nro + ":" + Colores.RESET);
 
-            Date fechaInicioReserva;
+            Date fechaInicioReserva = null;
             Date fechaFinReserva;
 
             try {
@@ -1373,12 +1381,16 @@ public class Pantalla {
                 LocalDate limiteAnterior = inicioLocal.minusDays(1);
                 Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-                fechaInicioReserva = pedirFechaPosteriorA(
-                        "   > Fecha Inicio (dd/MM/yyyy): ",
-                        fechaLimiteParaPedir,
-                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
-                );
+                // Flag para chequear que no pide una fecha anterior a hoy
+                boolean pedidoAFuturo = true;
+                while(pedidoAFuturo) {
+                    fechaInicioReserva = pedirFechaPosteriorA(
+                            "   > Fecha Inicio (dd/MM/yyyy): ",
+                            fechaLimiteParaPedir,
+                            "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
+                    );
 
+                }
                 // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
                 fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
@@ -1617,8 +1629,16 @@ public class Pantalla {
 
         while(!flagFechas) {
             // 1. Pedir y Validar Fechas (Bucle del diagrama)
-            Date fechaReferencia = new Date(Long.MIN_VALUE);
-            fechaInicio = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
+            Date fechaReferencia = Date.from(Instant.now());
+
+            // Formatear la fecha de referencia en español (ej: "viernes 05 de diciembre de 2025")
+            SimpleDateFormat sdfEsp = new SimpleDateFormat("EEEE dd 'de' MMMM yyyy", new Locale("es", "ES"));
+            sdfEsp.setTimeZone(TimeZone.getDefault());
+            String fechaReferenciaStr = sdfEsp.format(fechaReferencia);
+
+            fechaInicio = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferenciaStr + "." );
+
+
             fechaFin = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
 
             // Validar lógica de negocio (Rango coherente)
@@ -1811,7 +1831,7 @@ public class Pantalla {
             }
 
             // 5. Guardar en lista temporal
-            DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
+            DtoHabitacion dtoHab = MapearHabitacion.mapearEntidadADto(habSeleccionada);
             DtoEstadia dtoEstadia = new DtoEstadia.Builder()
                     .dtoHabitacion(dtoHab)
                     .fechaCheckIn(fechaInicioOcupacion)
@@ -1906,7 +1926,7 @@ public class Pantalla {
                     System.out.print("ID a seleccionar (0 cancelar): ");
                     int id = leerOpcionNumerica();
                     if (id > 0 && id <= res.size()) {
-                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
+                        seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
                     }
                 }
             }
