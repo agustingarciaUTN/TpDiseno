@@ -2065,71 +2065,73 @@ public class Pantalla {
         boolean seguir = true;
 
         while (seguir) {
-            // Variable para decidir qué hacer (1=Cargar, 2=Salir)
-            int opcionSeleccionada = 1; // Por defecto asumimos "Cargar"
+            int opcionSeleccionada = 1; // Por defecto "Cargar"
 
-            // --- LÓGICA DE MENÚ CONDICIONAL ---
+            // --- MENÚ CONDICIONAL (Responsable vs Acompañantes) ---
             if (lista.isEmpty()) {
-                // CASO 1: ES EL RESPONSABLE
-                // No mostramos menú, vamos directo a pedir datos
-                System.out.println(Colores.AMARILLO + "\n--- DATOS DEL RESPONSABLE (Titular) ---" + Colores.RESET);
-                System.out.println("Ingrese los datos para buscar o dar de alta:");
-                // opcionSeleccionada se mantiene en 1 automáticamente
+                // CASO 1: PRIMER HUÉSPED (Responsable) - No preguntamos, vamos directo al grano
+                System.out.println("\n" + Colores.AMARILLO + "╔════════════════════════════════════════════════════╗");
+                System.out.println("║ 👤 DATOS DEL RESPONSABLE (Titular)                 ║");
+                System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+                System.out.println(Colores.AZUL + "ℹ️  Ingrese los datos para buscar o dar de alta:" + Colores.RESET);
+
             } else {
-                // CASO 2: SON ACOMPAÑANTES
-                // Aquí SÍ mostramos menú para preguntar si quiere seguir
-                System.out.println(Colores.CYAN + "\n--- SELECCIÓN DE ACOMPAÑANTE #" + lista.size() + " ---" + Colores.RESET);
-                System.out.println("(Actual: " + lista.size() + " huéspedes cargados)");
-                System.out.println(Colores.VERDE + "   [1]" + Colores.RESET + " Agregar otro acompañante");
-                System.out.println(Colores.ROJO  + "   [2]" + Colores.RESET + " Finalizar carga y continuar");
-                System.out.print(">> Opción: ");
+                // CASO 2: ACOMPAÑANTES - Menú de decisión
+                System.out.println("\n" + Colores.CYAN + "┌──────────────────────────────────────────────────┐");
+                System.out.printf("│ 👥 SELECCIÓN DE ACOMPAÑANTE #%-2d                  │%n", (lista.size() + 1));
+                System.out.println("└──────────────────────────────────────────────────┘" + Colores.RESET);
+                System.out.println("   (Actual: " + lista.size() + " huéspedes cargados en esta habitación)");
+
+                System.out.println(Colores.VERDE + "   [1]" + Colores.RESET + " ➕ Agregar otro acompañante");
+                System.out.println(Colores.ROJO  + "   [2]" + Colores.RESET + " ✅ Finalizar carga y continuar");
+                System.out.print("   >> Opción: ");
 
                 opcionSeleccionada = leerOpcionNumerica();
             }
 
             // --- PROCESAR OPCIÓN ---
             if (opcionSeleccionada == 2) {
-                // El usuario decidió terminar (solo válido si hay al menos 1, controlado por el if-else arriba)
-                break;
+                break; // Terminar carga
             } else if (opcionSeleccionada != 1) {
-                System.out.println(Colores.ROJO + "❌ Opción inválida." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Opción inválida." + Colores.RESET);
                 continue;
             }
 
-            // --- BLOQUE DE CARGA DE DATOS (Se ejecuta si es el 1ro o si eligió opción 1) ---
+            // --- BLOQUE DE BÚSQUEDA Y SELECCIÓN ---
             DtoHuesped seleccionado = null;
 
-            // 1. Pedir Criterios (Esto cumple con "simplemente pida los datos")
+            // 1. Pedir Criterios (Reutilizamos el método bonito del CU2)
             DtoHuesped criterios = solicitarCriteriosDeBusqueda();
 
-            // 2. Buscar en BD
+            System.out.println(Colores.AZUL + "🔄 Buscando..." + Colores.RESET);
             ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
 
             if (res.isEmpty()) {
-                System.out.println(Colores.AMARILLO + "⚠️ No encontrado. ¿Desea darlo de alta ahora? (SI/NO)" + Colores.RESET);
+                System.out.println(Colores.AMARILLO + "\n⚠️  No encontrado." + Colores.RESET);
+                System.out.print("¿Desea darlo de alta ahora? (SI/NO): ");
                 if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                    // Llamada al CU9 (Alta) y asumimos que al volver queremos usar ese huésped
+                    // Llamada al Alta
                     this.darDeAltaHuesped();
-                    // Nota: darDeAltaHuesped no retorna el objeto, así que pedimos buscarlo de nuevo rápido
-                    // O podrías modificar darDeAlta para que retorne el ID.
-                    // Para simplificar, hacemos que el usuario lo busque de nuevo con el DNI que acaba de crear:
-                    System.out.println("Por favor, re-confirme el documento para agregarlo a la estadía:");
-                    // ... lógica simplificada de re-busqueda ...
+                    System.out.println(Colores.AZUL + "\nℹ️  Por favor, busque nuevamente al huésped recién creado para confirmarlo:" + Colores.RESET);
+                    // Al hacer 'continue', el bucle vuelve a empezar y le pide los criterios de nuevo. Es un flujo natural.
+                    continue;
                 }
             } else {
-                // Si hay resultados, mostrar y seleccionar
+                // Resultados encontrados
                 if (res.size() == 1) {
-                    // Si es único, lo seleccionamos casi directo (confirmando)
+                    // Coincidencia única
                     Huesped h = res.get(0);
-                    System.out.println("Se encontró a: " + h.getApellido() + " " + h.getNombres());
-                    System.out.print("¿Es correcto? (SI/NO): ");
+                    System.out.println("\nSe encontró a: " + Colores.NEGRILLA + h.getApellido() + " " + h.getNombres() + Colores.RESET);
+                    System.out.println("DNI: " + h.getNroDocumento());
+                    System.out.print(Colores.VERDE + "¿Es correcto? (SI/NO): " + Colores.RESET);
+
                     if(scanner.nextLine().trim().equalsIgnoreCase("SI")){
                         seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(h);
                     }
                 } else {
-                    // Si hay varios homónimos
+                    // Múltiples coincidencias -> Tabla
                     mostrarListaDatosEspecificos(res);
-                    System.out.print("ID a seleccionar (0 cancelar): ");
+                    System.out.print("\nIngrese ID a seleccionar (0 para cancelar): ");
                     int id = leerOpcionNumerica();
                     if (id > 0 && id <= res.size()) {
                         seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
@@ -2137,17 +2139,17 @@ public class Pantalla {
                 }
             }
 
-            // 3. Agregar a la lista temporal de la habitación
+            // 3. Agregar a la lista temporal
             if (seleccionado != null) {
-                // Verificar duplicado local (en la misma habitación)
+                // Verificar duplicado en la misma habitación
                 DtoHuesped finalSeleccionado = seleccionado;
                 boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
 
                 if (yaEsta) {
-                    System.out.println(Colores.ROJO + "⚠️ ¡Este huésped ya está en la lista de esta habitación!" + Colores.RESET);
+                    System.out.println(Colores.ROJO + "     ❌ Error: ¡Este huésped ya está en la lista!" + Colores.RESET);
                 } else {
                     lista.add(seleccionado);
-                    System.out.println(Colores.VERDE + ">> Agregado: " + seleccionado.getApellido() + " " + seleccionado.getNombres() + Colores.RESET);
+                    System.out.println(Colores.VERDE + "     ✅ Agregado: " + seleccionado.getApellido() + " " + seleccionado.getNombres() + Colores.RESET);
                 }
             }
         }
@@ -2155,51 +2157,58 @@ public class Pantalla {
     }
 
     private void pintarHabitacionOcupada(Map<Habitacion, Map<Date, String>> grilla,
-                                         Date inicioOcupacion, Date finOcupacion, // Fechas de la selección actual (pueden ser null)
+                                         Date inicioOcupacion, Date finOcupacion,
                                          List<DtoEstadia> estadiasConfirmadas,
-                                         Habitacion seleccionActual) { // Puede ser null
+                                         Habitacion seleccionActual) {
 
+        // VOLVEMOS AL FORMATO LARGO
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // 1. Obtener límites de la grilla original para no romper el dibujo
         if (grilla == null || grilla.isEmpty()) return;
 
+        // 1. Obtener límites
         Date inicioGrilla = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
         Date finGrilla = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
 
-        // Convertimos a lista para mantener el orden
         List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
-        // Aseguramos el orden visual
         habitacionesOrdenadas.sort(Comparator.comparing(Habitacion::getTipoHabitacion).thenComparing(Habitacion::getNumero));
 
-        System.out.println("\n--- GRILLA ACTUALIZADA (PRE-VISUALIZACIÓN) ---");
+        System.out.println(Colores.CYAN + "\n   === 🗓️  GRILLA ACTUALIZADA (PRE-VISUALIZACIÓN) ===" + Colores.RESET);
 
-        // 2. Encabezados
-        imprimirEncabezadoTipos(habitacionesOrdenadas);
+        // 2. ENCABEZADOS
+        // Línea Superior (Ajustada para fecha larga)
+        System.out.print("   ┌──────────────"); // Más ancho para dd/MM/yyyy
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┬───────────");
+        System.out.println("┐");
 
-        System.out.print("   FECHA     ");
+        // Títulos de Columnas
+        System.out.print("   │    FECHA     ");
         for (Habitacion hab : habitacionesOrdenadas) {
-            // Resaltar la columna de la habitación que se está eligiendo ahora
+            String textoHab = "Hab " + hab.getNumero();
+
+            // Resaltamos columna activa
             if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
-                System.out.print("|" + Colores.VERDE + String.format(" %-9s ", "Hab " + hab.getNumero()) + Colores.RESET);
+                System.out.print("│" + Colores.VERDE + String.format(" %-9s ", textoHab) + Colores.RESET);
             } else {
-                System.out.print("|" + String.format(" %-9s ", "Hab " + hab.getNumero()));
+                System.out.print("│ " + String.format("%-9s", textoHab) + " ");
             }
         }
-        System.out.println("|");
+        System.out.println("│");
 
-        System.out.print("-------------");
-        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
-        System.out.println("+");
+        // Línea Divisoria
+        System.out.print("   ├──────────────");
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┼───────────");
+        System.out.println("┤");
 
-        // 3. Cuerpo de la grilla
+        // 3. CUERPO DE LA GRILLA
         LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = finGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         LocalDate actual = inicioLocal;
         while (!actual.isAfter(finLocal)) {
-            System.out.printf("%-12s ", actual.format(dtf));
+            // Columna Fecha (Ancho 12 para que entre dd/MM/yyyy)
+            System.out.printf("   │ %-12s ", actual.format(dtf));
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             for (Habitacion hab : habitacionesOrdenadas) {
@@ -2207,21 +2216,19 @@ public class Pantalla {
                 String color = Colores.RESET;
                 boolean esSeleccion = false;
 
-                // A. Verificar si es la SELECCIÓN ACTUAL (la que estoy escribiendo ahora)
+                // A. Selección Actual
                 if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
                     if (inicioOcupacion != null && finOcupacion != null) {
-                        // Pintamos solo si la fecha cae en el rango ingresado
                         if (!fechaFila.before(inicioOcupacion) && fechaFila.before(finOcupacion)) {
                             esSeleccion = true;
                         }
                     }
                 }
 
-                // B. Verificar si está en la lista de CONFIRMADAS (las del bucle anterior)
+                // B. Confirmadas previamente
                 if (!esSeleccion && estadiasConfirmadas != null) {
                     for (DtoEstadia dto : estadiasConfirmadas) {
                         if (dto.getDtoHabitacion().getNumero().equals(hab.getNumero())) {
-                            // Pintamos el rango de ese DTO
                             if (!fechaFila.before(dto.getFechaCheckIn()) && fechaFila.before(dto.getFechaCheckOut())) {
                                 esSeleccion = true;
                                 break;
@@ -2234,62 +2241,101 @@ public class Pantalla {
                     visual = "   * ";
                     color = Colores.VERDE;
                 } else {
-                    // C. Estado original de la base de datos
+                    // C. Estado Base
                     Map<Date, String> mapa = grilla.get(hab);
                     String estado = (mapa != null) ? mapa.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
 
+                    // Mantenemos tus letras originales
                     switch (estado) {
-                        case "OCUPADA" -> { visual = "   X   "; color = Colores.ROJO; }
-                        case "RESERVADA" -> { visual = "   R   "; color = Colores.AMARILLO; }
-                        case "FUERA DE SERVICIO" -> { visual = "   -   "; color = Colores.ROJO; }
-                        case "LIBRE" -> { visual = "   L   "; color = Colores.RESET; }
+                        case "OCUPADA" -> {
+                            visual = "   X   ";
+                            color = Colores.ROJO;
+                        }
+                        case "RESERVADA" -> {
+                            visual = "   R   ";
+                            color = Colores.AMARILLO;
+                        }
+                        case "FUERA DE SERVICIO" -> {
+                            visual = "   -   ";
+                            color = Colores.CYAN;
+                        }
+                        case "LIBRE" -> {
+                            visual = "   L   ";
+                            color = Colores.RESET;
+                        }
                     }
                 }
-                System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
+                System.out.print("│" + color + String.format("%-11s", visual) + Colores.RESET);
             }
-            System.out.println("|");
+            System.out.println("│");
             actual = actual.plusDays(1);
         }
-        System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [*] Selección Actual");
-    }
 
+        // Línea Inferior
+        System.out.print("   └──────────────");
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┴───────────");
+        System.out.println("┘");
+
+        System.out.println("\n   REFERENCIAS:  [L]ibre | " + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
+                + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | " + Colores.VERDE + "[*] Selección Actual" + Colores.RESET
+                + " | " + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
+    }
 
     // Metodo que imprime la fila superior con los TIPOS agrupados
     public void imprimirEncabezadoTipos(List<Habitacion> habitacionesOrdenadas) {
-        // Espacio vacío sobre la columna de fechas (13 espacios)
-        System.out.print("             ");
+        // Padding inicial para alinearse con la columna "FECHA" de la grilla (13 espacios)
+        String padding = "             ";
 
+        // 1. LÍNEA SUPERIOR (Dibujamos el techo de las cajas)
+        System.out.print(padding);
         int i = 0;
+        while (i < habitacionesOrdenadas.size()) {
+            Habitacion actual = habitacionesOrdenadas.get(i);
+            int contador = 0;
+
+            // Contamos ancho del grupo
+            for (int j = i; j < habitacionesOrdenadas.size(); j++) {
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
+                else break;
+            }
+
+            // Dibujamos techo: ┌───────────┐ (ajustado al ancho)
+            // Restamos 1 al ancho total porque el borde final de uno es el inicio del otro si queremos pegarlos,
+            // pero para cajas separadas usaremos estilo limpio.
+            // Ancho celda = 12. Ancho grupo = 12 * n.
+            // Usamos borde simple cian.
+            System.out.print(Colores.CYAN + "┌" + "─".repeat((contador * 12) - 1) + "┐" + Colores.RESET);
+
+            i += contador;
+        }
+        System.out.println();
+
+        // 2. LÍNEA DE TEXTO (Nombres de Tipos)
+        System.out.print(padding);
+        i = 0;
         while (i < habitacionesOrdenadas.size()) {
             Habitacion actual = habitacionesOrdenadas.get(i);
             String tipoActual = actual.getTipoHabitacion().getDescripcion();
 
-            // Contar cuántas habitaciones consecutivas son de este mismo tipo
             int contador = 0;
             for (int j = i; j < habitacionesOrdenadas.size(); j++) {
-                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) {
-                    contador++;
-                } else {
-                    break;
-                }
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
+                else break;
             }
 
-            // Calcular el ancho total de este grupo
-            // Cada celda de habitación ocupa 12 caracteres: "| " (2) + 9 (texto) + " " (1)
-            int anchoGrupo = contador * 12;
+            int anchoGrupo = contador * 12; // 12 caracteres por habitación
 
-            // Imprimir el nombre del tipo centrado en ese ancho, con bordes
-            // Usamos CYAN para destacar el tipo
-            System.out.print(Colores.CYAN + "|" + PantallaHelper.centrarTexto(tipoActual, anchoGrupo - 1) + Colores.RESET);
+            // Imprimimos texto centrado entre bordes verticales │
+            // Usamos -2 en el ancho para descontar los bordes "│" y "│" que simulan la caja
+            System.out.print(Colores.CYAN + "│" + PantallaHelper.centrarTexto(tipoActual, anchoGrupo - 2) + "│" + Colores.RESET);
 
-            // Saltar el índice
             i += contador;
         }
-        System.out.println("|"); // Cerrar la línea
+        System.out.println();
 
-        // Imprimir una línea separadora decorativa debajo de los tipos
-        System.out.print("             ");
+        // 3. LÍNEA INFERIOR (Cierre de las cajas)
+        System.out.print(padding);
         i = 0;
         while (i < habitacionesOrdenadas.size()) {
             Habitacion actual = habitacionesOrdenadas.get(i);
@@ -2298,11 +2344,13 @@ public class Pantalla {
                 if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
                 else break;
             }
-            // Dibuja "-----------"
-            System.out.print("+" + "-".repeat((contador * 12) - 1));
+
+            // Dibujamos piso: └───────────┘
+            System.out.print(Colores.CYAN + "└" + "─".repeat((contador * 12) - 1) + "┘" + Colores.RESET);
+
             i += contador;
         }
-        System.out.println("+");
+        System.out.println();
     }
 
 
