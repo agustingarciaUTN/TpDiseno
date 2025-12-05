@@ -1370,7 +1370,7 @@ public class Pantalla {
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
         // 1. LLAMADA AL CU5
-        System.out.println("Visualice el rango general para buscar disponibilidad:");
+        System.out.println(Colores.AZUL + "ℹ️  Visualice el rango general para buscar disponibilidad:" + Colores.RESET);
         Map<Habitacion, Map<Date, String>> grillaVista = mostrarEstadoHabitaciones();
 
         if (grillaVista == null) return; // Cancelado o sin datos
@@ -1380,7 +1380,9 @@ public class Pantalla {
 
         // 2. Bucle de Selección
         while (seguirAgregando) {
-            System.out.println("\n" + Colores.AMARILLO + "--- Nueva Selección ---" + Colores.RESET);
+            System.out.println("\n" + Colores.AMARILLO + "┌──────────────────────────────────────────────────┐");
+            System.out.println("│               ➕ NUEVA SELECCIÓN                 │");
+            System.out.println("└──────────────────────────────────────────────────┘" + Colores.RESET);
 
             // A. Selección de Habitación
             String entrada;
@@ -1396,9 +1398,9 @@ public class Pantalla {
                     continue;
                 }
 
-                // Sólo dígitos (permite varios dígitos)
+                // Sólo dígitos
                 if (!entrada.matches("^\\d+$")) {
-                    System.out.println(Colores.ROJO + "   ❌ Error: Debe ingresar sólo números." + Colores.RESET);
+                    System.out.println(Colores.ROJO + "     ❌ Error: Debe ingresar sólo números." + Colores.RESET);
                     continue;
                 }
 
@@ -1414,8 +1416,7 @@ public class Pantalla {
                 }
             }
 
-
-            // Validar que la habitación exista en la grilla que estamos viendo (o en la BD)
+            // Validar existencia
             Habitacion habSeleccionada = null;
             for (Habitacion h : grillaVista.keySet()) {
                 if (h.getNumero().equals(String.valueOf(nro))) {
@@ -1423,68 +1424,66 @@ public class Pantalla {
                     break;
                 }
             }
-            if(habSeleccionada.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitacion esta fuera de servicio." + Colores.RESET);
+
+
+            if (habSeleccionada == null) {
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
                 continue;
             }
-            if (habSeleccionada == null) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
+            // Ahora que sabemos que no es null, preguntamos el estado
+            if(habSeleccionada.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación está FUERA DE SERVICIO." + Colores.RESET);
                 continue;
             }
 
-            // B. Selección de Fechas ESPECÍFICAS para esta reserva
-            System.out.println(Colores.CYAN + "   Define el rango de fechas específico para reservar la habitacion " + nro + ":" + Colores.RESET);
+
+            // B. Selección de Fechas
+            System.out.println(Colores.CYAN + "\n   Define el rango de fechas específico para la Habitación " + nro + ":" + Colores.RESET);
 
             Date fechaInicioReserva = null;
             Date fechaFinReserva;
 
             try {
-                // 1. Pedir Fecha Inicio: Debe ser posterior a "ayer" (es decir, de hoy en adelante)
-                // Usamos Calendar para restar un día de forma segura y permitir seleccionar "HOY"
-                // Calculamos la menor fecha presente en la vista (inicioGrilla)
+                // Calculamos límites de la grilla para validar
                 Date inicioGrilla;
                 Optional<Date> minFechaOpt = grillaVista.values().stream()
                         .flatMap(m -> m.keySet().stream())
                         .min(Date::compareTo);
-                inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
+                inicioGrilla = minFechaOpt.orElse(new Date());
 
-                //Conseguimos el limite superior de la fecha de la grilla
                 Date finGrilla;
                 Optional<Date> maxFechaOpt = grillaVista.values().stream().flatMap(m->m.keySet().stream()).max(Date::compareTo);
                 finGrilla = maxFechaOpt.orElse(inicioGrilla);
 
-                // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
-                // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
                 LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 LocalDate limiteAnterior = inicioLocal.minusDays(1);
                 Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-                // Flag para chequear que no pide una fecha anterior a hoy
+                // 1. Pedir Inicio
                 fechaInicioReserva = pedirFechaEntre(
                         "   > Fecha Inicio (dd/MM/yyyy): ",
                         fechaLimiteParaPedir,  finGrilla ,
-                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista.");
+                        "La fecha debe estar dentro del rango visualizado.");
 
-
-                // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
+                // 2. Pedir Fin
                 fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
                         fechaInicioReserva, finGrilla,
-                        "La fecha de fin debe ser posterior a la fecha de inicio."
+                        "La fecha debe ser posterior al inicio y dentro del rango visualizado."
                 );
 
             } catch (CancelacionException e) {
-                System.out.println("Operación cancelada.");
+                System.out.println(Colores.ROJO + "Operación cancelada." + Colores.RESET);
                 return;
             }
-            // C. Validaciones de Negocio
 
-            // 1. Validar coherencia de fechas (GestorHabitacion)
+            // C. Validaciones de Negocio
+            // 1. Coherencia de fechas
             if (!gestorHabitacion.validarRangoFechas(fechaInicioReserva, fechaFinReserva)) {
                 continue;
             }
 
-            // 2. Validar disponibilidad REAL en BD (GestorReserva y GestorEstadia)
+            // 2. Disponibilidad REAL (BD)
             boolean ocupadaParcialmente = false;
             ZoneId zone = ZoneId.systemDefault();
             LocalDate inicio = fechaInicioReserva.toInstant().atZone(zone).toLocalDate();
@@ -1502,43 +1501,41 @@ public class Pantalla {
             boolean reservada = gestorReserva.estaReservadaEnFecha(String.valueOf(nro), fechaInicioReserva, fechaFinReserva);
 
             if (ocupada || ocupadaParcialmente) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
                 continue;
             } else if (reservada) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación ya tiene una RESERVA confirmada en esas fechas." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación ya tiene una RESERVA confirmada." + Colores.RESET);
                 continue;
             }
 
-            // 3. Validar que no la haya seleccionado ya en este mismo proceso (Lista temporal)
+            // 3. Validar duplicado en lista actual
             boolean yaEnLista = false;
             for(DtoReserva dto : listaParaReservar) {
-                if(dto.getIdHabitacion().equals(nro)) {
-                    // Check simple: si es la misma habitación, no dejamos (para simplificar UX)
+                if(dto.getIdHabitacion().equals(String.valueOf(nro))) { // Corrección de tipo: nro es int
                     yaEnLista = true; break;
                 }
             }
             if (yaEnLista) {
-                System.out.println(Colores.ROJO + "   ❌ Ya has seleccionado esta habitación en esta sesión." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: Ya has seleccionado esta habitación en esta sesión." + Colores.RESET);
                 continue;
             }
 
-            System.out.println(Colores.VERDE + "   ✅ ¡Habitación disponible!" + Colores.RESET);
+            System.out.println(Colores.VERDE + "     ✅ ¡Habitación disponible!" + Colores.RESET);
 
-            // D. Solicitar Datos del Responsable (Requerido por DtoReserva y GestorReserva)
-            // Esto es crucial porque DtoReserva lo pide obligatorio en GestorReserva.validarDatosReserva
-            System.out.println(Colores.AMARILLO + "\n   Datos del Responsable de la Reserva:" + Colores.RESET);
+            // D. Solicitar Datos del Responsable
+            System.out.println(Colores.AMARILLO + "\n   👤 Datos del Responsable de la Reserva:" + Colores.RESET);
             String nombreResp, apellidoResp, telefonoResp;
             try {
-                apellidoResp = pedirStringTexto("   > Apellido: ");
-                nombreResp = pedirStringTexto("   > Nombre: ");
-                // pedirTelefono devuelve Long, DtoReserva pide String. Hacemos la conversión.
-                telefonoResp = String.valueOf(pedirTelefono());
+                // Agregué colores a los prompts aquí también
+                apellidoResp = pedirStringTexto(Colores.VERDE + "   > Apellido: " + Colores.RESET);
+                nombreResp = pedirStringTexto(Colores.VERDE + "   > Nombre: " + Colores.RESET);
+                telefonoResp = String.valueOf(pedirTelefono()); // Asumiendo que pedirTelefono tiene su propio prompt
             } catch (CancelacionException e) {
-                System.out.println("Reserva cancelada.");
+                System.out.println(Colores.ROJO + "Reserva cancelada." + Colores.RESET);
                 return;
             }
 
-            // E. Crear DTO y agregar a la lista
+            // E. Crear DTO
             DtoReserva nuevaReserva = new DtoReserva.Builder()
                     .idHabitacion(String.valueOf(nro))
                     .fechaDesde(fechaInicioReserva)
@@ -1550,40 +1547,38 @@ public class Pantalla {
 
             listaParaReservar.add(nuevaReserva);
 
-            // F. Actualizar Visualización (Pintamos lo que seleccionó el usuario)
-            // Necesitamos pasar las fechas de la vista original para mantener el marco de referencia
+            // F. Actualizar Visualización
             Date inicioVista = grillaVista.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
             Date finVista = grillaVista.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
 
             imprimirGrilla(grillaVista, inicioVista, finVista, listaParaReservar);
 
             // G. Preguntar si sigue
-            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
+            boolean flagIngreso = true;
             while(flagIngreso) {
-                System.out.print("\n¿Desea reservar otra habitación? (SI/NO): ");
+                System.out.print(Colores.AMARILLO + "\n¿Desea reservar otra habitación? (SI/NO): " + Colores.RESET);
                 String resp = scanner.nextLine().trim();
                 if (resp.equalsIgnoreCase("SI")) {
                     seguirAgregando = true;
-                    flagIngreso = false; //no repetimos while
+                    flagIngreso = false;
                 } else if (resp.equalsIgnoreCase("NO")) {
                     seguirAgregando = false;
-                    flagIngreso = false; //no repetimos while
+                    flagIngreso = false;
                 } else {
-                    System.out.println("    ❌ Por favor ingrese SI o NO.");
-                    flagIngreso = true; //repetimos while
+                    System.out.println(Colores.ROJO + "     ❌ Por favor ingrese SI o NO." + Colores.RESET);
+                    flagIngreso = true;
                 }
             }
         }
 
         if (listaParaReservar.isEmpty()) {
-            System.out.println("Finalizando sin generar reservas.");
+            System.out.println(Colores.AMARILLO + "Finalizando sin generar reservas." + Colores.RESET);
             return;
         }
 
         // 3. Confirmación y Persistencia
-        System.out.println(Colores.CYAN + "\nGuardando reservas..." + Colores.RESET);
+        System.out.println(Colores.AZUL + "\n💾 Guardando reservas..." + Colores.RESET);
         try {
-            // Llamamos al gestor existente
             gestorReserva.crearReservas(listaParaReservar);
             System.out.println(Colores.VERDE + "✅ ¡Reservas registradas con ÉXITO!" + Colores.RESET);
         } catch (Exception e) {
@@ -1592,7 +1587,7 @@ public class Pantalla {
                 System.out.println(Colores.ROJO + "   Causa interna: " + e.getCause().getMessage() + Colores.RESET);
             }
         }
-        System.out.println("Volviendo a Menu Principal...");
+        System.out.println(Colores.CYAN + "\n--- Fin CU4 'Reservar Habitación' ---" + Colores.RESET);
         pausa();
     }
 
@@ -1712,10 +1707,11 @@ public class Pantalla {
             sdfEsp.setTimeZone(TimeZone.getDefault());
             String fechaReferenciaStr = sdfEsp.format(fechaReferencia);
 
-            fechaInicio = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferenciaStr + "." );
+            fechaInicio = pedirFechaPosteriorA("Desde Fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferenciaStr + "." );
 
+            String fechaInicioStr = sdfEsp.format(fechaInicio);
 
-            fechaFin = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
+            fechaFin = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioStr + ".");
 
             // Validar lógica de negocio (Rango coherente)
             flagFechas = gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
