@@ -412,8 +412,9 @@ public class Pantalla {
                             }
                         } // Fin bucle verificacionPendiente
 
-                        //Si no existen duplicados (o se aceptaron), INSERT/UPDATE
+                        //Si no existen duplicado (o se desea sobreescribirlo), INSERT/UPDATE
                         gestorHuesped.upsertHuesped(datosIngresados);
+
                         System.out.println("\n" + Colores.VERDE + "✅ ¡El huésped ha sido guardado exitosamente!" + Colores.RESET);
 
                         // Luego del exito del alta, se pregunta si se desea cargar otro huesped
@@ -581,7 +582,8 @@ public class Pantalla {
         }
     }
 
-//===================== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ========================
+
+    //===================== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ========================
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
     private String pedirStringComplejo(String mensaje) throws CancelacionException {
@@ -1115,7 +1117,7 @@ public class Pantalla {
                 // lógica de negocio
                 Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
 
-                // Mensaje temporal
+                // Mensaje de ejecucion de CU10
                 System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
                 System.out.println("║   🚧 FUNCIONALIDAD CASO DE USO 10 EN PROGRESO 🚧   ║");
                 System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
@@ -1151,7 +1153,6 @@ public class Pantalla {
             columna = leerOpcionNumerica();
 
             if (columna < 1 || columna > 4) {
-                // Eliminamos el if(columna != -1) para que SIEMPRE avise del error, incluso con Enter vacío
                 System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
             }
             else {
@@ -1251,9 +1252,8 @@ public class Pantalla {
 
     }
 
-    /**
-     * METODO ORQUESTADOR OPTIMIZADO (Carga masiva)
-     */
+
+    // METODO ORQUESTADOR OPTIMIZADO (Carga masiva)
     private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
 
         System.out.println("Recuperando datos del servidor..."); // Feedback de carga
@@ -1304,7 +1304,6 @@ public class Pantalla {
                         // C. Buscar en lista de Reservas (Memoria)
                         boolean reservada = reservasHab.stream().anyMatch(r ->
                                         !fechaActual.before(r.getFechaDesde()) && fechaActual.before(r.getFechaHasta())
-                                // O ajusta la lógica de fechas exacta según tu regla de negocio (< vs <=)
                         );
 
                         if (reservada) estado = "RESERVADA";
@@ -1317,13 +1316,13 @@ public class Pantalla {
         return grilla;
     }
 
-    // CU4: Reservar Habitación (ACTUALIZADO)
+    // CU4: Reservar Habitación
     public void reservarHabitacion() throws Exception {
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           🛏️  RESERVAR HABITACIÓN (CU4)            ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        // 1. LLAMADA AL CU5 (Para ver el panorama general primero)
+        // 1. LLAMADA AL CU5
         System.out.println("Visualice el rango general para buscar disponibilidad:");
         Map<Habitacion, Map<Date, String>> grillaVista = mostrarEstadoHabitaciones();
 
@@ -1410,7 +1409,7 @@ public class Pantalla {
                 System.out.println("Operación cancelada.");
                 return;
             }
-            // C. Validaciones de Negocio (Usando tus Gestores)
+            // C. Validaciones de Negocio
 
             // 1. Validar coherencia de fechas (GestorHabitacion)
             if (!gestorHabitacion.validarRangoFechas(fechaInicioReserva, fechaFinReserva)) {
@@ -1548,7 +1547,6 @@ public class Pantalla {
         }
         System.out.println("|");
 
-        // Línea separadora simple
         System.out.print("-------------");
         for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
         System.out.println("+");
@@ -1566,7 +1564,7 @@ public class Pantalla {
                 String visual = "   ?   ";
                 String color = Colores.RESET;
 
-                // --- Lógica de Pintado ACTUALIZADA ---
+
                 boolean esSeleccion = false;
 
                 if (seleccion != null) {
@@ -1582,7 +1580,7 @@ public class Pantalla {
                         }
                     }
                 }
-                // -------------------------------------
+
 
                 if (esSeleccion) {
                     visual = "   * "; // Marca visual de "Tu Selección"
@@ -1623,6 +1621,7 @@ public class Pantalla {
                + " | " + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
     }
 
+
     // CU5: Mostrar Estado de Habitaciones
     // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
     public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() throws CancelacionException {
@@ -1654,7 +1653,7 @@ public class Pantalla {
         }
         System.out.println("\nProcesando estados...");
 
-        // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
+        // 2. Generar la grilla llamando a los gestores
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
@@ -1697,7 +1696,6 @@ public class Pantalla {
                 LocalDate ingresadaLocal = fechaIngresada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
                 // Validamos: La fecha ingresada debe ser estrictamente posterior a la base
-                // TRUCO: Si quieres permitir el MISMO día, cambia 'isAfter' por '!ingresadaLocal.isBefore(baseLocal)'
                 if (ingresadaLocal.isAfter(baseLocal)) {
                     return fechaIngresada;
                 } else {
@@ -1798,7 +1796,7 @@ public class Pantalla {
                     continue;
                 }
 
-                // 2. INMEDIATAMENTE PEDIR FECHAS (Esto es lo que faltaba)
+                // 2. PEDIR FECHAS
                 System.out.println(">> Defina el rango para la habitación " + nro + ":");
 
                 // Truco: Usamos fechas muy antiguas/lejanas como límites para que 'pedirFechaFutura'
@@ -1854,7 +1852,7 @@ public class Pantalla {
             estadiasParaProcesar.add(dtoEstadia);
             System.out.println(">> Selección guardada.");
 
-            // 6. REIMPRIMIR LA GRILLA (Tu requerimiento)
+            // 6. REIMPRIMIR LA GRILLA
             // Mostramos todo lo acumulado hasta ahora + la nueva selección
             pintarHabitacionOcupada(grilla, null, null, estadiasParaProcesar, null);
 
@@ -2038,7 +2036,6 @@ public class Pantalla {
                 if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
                     if (inicioOcupacion != null && finOcupacion != null) {
                         // Pintamos solo si la fecha cae en el rango ingresado
-                        // (!before && before para intervalo [inicio, fin))
                         if (!fechaFila.before(inicioOcupacion) && fechaFila.before(finOcupacion)) {
                             esSeleccion = true;
                         }
@@ -2082,64 +2079,8 @@ public class Pantalla {
         System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [*] Selección Actual");
     }
 
-    private String pedirDocumentoSinExcepcion(TipoDocumento tipo){
-        String NroDocumento = null;
-        boolean valido = false;
 
-        // Definimos las reglas (Regex)
-        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
-        String regexNumerico = "^\\d{7,8}$";
-        // Pasaporte: Letras y números, entre 6 y 15 caracteres
-        String regexPasaporte = "^[A-Z0-9]{6,15}$";
-        // Otro: Cualquier cosa entre 4 y 20 caracteres
-        String regexOtro = "^.{4,20}$";
-
-        while (!valido) {
-            System.out.print("Número de Documento: ");
-            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
-
-
-            if (entrada.isEmpty()) {
-                // Si es obligatorio (que lo es), no dejamos pasar vacío
-                System.out.println("Error: El documento es obligatorio.");
-                continue;
-            }
-
-            // Validamos según el tipo seleccionado
-            switch (tipo) {
-                case DNI:
-                case LE:
-                case LC:
-                    if (entrada.matches(regexNumerico)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
-                    }
-                    break;
-                case PASAPORTE:
-                    if (entrada.matches(regexPasaporte)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
-                    }
-                    break;
-                default: // OTRO
-                    if (entrada.matches(regexOtro)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato inválido.");
-                    }
-                    break;
-            }
-
-            if (valido) {
-                NroDocumento = entrada;
-            }
-        }
-        return NroDocumento;
-    }
-
-    // Método que imprime la fila superior con los TIPOS agrupados
+    // Metodo que imprime la fila superior con los TIPOS agrupados
     public void imprimirEncabezadoTipos(List<Habitacion> habitacionesOrdenadas) {
         // Espacio vacío sobre la columna de fechas (13 espacios)
         System.out.print("             ");
@@ -2147,7 +2088,7 @@ public class Pantalla {
         int i = 0;
         while (i < habitacionesOrdenadas.size()) {
             Habitacion actual = habitacionesOrdenadas.get(i);
-            String tipoActual = actual.getTipoHabitacion().getDescripcion(); // O .name() si prefieres
+            String tipoActual = actual.getTipoHabitacion().getDescripcion();
 
             // Contar cuántas habitaciones consecutivas son de este mismo tipo
             int contador = 0;

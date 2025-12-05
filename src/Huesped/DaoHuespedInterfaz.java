@@ -22,7 +22,6 @@ public interface DaoHuespedInterfaz {
 
     // Métodos auxiliares necesarios
     int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento);
-    boolean existeHuesped(TipoDocumento tipo, String nroDocumento);
 
 
     }

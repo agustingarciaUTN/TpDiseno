@@ -25,7 +25,6 @@ public class GestorHuesped {
     // 2. Constructor PRIVADO
     // Nadie puede hacer "new GestorReserva()" desde afuera.
     private GestorHuesped() {
-        // ¡IMPORTANTE! Aquí obtenemos las instancias de los DAO
         this.daoHuesped = DaoHuesped.getInstance();
         this.daoDireccion = DaoDireccion.getInstance();
 
@@ -92,6 +91,7 @@ public class GestorHuesped {
         // Si existe, nos devolverá el DTO con los datos de la BD (Nombre viejo, apellido viejo, etc).
 
         // Si obtenerHuesped devuelve algo distinto de null, es el duplicado real.
+        //Llamamos al daoHuesped para que busque en la bdd con los datos ingresados
         return daoHuesped.obtenerHuesped(datos.getTipoDocumento(), datos.getNroDocumento());
     }
 
@@ -110,7 +110,7 @@ public class GestorHuesped {
     public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
 
         // 1. Verificamos existencia (alt)
-        boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
+        boolean existe = dtoHuesped != null;
 
         // A. Convertir DTOs a Entidades (Usando los mappers)
         Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());
@@ -131,7 +131,7 @@ public class GestorHuesped {
         } else {
             // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
 
-            // 1. Recuperar ID de la dirección vieja
+            // 1. Recuperar ID de la dirección vieja para poder sobreescribirla
             int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
 
             // 2. Actualizar la Dirección si existe

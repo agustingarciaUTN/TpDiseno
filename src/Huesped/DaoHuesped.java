@@ -85,7 +85,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 ps.executeUpdate();
             }
 
-            // Actualizar satélites: Borrar viejos e insertar nuevos (Estrategia simple y segura)
+            // Actualizar satélites: Borrar viejos e insertar nuevos
             borrarSatelites(conn, huesped.getTipoDocumento().name(), huesped.getNroDocumento());
             insertarSatelites(conn, huesped);
 
@@ -176,7 +176,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- OBTENER INDIVIDUAL ---
     @Override
     public DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT * FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
+        String sql = "SELECT * FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";//Buscamos por tipo y numero de documento
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
@@ -184,19 +184,18 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             try (ResultSet rs = ps.executeQuery()) {
                 //Procesar el ResultSet
                 if (rs.next()) {
-                    return mapearHuesped(conn, rs);
+                    return mapearHuesped(conn, rs);//Mapeamos de result set a dto
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return null;//Retornamos el dto del huesped encontrado en la bdd
     }
 
     // --- ELIMINAR ---
     @Override
-    public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {
-        // Nota: Los satélites deberían borrarse por CASCADE en la BD, si no, hay que hacerlo manual aquí
+    public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {//Este metodo no es utilizado en el tp de diseño
         String sql = "DELETE FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -287,7 +286,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         List<String> emails = new ArrayList<>();
         List<String> ocups = new ArrayList<>();
 
-        // Ejemplo Teléfonos
+        // Teléfonos
         try (PreparedStatement ps = conn.prepareStatement("SELECT telefono FROM telefono_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -295,7 +294,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 while (rsSub.next()) tels.add(Long.parseLong(rsSub.getString("telefono")));
             }
         }
-        // Ejemplo Emails
+        // Emails
         try (PreparedStatement ps = conn.prepareStatement("SELECT email FROM email_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -303,7 +302,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 while (rsSub.next()) emails.add(rsSub.getString("email"));
             }
         }
-        // Ejemplo Ocupaciones
+        // Ocupaciones
         try (PreparedStatement ps = conn.prepareStatement("SELECT ocupacion FROM ocupacion_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -315,17 +314,17 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         // 3. Cargar Dirección
         DtoDireccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
 
-        // 4. Preparar Enumerados de forma segura
+        // 4. Preparar Enums de forma segura
         PosIva pIva = null;
         try {
-            // AQUÍ ESTÁ EL CAMBIO CLAVE: Usamos fromString para normalizar "EXENTO" -> Exento
+            // Usamos fromString para normalizar "EXENTO" -> Exento
             String posIvaDb = rs.getString("pos_iva");
             if (posIvaDb != null) {
                 pIva = PosIva.fromString(posIvaDb);
             }
         } catch (Exception e) {
             System.err.println("Advertencia: No se pudo mapear PosIva: " + rs.getString("pos_iva"));
-            // Dejamos pIva como null o asignamos un default si es crítico
+
         }
 
         TipoDocumento tDoc = null;
@@ -357,21 +356,6 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         DtoHuesped h = obtenerHuesped(tipo, nroDocumento);
         if(h != null && h.getDtoDireccion() != null) return h.getDtoDireccion().getId();
         return -1;
-    }
-
-
-    //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
-    @Override
-    public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, tipo.name());
-            ps.setString(2, nroDocumento);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) { return false; }
     }
 
 
