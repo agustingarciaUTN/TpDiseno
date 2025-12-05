@@ -1883,7 +1883,8 @@ public class Pantalla {
                 for (DtoEstadia previa : estadiasParaProcesar) {
                     if (previa.getDtoHabitacion().getNumero().equals(candidata.getNumero())) {
                         if (fechaInicioOcupacion.before(previa.getFechaCheckOut()) && fechaFinOcupacion.after(previa.getFechaCheckIn())) {
-                            ocupadaEnLote = true; break;
+                            ocupadaEnLote = true;
+                            break;
                         }
                     }
                 }
@@ -1896,8 +1897,20 @@ public class Pantalla {
                     System.out.println("AVISO: Habitación RESERVADA. ¿Es el titular?");
                     System.out.println("\n" + "Ingrese una opcion numerica:");
                     System.out.println("1. SI (OCUPAR) / 2. NO (CANCELAR)");
+
                     int opcionNumerica = leerOpcionNumerica();
-                    if (opcionNumerica == 1) {habSeleccionada = candidata;}
+                    while(true) {
+                        if (opcionNumerica == 1) {
+                            habSeleccionada = candidata;
+                            break;
+                        } else if (opcionNumerica == 2) {
+                            System.out.println(" ===============================");
+                            System.out.println("       Reserva cancelada");
+                            System.out.println(" ===============================" + "\n");
+                            break;
+                        }
+                        System.out.println(Colores.ROJO + "     POR FAVOR INGRESE 1 o 2" + Colores.RESET);
+                    }
                 } else {
                     habSeleccionada = candidata; // Libre y fechas válidas -> ÉXITO
                 }
