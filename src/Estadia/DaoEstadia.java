@@ -165,7 +165,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
         // se referían a las columnas check-in/out
         String sql = "SELECT 1 FROM estadia e " +
                 "JOIN estadia_huesped eh ON e.id_estadia = eh.id_estadia " +
-                "WHERE eh.tipo_documento = ? AND eh.nro_documento = ? " +
+                "WHERE eh.tipo_documento = ?::\"Tipo_Documento\" AND eh.nro_documento = ? " +
                 "AND e.\"fecha_check-in\" < ? AND (e.\"fecha_check-out\" IS NULL OR e.\"fecha_check-out\" > ?) " +
                 "LIMIT 1";
 

@@ -18,11 +18,12 @@ public interface DaoHuespedInterfaz {
     ArrayList<DtoHuesped> obtenerTodosLosHuespedes();
 
     // Búsqueda por Criterio (Recibe filtros sueltos para no forzar una Entidad inválida)
-    ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios);
+    ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(Huesped criterios);
+
+    boolean existeHuesped(TipoDocumento tipo, String nroDocumento);
 
     // Métodos auxiliares necesarios
     int obtenerIdDireccion(TipoDocumento tipo, String nroDocumento);
-    boolean existeHuesped(TipoDocumento tipo, String nroDocumento);
 
 
     }

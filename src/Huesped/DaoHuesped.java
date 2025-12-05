@@ -8,7 +8,6 @@ import enums.PosIva;
 import enums.TipoDocumento;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class DaoHuesped implements DaoHuespedInterfaz {
@@ -85,7 +84,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 ps.executeUpdate();
             }
 
-            // Actualizar satélites: Borrar viejos e insertar nuevos (Estrategia simple y segura)
+            // Actualizar satélites: Borrar viejos e insertar nuevos
             borrarSatelites(conn, huesped.getTipoDocumento().name(), huesped.getNroDocumento());
             insertarSatelites(conn, huesped);
 
@@ -100,11 +99,11 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     }
 
     // --- BUSCAR POR CRITERIO ---
+    //Si bien estos 2 metodos podrian ser "salteados" los dejamos para posibles futuros usos
     @Override
-    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios) {
+    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(Huesped criterios) {
         return ejecutarConsultaBusqueda(criterios);
     }
-
     // --- OBTENER TODOS ---
     @Override
     public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
@@ -113,10 +112,10 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     }
 
     // --- METODO COMÚN DE BÚSQUEDA  ---
-    private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(DtoHuesped criterios) {
+    private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(Huesped criterios) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
 
-        // SQL BLINDADO: Usamos LEFT JOINs para traer datos satélite en una sola query.
+        // SQL: Usamos LEFT JOINs para traer datos satélite en una sola query.
         StringBuilder sql = new StringBuilder(
                 "SELECT h.apellido, h.nombres, h.tipo_documento, h.numero_documento, h.cuit, h.nacionalidad, " +
                         "h.fecha_nacimiento, h.id_direccion, h.pos_iva, " +
@@ -124,15 +123,16 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                         "MAX(o.ocupacion) as ocupacion, " +
                         "MAX(e.email) as email " +
                         "FROM huesped h " +
-                        // JOINs con condición UPPER para asegurar match aunque haya diferencias de mayúsculas
-                        "LEFT JOIN email_huesped e ON h.tipo_documento = e.tipo_documento AND UPPER(h.numero_documento) = UPPER(e.nro_documento) " +
-                        "LEFT JOIN telefono_huesped t ON h.tipo_documento = t.tipo_documento AND UPPER(h.numero_documento) = UPPER(t.nro_documento) " +
-                        "LEFT JOIN ocupacion_huesped o ON h.tipo_documento = o.tipo_documento AND UPPER(h.numero_documento) = UPPER(o.nro_documento) " +
+
+                        "LEFT JOIN email_huesped e ON UPPER(h.tipo_documento::text) = UPPER(e.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(e.nro_documento) " +
+                        "LEFT JOIN telefono_huesped t ON UPPER(h.tipo_documento::text) = UPPER(t.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(t.nro_documento) " +
+                        "LEFT JOIN ocupacion_huesped o ON UPPER(h.tipo_documento::text) = UPPER(o.tipo_documento::text) AND UPPER(h.numero_documento) = UPPER(o.nro_documento) " +
+
                         "WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
 
-        // Aplicar filtros si existen
+        // Aplicar filtros si existen, sino se traen todos los huespedes
         if (criterios != null) {
             if (criterios.getApellido() != null && !criterios.getApellido().isEmpty()) {
                 sql.append(" AND h.apellido ILIKE ?");
@@ -144,7 +144,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
             if (criterios.getTipoDocumento() != null) {
                 sql.append(" AND h.tipo_documento = ?::\"Tipo_Documento\"");
-                params.add(criterios.getTipoDocumento().name());
+                params.add(criterios.getTipoDocumento());
             }
             if (criterios.getNroDocumento() != null && !criterios.getNroDocumento().isEmpty() && !criterios.getNroDocumento().equals("0")) {
                 sql.append(" AND h.numero_documento LIKE ?");
@@ -176,7 +176,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- OBTENER INDIVIDUAL ---
     @Override
     public DtoHuesped obtenerHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT * FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
+        String sql = "SELECT * FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";//Buscamos por tipo y numero de documento
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tipo.name());
@@ -184,7 +184,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             try (ResultSet rs = ps.executeQuery()) {
                 //Procesar el ResultSet
                 if (rs.next()) {
-                    return mapearHuesped(conn, rs);
+                    return mapearHuesped(conn, rs);//Mapeamos de result set a dto y Retornamos el dto del huesped encontrado en la bdd
                 }
             }
         } catch (SQLException e) {
@@ -195,8 +195,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- ELIMINAR ---
     @Override
-    public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {
-        // Nota: Los satélites deberían borrarse por CASCADE en la BD, si no, hay que hacerlo manual aquí
+    public boolean eliminarHuesped(TipoDocumento tipo, String nroDocumento) {//Este metodo no es utilizado en el tp de diseño
         String sql = "DELETE FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -209,6 +208,32 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
+
+    //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
+
+
+
+    @Override
+    public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
+        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
+
+
+        try (Connection conn = Conexion.getConnection();
+
+
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+
+            ps.setString(1, tipo.name());
+
+
+            ps.setString(2, nroDocumento);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) { return false; }
+    }
     // --- MÉTODOS AUXILIARES (SATÉLITES y MAPEO) ---
 
     private void insertarSatelites(Connection conn, Huesped h) throws SQLException {
@@ -287,7 +312,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         List<String> emails = new ArrayList<>();
         List<String> ocups = new ArrayList<>();
 
-        // Ejemplo Teléfonos
+        // Teléfonos
         try (PreparedStatement ps = conn.prepareStatement("SELECT telefono FROM telefono_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -295,7 +320,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 while (rsSub.next()) tels.add(Long.parseLong(rsSub.getString("telefono")));
             }
         }
-        // Ejemplo Emails
+        // Emails
         try (PreparedStatement ps = conn.prepareStatement("SELECT email FROM email_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -303,7 +328,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
                 while (rsSub.next()) emails.add(rsSub.getString("email"));
             }
         }
-        // Ejemplo Ocupaciones
+        // Ocupaciones
         try (PreparedStatement ps = conn.prepareStatement("SELECT ocupacion FROM ocupacion_huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND nro_documento=?")) {
             ps.setString(1, tipoStr);
             ps.setString(2, nroDoc);
@@ -315,17 +340,17 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         // 3. Cargar Dirección
         DtoDireccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
 
-        // 4. Preparar Enumerados de forma segura
+        // 4. Preparar Enums de forma segura
         PosIva pIva = null;
         try {
-            // AQUÍ ESTÁ EL CAMBIO CLAVE: Usamos fromString para normalizar "EXENTO" -> Exento
+            // Usamos fromString para normalizar "EXENTO" -> Exento
             String posIvaDb = rs.getString("pos_iva");
             if (posIvaDb != null) {
                 pIva = PosIva.fromString(posIvaDb);
             }
         } catch (Exception e) {
             System.err.println("Advertencia: No se pudo mapear PosIva: " + rs.getString("pos_iva"));
-            // Dejamos pIva como null o asignamos un default si es crítico
+
         }
 
         TipoDocumento tDoc = null;
@@ -357,21 +382,6 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         DtoHuesped h = obtenerHuesped(tipo, nroDocumento);
         if(h != null && h.getDtoDireccion() != null) return h.getDtoDireccion().getId();
         return -1;
-    }
-
-
-    //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
-    @Override
-    public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
-        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, tipo.name());
-            ps.setString(2, nroDocumento);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) { return false; }
     }
 
 

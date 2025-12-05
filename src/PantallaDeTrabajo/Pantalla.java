@@ -8,7 +8,9 @@ import Huesped.*;
 import Reserva.DtoReserva;
 import Reserva.GestorReserva;
 import Utils.Colores;
+import Utils.Mapear.MapearHabitacion;
 import Utils.Mapear.MapearHuesped;
+import enums.EstadoHabitacion;
 import enums.PosIva;
 import enums.TipoDocumento;
 import Usuario.*;
@@ -64,10 +66,11 @@ public class Pantalla {
         if (autenticarUsuario()) {
             //Si la autenticacion es exitosa, mostrar menu principal
             mostrarMenuPrincipal();
-        } else {
+        } else {//Si no, mensaje de error
             System.out.println(Colores.ROJO + "❌ No se pudo acceder al sistema." + Colores.RESET);
         }
 
+        //Mensaje de fin de sistema
         System.out.println("\n" + Colores.CYAN + "========================================");
         System.out.println("        👋 FIN DEL SISTEMA");
         System.out.println("========================================" + Colores.RESET);
@@ -78,20 +81,19 @@ public class Pantalla {
         System.out.println(Colores.NEGRILLA + "🔐 AUTENTICACION DE USUARIO" + Colores.RESET);
         System.out.println(Colores.CYAN + "   -------------------------" + Colores.RESET + "\n");
 
-        boolean autenticacionExitosa = false;
+        boolean autenticacionExitosa = false;//Bandera para while de autenticacion
 
         while (!autenticacionExitosa) {
-            //Paso 2: El sistema presenta la pantalla para autenticar al usuario
             System.out.println("Por favor, ingrese sus credenciales:");
 
-            //Paso 3: El actor ingresa su nombre (en forma visible) y su contraseña (oculta)
+            //El actor ingresa su nombre y su contraseña
             System.out.print(Colores.VERDE + "   👤 Usuario: " + Colores.RESET);
-            String nombre = scanner.nextLine().trim();
+            String nombre = scanner.nextLine().trim();//Ingreso de nombre de usuario
 
             System.out.print(Colores.VERDE + "   🔑 Contraseña: " + Colores.RESET);
-            String contrasenia = scanner.nextLine(); //en consola no se puede ocultar realmente
+            String contrasenia = scanner.nextLine(); //Ingreso de contraseña
 
-            //Validar con el gestor
+            //Validar con el gestor las credenciales ingresadas
             boolean credencialesValidas = gestorUsuario.autenticarUsuario(nombre, contrasenia);
 
             if (credencialesValidas) {
@@ -99,47 +101,55 @@ public class Pantalla {
                 this.usuarioAutenticado = true;
                 this.nombreUsuarioActual = nombre;
                 System.out.println("\n" + Colores.VERDE + "✅ ¡Autenticación exitosa! Bienvenido, " + nombre + Colores.RESET + "\n");
-                autenticacionExitosa = true;
+                autenticacionExitosa = true;//Para salir del while
             } else {
-                //Paso 3.A: El usuario o la contraseña son inválidos
-                //Paso 3.A.1: El sistema muestra el mensaje de error
+                //El usuario o la contraseña son inválidos
+                //El sistema muestra un mensaje de error
                 System.out.println("\n" + Colores.ROJO + "╔═════════════════════════════════════════════╗");
                 System.out.println("║ ❌ ERROR: Usuario o contraseña inválidos    ║");
                 System.out.println("╚═════════════════════════════════════════════╝" + Colores.RESET + "\n");
 
-                //Paso 3.A.2: El actor cierra la pantalla de error
-                System.out.print("Presione " + Colores.NEGRILLA + "ENTER" + Colores.RESET + " para continuar...");
-                System.out.print("\033[H\033" +
-                        "[2J");
-                System.out.flush();
-                scanner.nextLine();
 
-                //Paso 3.A.3: El sistema blanquea los campos (se hace automáticamente al repetir el ciclo)
+                int opcion = -1;
+                boolean opcionValida = false;
 
-                //Preguntar qué desea hacer
-                System.out.println("\n¿Qué desea hacer?");
-                System.out.println(Colores.AMARILLO + " [1]" + Colores.RESET + " 🔄 Volver a ingresar credenciales");
-                System.out.println(Colores.AMARILLO + " [2]" + Colores.RESET + " 🚪 Cerrar el sistema");
-                System.out.print(">> Ingrese una opción: ");
+                // Seguimos preguntando hasta que ingrese 1 o 2
+                while (!opcionValida) {
+                    System.out.println("\n¿Qué desea hacer?");
+                    System.out.println(Colores.AMARILLO + " [1]" + Colores.RESET + " 🔄 Volver a ingresar credenciales");
+                    System.out.println(Colores.AMARILLO + " [2]" + Colores.RESET + " 🚪 Cerrar el sistema");
+                    System.out.print(">> Ingrese una opción: ");
 
-                int opcion;
-                try {
-                    opcion = scanner.nextInt();
-                    scanner.nextLine(); //consumir salto de linea
-                } catch (Exception e) {
-                    scanner.nextLine(); //limpiar buffer
-                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
-                    continue;
+                    try {
+                        String entrada = scanner.nextLine().trim();
+
+                        if (entrada.isEmpty()) {
+                            // Si da Enter vacío, avisamos y repetimos
+                            System.out.println(Colores.ROJO + "⚠️  Debe ingresar una opción." + Colores.RESET);
+                            continue;
+                        }
+
+                        opcion = Integer.parseInt(entrada);
+
+                        if (opcion == 1 || opcion == 2) {
+                            opcionValida = true; //Salimos del bucle
+                        } else {
+                            System.out.println(Colores.ROJO + "⚠️  Opción inválida. Ingrese 1 o 2." + Colores.RESET);
+                        }
+
+                    } catch (NumberFormatException e) {
+                        System.out.println(Colores.ROJO + "⚠️  Error: Debe ingresar un número." + Colores.RESET);
+                    }
                 }
 
+                //Accion final
                 if (opcion == 2) {
-                    System.out.println("\nCerrando el sistema...");
-                    return false; //Sale sin autenticar
-                } else if (opcion == 1) {
-                    System.out.println(Colores.AZUL + "\n-- Intente nuevamente --\n" + Colores.RESET);
-                    //Paso 3.A.4: El CU continua en el paso 2 (se repite el while)
+                    System.out.println(Colores.AZUL + "\nCerrando el sistema..." + Colores.RESET);
+                    return false; // Sale del metodo y cierra
                 } else {
-                    System.out.println(Colores.ROJO + "\n⚠️ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
+                    // Opción 1
+                    System.out.println(Colores.AZUL + "\n-- Intente nuevamente --\n" + Colores.RESET);
+                    //Vuelve a ingresar credenciales
                 }
             }
         }
@@ -149,19 +159,19 @@ public class Pantalla {
 
     //METODO PARA MOSTRAR MENU PRINCIPAL
     private void mostrarMenuPrincipal() throws Exception {
-        //Paso 4: El sistema presenta la pantalla principal
-        boolean salir = false;
+
+        boolean salir = false;//Bandera para ejecucion del while. Ademas, para entrar, debe estar autorizado
 
         while (!salir && usuarioAutenticado) {
             System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
             System.out.println("║                MENU PRINCIPAL                      ║");
             System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-            // Datos del usuario con ícono
+            // Datos del usuario
             System.out.println(Colores.VERDE + "   👤 Usuario activo: " + Colores.NEGRILLA + nombreUsuarioActual + Colores.RESET);
             System.out.println(Colores.CYAN + "   ──────────────────────────────────────────────────" + Colores.RESET);
 
-            // Opciones con colores y emojis
+            // Opciones de CU
             System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " 🔍 Buscar huésped (CU2)");
             System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " 🛏️  Reservar Habitación (CU4)");
             System.out.println(Colores.AMARILLO + "   [3]" + Colores.RESET + " 📝 Dar de alta huésped (CU9)");
@@ -173,7 +183,7 @@ public class Pantalla {
 
             int opcion = -1;
             try {
-                // CORRECCIÓN: Leemos toda la línea como String
+                //Leemos toda la línea como String
                 String entrada = scanner.nextLine().trim();
 
                 // Si dió Enter vacío, lanzamos error manualmente para que caiga en el catch
@@ -192,7 +202,7 @@ public class Pantalla {
 
             System.out.println();
 
-            switch (opcion) {
+            switch (opcion) {//Switch para derivar a la ejecucion de cada caso de uso
                 case 1:
                     buscarHuesped();
                     break;
@@ -203,64 +213,88 @@ public class Pantalla {
                     darDeAltaHuesped();
                     break;
                 case 4:
-                    //iniciarBajaHuesped();
+                    ocuparHabitacion();
                     break;
-                case 5:
-                    System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
-                    String confirmar = scanner.nextLine().trim();
-                    if (confirmar.equalsIgnoreCase("SI")) {
-                        System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
-                        salir = true;
-                        usuarioAutenticado = false;
+                case 5://Caso de cerrar sesion
+                    boolean respuestaValida = false;
+
+                    while (!respuestaValida) {
+                        System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
+                        String confirmar = scanner.nextLine().trim();
+
+                        if (confirmar.equalsIgnoreCase("SI")) {
+                            System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
+                            salir = true;
+                            usuarioAutenticado = false;//Reestablecemos la variable de autenticacion
+                            respuestaValida = true;
+                        } else if (confirmar.equalsIgnoreCase("NO")) {
+                            System.out.println(Colores.AZUL + "Volviendo al menú principal..." + Colores.RESET);
+                            respuestaValida = true; //Sale del bucle interno y vuelve al menú
+                        } else {
+                            System.out.println(Colores.ROJO + "❌ Entrada inválida. Por favor ingrese 'SI' o 'NO'." + Colores.RESET);
+                        }
                     }
                     break;
                 default:
-                    System.out.println(Colores.ROJO + "❌ Opción inválida. Intente nuevamente.\n" + Colores.RESET);
+                    System.out.println(Colores.ROJO + "❌ Opción inválida. Intente nuevamente.\n" + Colores.RESET);//vuelve al while
             }
         }
-        //Paso 5: El CU termina
+
     }
 
-    // CU9
+    // =================================== CU9 ===========================================
     public void darDeAltaHuesped() {
-        //Mensaje de principio de ejecucion del CU9 con Estética de Título
+        //Mensaje de principio de ejecucion del CU9
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           📝 DAR DE ALTA HUÉSPED (CU9)             ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
         System.out.println(Colores.AMARILLO + " ℹ️  Nota: Escriba 'CANCELAR' en cualquier campo para salir." + Colores.RESET + "\n");
 
-        boolean continuarCargando = true; //bandera que representa la condicion del loop principal
+        boolean continuarCargando = true; //bandera que representa la condicion del loop principal [1]
 
-        // [BUCLE 1]: Controla el ciclo completo de carga.
+        // [BUCLE 1]: Controla el ciclo completo de carga
         // Se repite cada vez que el usuario termina de cargar un huésped y responde "SI" a "¿Desea cargar otro?".
         while (continuarCargando) {
 
             DtoHuesped datosIngresados = null;
 
-            // 1. INTENTO DE CARGA DE DATOS (creamos una excepción para manejar la opcion de CANCELAR en cualquier momento del formulario)
+            //INTENTO DE CARGA DE DATOS (creamos una excepción para manejar la opcion de CANCELAR en cualquier momento del formulario)
             //Envolvemos la carga en un try-catch para capturar la cancelación
             try {
                 //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
                 datosIngresados = mostrarYPedirDatosFormulario();
+
             } catch (CancelacionException e) {
                 // Si el usuario escribió "CANCELAR" durante el formulario:
-                System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
-                String confir = scanner.nextLine();
-                if (confir.equalsIgnoreCase("SI")) {
-                    System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
-                    return; // Sale del metodo completamente
-                } else {
-                    System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
-                    continue; // Vuelve al inicio del while (Lamentablemente reinicia el form, es complejo reanudar en consola)
+                boolean confirmacionValida = false;
+
+                while (!confirmacionValida) {
+                    System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
+                    String confir = scanner.nextLine().trim();
+
+                    if (confir.equalsIgnoreCase("SI")) {
+                        System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
+                        return; // Sale del método completamente
+
+                    } else if (confir.equalsIgnoreCase("NO")) {
+                        System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
+                        confirmacionValida = true; // Rompe el bucle de validación para permitir el continue de abajo
+
+                    } else {
+                        System.out.println(Colores.ROJO + "❌ Entrada inválida. Por favor ingrese 'SI' o 'NO'." + Colores.RESET);
+                    }
                 }
+
+                // Si eligió NO, salimos del while de validación y ejecutamos esto para reiniciar el form
+                continue;
             }
 
-            // 2. MENU DE DECISIÓN (Siguiente / Cancelar)
-            // Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar
+            //MENU DE DECISIÓN (Siguiente / Cancelar)
+            //Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar al final del formulario. La idea es que, hasta que no se diga que esta seguro de cancelar la carga, no se pierda lo ingresado
             boolean decisionPendiente = true;
 
             // [BUCLE 2]: Menú de Acciones Post-Formulario.
-            // Mantiene al usuario en la pantalla de decisión ("Siguiente" o "Cancelar") hasta que elija una opción válida.
+            // Mantiene al usuario en la pantalla de decisión ("Siguiente" o "Cancelar") hasta que elija una opción válida
             // Evita que el programa se cierre si el usuario se equivoca al elegir una opción.
             while (decisionPendiente) {
                 System.out.println(Colores.CYAN + "\n────────── Fin del Formulario ──────────" + Colores.RESET);
@@ -270,7 +304,7 @@ public class Pantalla {
                 System.out.print(">> Ingrese una opción: ");
 
                 int opcionBoton = -1;
-                try {//validacion mas robusta
+                try {//validacion de ingreso
                     String entrada = scanner.nextLine();
                     opcionBoton = Integer.parseInt(entrada);
                 } catch (NumberFormatException e) {
@@ -281,13 +315,15 @@ public class Pantalla {
                 if (opcionBoton == 1) { // presiono SIGUIENTE
                     System.out.println(Colores.AZUL + "⏳ Procesando datos..." + Colores.RESET);
 
-                    //aca hay que llamar al gestor para que valide los datos
+                    //llamar al gestor para que haga las validaciones de negocio
                     List<String> errores;
                     //Metodo que retorna una lista de todos los errores en la validacion de negocio
                     errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
                     //Actuamos en consecuencia, dependiendo si hubo errores o no
-                    if (!errores.isEmpty()) {
+
+                    if (!errores.isEmpty()) {//Si hubo errores
+
                         System.out.println(Colores.ROJO + "\n╔══════════════════════════════════════════╗");
                         System.out.println("║ ❌ ERROR DE VALIDACIÓN DE DATOS          ║");
                         System.out.println("╚══════════════════════════════════════════╝" + Colores.RESET);
@@ -295,7 +331,7 @@ public class Pantalla {
                             System.out.println(Colores.ROJO + "  • " + error + Colores.RESET);
                         }
                         System.out.println("\nPor favor, ingrese los datos nuevamente.");
-                        decisionPendiente = false;//Salimos del bucle de decisión para recargar datos
+                        decisionPendiente = false;//Salimos del bucle de decisión para recargar datos en formulario
                         continue; //fuerza al inicio del while principal
                     }
 
@@ -303,13 +339,13 @@ public class Pantalla {
                     try {
                         boolean verificacionPendiente = true;
 
-                        // [BUCLE 3]: Verificación y Corrección de Duplicados.
-                        // Este bucle permite que, si el usuario elige "CORREGIR", se pidan de nuevo SOLO los datos conflictivos
+                        // [BUCLE 3]: Verificación y Corrección de Duplicados
+                        // Este bucle permite que, si el usuario elige "CORREGIR", se pidan de nuevo SOLO los datos conflictivos (tipo y nro documento)
                         // y se vuelva a verificar la duplicidad sin perder el resto de la información cargada.
                         while (verificacionPendiente) {
 
                             //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
-                            DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                            Huesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
                             //Si chequearDuplicado retorna NULL, no hay duplicado
 
                             if (duplicado != null) {//si encuentra duplicado
@@ -330,7 +366,7 @@ public class Pantalla {
                                 while (!opcionValida2) {
                                     System.out.println("Opciones:");
                                     System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " ACEPTAR IGUALMENTE (Sobreescribir/Actualizar)");
-                                    System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS (Solo documento)");
+                                    System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS (Solo Tipo y Número de Documento)");
                                     System.out.print(">> Ingrese una opción: ");
 
                                     try {
@@ -367,7 +403,7 @@ public class Pantalla {
                                         continue;
                                     }
                                 }
-                                // Si elige 1 (ACEPTAR IGUALMENTE), salimos del bucle 3 y guardamos
+                                // Si elige 1 (ACEPTAR IGUALMENTE), salimos del bucle 3 y guardamos (se sobrescribira el huesped)
                                 verificacionPendiente = false;
 
                             } else {
@@ -376,11 +412,12 @@ public class Pantalla {
                             }
                         } // Fin bucle verificacionPendiente
 
-                        //Si no existen duplicados (o se aceptaron), INSERT/UPDATE
+                        //Si no existen duplicado (o se desea sobreescribirlo), INSERT/UPDATE
                         gestorHuesped.upsertHuesped(datosIngresados);
+
                         System.out.println("\n" + Colores.VERDE + "✅ ¡El huésped ha sido guardado exitosamente!" + Colores.RESET);
 
-                        // AQUÍ VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
+                        // Luego del exito del alta, se pregunta si se desea cargar otro huesped
                         System.out.print(Colores.CYAN + "\n🔄 ¿Desea cargar otro huésped? (SI/NO): " + Colores.RESET);
 
                         //validacion de ingreso correcto
@@ -390,7 +427,7 @@ public class Pantalla {
                             ingresoOtroHuesped = scanner.nextLine();
                         }
 
-                        //si ingreso NO termina el bucle principal, si ingreso SI se repite
+                        //si ingresó NO, termina el bucle principal. Si ingresó SI, se repite
                         if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
                             continuarCargando = false;
                         } else {
@@ -430,7 +467,7 @@ public class Pantalla {
         } // Fin while continuarCargando
 
         System.out.println(Colores.CYAN + "--- Fin CU9 'Dar de alta huésped' ---" + Colores.RESET + "\n");
-    }
+    }//Fin de CU 9
 
 
     //metodo privado para pedir los datos del huesped a dar de alta, CU9 (formulario)
@@ -442,8 +479,8 @@ public class Pantalla {
         System.out.println("   └──────────────────────────────────────────────────┘" + Colores.RESET);
 
         //Cada uno de estos métodos solicita por teclado el ingreso de cada campo del formulario
-        //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida)
-        //en el momento, evitando datos sin sentido
+        //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida, etc)
+        //en el momento, evitando datos sin sentido y tener que reingresar todo a posteriori
 
         //Las validaciones de negocio las realizará el Gestor
         // Todos los métodos 'pedir...' pueden lanzar la excepción si el usuario escribe "CANCELAR"
@@ -451,22 +488,17 @@ public class Pantalla {
         // --- SECCIÓN 1: DATOS PERSONALES ---
         System.out.println(Colores.AMARILLO + "\n   === 👤 DATOS PERSONALES ===" + Colores.RESET);
 
-        // Agregamos colores y sangría (espacios) a los mensajes
         String apellido = pedirStringTexto(Colores.VERDE + "   > Apellido: " + Colores.RESET);
 
         String nombres = pedirStringTexto(Colores.VERDE + "   > Nombres: " + Colores.RESET);
-
-        // Asumo que este metodo imprime su propio menú, así que solo lo llamamos
 
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
         String numeroDocumento = pedirDocumento(tipoDocumento, false);
 
-        // Posición IVA
         String posIva = pedirPosIva();
 
-        // CUIT (Opcional)
-        String cuit = pedirCUIT(posIva);
+        String cuit = pedirCUIT(posIva, tipoDocumento, numeroDocumento);
 
         Date fechaNacimiento = pedirFecha();
 
@@ -498,7 +530,7 @@ public class Pantalla {
         // --- SECCIÓN 3: CONTACTO ---
         System.out.println(Colores.AMARILLO + "\n   === 📞 CONTACTO ===" + Colores.RESET);
 
-        Long telefono = pedirTelefono(); // Asumo que dentro pide el dato con su propio mensaje, o podemos pasarle uno si el método lo permite
+        Long telefono = pedirTelefono();
 
         String email = pedirEmail();
 
@@ -514,6 +546,7 @@ public class Pantalla {
                 .piso(pisoDireccion)
                 .codPostal(codPostalDireccionPrimitivo)
                 .build();
+
         //Creamos el DtoHuesped usando el Builder
         DtoHuesped huespedDto = new DtoHuesped.Builder()
                 .nombres(nombres)
@@ -541,7 +574,7 @@ public class Pantalla {
     }
 
 
-    //Metodo auxiliar clave para verificar cancelación
+    //Metodo auxiliar para verificar cancelación
     private void chequearCancelacion(String input) throws CancelacionException {
         // Si el input no es nulo y es "CANCELAR" (ignorando mayúsculas), lanzamos la excepción
         if (input != null && input.trim().equalsIgnoreCase("CANCELAR")) {
@@ -549,7 +582,8 @@ public class Pantalla {
         }
     }
 
-//=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
+
+    //===================== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ========================
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
     private String pedirStringComplejo(String mensaje) throws CancelacionException {
@@ -584,7 +618,7 @@ public class Pantalla {
 
                 // Esta expresion ^[\p{L} ]+$ permite cualquier letra de cualquier idioma
                 // y espacios, pero no números ni caracteres especiales.
-            } else if (!entrada.matches("^[\\p{L} ]+$")) {//cualquier letra Unicode
+            } else if (!entrada.matches("^[\\p{L} ]+$")) {
                 System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
 
             } else {
@@ -619,6 +653,7 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar Enteros
     private Integer pedirEntero(String mensaje) throws CancelacionException {
         Integer valor = null; // Usamos la clase wrapper para permitir null
         boolean valido = false;
@@ -648,6 +683,7 @@ public class Pantalla {
         return valor;
     }
 
+    //Solicitar y Validar Telefono
     private Long pedirTelefono() throws CancelacionException {
         Long valor = null;
         boolean valido = false;
@@ -656,7 +692,6 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            // Prompt con color verde
             System.out.print(Colores.VERDE + "   > Teléfono: " + Colores.RESET);
             String entrada = scanner.nextLine().trim();
 
@@ -697,50 +732,77 @@ public class Pantalla {
         return valor;
     }
 
-    private String pedirCUIT(String posIvaSeleccionada) throws CancelacionException {
+    //Solicitar y Validar CUIT
+    private String pedirCUIT(String posIvaSeleccionada, TipoDocumento tipoDoc, String nroDoc) throws CancelacionException {
         String cuit;
-        String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
-        // Verificamos si es Responsable Inscripto usando el Enum
-        boolean esResponsableInscripto = posIvaSeleccionada != null &&
-                posIvaSeleccionada.equals(PosIva.ResponsableInscripto.name());
+        // Prefijos válidos en Argentina (Personas físicas y jurídicas)
+        List<String> prefijosValidos = Arrays.asList("20", "23", "24", "27", "30", "33", "34");
 
         while (true) {
-            // Cambiamos el mensaje según la obligatoriedad
-            if (esResponsableInscripto) {
-                System.out.print(Colores.VERDE + "   > CUIT " + Colores.ROJO + "(Obligatorio por ser Resp. Inscripto)" + Colores.VERDE + ": " + Colores.RESET);
-            } else {
-                System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
-            }
+            System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
 
             cuit = scanner.nextLine().trim();
             chequearCancelacion(cuit);
 
-            // CASO 1: Está vacío
+            // --- CASO VACÍO ---
             if (cuit.isEmpty()) {
-                if (esResponsableInscripto) {
-                    //No dejamos avanzar si es RI y no pone CUIT
-                    System.out.println(Colores.ROJO + "     ❌ Error: El CUIT es obligatorio para Responsables Inscriptos." + Colores.RESET);
-                } else {
-                    return null; // Es válido que sea null (será Factura B)
-                }
+                return null; // Dejamos pasar (el Gestor validará si es RI)
+            }
 
-                // CASO 2: Escribió algo, validamos formato
-            } else if (!cuit.matches(expresionCUIT)) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Formato incorrecto. Debe ser XX-XXXXXXXX-X" + Colores.RESET);
+            boolean formatoValido = true;
+            String mensajeError = "";
+
+            // 1. Validar estructura básica (XX-XXXXXX-X)
+            // Regex: 2 números, guión, números, guión, 1 número
+            if (!cuit.matches("^\\d{2}-\\d+-\\d$")) {
+                formatoValido = false;
+                mensajeError = "Formato incorrecto. Debe ser XX-NUMERO-X (ej: 20-12345678-9).";
             } else {
+                // Desglosamos el CUIT para validaciones finas
+                String[] partes = cuit.split("-");
+                String prefijo = partes[0];
+                String numeroCentral = partes[1];
+                // String digito = partes[2]; // Ya validado por regex que es 1 dígito
+
+                // 2. Validar Prefijo (El "XX" del principio)
+                if (!prefijosValidos.contains(prefijo)) {
+                    formatoValido = false;
+                    mensajeError = "Prefijo inválido. Use uno habitual (20, 23, 24, 27, 30, etc.).";
+                }
+                // 3. Validar coincidencia con el DNI (El número del medio)
+                else if (tipoDoc == TipoDocumento.DNI || tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
+                    if (!numeroCentral.equals(nroDoc)) {
+                        formatoValido = false;
+                        // MENSAJE GENÉRICO (Lo que pediste)
+                        mensajeError = "El CUIT debe contener el número de documento ingresado (XX-Documento-X).";
+                    }
+                }
+                // 4. Validar longitud para otros documentos (Pasaporte/Otro)
+                else {
+                    if (numeroCentral.length() < 6 || numeroCentral.length() > 9) {
+                        formatoValido = false;
+                        mensajeError = "La longitud del número central no es válida.";
+                    }
+                }
+            }
+
+            if (formatoValido) {
                 return cuit;
+            } else {
+                System.out.println(Colores.ROJO + "     ❌ Error: " + mensajeError + Colores.RESET);
             }
         }
     }
 
+    //Solicitar y Validar Email
     private String pedirEmail() throws CancelacionException {
         String email;
         // expresion simple para emails: algo@algo.algo
         String expresionEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
         while (true) {
-            // Prompt con "(Opcional)" destacado
+
             System.out.print(Colores.VERDE + "   > Email " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
             email = scanner.nextLine();
 
@@ -750,7 +812,7 @@ public class Pantalla {
                 return null; // Válido (opcional)
 
             } else if (!email.matches(expresionEmail)) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Formato de email no válido." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato de email no válido (xxxx@xxxx.com)." + Colores.RESET);
 
             } else {
                 return email; // Válido
@@ -758,6 +820,7 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar Fecha de nacimiento
     private Date pedirFecha() throws CancelacionException {
         Date fecha = null;
         boolean valida = false;
@@ -795,12 +858,12 @@ public class Pantalla {
         return fecha;
     }
 
+    //Solicitar y Validar Tipo Documento
     private TipoDocumento pedirTipoDocumento() throws CancelacionException {
         TipoDocumento tipoDoc = null;
         boolean valido = false;
 
-        // Construimos las opciones con un formato más limpio: [DNI / PASAPORTE / ...]
-        // Usamos Cyan para las opciones para que se diferencien del texto de la pregunta
+
         StringBuilder opciones = new StringBuilder(Colores.CYAN + "[");
         TipoDocumento[] valores = TipoDocumento.values();
         for (int i = 0; i < valores.length; i++) {
@@ -812,7 +875,7 @@ public class Pantalla {
         opciones.append("]" + Colores.RESET);
 
         while (!valido) {
-            // Prompt en Verde + Opciones en Cyan
+
             System.out.print(Colores.VERDE + "   > Tipo de Documento " + opciones + Colores.VERDE + ": " + Colores.RESET);
 
             String tipoDocStr = scanner.nextLine().toUpperCase().trim();
@@ -832,11 +895,7 @@ public class Pantalla {
         return tipoDoc;
     }
 
-    /**
-     * Metodo unificado para pedir documentos.
-     * @param tipo El tipo seleccionado (null si se omitió en búsqueda).
-     * @param esOpcional Si es true, permite salir con Enter vacío.
-     */
+    //Solicitar y Validar Numero de Documento. esOpcional Si es true, permite salir con Enter vacío
     private String pedirDocumento(TipoDocumento tipo, boolean esOpcional) throws CancelacionException {
         String nroDocumento = null;
         boolean valido = false;
@@ -852,12 +911,7 @@ public class Pantalla {
         String regexOtro = "^.{4,20}$";
 
         while (!valido) {
-            // Prompt visual
-            if (esOpcional) {
-                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
-            } else {
-                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
-            }
+            System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
 
             String entrada = scanner.nextLine().trim().toUpperCase();
 
@@ -915,12 +969,12 @@ public class Pantalla {
         return nroDocumento;
     }
 
+    //Solicitar y Validar Posicion frente al IVA
     private String pedirPosIva() throws CancelacionException {
         String posIva = null;
         boolean valido = false;
 
         while (!valido) {
-            // Transformamos el bloque de texto en un menú visualmente agradable
             System.out.println(Colores.VERDE + "   > Posición frente al IVA:" + Colores.RESET);
             System.out.println(Colores.AMARILLO + "      [1]" + Colores.RESET + " Consumidor Final (Por defecto)");
             System.out.println(Colores.AMARILLO + "      [2]" + Colores.RESET + " Monotributista");
@@ -944,7 +998,6 @@ public class Pantalla {
                     case 1:
                         posIva = PosIva.ConsumidorFinal.name();
                         valido = true;
-                        // Feedback visual de la selección por defecto
                         if(opcion == 0) System.out.println(Colores.CYAN + "        (Seleccionado: Consumidor Final)" + Colores.RESET);
                         break;
                     case 2:
@@ -969,7 +1022,7 @@ public class Pantalla {
         return posIva;
     }
 
-    //==== FIN METODOS CU9 ====
+    //============================== FIN METODOS CU9 ======================================
 
 
     //METODO AUXILIAR PARA PAUSAR
@@ -979,24 +1032,25 @@ public class Pantalla {
         System.out.println();
     }
 
-    //CU2
+    //=================================== CU2 =========================================
     public void buscarHuesped() {
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           🔎 BÚSQUEDA DE HUÉSPED (CU2)             ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
+        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();//Solicitamos los criterios por los que el usuario quiere realizar la busqueda de/los huespedes.
+        // Se recuerda que solo se admitiran las iniciales para la busqueda por apellido y nombre. Respondiendo a la especificacion del caso de uso "comienza con"
 
         System.out.println(Colores.AZUL + "\n🔄 Buscando en la base de datos..." + Colores.RESET);
 
 
-        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
+        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);//Llamamos al metodo del gestor que se encarga de dirigir la busqueda de los huespedes
 
-        if (huespedesEncontrados.isEmpty()) {
+        if (huespedesEncontrados.isEmpty()) {//No se encontraron huespedes con los criterios especificados
             System.out.println(Colores.AMARILLO + "\n⚠️  No se encontraron huéspedes con los criterios especificados." + Colores.RESET);
             System.out.print("¿Desea dar de alta un nuevo huésped? (SI/NO): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                this.darDeAltaHuesped(); // Deriva al CU 9
+                this.darDeAltaHuesped(); // Deriva al CU 9, dar de alta huesped
             }
         } else {
             // Mostramos la tabla y luego el menú de selección
@@ -1093,16 +1147,16 @@ public class Pantalla {
                 listaHuespedesDto.add(MapearHuesped.mapearEntidadADto(listaEHuespedes));
             }
 
-            // Sigue el flujo
+            // Sigue el flujo. Mapeamos de entidad a DTO para pasarle al Gestor
             if (seleccion > 0 && seleccion <= listaEntidadesHuespedes.size()) {
                 DtoHuesped huespedDtoSeleccionado = listaHuespedesDto.get(seleccion - 1);
 
                 System.out.println(Colores.AZUL + "\n⏳ Cargando datos del huésped seleccionado..." + Colores.RESET);
 
                 // lógica de negocio
-                Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
+                Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);//Creamos el huesped para pasarlo al CU10
 
-                // Mensaje temporal
+                // Mensaje de ejecucion de CU10
                 System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
                 System.out.println("║   🚧 FUNCIONALIDAD CASO DE USO 10 EN PROGRESO 🚧   ║");
                 System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
@@ -1122,6 +1176,7 @@ public class Pantalla {
 
     }
 
+    //Metodo para la construccion de la tabla de huespedes en CU2
     private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
         // --- MENÚ DE ORDENAMIENTO ---
 
@@ -1135,10 +1190,9 @@ public class Pantalla {
             System.out.println("   2. Nombre              4. Número Documento");
             System.out.print(Colores.VERDE + "   >> Ordenar por: " + Colores.RESET);
 
-            columna = leerOpcionNumerica();
+            columna = leerOpcionNumerica();//Solicitamos ingreso de parametro de ordenamiento
 
             if (columna < 1 || columna > 4) {
-                // Eliminamos el if(columna != -1) para que SIEMPRE avise del error, incluso con Enter vacío
                 System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
             }
             else {
@@ -1153,7 +1207,7 @@ public class Pantalla {
             System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
             System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
 
-            int orden = leerOpcionNumerica();
+            int orden = leerOpcionNumerica();//Solicitamos ingreso de parametro de tipo de ordenamiento
 
             if(orden < 1 || orden > 2){
                 System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
@@ -1167,24 +1221,9 @@ public class Pantalla {
 
 
         // Definimos el comparador para la ENTIDAD Huesped
-        Comparator<Huesped> comparador = switch (columna) {
-            case 1 -> // Apellido
-                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
-            case 2 -> // Nombre
-                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
-            case 3 -> // Tipo de Documento (Enum)
-                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z");
-            case 4 -> // Número de Documento (long en Entidad)
-                    Comparator.comparing(Huesped::getNroDocumento);
-            default -> null;
-        };
-
-        if (comparador != null) {
-            if (!ascendente) {
-                comparador = comparador.reversed();
-            }
-            listaHuespedes.sort(comparador);
-        }
+        //Metodo de ordenamiento
+        Comparator<Huesped> comparador = getHuespedComparator(columna, ascendente);
+        listaHuespedes.sort(comparador);
 
         // --- TABLA DE RESULTADOS ---
         System.out.println("\n" + Colores.VERDE + "✅ Se encontraron " + listaHuespedes.size() + " resultados:" + Colores.RESET);
@@ -1212,6 +1251,28 @@ public class Pantalla {
         System.out.println("└──────┴──────────────────────┴──────────────────────┴────────────────────┘");
     }
 
+    //Metodo de ordenamiento de huespedes
+    private static Comparator<Huesped> getHuespedComparator(int columna, boolean ascendente) {
+        Comparator<Huesped> comparador = switch (columna) {
+            case 1 -> // Apellido
+                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
+            case 2 -> // Nombre
+                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
+            case 3 -> // Tipo de Documento (Enum)
+                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z");
+            case 4 -> // Número de Documento (long en Entidad)
+                    Comparator.comparing(Huesped::getNroDocumento);
+            default -> null;
+        };
+
+        if (!ascendente) {
+            comparador = comparador.reversed();
+        }
+        return comparador;
+    }
+
+    // ================================ FIN METODOS CU2 =====================================
+
     // Metodo auxiliar para evitar que textos largos rompan la tabla
     private String cortar(String texto) {
         if (texto == null) return "";
@@ -1238,12 +1299,11 @@ public class Pantalla {
 
     }
 
-    /**
-     * METODO ORQUESTADOR OPTIMIZADO (Carga masiva)
-     */
+
+    // METODO ORQUESTADOR OPTIMIZADO (Carga masiva)
     private Map<Habitacion, Map<Date, String>> generarGrillaEstados(Date fechaInicio, Date fechaFin) {
 
-        System.out.println("Recuperando datos del servidor..."); // Feedback de carga
+        System.out.println(Colores.AZUL + "⏳ Recuperando datos del servidor..." + Colores.RESET); // Feedback de carga con color
 
         // 1. Traer TODO de una vez (3 Consultas en total)
         ArrayList<Habitacion> habitaciones = gestorHabitacion.obtenerTodas();
@@ -1290,8 +1350,7 @@ public class Pantalla {
                     } else {
                         // C. Buscar en lista de Reservas (Memoria)
                         boolean reservada = reservasHab.stream().anyMatch(r ->
-                                        fechaActual.after(r.getFechaDesde()) && fechaActual.before(r.getFechaHasta())
-                                // O ajusta la lógica de fechas exacta según tu regla de negocio (< vs <=)
+                                !fechaActual.before(r.getFechaDesde()) && fechaActual.before(r.getFechaHasta())
                         );
 
                         if (reservada) estado = "RESERVADA";
@@ -1304,14 +1363,14 @@ public class Pantalla {
         return grilla;
     }
 
-    // CU4: Reservar Habitación (ACTUALIZADO)
+    // CU4: Reservar Habitación
     public void reservarHabitacion() throws Exception {
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           🛏️  RESERVAR HABITACIÓN (CU4)            ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        // 1. LLAMADA AL CU5 (Para ver el panorama general primero)
-        System.out.println("Visualice el rango general para buscar disponibilidad:");
+        // 1. LLAMADA AL CU5
+        System.out.println(Colores.AZUL + "ℹ️  Visualice el rango general para buscar disponibilidad:" + Colores.RESET);
         Map<Habitacion, Map<Date, String>> grillaVista = mostrarEstadoHabitaciones();
 
         if (grillaVista == null) return; // Cancelado o sin datos
@@ -1321,66 +1380,108 @@ public class Pantalla {
 
         // 2. Bucle de Selección
         while (seguirAgregando) {
-            System.out.println("\n" + Colores.AMARILLO + "--- Nueva Selección ---" + Colores.RESET);
+            System.out.println("\n" + Colores.AMARILLO + "┌──────────────────────────────────────────────────┐");
+            System.out.println("│               ➕ NUEVA SELECCIÓN                 │");
+            System.out.println("└──────────────────────────────────────────────────┘" + Colores.RESET);
 
             // A. Selección de Habitación
-            System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
-            String nro = scanner.nextLine().trim().toUpperCase();
+            String entrada;
+            int nro = -1;
 
-            // Validar que la habitación exista en la grilla que estamos viendo (o en la BD)
+            while (true) {
+                System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
+                entrada = scanner.nextLine().trim();
+
+                // Campo obligatorio
+                if (entrada.isEmpty()) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Campo Obligatorio." + Colores.RESET);
+                    continue;
+                }
+
+                // Sólo dígitos
+                if (!entrada.matches("^\\d+$")) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Debe ingresar sólo números." + Colores.RESET);
+                    continue;
+                }
+
+                try {
+                    nro = Integer.parseInt(entrada);
+                    if (nro <= 0) {
+                        System.out.println(Colores.ROJO + "     ❌ Error: Ingrese un número positivo." + Colores.RESET);
+                        continue;
+                    }
+                    break; // válido
+                } catch (NumberFormatException e) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Número demasiado grande." + Colores.RESET);
+                }
+            }
+
+
+            // Validar existencia
             Habitacion habSeleccionada = null;
             for (Habitacion h : grillaVista.keySet()) {
-                if (h.getNumero().equals(nro)) {
+                if (h.getNumero().equals(String.valueOf(nro))) {
                     habSeleccionada = h;
                     break;
                 }
             }
 
+            // --- CORRECCIÓN CRÍTICA: Validar null ANTES de usar el objeto ---
             if (habSeleccionada == null) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación no existe o no está en la vista actual." + Colores.RESET);
                 continue;
             }
 
-            // B. Selección de Fechas ESPECÍFICAS para esta reserva
-            System.out.println(Colores.CYAN + "   Define el rango específico para la habitación " + nro + ":" + Colores.RESET);
+            // Ahora es seguro preguntar el estado
+            if(habSeleccionada.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación está FUERA DE SERVICIO." + Colores.RESET);
+                continue;
+            }
+            // ----------------------------------------------------------------
 
-            Date fechaInicioReserva;
+
+            // B. Selección de Fechas
+            System.out.println(Colores.CYAN + "\n   Define el rango de fechas específico para la Habitación " + nro + ":" + Colores.RESET);
+
+            Date fechaInicioReserva = null;
             Date fechaFinReserva;
 
             try {
-                // 1. Pedir Fecha Inicio: Debe ser posterior a "ayer" (es decir, de hoy en adelante)
-                // Usamos Calendar para restar un día de forma segura y permitir seleccionar "HOY"
-                // Calculamos la menor fecha presente en la vista (inicioGrilla)
+                // Calculamos límites de la grilla para validar
                 Date inicioGrilla;
                 Optional<Date> minFechaOpt = grillaVista.values().stream()
                         .flatMap(m -> m.keySet().stream())
                         .min(Date::compareTo);
-                inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
+                inicioGrilla = minFechaOpt.orElse(new Date());
 
-                // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
-                // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
+                Date finGrilla;
+                Optional<Date> maxFechaOpt = grillaVista.values().stream().flatMap(m->m.keySet().stream()).max(Date::compareTo);
+                finGrilla = maxFechaOpt.orElse(inicioGrilla);
+
                 LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 LocalDate limiteAnterior = inicioLocal.minusDays(1);
                 Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-                fechaInicioReserva = pedirFechaPosteriorA(
+                // 1. Pedir Inicio
+                fechaInicioReserva = pedirFechaEntre(
                         "   > Fecha Inicio (dd/MM/yyyy): ",
-                        fechaLimiteParaPedir,
-                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
-                );
+                        fechaLimiteParaPedir,  finGrilla ,
+                        "La fecha debe estar dentro del rango visualizado.");
 
-                // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
-                fechaFinReserva = pedirFechaPosteriorA(
+
+                // 2. Pedir Fin
+                fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
-                        fechaInicioReserva,
-                        "La fecha de fin debe ser posterior a la fecha de inicio."
+                        fechaInicioReserva, finGrilla,
+                        "La fecha debe ser posterior al inicio y dentro del rango visualizado."
                 );
 
             } catch (CancelacionException e) {
-                System.out.println("Operación cancelada.");
+                System.out.println(Colores.ROJO + "Operación cancelada." + Colores.RESET);
                 return;
             }
-            // C. Validaciones de Negocio (Usando tus Gestores)
+
+            // C. Validaciones de Negocio
 
             // 1. Validar coherencia de fechas (GestorHabitacion)
             if (!gestorHabitacion.validarRangoFechas(fechaInicioReserva, fechaFinReserva)) {
@@ -1388,50 +1489,60 @@ public class Pantalla {
             }
 
             // 2. Validar disponibilidad REAL en BD (GestorReserva y GestorEstadia)
-            boolean ocupada = gestorEstadia.estaOcupadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
-            boolean reservada = gestorReserva.estaReservadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
+            boolean ocupadaParcialmente = false;
+            ZoneId zone = ZoneId.systemDefault();
+            LocalDate inicio = fechaInicioReserva.toInstant().atZone(zone).toLocalDate();
+            LocalDate fin = fechaFinReserva.toInstant().atZone(zone).toLocalDate();
 
-            if (ocupada) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
-                continue;
+            for(LocalDate d = inicio; !d.isAfter(fin) ; d = d.plusDays(1)){
+                Date diaChequeado = Date.from(d.atStartOfDay(zone).toInstant());
+                if(gestorEstadia.estaOcupadaEnFecha(String.valueOf(nro), diaChequeado, diaChequeado)){
+                    ocupadaParcialmente = true;
+                    break;
+                }
             }
-            if (reservada) {
-                System.out.println(Colores.ROJO + "   ❌ Error: La habitación ya tiene una RESERVA confirmada en esas fechas." + Colores.RESET);
+
+            boolean ocupada = gestorEstadia.estaOcupadaEnFecha(String.valueOf(nro), fechaInicioReserva, fechaFinReserva);
+            boolean reservada = gestorReserva.estaReservadaEnFecha(String.valueOf(nro), fechaInicioReserva, fechaFinReserva);
+
+            if (ocupada || ocupadaParcialmente) {
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
+                continue;
+            } else if (reservada) {
+                System.out.println(Colores.ROJO + "     ❌ Error: La habitación ya tiene una RESERVA confirmada." + Colores.RESET);
                 continue;
             }
 
             // 3. Validar que no la haya seleccionado ya en este mismo proceso (Lista temporal)
             boolean yaEnLista = false;
             for(DtoReserva dto : listaParaReservar) {
-                if(dto.getIdHabitacion().equals(nro)) {
-                    // Check simple: si es la misma habitación, no dejamos (para simplificar UX)
+                if(dto.getIdHabitacion().equals(String.valueOf(nro))) { // Corrección de tipo: nro es int
                     yaEnLista = true; break;
                 }
             }
             if (yaEnLista) {
-                System.out.println(Colores.ROJO + "   ❌ Ya has seleccionado esta habitación en esta sesión." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: Ya has seleccionado esta habitación en esta sesión." + Colores.RESET);
                 continue;
             }
 
-            System.out.println(Colores.VERDE + "   ✅ ¡Habitación disponible!" + Colores.RESET);
+            System.out.println(Colores.VERDE + "     ✅ ¡Habitación disponible!" + Colores.RESET);
 
-            // D. Solicitar Datos del Responsable (Requerido por DtoReserva y GestorReserva)
-            // Esto es crucial porque DtoReserva lo pide obligatorio en GestorReserva.validarDatosReserva
-            System.out.println(Colores.AMARILLO + "\n   Datos del Responsable de la Reserva:" + Colores.RESET);
+            // D. Solicitar Datos del Responsable
+            System.out.println(Colores.AMARILLO + "\n   👤 Datos del Responsable de la Reserva:" + Colores.RESET);
             String nombreResp, apellidoResp, telefonoResp;
             try {
-                apellidoResp = pedirStringTexto("   > Apellido: ");
-                nombreResp = pedirStringTexto("   > Nombre: ");
-                // pedirTelefono devuelve Long, DtoReserva pide String. Hacemos la conversión.
-                telefonoResp = String.valueOf(pedirTelefono());
+                // Agregué colores a los prompts aquí también
+                apellidoResp = pedirStringTexto(Colores.VERDE + "   > Apellido: " + Colores.RESET);
+                nombreResp = pedirStringTexto(Colores.VERDE + "   > Nombre: " + Colores.RESET);
+                telefonoResp = String.valueOf(pedirTelefono()); // Asumiendo que pedirTelefono tiene su propio prompt
             } catch (CancelacionException e) {
-                System.out.println("Reserva cancelada.");
+                System.out.println(Colores.ROJO + "Reserva cancelada." + Colores.RESET);
                 return;
             }
 
             // E. Crear DTO y agregar a la lista
             DtoReserva nuevaReserva = new DtoReserva.Builder()
-                    .idHabitacion(nro)
+                    .idHabitacion(String.valueOf(nro))
                     .fechaDesde(fechaInicioReserva)
                     .fechaHasta(fechaFinReserva)
                     .nombreResponsable(nombreResp)
@@ -1449,22 +1560,31 @@ public class Pantalla {
             imprimirGrilla(grillaVista, inicioVista, finVista, listaParaReservar);
 
             // G. Preguntar si sigue
-            System.out.print("\n¿Desea reservar otra habitación? (SI/NO): ");
-            String resp = scanner.nextLine().trim();
-            if (!resp.equalsIgnoreCase("SI")) {
-                seguirAgregando = false;
+            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
+            while(flagIngreso) {
+                System.out.print(Colores.AMARILLO + "\n¿Desea reservar otra habitación? (SI/NO): " + Colores.RESET);
+                String resp = scanner.nextLine().trim();
+                if (resp.equalsIgnoreCase("SI")) {
+                    seguirAgregando = true;
+                    flagIngreso = false; //no repetimos while
+                } else if (resp.equalsIgnoreCase("NO")) {
+                    seguirAgregando = false;
+                    flagIngreso = false; //no repetimos while
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Por favor ingrese SI o NO." + Colores.RESET);
+                    flagIngreso = true;
+                }
             }
         }
 
         if (listaParaReservar.isEmpty()) {
-            System.out.println("Finalizando sin generar reservas.");
+            System.out.println(Colores.AMARILLO + "Finalizando sin generar reservas." + Colores.RESET);
             return;
         }
 
         // 3. Confirmación y Persistencia
-        System.out.println(Colores.CYAN + "\nGuardando reservas..." + Colores.RESET);
+        System.out.println(Colores.AZUL + "\n💾 Guardando reservas..." + Colores.RESET);
         try {
-            // Llamamos al gestor existente
             gestorReserva.crearReservas(listaParaReservar);
             System.out.println(Colores.VERDE + "✅ ¡Reservas registradas con ÉXITO!" + Colores.RESET);
         } catch (Exception e) {
@@ -1473,15 +1593,15 @@ public class Pantalla {
                 System.out.println(Colores.ROJO + "   Causa interna: " + e.getCause().getMessage() + Colores.RESET);
             }
         }
-        System.out.println("Volviendo a Menu Principal...");
+        System.out.println(Colores.CYAN + "\n--- Fin CU4 'Reservar Habitación' ---" + Colores.RESET);
         pausa();
     }
 
     private void imprimirGrilla(Map<Habitacion, Map<Date, String>> grilla, Date inicio, Date fin, List<DtoReserva> seleccion) {
+
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String formatoCelda = "| %-9s ";
-
         System.out.println("\n--- GRILLA DE DISPONIBILIDAD ---");
 
         List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
@@ -1489,36 +1609,37 @@ public class Pantalla {
         // 1. IMPRIMIR ENCABEZADO AGRUPADO POR TIPO
         imprimirEncabezadoTipos(habitacionesOrdenadas);
 
+
         // 2. Imprimir fila de Números de Habitación
-        System.out.print("   FECHA     ");
+        System.out.print("       FECHA ");
         for (Habitacion hab : habitacionesOrdenadas) {
             System.out.printf(formatoCelda, "Hab " + hab.getNumero());
+
         }
         System.out.println("|");
-
-        // Línea separadora simple
         System.out.print("-------------");
         for (int k=0; k<habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
         System.out.println("+");
+
 
         // 3. Filas (Días)
         LocalDate inicioLocal = inicio.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         LocalDate actual = inicioLocal;
+
         while (!actual.isAfter(finLocal)) {
             System.out.printf("%-12s ", actual.format(dtf)); // Fecha
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             for (Habitacion hab : habitacionesOrdenadas) {
-                String visual = "   ?   ";
+                String visual = " ? ";
                 String color = Colores.RESET;
-
-                // --- Lógica de Pintado ACTUALIZADA ---
                 boolean esSeleccion = false;
 
                 if (seleccion != null) {
                     for (DtoReserva res : seleccion) {
+
                         // Coincide Habitación
                         if (res.getIdHabitacion().equals(hab.getNumero())) {
                             // Coincide Rango de Fechas ( fechaFila >= desde Y fechaFila <= hasta )
@@ -1530,10 +1651,9 @@ public class Pantalla {
                         }
                     }
                 }
-                // -------------------------------------
 
                 if (esSeleccion) {
-                    visual = "   * "; // Marca visual de "Tu Selección"
+                    visual = " * "; // Marca visual de "Tu Selección"
                     color = Colores.VERDE;
                 } else {
                     // Si no es selección nuestra, miramos la base de datos (cacheada en grilla)
@@ -1543,19 +1663,19 @@ public class Pantalla {
 
                     color = switch (estado) {
                         case "OCUPADA" -> {
-                            visual = "   X   ";
+                            visual = " X ";
                             yield Colores.ROJO;
                         }
                         case "RESERVADA" -> {
-                            visual = "   R   ";
+                            visual = " R ";
                             yield Colores.AMARILLO;
                         }
                         case "FUERA DE SERVICIO" -> {
-                            visual = "   -   ";
+                            visual = " - ";
                             yield Colores.CYAN;
                         }
                         case "LIBRE" -> {
-                            visual = "   L   ";
+                            visual = " L ";
                             yield Colores.RESET;
                         }
                         default -> color;
@@ -1564,48 +1684,73 @@ public class Pantalla {
                 System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
             }
             System.out.println("|");
+
             actual = actual.plusDays(1);
         }
+
         System.out.println("REF: [L]ibre | " + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
                 + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | " + Colores.VERDE + "[*] Tu Selección" + Colores.RESET
-                + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
+                + " | " + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
+
     }
+
 
     // CU5: Mostrar Estado de Habitaciones
     // Retorna el mapa con los datos para que el CU4 pueda reutilizarlos
+    // CU5: Mostrar Estado de Habitaciones
     public Map<Habitacion, Map<Date, String>> mostrarEstadoHabitaciones() throws CancelacionException {
-        System.out.println("========================================");
-        System.out.println("   CU5: MOSTRAR ESTADO HABITACIONES");
-        System.out.println("========================================\n");
+        System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║        📊 MOSTRAR ESTADO HABITACIONES (CU5)        ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        //chequeo de fechas
         boolean flagFechas = false;
         Date fechaInicio = null;
         Date fechaFin = null;
 
         while(!flagFechas) {
-            // 1. Pedir y Validar Fechas (Bucle del diagrama)
-            Date fechaReferencia = new Date(Long.MIN_VALUE);
-            fechaInicio = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
-            fechaFin = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
+            // 1. Pedir y Validar Fechas
+            LocalDate ayer = LocalDate.now().minusDays(1);
+            Date fechaReferencia = Date.from(ayer.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            // Validar lógica de negocio (Rango coherente)
+            SimpleDateFormat sdfEsp = new SimpleDateFormat("EEEE dd 'de' MMMM yyyy", new Locale("es", "ES"));
+            sdfEsp.setTimeZone(TimeZone.getDefault());
+            String fechaReferenciaStr = sdfEsp.format(fechaReferencia);
+
+            System.out.println(Colores.AMARILLO + "\n   📅 Defina el rango de fechas a visualizar:" + Colores.RESET);
+
+            fechaInicio = pedirFechaPosteriorA(
+                    "   > Desde Fecha (dd/MM/yyyy): ",
+                    fechaReferencia,
+                    "La fecha de Inicio debe ser mayor a " + fechaReferenciaStr + "." );
+
+            String fechaInicioStr = sdfEsp.format(fechaInicio);
+
+            fechaFin = pedirFechaPosteriorA(
+                    "   > Hasta Fecha (dd/MM/yyyy): ",
+                    fechaInicio,
+                    "La fecha limite debe ser mayor a la fecha de inicio (" + fechaInicioStr + ").");
+
+            // Validar lógica de negocio
             flagFechas = gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
+            if(!flagFechas) {
+                System.out.println(Colores.ROJO + "     ❌ Error: El rango de fechas no es válido. Intente nuevamente." + Colores.RESET);
+            }
         }
-        System.out.println("\nProcesando estados...");
 
-        // 2. ORQUESTACIÓN: Generar la grilla llamando a los gestores
+        System.out.println(Colores.AZUL + "\n⏳ Procesando estados y disponibilidad..." + Colores.RESET);
+
+        // 2. Generar la grilla
         Map<Habitacion, Map<Date, String>> grilla = generarGrillaEstados(fechaInicio, fechaFin);
 
         if (grilla.isEmpty()) {
-            System.out.println("No hay habitaciones registradas en el sistema.");
+            System.out.println(Colores.AMARILLO + "⚠️  No hay habitaciones registradas en el sistema." + Colores.RESET);
             return null;
         }
 
-        // 3. Visualización (Pintar la grilla base sin selección)
+        // 3. Visualización
         imprimirGrilla(grilla, fechaInicio, fechaFin, null);
 
-        return grilla; // Retornamos los datos para que CU4 los use
+        return grilla;
     }
 
 
@@ -1619,7 +1764,6 @@ public class Pantalla {
         SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
         formatoFecha.setLenient(false);
 
-        // Convertimos la fecha base a LocalDate para ignorar horas/minutos/segundos
         LocalDate baseLocal = fechaBase.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         while (true) {
@@ -1636,8 +1780,6 @@ public class Pantalla {
                 Date fechaIngresada = formatoFecha.parse(fechaStr);
                 LocalDate ingresadaLocal = fechaIngresada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
-                // Validamos: La fecha ingresada debe ser estrictamente posterior a la base
-                // TRUCO: Si quieres permitir el MISMO día, cambia 'isAfter' por '!ingresadaLocal.isBefore(baseLocal)'
                 if (ingresadaLocal.isAfter(baseLocal)) {
                     return fechaIngresada;
                 } else {
@@ -1650,16 +1792,52 @@ public class Pantalla {
         }
     }
 
+    private Date pedirFechaEntre(String mensaje, Date fechaInicioReserva, Date fechaLimiteGrilla , String mensajeError) throws CancelacionException {
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+        formatoFecha.setLenient(false);
+
+        // Convertimos la fecha base a LocalDate para ignorar horas/minutos/segundos
+        LocalDate baseLocal = fechaInicioReserva.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        while (true) {
+            System.out.print(Colores.VERDE + mensaje + Colores.RESET);
+            String fechaStr = scanner.nextLine().trim();
+            chequearCancelacion(fechaStr);
+
+            if (fechaStr.isEmpty()) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
+                continue;
+            }
+
+            try {
+                Date fechaIngresada = formatoFecha.parse(fechaStr);
+                LocalDate ingresadaLocal = fechaIngresada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate fechaLimite = fechaLimiteGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                // Validamos: La fecha ingresada debe ser posterior o igual a la base
+                if (ingresadaLocal.isAfter(fechaLimite)) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: La fecha debe estar contenida en el rango de fechas visualizado en la grilla."  + Colores.RESET);
+                } else if (!ingresadaLocal.isBefore(baseLocal)){
+                    return fechaIngresada;
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: " + mensajeError + Colores.RESET);
+                }
+
+            } catch (ParseException e) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido. Use dd/MM/yyyy." + Colores.RESET);
+            }
+        }
+    }
 
 
     // --- CU15: OCUPAR HABITACIÓN (CHECK-IN) ---
     public void ocuparHabitacion() throws Exception {
-        System.out.println("========================================");
-        System.out.println("   CU15: OCUPAR HABITACIÓN");
-        System.out.println("========================================\n");
+        System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
+        System.out.println("║           🔑 OCUPAR HABITACIÓN (CU15)              ║");
+        System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
         // 1. Mostrar Grilla Base
-        System.out.println("--- Disponibilidad Actual ---");
+        System.out.println(Colores.AZUL + "ℹ️  Visualizando disponibilidad actual..." + Colores.RESET);
         Map<Habitacion, Map<Date, String>> grilla = mostrarEstadoHabitaciones();
 
         if (grilla == null) return;
@@ -1674,6 +1852,9 @@ public class Pantalla {
 
         // --- FASE 1: SELECCIÓN DE HABITACIONES ---
         while (deseaCargarOtra) {
+            System.out.println("\n" + Colores.AMARILLO + "┌──────────────────────────────────────────────────┐");
+            System.out.println("│               ➕ NUEVA SELECCIÓN                 │");
+            System.out.println("└──────────────────────────────────────────────────┘" + Colores.RESET);
 
             Habitacion habSeleccionada = null;
             Date fechaInicioOcupacion = null;
@@ -1681,8 +1862,14 @@ public class Pantalla {
 
             // Sub-Bucle: Validar selección individual
             while (habSeleccionada == null) {
-                System.out.print("\nIngrese Nro Habitación a Ocupar: ");
+                System.out.print(Colores.VERDE + "\n   > Ingrese Nro Habitación a Ocupar: " + Colores.RESET);
                 String nro = scanner.nextLine().trim().toUpperCase();
+
+                while(nro.isEmpty()){
+                    System.out.println(Colores.ROJO +"     ❌ Error: Campo Obligatorio." + Colores.RESET);
+                    System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a Ocupar: " + Colores.RESET);
+                    nro = scanner.nextLine().trim().toUpperCase();
+                }
 
                 // 1. Validar existencia en la lista
                 Habitacion candidata = null;
@@ -1694,22 +1881,62 @@ public class Pantalla {
                 }
 
                 if (candidata == null) {
-                    System.out.println("Error: Habitación no encontrada.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: Habitación no encontrada en la grilla." + Colores.RESET);
                     continue;
                 }
 
-                // 2. INMEDIATAMENTE PEDIR FECHAS (Esto es lo que faltaba)
-                System.out.println(">> Defina el rango para la habitación " + nro + ":");
+                if(candidata.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
+                    System.out.println(Colores.ROJO + "     ❌ Error: La habitación está FUERA DE SERVICIO." + Colores.RESET);
+                    continue;
+                }
+
+                // 2. PEDIR FECHAS
+                System.out.println(Colores.CYAN + "\n   Define el rango para la habitación " + nro + ":" + Colores.RESET);
 
                 // Truco: Usamos fechas muy antiguas/lejanas como límites para que 'pedirFechaFutura'
                 // solo valide el formato, y nosotros validamos la lógica de negocio abajo.
-                Date fechaReferencia = new Date(Long.MIN_VALUE);
-                fechaInicioOcupacion = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
-                fechaFinOcupacion = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicioOcupacion, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioOcupacion + ".");
+                // 1. Pedir Fecha Inicio: Debe ser posterior a "ayer" (es decir, de hoy en adelante)
+                // Usamos Calendar para restar un día de forma segura y permitir seleccionar "HOY"
+                // Calculamos la menor fecha presente en la vista (inicioGrilla)
+                Date inicioGrilla;
+                Optional<Date> minFechaOpt = grilla.values().stream()
+                        .flatMap(m -> m.keySet().stream())
+                        .min(Date::compareTo);
+                inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
+
+                //Conseguimos el limite superior de la fecha de la grilla
+                Date finGrilla;
+                Optional<Date> maxFechaOpt = grilla.values().stream().flatMap(m->m.keySet().stream()).max(Date::compareTo);
+                finGrilla = maxFechaOpt.orElse(inicioGrilla);
+
+                // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
+                // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
+                LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate limiteAnterior = inicioLocal.minusDays(1);
+                Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+                // Flag para chequear que no pide una fecha anterior a hoy
+                try {
+                    fechaInicioOcupacion = pedirFechaEntre(
+                            "   > Fecha Inicio (dd/MM/yyyy): ",
+                            fechaLimiteParaPedir,  finGrilla ,
+                            "La fecha no puede ser anterior a la fecha mínima de la vista.");
+
+
+                    // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
+                    fechaFinOcupacion = pedirFechaEntre(
+                            "   > Fecha Fin (dd/MM/yyyy): ",
+                            fechaInicioOcupacion, finGrilla,
+                            "La fecha de fin debe ser posterior a la fecha de inicio."
+                    );
+                } catch (CancelacionException e) {
+                    System.out.println(Colores.ROJO + "Operación cancelada." + Colores.RESET);
+                    return; // Sale del método
+                }
 
                 // 3. Validar que esté dentro de lo que vemos en pantalla
                 if (fechaInicioOcupacion.before(fechaInicioGrilla) || fechaFinOcupacion.after(fechaFinGrilla)) {
-                    System.out.println(Colores.ROJO + "⚠️ Error: Las fechas deben estar dentro del rango visualizado (" +
+                    System.out.println(Colores.ROJO + "     ⚠️ Error: Las fechas deben estar dentro del rango visualizado (" +
                             sdf.format(fechaInicioGrilla) + " - " + sdf.format(fechaFinGrilla) + ")." + Colores.RESET);
                     continue; // Vuelve a pedir habitación
                 }
@@ -1722,28 +1949,42 @@ public class Pantalla {
                 for (DtoEstadia previa : estadiasParaProcesar) {
                     if (previa.getDtoHabitacion().getNumero().equals(candidata.getNumero())) {
                         if (fechaInicioOcupacion.before(previa.getFechaCheckOut()) && fechaFinOcupacion.after(previa.getFechaCheckIn())) {
-                            ocupadaEnLote = true; break;
+                            ocupadaEnLote = true;
+                            break;
                         }
                     }
                 }
 
                 if (ocupadaEnLote) {
-                    System.out.println("Error: Ya seleccionó esta habitación en este proceso.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: Ya seleccionó esta habitación en este proceso." + Colores.RESET);
                 } else if (ocupadaBD) {
-                    System.out.println("Error: La habitación figura OCUPADA en el sistema.");
+                    System.out.println(Colores.ROJO + "     ❌ Error: La habitación figura OCUPADA en el sistema." + Colores.RESET);
                 } else if (reservadaBD) {
-                    System.out.println("AVISO: Habitación RESERVADA. ¿Es el titular?");
-                    System.out.println("\n" + "Ingrese una opcion numerica:");
-                    System.out.println("1. SI (OCUPAR) / 2. NO (CANCELAR)");
+                    System.out.println(Colores.AMARILLO + "     ⚠️ AVISO: Habitación RESERVADA. ¿Es el titular?" + Colores.RESET);
+                    System.out.println("     [1] SI (OCUPAR)");
+                    System.out.println("     [2] NO (CANCELAR)");
+                    System.out.print("     >> Opción: ");
+
                     int opcionNumerica = leerOpcionNumerica();
-                    if (opcionNumerica == 1) {habSeleccionada = candidata;}
+                    while(true) {
+                        if (opcionNumerica == 1) {
+                            habSeleccionada = candidata;
+                            break;
+                        } else if (opcionNumerica == 2) {
+                            System.out.println(Colores.AZUL + "     ↩️ Reserva cancelada, elija otra habitación." + Colores.RESET);
+                            break;
+                        }
+                        System.out.println(Colores.ROJO + "     ❌ Por favor ingrese 1 o 2." + Colores.RESET);
+                        System.out.print("     >> Opción: ");
+                        opcionNumerica = leerOpcionNumerica();
+                    }
                 } else {
                     habSeleccionada = candidata; // Libre y fechas válidas -> ÉXITO
                 }
             }
 
             // 5. Guardar en lista temporal
-            DtoHabitacion dtoHab = Utils.Mapear.MapearHabitacion.mapearEntidadADto(habSeleccionada);
+            DtoHabitacion dtoHab = MapearHabitacion.mapearEntidadADto(habSeleccionada);
             DtoEstadia dtoEstadia = new DtoEstadia.Builder()
                     .dtoHabitacion(dtoHab)
                     .fechaCheckIn(fechaInicioOcupacion)
@@ -1752,30 +1993,43 @@ public class Pantalla {
                     .build();
 
             estadiasParaProcesar.add(dtoEstadia);
-            System.out.println(">> Selección guardada.");
+            System.out.println(Colores.VERDE + "     ✅ Selección guardada." + Colores.RESET);
 
-            // 6. REIMPRIMIR LA GRILLA (Tu requerimiento)
+            // 6. REIMPRIMIR LA GRILLA
             // Mostramos todo lo acumulado hasta ahora + la nueva selección
             pintarHabitacionOcupada(grilla, null, null, estadiasParaProcesar, null);
 
-            System.out.println("\n¿Desea ocupar OTRA habitación? (SI/NO): ");
-            if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                deseaCargarOtra = false;
+            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
+            while(flagIngreso) {
+                System.out.print(Colores.AMARILLO + "\n¿Desea ocupar otra habitación? (SI/NO): " + Colores.RESET);
+                String resp = scanner.nextLine().trim();
+                if (resp.equalsIgnoreCase("SI")) {
+                    deseaCargarOtra = true;
+                    flagIngreso = false; //no repetimos while
+                } else if (resp.equalsIgnoreCase("NO")) {
+                    deseaCargarOtra = false;
+                    flagIngreso = false; //no repetimos while
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Por favor ingrese SI o NO." + Colores.RESET);
+                    flagIngreso = true; //repetimos while
+                }
             }
         }
 
         if (estadiasParaProcesar.isEmpty()) return;
 
-        System.out.println(Colores.AMARILLO + "\n⚠️ Procediendo a la carga de datos de los huéspedes..." + Colores.RESET);
+        System.out.println(Colores.CYAN + "\n══════════════════════════════════════════════════════");
+        System.out.println("   ⚠️  Procediendo a la carga de HUÉSPEDES para " + estadiasParaProcesar.size() + " habitaciones");
+        System.out.println("══════════════════════════════════════════════════════" + Colores.RESET);
         pausa();
 
         // --- FASE 2: CARGA DE HUÉSPEDES ---
         List<DtoEstadia> estadiasFinales = new ArrayList<>();
 
         for (DtoEstadia dto : estadiasParaProcesar) {
-            System.out.println("\n--------------------------------------------------");
-            System.out.println("🏠 Completando datos para: Habitación " + dto.getDtoHabitacion().getNumero());
-            System.out.println("--------------------------------------------------");
+            System.out.println("\n" + Colores.AZUL + "╔════════════════════════════════════════════════════╗");
+            System.out.println("║ 🏠 CARGA PARA HABITACIÓN: " + String.format("%-24s", dto.getDtoHabitacion().getNumero()) + " ║");
+            System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
             ArrayList<DtoHuesped> grupo = seleccionarGrupoHuespedes();
 
@@ -1790,7 +2044,7 @@ public class Pantalla {
         if (estadiasFinales.isEmpty()) return;
 
         // --- FASE 3: PERSISTENCIA ---
-        System.out.println("\nGuardando...");
+        System.out.println(Colores.AZUL + "\n💾 Guardando ocupaciones..." + Colores.RESET);
         try {
             for (DtoEstadia dto : estadiasFinales) {
                 gestorEstadia.crearEstadia(dto);
@@ -1798,8 +2052,10 @@ public class Pantalla {
             System.out.println("\n" + Colores.VERDE + "✅ ¡Check-in masivo realizado con ÉXITO!" + Colores.RESET);
             pausa();
         } catch (Exception e) {
-            System.out.println("\n*** ERROR AL GUARDAR ***");
-            System.out.println("Detalle: " + e.getMessage());
+            System.out.println("\n" + Colores.ROJO + "╔═════════════════════════════════════════════╗");
+            System.out.println("║ ❌ ERROR CRÍTICO AL GUARDAR                 ║");
+            System.out.println("╚═════════════════════════════════════════════╝" + Colores.RESET);
+            System.out.println(Colores.ROJO + "Detalle: " + e.getMessage() + Colores.RESET);
             pausa();
         }
     }
@@ -1809,33 +2065,73 @@ public class Pantalla {
         boolean seguir = true;
 
         while (seguir) {
-            // Feedback visual del rol
+            int opcionSeleccionada = 1; // Por defecto "Cargar"
+
+            // --- MENÚ CONDICIONAL (Responsable vs Acompañantes) ---
             if (lista.isEmpty()) {
-                System.out.println("\n--- SELECCIÓN DEL RESPONSABLE (Titular) ---");
-                System.out.println("(Nota: El responsable puede figurar en múltiples habitaciones)");
+                // CASO 1: PRIMER HUÉSPED (Responsable) - No preguntamos, vamos directo al grano
+                System.out.println("\n" + Colores.AMARILLO + "╔════════════════════════════════════════════════════╗");
+                System.out.println("║ 👤 DATOS DEL RESPONSABLE (Titular)                 ║");
+                System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
+                System.out.println(Colores.AZUL + "ℹ️  Ingrese los datos para buscar o dar de alta:" + Colores.RESET);
+
             } else {
-                System.out.println("\n--- SELECCIÓN DE ACOMPAÑANTE #" + lista.size() + " ---");
-                System.out.println("(Nota: Los acompañantes NO pueden estar en otra habitación)");
+                // CASO 2: ACOMPAÑANTES - Menú de decisión
+                System.out.println("\n" + Colores.CYAN + "┌──────────────────────────────────────────────────┐");
+                System.out.printf("│ 👥 SELECCIÓN DE ACOMPAÑANTE #%-2d                  │%n", (lista.size() + 1));
+                System.out.println("└──────────────────────────────────────────────────┘" + Colores.RESET);
+                System.out.println("   (Actual: " + lista.size() + " huéspedes cargados en esta habitación)");
+
+                System.out.println(Colores.VERDE + "   [1]" + Colores.RESET + " ➕ Agregar otro acompañante");
+                System.out.println(Colores.ROJO  + "   [2]" + Colores.RESET + " ✅ Finalizar carga y continuar");
+                System.out.print("   >> Opción: ");
+
+                opcionSeleccionada = leerOpcionNumerica();
             }
 
-            System.out.println("1. Buscar Huésped existente");
-            if (!lista.isEmpty()) System.out.println("2. Finalizar carga para esta habitación");
+            // --- PROCESAR OPCIÓN ---
+            if (opcionSeleccionada == 2) {
+                break; // Terminar carga
+            } else if (opcionSeleccionada != 1) {
+                System.out.println(Colores.ROJO + "     ❌ Opción inválida." + Colores.RESET);
+                continue;
+            }
 
-            System.out.print("Opción: ");
-            int op = leerOpcionNumerica();
-
-            if (op == 2 && !lista.isEmpty()) break;
-
+            // --- BLOQUE DE BÚSQUEDA Y SELECCIÓN ---
             DtoHuesped seleccionado = null;
 
-            if (op == 1) { // Buscar
-                DtoHuesped criterios = solicitarCriteriosDeBusqueda();
-                ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
-                if (res.isEmpty()) {
-                    System.out.println("No se encontraron huéspedes.");
+            // 1. Pedir Criterios (Reutilizamos el método bonito del CU2)
+            DtoHuesped criterios = solicitarCriteriosDeBusqueda();
+
+            System.out.println(Colores.AZUL + "🔄 Buscando..." + Colores.RESET);
+            ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
+
+            if (res.isEmpty()) {
+                System.out.println(Colores.AMARILLO + "\n⚠️  No encontrado." + Colores.RESET);
+                System.out.print("¿Desea darlo de alta ahora? (SI/NO): ");
+                if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
+                    // Llamada al Alta
+                    this.darDeAltaHuesped();
+                    System.out.println(Colores.AZUL + "\nℹ️  Por favor, busque nuevamente al huésped recién creado para confirmarlo:" + Colores.RESET);
+                    // Al hacer 'continue', el bucle vuelve a empezar y le pide los criterios de nuevo. Es un flujo natural.
+                    continue;
+                }
+            } else {
+                // Resultados encontrados
+                if (res.size() == 1) {
+                    // Coincidencia única
+                    Huesped h = res.get(0);
+                    System.out.println("\nSe encontró a: " + Colores.NEGRILLA + h.getApellido() + " " + h.getNombres() + Colores.RESET);
+                    System.out.println("DNI: " + h.getNroDocumento());
+                    System.out.print(Colores.VERDE + "¿Es correcto? (SI/NO): " + Colores.RESET);
+
+                    if(scanner.nextLine().trim().equalsIgnoreCase("SI")){
+                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(h);
+                    }
                 } else {
+                    // Múltiples coincidencias -> Tabla
                     mostrarListaDatosEspecificos(res);
-                    System.out.print("ID a seleccionar (0 cancelar): ");
+                    System.out.print("\nIngrese ID a seleccionar (0 para cancelar): ");
                     int id = leerOpcionNumerica();
                     if (id > 0 && id <= res.size()) {
                         seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
@@ -1843,73 +2139,76 @@ public class Pantalla {
                 }
             }
 
+            // 3. Agregar a la lista temporal
             if (seleccionado != null) {
-                // Verificar duplicado local (en la misma habitación)
+                // Verificar duplicado en la misma habitación
                 DtoHuesped finalSeleccionado = seleccionado;
                 boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
 
                 if (yaEsta) {
-                    System.out.println("¡Este huésped ya está en la lista de esta habitación!");
+                    System.out.println(Colores.ROJO + "     ❌ Error: ¡Este huésped ya está en la lista!" + Colores.RESET);
                 } else {
                     lista.add(seleccionado);
-                    System.out.println(">> Agregado: " + seleccionado.getApellido());
+                    System.out.println(Colores.VERDE + "     ✅ Agregado: " + seleccionado.getApellido() + " " + seleccionado.getNombres() + Colores.RESET);
                 }
-            }
-
-            if (!lista.isEmpty()) {
-                System.out.println("\n¿Agregar otro acompañante? (SI/NO)");
-                if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) seguir = false;
             }
         }
         return lista;
     }
 
     private void pintarHabitacionOcupada(Map<Habitacion, Map<Date, String>> grilla,
-                                         Date inicioOcupacion, Date finOcupacion, // Fechas de la selección actual (pueden ser null)
+                                         Date inicioOcupacion, Date finOcupacion,
                                          List<DtoEstadia> estadiasConfirmadas,
-                                         Habitacion seleccionActual) { // Puede ser null
+                                         Habitacion seleccionActual) {
 
+        // VOLVEMOS AL FORMATO LARGO
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        // 1. Obtener límites de la grilla original para no romper el dibujo
         if (grilla == null || grilla.isEmpty()) return;
 
+        // 1. Obtener límites
         Date inicioGrilla = grilla.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
         Date finGrilla = grilla.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
 
-        // Convertimos a lista para mantener el orden
         List<Habitacion> habitacionesOrdenadas = new ArrayList<>(grilla.keySet());
-        // Aseguramos el orden visual
         habitacionesOrdenadas.sort(Comparator.comparing(Habitacion::getTipoHabitacion).thenComparing(Habitacion::getNumero));
 
-        System.out.println("\n--- GRILLA ACTUALIZADA (PRE-VISUALIZACIÓN) ---");
+        System.out.println(Colores.CYAN + "\n   === 🗓️  GRILLA ACTUALIZADA (PRE-VISUALIZACIÓN) ===" + Colores.RESET);
 
-        // 2. Encabezados
-        imprimirEncabezadoTipos(habitacionesOrdenadas);
+        // 2. ENCABEZADOS
+        // Línea Superior (Ajustada para fecha larga)
+        System.out.print("   ┌──────────────"); // Más ancho para dd/MM/yyyy
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┬───────────");
+        System.out.println("┐");
 
-        System.out.print("   FECHA     ");
+        // Títulos de Columnas
+        System.out.print("   │    FECHA     ");
         for (Habitacion hab : habitacionesOrdenadas) {
-            // Resaltar la columna de la habitación que se está eligiendo ahora
+            String textoHab = "Hab " + hab.getNumero();
+
+            // Resaltamos columna activa
             if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
-                System.out.print("|" + Colores.VERDE + String.format(" %-9s ", "Hab " + hab.getNumero()) + Colores.RESET);
+                System.out.print("│" + Colores.VERDE + String.format(" %-9s ", textoHab) + Colores.RESET);
             } else {
-                System.out.print("|" + String.format(" %-9s ", "Hab " + hab.getNumero()));
+                System.out.print("│ " + String.format("%-9s", textoHab) + " ");
             }
         }
-        System.out.println("|");
+        System.out.println("│");
 
-        System.out.print("-------------");
-        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("+-----------");
-        System.out.println("+");
+        // Línea Divisoria
+        System.out.print("   ├──────────────");
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┼───────────");
+        System.out.println("┤");
 
-        // 3. Cuerpo de la grilla
+        // 3. CUERPO DE LA GRILLA
         LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate finLocal = finGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 
         LocalDate actual = inicioLocal;
         while (!actual.isAfter(finLocal)) {
-            System.out.printf("%-12s ", actual.format(dtf));
+            // Columna Fecha (Ancho 12 para que entre dd/MM/yyyy)
+            System.out.printf("   │ %-12s ", actual.format(dtf));
             Date fechaFila = Date.from(actual.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             for (Habitacion hab : habitacionesOrdenadas) {
@@ -1917,22 +2216,19 @@ public class Pantalla {
                 String color = Colores.RESET;
                 boolean esSeleccion = false;
 
-                // A. Verificar si es la SELECCIÓN ACTUAL (la que estoy escribiendo ahora)
+                // A. Selección Actual
                 if (seleccionActual != null && hab.getNumero().equals(seleccionActual.getNumero())) {
                     if (inicioOcupacion != null && finOcupacion != null) {
-                        // Pintamos solo si la fecha cae en el rango ingresado
-                        // (!before && before para intervalo [inicio, fin))
                         if (!fechaFila.before(inicioOcupacion) && fechaFila.before(finOcupacion)) {
                             esSeleccion = true;
                         }
                     }
                 }
 
-                // B. Verificar si está en la lista de CONFIRMADAS (las del bucle anterior)
+                // B. Confirmadas previamente
                 if (!esSeleccion && estadiasConfirmadas != null) {
                     for (DtoEstadia dto : estadiasConfirmadas) {
                         if (dto.getDtoHabitacion().getNumero().equals(hab.getNumero())) {
-                            // Pintamos el rango de ese DTO
                             if (!fechaFila.before(dto.getFechaCheckIn()) && fechaFila.before(dto.getFechaCheckOut())) {
                                 esSeleccion = true;
                                 break;
@@ -1945,118 +2241,101 @@ public class Pantalla {
                     visual = "   * ";
                     color = Colores.VERDE;
                 } else {
-                    // C. Estado original de la base de datos
+                    // C. Estado Base
                     Map<Date, String> mapa = grilla.get(hab);
                     String estado = (mapa != null) ? mapa.get(fechaFila) : "LIBRE";
                     if (estado == null) estado = "LIBRE";
 
+                    // Mantenemos tus letras originales
                     switch (estado) {
-                        case "OCUPADA" -> { visual = "   X   "; color = Colores.ROJO; }
-                        case "RESERVADA" -> { visual = "   R   "; color = Colores.AMARILLO; }
-                        case "FUERA DE SERVICIO" -> { visual = "   -   "; color = Colores.ROJO; }
-                        case "LIBRE" -> { visual = "   L   "; color = Colores.RESET; }
+                        case "OCUPADA" -> {
+                            visual = "   X   ";
+                            color = Colores.ROJO;
+                        }
+                        case "RESERVADA" -> {
+                            visual = "   R   ";
+                            color = Colores.AMARILLO;
+                        }
+                        case "FUERA DE SERVICIO" -> {
+                            visual = "   -   ";
+                            color = Colores.CYAN;
+                        }
+                        case "LIBRE" -> {
+                            visual = "   L   ";
+                            color = Colores.RESET;
+                        }
                     }
                 }
-                System.out.print("|" + color + String.format(" %-9s ", visual.trim()) + Colores.RESET);
+                System.out.print("│" + color + String.format("%-11s", visual) + Colores.RESET);
             }
-            System.out.println("|");
+            System.out.println("│");
             actual = actual.plusDays(1);
         }
-        System.out.println("REF: [L]ibre | [R]eservada | [X]Ocupada | [*] Selección Actual");
+
+        // Línea Inferior
+        System.out.print("   └──────────────");
+        for (int k = 0; k < habitacionesOrdenadas.size(); k++) System.out.print("┴───────────");
+        System.out.println("┘");
+
+        System.out.println("\n   REFERENCIAS:  [L]ibre | " + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
+                + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | " + Colores.VERDE + "[*] Selección Actual" + Colores.RESET
+                + " | " + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
     }
 
-    private String pedirDocumentoSinExcepcion(TipoDocumento tipo){
-        String NroDocumento = null;
-        boolean valido = false;
-
-        // Definimos las reglas (Regex)
-        // DNI, LE, LC: Solo números, entre 7 y 8 dígitos (ej: 12345678)
-        String regexNumerico = "^\\d{7,8}$";
-        // Pasaporte: Letras y números, entre 6 y 15 caracteres
-        String regexPasaporte = "^[A-Z0-9]{6,15}$";
-        // Otro: Cualquier cosa entre 4 y 20 caracteres
-        String regexOtro = "^.{4,20}$";
-
-        while (!valido) {
-            System.out.print("Número de Documento: ");
-            String entrada = scanner.nextLine().trim().toUpperCase(); // Normalizamos a mayúsculas
-
-
-            if (entrada.isEmpty()) {
-                // Si es obligatorio (que lo es), no dejamos pasar vacío
-                System.out.println("Error: El documento es obligatorio.");
-                continue;
-            }
-
-            // Validamos según el tipo seleccionado
-            switch (tipo) {
-                case DNI:
-                case LE:
-                case LC:
-                    if (entrada.matches(regexNumerico)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Para " + tipo + " debe ingresar entre 7 y 8 números.");
-                    }
-                    break;
-                case PASAPORTE:
-                    if (entrada.matches(regexPasaporte)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato de Pasaporte inválido (solo letras y números).");
-                    }
-                    break;
-                default: // OTRO
-                    if (entrada.matches(regexOtro)) {
-                        valido = true;
-                    } else {
-                        System.out.println("Error: Formato inválido.");
-                    }
-                    break;
-            }
-
-            if (valido) {
-                NroDocumento = entrada;
-            }
-        }
-        return NroDocumento;
-    }
-
-    // Método que imprime la fila superior con los TIPOS agrupados
+    // Metodo que imprime la fila superior con los TIPOS agrupados
     public void imprimirEncabezadoTipos(List<Habitacion> habitacionesOrdenadas) {
-        // Espacio vacío sobre la columna de fechas (13 espacios)
-        System.out.print("             ");
+        // Padding inicial para alinearse con la columna "FECHA" de la grilla (13 espacios)
+        String padding = "             ";
 
+        // 1. LÍNEA SUPERIOR (Dibujamos el techo de las cajas)
+        System.out.print(padding);
         int i = 0;
         while (i < habitacionesOrdenadas.size()) {
             Habitacion actual = habitacionesOrdenadas.get(i);
-            String tipoActual = actual.getTipoHabitacion().getDescripcion(); // O .name() si prefieres
-
-            // Contar cuántas habitaciones consecutivas son de este mismo tipo
             int contador = 0;
+
+            // Contamos ancho del grupo
             for (int j = i; j < habitacionesOrdenadas.size(); j++) {
-                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) {
-                    contador++;
-                } else {
-                    break;
-                }
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
+                else break;
             }
 
-            // Calcular el ancho total de este grupo
-            // Cada celda de habitación ocupa 12 caracteres: "| " (2) + 9 (texto) + " " (1)
-            int anchoGrupo = contador * 12;
+            // Dibujamos techo: ┌───────────┐ (ajustado al ancho)
+            // Restamos 1 al ancho total porque el borde final de uno es el inicio del otro si queremos pegarlos,
+            // pero para cajas separadas usaremos estilo limpio.
+            // Ancho celda = 12. Ancho grupo = 12 * n.
+            // Usamos borde simple cian.
+            System.out.print(Colores.CYAN + "┌" + "─".repeat((contador * 12) - 1) + "┐" + Colores.RESET);
 
-            // Imprimir el nombre del tipo centrado en ese ancho, con bordes
-            // Usamos CYAN para destacar el tipo
-            System.out.print(Colores.CYAN + "|" + PantallaHelper.centrarTexto(tipoActual, anchoGrupo - 1) + Colores.RESET);
-
-            // Saltar el índice
             i += contador;
         }
-        System.out.println("|"); // Cerrar la línea
+        System.out.println();
 
-        // Imprimir una línea separadora decorativa debajo de los tipos
-        System.out.print("             ");
+        // 2. LÍNEA DE TEXTO (Nombres de Tipos)
+        System.out.print(padding);
+        i = 0;
+        while (i < habitacionesOrdenadas.size()) {
+            Habitacion actual = habitacionesOrdenadas.get(i);
+            String tipoActual = actual.getTipoHabitacion().getDescripcion();
+
+            int contador = 0;
+            for (int j = i; j < habitacionesOrdenadas.size(); j++) {
+                if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
+                else break;
+            }
+
+            int anchoGrupo = contador * 12; // 12 caracteres por habitación
+
+            // Imprimimos texto centrado entre bordes verticales │
+            // Usamos -2 en el ancho para descontar los bordes "│" y "│" que simulan la caja
+            System.out.print(Colores.CYAN + "│" + PantallaHelper.centrarTexto(tipoActual, anchoGrupo - 2) + "│" + Colores.RESET);
+
+            i += contador;
+        }
+        System.out.println();
+
+        // 3. LÍNEA INFERIOR (Cierre de las cajas)
+        System.out.print(padding);
         i = 0;
         while (i < habitacionesOrdenadas.size()) {
             Habitacion actual = habitacionesOrdenadas.get(i);
@@ -2065,12 +2344,17 @@ public class Pantalla {
                 if (habitacionesOrdenadas.get(j).getTipoHabitacion() == actual.getTipoHabitacion()) contador++;
                 else break;
             }
-            // Dibuja "-----------"
-            System.out.print("+" + "-".repeat((contador * 12) - 1));
+
+            // Dibujamos piso: └───────────┘
+            System.out.print(Colores.CYAN + "└" + "─".repeat((contador * 12) - 1) + "┘" + Colores.RESET);
+
             i += contador;
         }
-        System.out.println("+");
+        System.out.println();
     }
+
+
+
 
 
 }

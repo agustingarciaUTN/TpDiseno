@@ -25,7 +25,6 @@ public class GestorHuesped {
     // 2. Constructor PRIVADO
     // Nadie puede hacer "new GestorReserva()" desde afuera.
     private GestorHuesped() {
-        // ¡IMPORTANTE! Aquí obtenemos las instancias de los DAO
         this.daoHuesped = DaoHuesped.getInstance();
         this.daoDireccion = DaoDireccion.getInstance();
 
@@ -50,17 +49,18 @@ public class GestorHuesped {
        // Si el criterio NO es nulo Y NO está vacío (tiene al menos un dato real)...
        if (criterios != null && !criterios.estanVacios()) {
            System.out.println("Buscando coincidencias...");
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
+
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(MapearHuesped.mapearDtoAEntidad(criterios));//Obtenemos los huespedes que cumplan los criterios de busqueda
        }
        else {
-           // Si es null o está "vacío" (todo Enter), traemos TODO
+           // Si es null o está "vacío" (todo Enter), traemos todos los huespedes del sistema
            System.out.println("Sin filtro: Trayendo todos los huéspedes...");
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();//Obtenemos todos los huespedes dela bdd
        }
 
        ArrayList<Huesped> listaHuespedesEncontrados = new ArrayList<>();
 
-       // For que mapea cada DtoHuesped a Huesped y lo añade a la lista
+       // For que mapea cada DtoHuesped a Huesped y lo añade a la lista de retorno
        for(int i = 0 ; i < listaDtoHuespedesEncontrados.size() ; i++){
            listaHuespedesEncontrados.add(i, MapearHuesped.mapearDtoAEntidad(listaDtoHuespedesEncontrados.get(i)));
        }
@@ -74,7 +74,7 @@ public class GestorHuesped {
         List<String> errores = new ArrayList<>();
 
         // Regla especial CUIT/IVA
-        //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vació, ademas validamos su formato con Regex
+        //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vacio
         if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
@@ -87,12 +87,13 @@ public class GestorHuesped {
 
     //buscarPorTipoYNumeroDocumento  <- nombre en Diag de Secuencia
     //Esto tambien es una validacion de negocio. El Tipo y Numero de documento ingresado, no puede existir en el sistema
-    public DtoHuesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
+    public Huesped chequearDuplicado(DtoHuesped datos) throws PersistenciaException {
         // Llamamos al DAO para buscar por tipo y número.
         // Si existe, nos devolverá el DTO con los datos de la BD (Nombre viejo, apellido viejo, etc).
 
         // Si obtenerHuesped devuelve algo distinto de null, es el duplicado real.
-        return daoHuesped.obtenerHuesped(datos.getTipoDocumento(), datos.getNroDocumento());
+        //Llamamos al daoHuesped para que busque en la bdd con los datos ingresados
+        return MapearHuesped.mapearDtoAEntidad(daoHuesped.obtenerHuesped(datos.getTipoDocumento(), datos.getNroDocumento()));
     }
 
     public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped){
@@ -131,7 +132,7 @@ public class GestorHuesped {
         } else {
             // === CAMINO: MODIFICACIÓN (Existe - "Aceptar Igualmente") ===
 
-            // 1. Recuperar ID de la dirección vieja
+            // 1. Recuperar ID de la dirección vieja para poder sobreescribirla
             int idDireccionExistente = daoHuesped.obtenerIdDireccion(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
 
             // 2. Actualizar la Dirección si existe

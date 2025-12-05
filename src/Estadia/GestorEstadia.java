@@ -37,7 +37,7 @@ public class GestorEstadia {
         return daoEstadia.hayEstadiaEnFecha(nroHabitacion, fechaInicio, fechaFin);
     }
     public List<DtoEstadia> buscarEstadiasEnFecha(Date inicio, Date fin) {
-        return ((DaoEstadia) daoEstadia).obtenerEstadiasEnPeriodo(inicio, fin);
+        return daoEstadia.obtenerEstadiasEnPeriodo(inicio, fin);
     }
     /**
      * CU15: Crear Estadía (con validación de roles)
