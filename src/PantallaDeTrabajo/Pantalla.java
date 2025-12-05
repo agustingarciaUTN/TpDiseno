@@ -1345,18 +1345,42 @@ public class Pantalla {
             System.out.println("\n" + Colores.AMARILLO + "--- Nueva Selección ---" + Colores.RESET);
 
             // A. Selección de Habitación
-            System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
-            String nro = scanner.nextLine().trim().toUpperCase();
-            while(nro.isEmpty()){
-                System.out.println(Colores.ROJO +"     ❌ Error: Campo Obligatorio." + Colores.RESET);
-                System.out.print("\nIngrese Nro Habitación a reservar: ");
-                nro = scanner.nextLine().trim().toUpperCase();
+            String entrada;
+            int nro = -1;
+
+            while (true) {
+                System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
+                entrada = scanner.nextLine().trim();
+
+                // Campo obligatorio
+                if (entrada.isEmpty()) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Campo Obligatorio." + Colores.RESET);
+                    continue;
+                }
+
+                // Sólo dígitos (permite varios dígitos)
+                if (!entrada.matches("^\\d+$")) {
+                    System.out.println(Colores.ROJO + "   ❌ Error: Debe ingresar sólo números." + Colores.RESET);
+                    continue;
+                }
+
+                try {
+                    nro = Integer.parseInt(entrada);
+                    if (nro <= 0) {
+                        System.out.println(Colores.ROJO + "     ❌ Error: Ingrese un número positivo." + Colores.RESET);
+                        continue;
+                    }
+                    break; // válido
+                } catch (NumberFormatException e) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: Número demasiado grande." + Colores.RESET);
+                }
             }
+
 
             // Validar que la habitación exista en la grilla que estamos viendo (o en la BD)
             Habitacion habSeleccionada = null;
             for (Habitacion h : grillaVista.keySet()) {
-                if (h.getNumero().equals(nro)) {
+                if (h.getNumero().equals(String.valueOf(nro))) {
                     habSeleccionada = h;
                     break;
                 }
@@ -1398,15 +1422,12 @@ public class Pantalla {
                 Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
                 // Flag para chequear que no pide una fecha anterior a hoy
-                boolean pedidoAFuturo = true;
-                while(pedidoAFuturo) {
-                    fechaInicioReserva = pedirFechaPosteriorA(
-                            "   > Fecha Inicio (dd/MM/yyyy): ",
-                            fechaLimiteParaPedir,
-                            "La fecha de inicio no puede ser anterior a la fecha mínima de la vista."
-                    );
+                fechaInicioReserva = pedirFechaEntre(
+                        "   > Fecha Inicio (dd/MM/yyyy): ",
+                        inicioGrilla,  fechaLimiteParaPedir ,
+                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista.");
 
-                }
+
                 // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
                 fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
@@ -1433,14 +1454,14 @@ public class Pantalla {
 
             for(LocalDate d = inicio; !d.isAfter(fin) ; d = d.plusDays(1)){
                 Date diaChequeado = Date.from(d.atStartOfDay(zone).toInstant());
-                if(gestorEstadia.estaOcupadaEnFecha(nro, diaChequeado, diaChequeado)){
+                if(gestorEstadia.estaOcupadaEnFecha(String.valueOf(nro), diaChequeado, diaChequeado)){
                     ocupadaParcialmente = true;
                     break;
                 }
             }
 
-            boolean ocupada = gestorEstadia.estaOcupadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
-            boolean reservada = gestorReserva.estaReservadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
+            boolean ocupada = gestorEstadia.estaOcupadaEnFecha(String.valueOf(nro), fechaInicioReserva, fechaFinReserva);
+            boolean reservada = gestorReserva.estaReservadaEnFecha(String.valueOf(nro), fechaInicioReserva, fechaFinReserva);
 
             if (ocupada || ocupadaParcialmente) {
                 System.out.println(Colores.ROJO + "   ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
@@ -1481,7 +1502,7 @@ public class Pantalla {
 
             // E. Crear DTO y agregar a la lista
             DtoReserva nuevaReserva = new DtoReserva.Builder()
-                    .idHabitacion(nro)
+                    .idHabitacion(String.valueOf(nro))
                     .fechaDesde(fechaInicioReserva)
                     .fechaHasta(fechaFinReserva)
                     .nombreResponsable(nombreResp)
@@ -1741,7 +1762,7 @@ public class Pantalla {
 
                 // Validamos: La fecha ingresada debe ser posterior o igual a la base
                 if (ingresadaLocal.isAfter(fechaLimite)) {
-                    System.out.println(Colores.ROJO + "     ❌ Error: La fecha de fin de reserva debe estar contenida en el rango de fechas visualizado en la grilla."  + Colores.RESET);
+                    System.out.println(Colores.ROJO + "     ❌ Error: La fecha debe estar contenida en el rango de fechas visualizado en la grilla."  + Colores.RESET);
                 } else if (!ingresadaLocal.isBefore(baseLocal)){
                     return fechaIngresada;
                 } else {
