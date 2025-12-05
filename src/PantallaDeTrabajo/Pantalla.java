@@ -266,17 +266,27 @@ public class Pantalla {
 
             } catch (CancelacionException e) {
                 // Si el usuario escribió "CANCELAR" durante el formulario:
-                System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
-                String confir = scanner.nextLine();
+                boolean confirmacionValida = false;
 
-                if (confir.equalsIgnoreCase("SI")) {
-                    System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
-                    return; // Sale del metodo completamente y retorna al menu principal
+                while (!confirmacionValida) {
+                    System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
+                    String confir = scanner.nextLine().trim();
 
-                } else {
-                    System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
-                    continue; // Vuelve al inicio del while (Reinicia el form, es complejo reanudar desde el ultimo punto en consola)
+                    if (confir.equalsIgnoreCase("SI")) {
+                        System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
+                        return; // Sale del método completamente
+
+                    } else if (confir.equalsIgnoreCase("NO")) {
+                        System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
+                        confirmacionValida = true; // Rompe el bucle de validación para permitir el continue de abajo
+
+                    } else {
+                        System.out.println(Colores.ROJO + "❌ Entrada inválida. Por favor ingrese 'SI' o 'NO'." + Colores.RESET);
+                    }
                 }
+
+                // Si eligió NO, salimos del while de validación y ejecutamos esto para reiniciar el form
+                continue;
             }
 
             //MENU DE DECISIÓN (Siguiente / Cancelar)
@@ -484,10 +494,9 @@ public class Pantalla {
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
         String numeroDocumento = pedirDocumento(tipoDocumento, false);
-        
+
         String posIva = pedirPosIva();
 
-        // CUIT (Opcional)
         String cuit = pedirCUIT(posIva);
 
         Date fechaNacimiento = pedirFecha();
@@ -520,7 +529,7 @@ public class Pantalla {
         // --- SECCIÓN 3: CONTACTO ---
         System.out.println(Colores.AMARILLO + "\n   === 📞 CONTACTO ===" + Colores.RESET);
 
-        Long telefono = pedirTelefono(); // Asumo que dentro pide el dato con su propio mensaje, o podemos pasarle uno si el método lo permite
+        Long telefono = pedirTelefono();
 
         String email = pedirEmail();
 
@@ -536,6 +545,7 @@ public class Pantalla {
                 .piso(pisoDireccion)
                 .codPostal(codPostalDireccionPrimitivo)
                 .build();
+
         //Creamos el DtoHuesped usando el Builder
         DtoHuesped huespedDto = new DtoHuesped.Builder()
                 .nombres(nombres)
@@ -563,7 +573,7 @@ public class Pantalla {
     }
 
 
-    //Metodo auxiliar clave para verificar cancelación
+    //Metodo auxiliar para verificar cancelación
     private void chequearCancelacion(String input) throws CancelacionException {
         // Si el input no es nulo y es "CANCELAR" (ignorando mayúsculas), lanzamos la excepción
         if (input != null && input.trim().equalsIgnoreCase("CANCELAR")) {
@@ -571,7 +581,7 @@ public class Pantalla {
         }
     }
 
-//=== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ===
+//===================== Metodos para pedir Y VALIDAR cada tipo de dato, CU9 ========================
 
     //Solicitar y Validar String complejo (calle, provincia, localidad)
     private String pedirStringComplejo(String mensaje) throws CancelacionException {
@@ -606,7 +616,7 @@ public class Pantalla {
 
                 // Esta expresion ^[\p{L} ]+$ permite cualquier letra de cualquier idioma
                 // y espacios, pero no números ni caracteres especiales.
-            } else if (!entrada.matches("^[\\p{L} ]+$")) {//cualquier letra Unicode
+            } else if (!entrada.matches("^[\\p{L} ]+$")) {
                 System.out.println(Colores.ROJO + "     ❌ Error: Solo se admiten letras y espacios." + Colores.RESET);
 
             } else {
@@ -641,6 +651,7 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar Enteros
     private Integer pedirEntero(String mensaje) throws CancelacionException {
         Integer valor = null; // Usamos la clase wrapper para permitir null
         boolean valido = false;
@@ -670,6 +681,7 @@ public class Pantalla {
         return valor;
     }
 
+    //Solicitar y Validar Telefono
     private Long pedirTelefono() throws CancelacionException {
         Long valor = null;
         boolean valido = false;
@@ -678,7 +690,6 @@ public class Pantalla {
         String regexTelefono = "^[0-9+() -]+$";
 
         while (!valido) {
-            // Prompt con color verde
             System.out.print(Colores.VERDE + "   > Teléfono: " + Colores.RESET);
             String entrada = scanner.nextLine().trim();
 
@@ -719,33 +730,21 @@ public class Pantalla {
         return valor;
     }
 
+    //Solicitar y Validar CUIT
     private String pedirCUIT(String posIvaSeleccionada) throws CancelacionException {
         String cuit;
         String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
-        // Verificamos si es Responsable Inscripto usando el Enum
-        boolean esResponsableInscripto = posIvaSeleccionada != null &&
-                posIvaSeleccionada.equals(PosIva.ResponsableInscripto.name());
 
         while (true) {
-            // Cambiamos el mensaje según la obligatoriedad
-            if (esResponsableInscripto) {
-                System.out.print(Colores.VERDE + "   > CUIT " + Colores.ROJO + "(Obligatorio por ser Resp. Inscripto)" + Colores.VERDE + ": " + Colores.RESET);
-            } else {
-                System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
-            }
+            System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
 
             cuit = scanner.nextLine().trim();
             chequearCancelacion(cuit);
 
             // CASO 1: Está vacío
             if (cuit.isEmpty()) {
-                if (esResponsableInscripto) {
-                    //No dejamos avanzar si es RI y no pone CUIT
-                    System.out.println(Colores.ROJO + "     ❌ Error: El CUIT es obligatorio para Responsables Inscriptos." + Colores.RESET);
-                } else {
-                    return null; // Es válido que sea null (será Factura B)
-                }
+                return null; // Es válido que sea null (será Factura B)
 
                 // CASO 2: Escribió algo, validamos formato
             } else if (!cuit.matches(expresionCUIT)) {
@@ -756,13 +755,14 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar Email
     private String pedirEmail() throws CancelacionException {
         String email;
         // expresion simple para emails: algo@algo.algo
         String expresionEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
         while (true) {
-            // Prompt con "(Opcional)" destacado
+
             System.out.print(Colores.VERDE + "   > Email " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
             email = scanner.nextLine();
 
@@ -780,6 +780,7 @@ public class Pantalla {
         }
     }
 
+    //Solicitar y Validar Fecha de nacimiento
     private Date pedirFecha() throws CancelacionException {
         Date fecha = null;
         boolean valida = false;
@@ -817,12 +818,12 @@ public class Pantalla {
         return fecha;
     }
 
+    //Solicitar y Validar Tipo Documento
     private TipoDocumento pedirTipoDocumento() throws CancelacionException {
         TipoDocumento tipoDoc = null;
         boolean valido = false;
 
-        // Construimos las opciones con un formato más limpio: [DNI / PASAPORTE / ...]
-        // Usamos Cyan para las opciones para que se diferencien del texto de la pregunta
+
         StringBuilder opciones = new StringBuilder(Colores.CYAN + "[");
         TipoDocumento[] valores = TipoDocumento.values();
         for (int i = 0; i < valores.length; i++) {
@@ -834,7 +835,7 @@ public class Pantalla {
         opciones.append("]" + Colores.RESET);
 
         while (!valido) {
-            // Prompt en Verde + Opciones en Cyan
+
             System.out.print(Colores.VERDE + "   > Tipo de Documento " + opciones + Colores.VERDE + ": " + Colores.RESET);
 
             String tipoDocStr = scanner.nextLine().toUpperCase().trim();
@@ -854,11 +855,7 @@ public class Pantalla {
         return tipoDoc;
     }
 
-    /**
-     * Metodo unificado para pedir documentos.
-     * @param tipo El tipo seleccionado (null si se omitió en búsqueda).
-     * @param esOpcional Si es true, permite salir con Enter vacío.
-     */
+    //Solicitar y Validar Numero de Documento. esOpcional Si es true, permite salir con Enter vacío
     private String pedirDocumento(TipoDocumento tipo, boolean esOpcional) throws CancelacionException {
         String nroDocumento = null;
         boolean valido = false;
@@ -874,12 +871,7 @@ public class Pantalla {
         String regexOtro = "^.{4,20}$";
 
         while (!valido) {
-            // Prompt visual
-            if (esOpcional) {
-                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
-            } else {
-                System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
-            }
+            System.out.print(Colores.VERDE + "   > Número de Documento: " + Colores.RESET);
 
             String entrada = scanner.nextLine().trim().toUpperCase();
 
@@ -937,12 +929,12 @@ public class Pantalla {
         return nroDocumento;
     }
 
+    //Solicitar y Validar Posicion frente al IVA
     private String pedirPosIva() throws CancelacionException {
         String posIva = null;
         boolean valido = false;
 
         while (!valido) {
-            // Transformamos el bloque de texto en un menú visualmente agradable
             System.out.println(Colores.VERDE + "   > Posición frente al IVA:" + Colores.RESET);
             System.out.println(Colores.AMARILLO + "      [1]" + Colores.RESET + " Consumidor Final (Por defecto)");
             System.out.println(Colores.AMARILLO + "      [2]" + Colores.RESET + " Monotributista");
@@ -966,7 +958,6 @@ public class Pantalla {
                     case 1:
                         posIva = PosIva.ConsumidorFinal.name();
                         valido = true;
-                        // Feedback visual de la selección por defecto
                         if(opcion == 0) System.out.println(Colores.CYAN + "        (Seleccionado: Consumidor Final)" + Colores.RESET);
                         break;
                     case 2:

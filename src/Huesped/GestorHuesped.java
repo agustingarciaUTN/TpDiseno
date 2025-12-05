@@ -74,7 +74,7 @@ public class GestorHuesped {
         List<String> errores = new ArrayList<>();
 
         // Regla especial CUIT/IVA
-        //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vació, ademas validamos su formato con Regex
+        //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vacio
         if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
