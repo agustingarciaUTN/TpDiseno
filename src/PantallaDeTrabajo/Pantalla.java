@@ -345,7 +345,7 @@ public class Pantalla {
                         while (verificacionPendiente) {
 
                             //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
-                            DtoHuesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                            Huesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
                             //Si chequearDuplicado retorna NULL, no hay duplicado
 
                             if (duplicado != null) {//si encuentra duplicado
