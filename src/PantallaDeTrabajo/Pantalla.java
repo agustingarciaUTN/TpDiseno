@@ -498,7 +498,7 @@ public class Pantalla {
 
         String posIva = pedirPosIva();
 
-        String cuit = pedirCUIT(posIva);
+        String cuit = pedirCUIT(posIva, tipoDocumento, numeroDocumento);
 
         Date fechaNacimiento = pedirFecha();
 
@@ -733,10 +733,11 @@ public class Pantalla {
     }
 
     //Solicitar y Validar CUIT
-    private String pedirCUIT(String posIvaSeleccionada) throws CancelacionException {
+    private String pedirCUIT(String posIvaSeleccionada, TipoDocumento tipoDoc, String nroDoc) throws CancelacionException {
         String cuit;
-        String expresionCUIT = "^\\d{2}-\\d{8}-\\d$";
 
+        // Prefijos válidos en Argentina (Personas físicas y jurídicas)
+        List<String> prefijosValidos = Arrays.asList("20", "23", "24", "27", "30", "33", "34");
 
         while (true) {
             System.out.print(Colores.VERDE + "   > CUIT " + Colores.CYAN + "(Opcional)" + Colores.VERDE + ": " + Colores.RESET);
@@ -744,15 +745,52 @@ public class Pantalla {
             cuit = scanner.nextLine().trim();
             chequearCancelacion(cuit);
 
-            // CASO 1: Está vacío
+            // --- CASO VACÍO ---
             if (cuit.isEmpty()) {
-                return null; // Es válido que sea null (será Factura B)
+                return null; // Dejamos pasar (el Gestor validará si es RI)
+            }
 
-                // CASO 2: Escribió algo, validamos formato
-            } else if (!cuit.matches(expresionCUIT)) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Formato incorrecto. Debe ser XX-XXXXXXXX-X" + Colores.RESET);
+            boolean formatoValido = true;
+            String mensajeError = "";
+
+            // 1. Validar estructura básica (XX-XXXXXX-X)
+            // Regex: 2 números, guión, números, guión, 1 número
+            if (!cuit.matches("^\\d{2}-\\d+-\\d$")) {
+                formatoValido = false;
+                mensajeError = "Formato incorrecto. Debe ser XX-NUMERO-X (ej: 20-12345678-9).";
             } else {
+                // Desglosamos el CUIT para validaciones finas
+                String[] partes = cuit.split("-");
+                String prefijo = partes[0];
+                String numeroCentral = partes[1];
+                // String digito = partes[2]; // Ya validado por regex que es 1 dígito
+
+                // 2. Validar Prefijo (El "XX" del principio)
+                if (!prefijosValidos.contains(prefijo)) {
+                    formatoValido = false;
+                    mensajeError = "Prefijo inválido. Use uno habitual (20, 23, 24, 27, 30, etc.).";
+                }
+                // 3. Validar coincidencia con el DNI (El número del medio)
+                else if (tipoDoc == TipoDocumento.DNI || tipoDoc == TipoDocumento.LE || tipoDoc == TipoDocumento.LC) {
+                    if (!numeroCentral.equals(nroDoc)) {
+                        formatoValido = false;
+                        // MENSAJE GENÉRICO (Lo que pediste)
+                        mensajeError = "El CUIT debe contener el número de documento ingresado (XX-Documento-X).";
+                    }
+                }
+                // 4. Validar longitud para otros documentos (Pasaporte/Otro)
+                else {
+                    if (numeroCentral.length() < 6 || numeroCentral.length() > 9) {
+                        formatoValido = false;
+                        mensajeError = "La longitud del número central no es válida.";
+                    }
+                }
+            }
+
+            if (formatoValido) {
                 return cuit;
+            } else {
+                System.out.println(Colores.ROJO + "     ❌ Error: " + mensajeError + Colores.RESET);
             }
         }
     }
@@ -774,7 +812,7 @@ public class Pantalla {
                 return null; // Válido (opcional)
 
             } else if (!email.matches(expresionEmail)) {
-                System.out.println(Colores.ROJO + "     ❌ Error: Formato de email no válido." + Colores.RESET);
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato de email no válido (xxxx@xxxx.com)." + Colores.RESET);
 
             } else {
                 return email; // Válido
