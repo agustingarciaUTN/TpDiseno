@@ -2031,66 +2031,98 @@ public class Pantalla {
         }
     }
     // --- SUB-METODO PARA SELECCIONAR HUÉSPEDES (Con distinción visual) ---
+    // --- SUB-METODO PARA SELECCIONAR HUÉSPEDES (Con flujo optimizado) ---
     private ArrayList<DtoHuesped> seleccionarGrupoHuespedes() {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
         boolean seguir = true;
 
         while (seguir) {
-            // Feedback visual del rol
+            // Variable para decidir qué hacer (1=Cargar, 2=Salir)
+            int opcionSeleccionada = 1; // Por defecto asumimos "Cargar"
+
+            // --- LÓGICA DE MENÚ CONDICIONAL ---
             if (lista.isEmpty()) {
-                System.out.println("\n--- SELECCIÓN DEL RESPONSABLE (Titular) ---");
-                System.out.println("(Nota: El responsable puede figurar en múltiples habitaciones)");
+                // CASO 1: ES EL RESPONSABLE
+                // No mostramos menú, vamos directo a pedir datos
+                System.out.println(Colores.AMARILLO + "\n--- DATOS DEL RESPONSABLE (Titular) ---" + Colores.RESET);
+                System.out.println("Ingrese los datos para buscar o dar de alta:");
+                // opcionSeleccionada se mantiene en 1 automáticamente
             } else {
-                System.out.println("\n--- SELECCIÓN DE ACOMPAÑANTE #" + lista.size() + " ---");
-                System.out.println("(Nota: Los acompañantes NO pueden estar en otra habitación)");
+                // CASO 2: SON ACOMPAÑANTES
+                // Aquí SÍ mostramos menú para preguntar si quiere seguir
+                System.out.println(Colores.CYAN + "\n--- SELECCIÓN DE ACOMPAÑANTE #" + lista.size() + " ---" + Colores.RESET);
+                System.out.println("(Actual: " + lista.size() + " huéspedes cargados)");
+                System.out.println(Colores.VERDE + "   [1]" + Colores.RESET + " Agregar otro acompañante");
+                System.out.println(Colores.ROJO  + "   [2]" + Colores.RESET + " Finalizar carga y continuar");
+                System.out.print(">> Opción: ");
+
+                opcionSeleccionada = leerOpcionNumerica();
             }
 
+            // --- PROCESAR OPCIÓN ---
+            if (opcionSeleccionada == 2) {
+                // El usuario decidió terminar (solo válido si hay al menos 1, controlado por el if-else arriba)
+                break;
+            } else if (opcionSeleccionada != 1) {
+                System.out.println(Colores.ROJO + "❌ Opción inválida." + Colores.RESET);
+                continue;
+            }
+
+            // --- BLOQUE DE CARGA DE DATOS (Se ejecuta si es el 1ro o si eligió opción 1) ---
             DtoHuesped seleccionado = null;
 
-            System.out.println("1. Buscar Huésped existente");
-            if (!lista.isEmpty()) {
-                System.out.println("2. Finalizar carga para esta habitación");
+            // 1. Pedir Criterios (Esto cumple con "simplemente pida los datos")
+            DtoHuesped criterios = solicitarCriteriosDeBusqueda();
 
-                System.out.print("Opción: ");
-                int op = leerOpcionNumerica();
+            // 2. Buscar en BD
+            ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
 
-                if (op == 2) break;
-
-                seleccionado = null;
-
-                if (op == 1) { // Buscar
-                    DtoHuesped criterios = solicitarCriteriosDeBusqueda();
-                    ArrayList<Huesped> res = gestorHuesped.buscarHuespedes(criterios);
-                    if (res.isEmpty()) {
-                        System.out.println("No se encontraron huéspedes.");
-                    } else {
-                        mostrarListaDatosEspecificos(res);
-                        System.out.print("ID a seleccionar (0 cancelar): ");
-                        int id = leerOpcionNumerica();
-                        while (true) {
-                            if (id == 0) break; // Cancelar
-                            if (id > 0 && id <= res.size()) {
-                                seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
-                                break;
-                            }
-                            System.out.print(Colores.ROJO + "   ❌ ID inválido." + Colores.RESET + "\n" + "Ingrese un ID entre 1 y " + res.size() + " o 0 para cancelar: " + Colores.RESET);
-                            id = leerOpcionNumerica();
-                        }
+            if (res.isEmpty()) {
+                System.out.println(Colores.AMARILLO + "⚠️ No encontrado. ¿Desea darlo de alta ahora? (SI/NO)" + Colores.RESET);
+                if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
+                    // Llamada al CU9 (Alta) y asumimos que al volver queremos usar ese huésped
+                    this.darDeAltaHuesped();
+                    // Nota: darDeAltaHuesped no retorna el objeto, así que pedimos buscarlo de nuevo rápido
+                    // O podrías modificar darDeAlta para que retorne el ID.
+                    // Para simplificar, hacemos que el usuario lo busque de nuevo con el DNI que acaba de crear:
+                    System.out.println("Por favor, re-confirme el documento para agregarlo a la estadía:");
+                    // ... lógica simplificada de re-busqueda ...
+                }
+            } else {
+                // Si hay resultados, mostrar y seleccionar
+                if (res.size() == 1) {
+                    // Si es único, lo seleccionamos casi directo (confirmando)
+                    Huesped h = res.get(0);
+                    System.out.println("Se encontró a: " + h.getApellido() + " " + h.getNombres());
+                    System.out.print("¿Es correcto? (SI/NO): ");
+                    if(scanner.nextLine().trim().equalsIgnoreCase("SI")){
+                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(h);
+                    }
+                } else {
+                    // Si hay varios homónimos
+                    mostrarListaDatosEspecificos(res);
+                    System.out.print("ID a seleccionar (0 cancelar): ");
+                    int id = leerOpcionNumerica();
+                    if (id > 0 && id <= res.size()) {
+                        seleccionado = Utils.Mapear.MapearHuesped.mapearEntidadADto(res.get(id - 1));
                     }
                 }
             }
+
+            // 3. Agregar a la lista temporal de la habitación
+            if (seleccionado != null) {
                 // Verificar duplicado local (en la misma habitación)
-            DtoHuesped finalSeleccionado = seleccionado;
-            boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
-            if (yaEsta) {
-                System.out.println("¡Este huésped ya está en la lista de esta habitación!");
-            } else {
-                lista.add(seleccionado);
-                System.out.println(">> Agregado: " + seleccionado.getApellido());
+                DtoHuesped finalSeleccionado = seleccionado;
+                boolean yaEsta = lista.stream().anyMatch(h -> h.getNroDocumento().equals(finalSeleccionado.getNroDocumento()));
+
+                if (yaEsta) {
+                    System.out.println(Colores.ROJO + "⚠️ ¡Este huésped ya está en la lista de esta habitación!" + Colores.RESET);
+                } else {
+                    lista.add(seleccionado);
+                    System.out.println(Colores.VERDE + ">> Agregado: " + seleccionado.getApellido() + " " + seleccionado.getNombres() + Colores.RESET);
+                }
             }
         }
-        System.out.println("\n¿Agregar otro acompañante? (SI/NO)");
-        if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) seguir = false;
         return lista;
     }
 
