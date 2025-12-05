@@ -144,7 +144,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             }
             if (criterios.getTipoDocumento() != null) {
                 sql.append(" AND h.tipo_documento = ?::\"Tipo_Documento\"");
-                params.add(criterios.getTipoDocumento().name());
+                params.add(criterios.getTipoDocumento());
             }
             if (criterios.getNroDocumento() != null && !criterios.getNroDocumento().isEmpty() && !criterios.getNroDocumento().equals("0")) {
                 sql.append(" AND h.numero_documento LIKE ?");
