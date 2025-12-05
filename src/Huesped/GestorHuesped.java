@@ -49,17 +49,17 @@ public class GestorHuesped {
        // Si el criterio NO es nulo Y NO está vacío (tiene al menos un dato real)...
        if (criterios != null && !criterios.estanVacios()) {
            System.out.println("Buscando coincidencias...");
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);//Obtenemos los huespedes que cumplan los criterios de busqueda
        }
        else {
-           // Si es null o está "vacío" (todo Enter), traemos TODO
+           // Si es null o está "vacío" (todo Enter), traemos todos los huespedes del sistema
            System.out.println("Sin filtro: Trayendo todos los huéspedes...");
            listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
        }
 
        ArrayList<Huesped> listaHuespedesEncontrados = new ArrayList<>();
 
-       // For que mapea cada DtoHuesped a Huesped y lo añade a la lista
+       // For que mapea cada DtoHuesped a Huesped y lo añade a la lista de retorno
        for(int i = 0 ; i < listaDtoHuespedesEncontrados.size() ; i++){
            listaHuespedesEncontrados.add(i, MapearHuesped.mapearDtoAEntidad(listaDtoHuespedesEncontrados.get(i)));
        }

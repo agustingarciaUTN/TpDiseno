@@ -984,7 +984,7 @@ public class Pantalla {
         return posIva;
     }
 
-    //==== FIN METODOS CU9 ====
+    //============================== FIN METODOS CU9 ======================================
 
 
     //METODO AUXILIAR PARA PAUSAR
@@ -994,24 +994,24 @@ public class Pantalla {
         System.out.println();
     }
 
-    //CU2
+    //=================================== CU2 =========================================
     public void buscarHuesped() {
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           🔎 BÚSQUEDA DE HUÉSPED (CU2)             ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();
+        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();//Solicitamos los criterios por los que el usuario quiere realizar la busqueda de/los huespedes
 
         System.out.println(Colores.AZUL + "\n🔄 Buscando en la base de datos..." + Colores.RESET);
 
 
-        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);
+        ArrayList<Huesped> huespedesEncontrados = gestorHuesped.buscarHuespedes(dtoHuespedCriterios);//Llamamos al metodo del gestor que se encarga de dirigir la busqueda de los huespedes
 
-        if (huespedesEncontrados.isEmpty()) {
+        if (huespedesEncontrados.isEmpty()) {//No se encontraron huespedes con los criterios especificados
             System.out.println(Colores.AMARILLO + "\n⚠️  No se encontraron huéspedes con los criterios especificados." + Colores.RESET);
             System.out.print("¿Desea dar de alta un nuevo huésped? (SI/NO): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                this.darDeAltaHuesped(); // Deriva al CU 9
+                this.darDeAltaHuesped(); // Deriva al CU 9, dar de alta huesped
             }
         } else {
             // Mostramos la tabla y luego el menú de selección
@@ -1137,6 +1137,7 @@ public class Pantalla {
 
     }
 
+    //Metodo para la construccion de la tabla de huespedes en CU2
     private void mostrarListaDatosEspecificos(ArrayList<Huesped> listaHuespedes) {
         // --- MENÚ DE ORDENAMIENTO ---
 
@@ -1150,7 +1151,7 @@ public class Pantalla {
             System.out.println("   2. Nombre              4. Número Documento");
             System.out.print(Colores.VERDE + "   >> Ordenar por: " + Colores.RESET);
 
-            columna = leerOpcionNumerica();
+            columna = leerOpcionNumerica();//Solicitamos ingreso de parametro de ordenamiento
 
             if (columna < 1 || columna > 4) {
                 System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
@@ -1167,7 +1168,7 @@ public class Pantalla {
             System.out.println("\n   1. Ascendente (A-Z)    2. Descendente (Z-A)");
             System.out.print(Colores.VERDE + "   >> Criterio: " + Colores.RESET);
 
-            int orden = leerOpcionNumerica();
+            int orden = leerOpcionNumerica();//Solicitamos ingreso de parametro de tipo de ordenamiento
 
             if(orden < 1 || orden > 2){
                 System.out.println(Colores.ROJO + "     ❌ Opción inválida, vuelva a ingresar." + Colores.RESET);
@@ -1181,24 +1182,9 @@ public class Pantalla {
 
 
         // Definimos el comparador para la ENTIDAD Huesped
-        Comparator<Huesped> comparador = switch (columna) {
-            case 1 -> // Apellido
-                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
-            case 2 -> // Nombre
-                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
-            case 3 -> // Tipo de Documento (Enum)
-                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z");
-            case 4 -> // Número de Documento (long en Entidad)
-                    Comparator.comparing(Huesped::getNroDocumento);
-            default -> null;
-        };
-
-        if (comparador != null) {
-            if (!ascendente) {
-                comparador = comparador.reversed();
-            }
-            listaHuespedes.sort(comparador);
-        }
+        //Metodo de ordenamiento
+        Comparator<Huesped> comparador = getHuespedComparator(columna, ascendente);
+        listaHuespedes.sort(comparador);
 
         // --- TABLA DE RESULTADOS ---
         System.out.println("\n" + Colores.VERDE + "✅ Se encontraron " + listaHuespedes.size() + " resultados:" + Colores.RESET);
@@ -1225,6 +1211,28 @@ public class Pantalla {
         }
         System.out.println("└──────┴──────────────────────┴──────────────────────┴────────────────────┘");
     }
+
+    //Metodo de ordenamiento de huespedes
+    private static Comparator<Huesped> getHuespedComparator(int columna, boolean ascendente) {
+        Comparator<Huesped> comparador = switch (columna) {
+            case 1 -> // Apellido
+                    Comparator.comparing(Huesped::getApellido, String.CASE_INSENSITIVE_ORDER);
+            case 2 -> // Nombre
+                    Comparator.comparing(Huesped::getNombres, String.CASE_INSENSITIVE_ORDER);
+            case 3 -> // Tipo de Documento (Enum)
+                    Comparator.comparing(h -> h.getTipoDocumento() != null ? h.getTipoDocumento().name() : "Z");
+            case 4 -> // Número de Documento (long en Entidad)
+                    Comparator.comparing(Huesped::getNroDocumento);
+            default -> null;
+        };
+
+        if (!ascendente) {
+            comparador = comparador.reversed();
+        }
+        return comparador;
+    }
+
+    // ================================ FIN METODOS CU2 =====================================
 
     // Metodo auxiliar para evitar que textos largos rompan la tabla
     private String cortar(String texto) {
