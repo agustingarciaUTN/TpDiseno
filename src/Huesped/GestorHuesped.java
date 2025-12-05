@@ -110,7 +110,7 @@ public class GestorHuesped {
     public void upsertHuesped(DtoHuesped dtoHuesped) throws PersistenciaException {
 
         // 1. Verificamos existencia (alt)
-        boolean existe = dtoHuesped != null;
+        boolean existe = daoHuesped.existeHuesped(dtoHuesped.getTipoDocumento(), dtoHuesped.getNroDocumento());
 
         // A. Convertir DTOs a Entidades (Usando los mappers)
         Direccion direccionEntidad = MapearDireccion.mapearDtoAEntidad(dtoHuesped.getDtoDireccion());

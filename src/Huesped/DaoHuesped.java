@@ -8,7 +8,6 @@ import enums.PosIva;
 import enums.TipoDocumento;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class DaoHuesped implements DaoHuespedInterfaz {
@@ -208,6 +207,32 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
     }
 
+
+    //Verificamos si en la DB existe un Huesped con el mismo Tipo y Numero de documento que el ingresado por formulario CU9
+
+
+
+    @Override
+    public boolean existeHuesped(TipoDocumento tipo, String nroDocumento) {
+        String sql = "SELECT 1 FROM huesped WHERE tipo_documento=?::\"Tipo_Documento\" AND numero_documento=?";
+
+
+        try (Connection conn = Conexion.getConnection();
+
+
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+
+            ps.setString(1, tipo.name());
+
+
+            ps.setString(2, nroDocumento);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) { return false; }
+    }
     // --- MÉTODOS AUXILIARES (SATÉLITES y MAPEO) ---
 
     private void insertarSatelites(Connection conn, Huesped h) throws SQLException {
