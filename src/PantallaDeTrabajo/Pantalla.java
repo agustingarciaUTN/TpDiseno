@@ -21,7 +21,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import Excepciones.PersistenciaException;
@@ -66,10 +65,11 @@ public class Pantalla {
         if (autenticarUsuario()) {
             //Si la autenticacion es exitosa, mostrar menu principal
             mostrarMenuPrincipal();
-        } else {
+        } else {//Si no, mensaje de error
             System.out.println(Colores.ROJO + "❌ No se pudo acceder al sistema." + Colores.RESET);
         }
 
+        //Mensaje de fin de sistema
         System.out.println("\n" + Colores.CYAN + "========================================");
         System.out.println("        👋 FIN DEL SISTEMA");
         System.out.println("========================================" + Colores.RESET);
@@ -1347,7 +1347,7 @@ public class Pantalla {
             }
 
             // B. Selección de Fechas ESPECÍFICAS para esta reserva
-            System.out.println(Colores.CYAN + "   Define el rango específico para la habitación " + nro + ":" + Colores.RESET);
+            System.out.println(Colores.CYAN + "   Define el rango de fechas específico para reservar la habitacion " + nro + ":" + Colores.RESET);
 
             Date fechaInicioReserva;
             Date fechaFinReserva;
@@ -1398,14 +1398,26 @@ public class Pantalla {
             }
 
             // 2. Validar disponibilidad REAL en BD (GestorReserva y GestorEstadia)
+            boolean ocupadaParcialmente = false;
+            ZoneId zone = ZoneId.systemDefault();
+            LocalDate inicio = fechaInicioReserva.toInstant().atZone(zone).toLocalDate();
+            LocalDate fin = fechaFinReserva.toInstant().atZone(zone).toLocalDate();
+
+            for(LocalDate d = inicio; !d.isAfter(fin) ; d = d.plusDays(1)){
+                Date diaChequeado = Date.from(d.atStartOfDay(zone).toInstant());
+                if(gestorEstadia.estaOcupadaEnFecha(nro, diaChequeado, diaChequeado)){
+                    ocupadaParcialmente = true;
+                    break;
+                }
+            }
+
             boolean ocupada = gestorEstadia.estaOcupadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
             boolean reservada = gestorReserva.estaReservadaEnFecha(nro, fechaInicioReserva, fechaFinReserva);
 
-            if (ocupada) {
+            if (ocupada || ocupadaParcialmente) {
                 System.out.println(Colores.ROJO + "   ❌ Error: La habitación está OCUPADA físicamente en esas fechas." + Colores.RESET);
                 continue;
-            }
-            if (reservada) {
+            } else if (reservada) {
                 System.out.println(Colores.ROJO + "   ❌ Error: La habitación ya tiene una RESERVA confirmada en esas fechas." + Colores.RESET);
                 continue;
             }
@@ -1459,10 +1471,20 @@ public class Pantalla {
             imprimirGrilla(grillaVista, inicioVista, finVista, listaParaReservar);
 
             // G. Preguntar si sigue
-            System.out.print("\n¿Desea reservar otra habitación? (SI/NO): ");
-            String resp = scanner.nextLine().trim();
-            if (!resp.equalsIgnoreCase("SI")) {
-                seguirAgregando = false;
+            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
+            while(flagIngreso) {
+                System.out.print("\n¿Desea reservar otra habitación? (SI/NO): ");
+                String resp = scanner.nextLine().trim();
+                if (resp.equalsIgnoreCase("SI")) {
+                    seguirAgregando = true;
+                    flagIngreso = false; //no repetimos while
+                } else if (resp.equalsIgnoreCase("NO")) {
+                    seguirAgregando = false;
+                    flagIngreso = false; //no repetimos while
+                } else {
+                    System.out.println("    ❌ Por favor ingrese SI o NO.");
+                    flagIngreso = true; //repetimos while
+                }
             }
         }
 
