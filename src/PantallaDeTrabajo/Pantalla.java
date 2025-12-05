@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.chrono.ChronoLocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import Excepciones.PersistenciaException;
@@ -1357,6 +1358,11 @@ public class Pantalla {
                         .min(Date::compareTo);
                 inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
 
+                //Conseguimos el limite superior de la fecha de la grilla
+                Date finGrilla;
+                Optional<Date> maxFechaOpt = grillaVista.values().stream().flatMap(m->m.keySet().stream()).max(Date::compareTo);
+                finGrilla = maxFechaOpt.orElse(inicioGrilla);
+
                 // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
                 // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
                 LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -1370,9 +1376,9 @@ public class Pantalla {
                 );
 
                 // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
-                fechaFinReserva = pedirFechaPosteriorA(
+                fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
-                        fechaInicioReserva,
+                        fechaInicioReserva, finGrilla,
                         "La fecha de fin debe ser posterior a la fecha de inicio."
                 );
 
@@ -1586,8 +1592,8 @@ public class Pantalla {
         while(!flagFechas) {
             // 1. Pedir y Validar Fechas (Bucle del diagrama)
             Date fechaReferencia = new Date(Long.MIN_VALUE);
-            fechaInicio = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
-            fechaFin = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
+            fechaInicio = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
+            fechaFin = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicio, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicio + ".");
 
             // Validar lógica de negocio (Rango coherente)
             flagFechas = gestorHabitacion.validarRangoFechas(fechaInicio, fechaFin);
@@ -1650,6 +1656,42 @@ public class Pantalla {
         }
     }
 
+    private Date pedirFechaEntre(String mensaje, Date fechaInicioReserva, Date fechaLimiteGrilla , String mensajeError) throws CancelacionException {
+        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+        formatoFecha.setLenient(false);
+
+        // Convertimos la fecha base a LocalDate para ignorar horas/minutos/segundos
+        LocalDate baseLocal = fechaInicioReserva.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        while (true) {
+            System.out.print(Colores.VERDE + mensaje + Colores.RESET);
+            String fechaStr = scanner.nextLine().trim();
+            chequearCancelacion(fechaStr);
+
+            if (fechaStr.isEmpty()) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Este campo es obligatorio." + Colores.RESET);
+                continue;
+            }
+
+            try {
+                Date fechaIngresada = formatoFecha.parse(fechaStr);
+                LocalDate ingresadaLocal = fechaIngresada.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate fechaLimite = fechaLimiteGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                // Validamos: La fecha ingresada debe ser posterior o igual a la base
+                if (ingresadaLocal.isAfter(fechaLimite)) {
+                    System.out.println(Colores.ROJO + "     ❌ Error: La fecha de fin de reserva debe estar contenida en el rango de fechas visualizado en la grilla."  + Colores.RESET);
+                } else if (!ingresadaLocal.isBefore(baseLocal)){
+                    return fechaIngresada;
+                } else {
+                    System.out.println(Colores.ROJO + "     ❌ Error: " + mensajeError + Colores.RESET);
+                }
+
+            } catch (ParseException e) {
+                System.out.println(Colores.ROJO + "     ❌ Error: Formato inválido. Use dd/MM/yyyy." + Colores.RESET);
+            }
+        }
+    }
 
 
     // --- CU15: OCUPAR HABITACIÓN (CHECK-IN) ---
@@ -1704,8 +1746,8 @@ public class Pantalla {
                 // Truco: Usamos fechas muy antiguas/lejanas como límites para que 'pedirFechaFutura'
                 // solo valide el formato, y nosotros validamos la lógica de negocio abajo.
                 Date fechaReferencia = new Date(Long.MIN_VALUE);
-                fechaInicioOcupacion = pedirFechaPosteriorA("Desde fecha dd/mm/aaaa ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
-                fechaFinOcupacion = pedirFechaPosteriorA("Hasta Fecha dd/mm/aaaa ", fechaInicioOcupacion, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioOcupacion + ".");
+                fechaInicioOcupacion = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
+                fechaFinOcupacion = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicioOcupacion, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioOcupacion + ".");
 
                 // 3. Validar que esté dentro de lo que vemos en pantalla
                 if (fechaInicioOcupacion.before(fechaInicioGrilla) || fechaFinOcupacion.after(fechaFinGrilla)) {
@@ -2071,6 +2113,9 @@ public class Pantalla {
         }
         System.out.println("+");
     }
+
+
+
 
 
 }
