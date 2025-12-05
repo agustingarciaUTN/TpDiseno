@@ -1666,7 +1666,8 @@ public class Pantalla {
 
         while(!flagFechas) {
             // 1. Pedir y Validar Fechas (Bucle del diagrama)
-            Date fechaReferencia = Date.from(Instant.now());
+            LocalDate ayer = LocalDate.now().minusDays(1);
+            Date fechaReferencia = Date.from(ayer.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             // Formatear la fecha de referencia en español (ej: "viernes 05 de diciembre de 2025")
             SimpleDateFormat sdfEsp = new SimpleDateFormat("EEEE dd 'de' MMMM yyyy", new Locale("es", "ES"));
