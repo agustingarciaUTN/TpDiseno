@@ -49,7 +49,8 @@ public class GestorHuesped {
        // Si el criterio NO es nulo Y NO está vacío (tiene al menos un dato real)...
        if (criterios != null && !criterios.estanVacios()) {
            System.out.println("Buscando coincidencias...");
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(criterios);//Obtenemos los huespedes que cumplan los criterios de busqueda
+
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerHuespedesPorCriterio(MapearHuesped.mapearDtoAEntidad(criterios));//Obtenemos los huespedes que cumplan los criterios de busqueda
        }
        else {
            // Si es null o está "vacío" (todo Enter), traemos todos los huespedes del sistema

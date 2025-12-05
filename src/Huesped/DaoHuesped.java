@@ -101,7 +101,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     // --- BUSCAR POR CRITERIO ---
     //Si bien estos 2 metodos podrian ser "salteados" los dejamos para posibles futuros usos
     @Override
-    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios) {
+    public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(Huesped criterios) {
         return ejecutarConsultaBusqueda(criterios);
     }
     // --- OBTENER TODOS ---
@@ -112,7 +112,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     }
 
     // --- METODO COMÚN DE BÚSQUEDA  ---
-    private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(DtoHuesped criterios) {
+    private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(Huesped criterios) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
 
         // SQL: Usamos LEFT JOINs para traer datos satélite en una sola query.

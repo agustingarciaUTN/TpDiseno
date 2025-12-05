@@ -1424,7 +1424,7 @@ public class Pantalla {
                 // Flag para chequear que no pide una fecha anterior a hoy
                 fechaInicioReserva = pedirFechaEntre(
                         "   > Fecha Inicio (dd/MM/yyyy): ",
-                        inicioGrilla,  fechaLimiteParaPedir ,
+                        fechaLimiteParaPedir,  finGrilla ,
                         "La fecha de inicio no puede ser anterior a la fecha mínima de la vista.");
 
 
@@ -1820,6 +1820,10 @@ public class Pantalla {
                         break;
                     }
                 }
+                if(candidata.getEstadoHabitacion() == EstadoHabitacion.FUERA_DE_SERVICIO){
+                    System.out.println(Colores.ROJO + "   ❌ Error: La habitacion esta fuera de servicio." + Colores.RESET);
+                    continue;
+                }
 
                 if (candidata == null) {
                     System.out.println("Error: Habitación no encontrada.");
@@ -1831,10 +1835,39 @@ public class Pantalla {
 
                 // Truco: Usamos fechas muy antiguas/lejanas como límites para que 'pedirFechaFutura'
                 // solo valide el formato, y nosotros validamos la lógica de negocio abajo.
-                Date fechaReferencia = new Date(Long.MIN_VALUE);
-                fechaInicioOcupacion = pedirFechaPosteriorA("Desde fecha (dd/MM/yyyy): ", fechaReferencia, "La fecha de Inicio debe ser mayor a " + fechaReferencia + "." );
-                fechaFinOcupacion = pedirFechaPosteriorA("Hasta Fecha (dd/MM/yyyy): ", fechaInicioOcupacion, "La fecha limite debe ser mayor a la fecha de inicio: " + fechaInicioOcupacion + ".");
+                // 1. Pedir Fecha Inicio: Debe ser posterior a "ayer" (es decir, de hoy en adelante)
+                // Usamos Calendar para restar un día de forma segura y permitir seleccionar "HOY"
+                // Calculamos la menor fecha presente en la vista (inicioGrilla)
+                Date inicioGrilla;
+                Optional<Date> minFechaOpt = grilla.values().stream()
+                        .flatMap(m -> m.keySet().stream())
+                        .min(Date::compareTo);
+                inicioGrilla = minFechaOpt.orElse(new Date()); // si no hay fechas, usamos hoy
 
+                //Conseguimos el limite superior de la fecha de la grilla
+                Date finGrilla;
+                Optional<Date> maxFechaOpt = grilla.values().stream().flatMap(m->m.keySet().stream()).max(Date::compareTo);
+                finGrilla = maxFechaOpt.orElse(inicioGrilla);
+
+                // Como pedirFechaPosteriorA exige 'posterior a' la fecha pasada,
+                // pasamos un día anterior para que la selección válida sea >= inicioGrilla.
+                LocalDate inicioLocal = inicioGrilla.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate limiteAnterior = inicioLocal.minusDays(1);
+                Date fechaLimiteParaPedir = Date.from(limiteAnterior.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+                // Flag para chequear que no pide una fecha anterior a hoy
+                fechaInicioOcupacion = pedirFechaEntre(
+                        "   > Fecha Inicio (dd/MM/yyyy): ",
+                        fechaLimiteParaPedir,  finGrilla ,
+                        "La fecha de inicio no puede ser anterior a la fecha mínima de la vista.");
+
+
+                // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
+                fechaFinOcupacion = pedirFechaEntre(
+                        "   > Fecha Fin (dd/MM/yyyy): ",
+                        fechaInicioOcupacion, finGrilla,
+                        "La fecha de fin debe ser posterior a la fecha de inicio."
+                );
                 // 3. Validar que esté dentro de lo que vemos en pantalla
                 if (fechaInicioOcupacion.before(fechaInicioGrilla) || fechaFinOcupacion.after(fechaFinGrilla)) {
                     System.out.println(Colores.ROJO + "⚠️ Error: Las fechas deben estar dentro del rango visualizado (" +
