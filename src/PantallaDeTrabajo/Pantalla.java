@@ -203,7 +203,7 @@ public class Pantalla {
                     darDeAltaHuesped();
                     break;
                 case 4:
-                    //iniciarBajaHuesped();
+                    ocuparHabitacion();
                     break;
                 case 5:
                     System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
