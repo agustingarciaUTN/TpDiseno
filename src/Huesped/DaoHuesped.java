@@ -100,11 +100,11 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     }
 
     // --- BUSCAR POR CRITERIO ---
+    //Si bien estos 2 metodos podrian ser "salteados" los dejamos para posibles futuros usos
     @Override
     public ArrayList<DtoHuesped> obtenerHuespedesPorCriterio(DtoHuesped criterios) {
         return ejecutarConsultaBusqueda(criterios);
     }
-
     // --- OBTENER TODOS ---
     @Override
     public ArrayList<DtoHuesped> obtenerTodosLosHuespedes() {
@@ -116,7 +116,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
     private ArrayList<DtoHuesped> ejecutarConsultaBusqueda(DtoHuesped criterios) {
         ArrayList<DtoHuesped> lista = new ArrayList<>();
 
-        // SQL BLINDADO: Usamos LEFT JOINs para traer datos satélite en una sola query.
+        // SQL: Usamos LEFT JOINs para traer datos satélite en una sola query.
         StringBuilder sql = new StringBuilder(
                 "SELECT h.apellido, h.nombres, h.tipo_documento, h.numero_documento, h.cuit, h.nacionalidad, " +
                         "h.fecha_nacimiento, h.id_direccion, h.pos_iva, " +
@@ -132,7 +132,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
 
         List<Object> params = new ArrayList<>();
 
-        // Aplicar filtros si existen
+        // Aplicar filtros si existen, sino se traen todos los huespedes
         if (criterios != null) {
             if (criterios.getApellido() != null && !criterios.getApellido().isEmpty()) {
                 sql.append(" AND h.apellido ILIKE ?");

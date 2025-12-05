@@ -54,7 +54,7 @@ public class GestorHuesped {
        else {
            // Si es null o está "vacío" (todo Enter), traemos todos los huespedes del sistema
            System.out.println("Sin filtro: Trayendo todos los huéspedes...");
-           listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();
+           listaDtoHuespedesEncontrados = daoHuesped.obtenerTodosLosHuespedes();//Obtenemos todos los huespedes dela bdd
        }
 
        ArrayList<Huesped> listaHuespedesEncontrados = new ArrayList<>();

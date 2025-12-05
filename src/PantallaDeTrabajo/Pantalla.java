@@ -1000,7 +1000,8 @@ public class Pantalla {
         System.out.println("║           🔎 BÚSQUEDA DE HUÉSPED (CU2)             ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
 
-        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();//Solicitamos los criterios por los que el usuario quiere realizar la busqueda de/los huespedes
+        DtoHuesped dtoHuespedCriterios = solicitarCriteriosDeBusqueda();//Solicitamos los criterios por los que el usuario quiere realizar la busqueda de/los huespedes.
+        // Se recuerda que solo se admitiran las iniciales para la busqueda por apellido y nombre. Respondiendo a la especificacion del caso de uso "comienza con"
 
         System.out.println(Colores.AZUL + "\n🔄 Buscando en la base de datos..." + Colores.RESET);
 
@@ -1108,14 +1109,14 @@ public class Pantalla {
                 listaHuespedesDto.add(MapearHuesped.mapearEntidadADto(listaEHuespedes));
             }
 
-            // Sigue el flujo
+            // Sigue el flujo. Mapeamos de entidad a DTO para pasarle al Gestor
             if (seleccion > 0 && seleccion <= listaEntidadesHuespedes.size()) {
                 DtoHuesped huespedDtoSeleccionado = listaHuespedesDto.get(seleccion - 1);
 
                 System.out.println(Colores.AZUL + "\n⏳ Cargando datos del huésped seleccionado..." + Colores.RESET);
 
                 // lógica de negocio
-                Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);
+                Huesped huespedSeleccionado = gestorHuesped.crearHuespedSinPersistir(huespedDtoSeleccionado);//Creamos el huesped para pasarlo al CU10
 
                 // Mensaje de ejecucion de CU10
                 System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
