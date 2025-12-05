@@ -1465,7 +1465,8 @@ public class Pantalla {
                         fechaLimiteParaPedir,  finGrilla ,
                         "La fecha debe estar dentro del rango visualizado.");
 
-                // 2. Pedir Fin
+
+                // 2. Pedir Fecha Fin: Debe ser posterior a la Fecha de Inicio recién ingresada
                 fechaFinReserva = pedirFechaEntre(
                         "   > Fecha Fin (dd/MM/yyyy): ",
                         fechaInicioReserva, finGrilla,
@@ -1478,12 +1479,13 @@ public class Pantalla {
             }
 
             // C. Validaciones de Negocio
-            // 1. Coherencia de fechas
+
+            // 1. Validar coherencia de fechas (GestorHabitacion)
             if (!gestorHabitacion.validarRangoFechas(fechaInicioReserva, fechaFinReserva)) {
                 continue;
             }
 
-            // 2. Disponibilidad REAL (BD)
+            // 2. Validar disponibilidad REAL en BD (GestorReserva y GestorEstadia)
             boolean ocupadaParcialmente = false;
             ZoneId zone = ZoneId.systemDefault();
             LocalDate inicio = fechaInicioReserva.toInstant().atZone(zone).toLocalDate();
@@ -1508,7 +1510,7 @@ public class Pantalla {
                 continue;
             }
 
-            // 3. Validar duplicado en lista actual
+            // 3. Validar que no la haya seleccionado ya en este mismo proceso (Lista temporal)
             boolean yaEnLista = false;
             for(DtoReserva dto : listaParaReservar) {
                 if(dto.getIdHabitacion().equals(String.valueOf(nro))) { // Corrección de tipo: nro es int
@@ -1535,7 +1537,7 @@ public class Pantalla {
                 return;
             }
 
-            // E. Crear DTO
+            // E. Crear DTO y agregar a la lista
             DtoReserva nuevaReserva = new DtoReserva.Builder()
                     .idHabitacion(String.valueOf(nro))
                     .fechaDesde(fechaInicioReserva)
@@ -1547,23 +1549,24 @@ public class Pantalla {
 
             listaParaReservar.add(nuevaReserva);
 
-            // F. Actualizar Visualización
+            // F. Actualizar Visualización (Pintamos lo que seleccionó el usuario)
+            // Necesitamos pasar las fechas de la vista original para mantener el marco de referencia
             Date inicioVista = grillaVista.values().iterator().next().keySet().stream().min(Date::compareTo).orElse(new Date());
             Date finVista = grillaVista.values().iterator().next().keySet().stream().max(Date::compareTo).orElse(new Date());
 
             imprimirGrilla(grillaVista, inicioVista, finVista, listaParaReservar);
 
             // G. Preguntar si sigue
-            boolean flagIngreso = true;
+            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
             while(flagIngreso) {
                 System.out.print(Colores.AMARILLO + "\n¿Desea reservar otra habitación? (SI/NO): " + Colores.RESET);
                 String resp = scanner.nextLine().trim();
                 if (resp.equalsIgnoreCase("SI")) {
                     seguirAgregando = true;
-                    flagIngreso = false;
+                    flagIngreso = false; //no repetimos while
                 } else if (resp.equalsIgnoreCase("NO")) {
                     seguirAgregando = false;
-                    flagIngreso = false;
+                    flagIngreso = false; //no repetimos while
                 } else {
                     System.out.println(Colores.ROJO + "     ❌ Por favor ingrese SI o NO." + Colores.RESET);
                     flagIngreso = true;
