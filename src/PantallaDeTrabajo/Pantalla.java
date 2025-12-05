@@ -1910,6 +1910,9 @@ public class Pantalla {
                             break;
                         }
                         System.out.println(Colores.ROJO + "     POR FAVOR INGRESE 1 o 2" + Colores.RESET);
+                        opcionNumerica = leerOpcionNumerica();
+                        System.out.println("\n" + "Ingrese una opcion numerica:");
+                        System.out.println("1. SI (OCUPAR) / 2. NO (CANCELAR)");
                     }
                 } else {
                     habSeleccionada = candidata; // Libre y fechas válidas -> ÉXITO
