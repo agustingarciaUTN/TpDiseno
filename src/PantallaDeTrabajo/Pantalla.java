@@ -216,12 +216,23 @@ public class Pantalla {
                     ocuparHabitacion();
                     break;
                 case 5://Caso de cerrar sesion
-                    System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
-                    String confirmar = scanner.nextLine().trim();
-                    if (confirmar.equalsIgnoreCase("SI")) {
-                        System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
-                        salir = true;
-                        usuarioAutenticado = false;//Reestablecemos la variable de autenticacion
+                    boolean respuestaValida = false;
+
+                    while (!respuestaValida) {
+                        System.out.print(Colores.AMARILLO + "⚠️  ¿Está seguro que desea cerrar sesión? (SI/NO): " + Colores.RESET);
+                        String confirmar = scanner.nextLine().trim();
+
+                        if (confirmar.equalsIgnoreCase("SI")) {
+                            System.out.println(Colores.AZUL + "\n👋 Cerrando sesión...\n" + Colores.RESET);
+                            salir = true;
+                            usuarioAutenticado = false;//Reestablecemos la variable de autenticacion
+                            respuestaValida = true;
+                        } else if (confirmar.equalsIgnoreCase("NO")) {
+                            System.out.println(Colores.AZUL + "Volviendo al menú principal..." + Colores.RESET);
+                            respuestaValida = true; //Sale del bucle interno y vuelve al menú
+                        } else {
+                            System.out.println(Colores.ROJO + "❌ Entrada inválida. Por favor ingrese 'SI' o 'NO'." + Colores.RESET);
+                        }
                     }
                     break;
                 default:
@@ -233,44 +244,47 @@ public class Pantalla {
 
     // =================================== CU9 ===========================================
     public void darDeAltaHuesped() {
-        //Mensaje de principio de ejecucion del CU9 con Estética de Título
+        //Mensaje de principio de ejecucion del CU9
         System.out.println("\n" + Colores.CYAN + "╔════════════════════════════════════════════════════╗");
         System.out.println("║           📝 DAR DE ALTA HUÉSPED (CU9)             ║");
         System.out.println("╚════════════════════════════════════════════════════╝" + Colores.RESET);
         System.out.println(Colores.AMARILLO + " ℹ️  Nota: Escriba 'CANCELAR' en cualquier campo para salir." + Colores.RESET + "\n");
 
-        boolean continuarCargando = true; //bandera que representa la condicion del loop principal
+        boolean continuarCargando = true; //bandera que representa la condicion del loop principal [1]
 
-        // [BUCLE 1]: Controla el ciclo completo de carga.
+        // [BUCLE 1]: Controla el ciclo completo de carga
         // Se repite cada vez que el usuario termina de cargar un huésped y responde "SI" a "¿Desea cargar otro?".
         while (continuarCargando) {
 
             DtoHuesped datosIngresados = null;
 
-            // 1. INTENTO DE CARGA DE DATOS (creamos una excepción para manejar la opcion de CANCELAR en cualquier momento del formulario)
+            //INTENTO DE CARGA DE DATOS (creamos una excepción para manejar la opcion de CANCELAR en cualquier momento del formulario)
             //Envolvemos la carga en un try-catch para capturar la cancelación
             try {
                 //metodo Pantalla -> Conserje para mostrar formulario y pedir datos
                 datosIngresados = mostrarYPedirDatosFormulario();
+
             } catch (CancelacionException e) {
                 // Si el usuario escribió "CANCELAR" durante el formulario:
                 System.out.print(Colores.ROJO + "\n🛑 ¿Está seguro que desea cancelar la carga actual? (SI/NO): " + Colores.RESET);
                 String confir = scanner.nextLine();
+
                 if (confir.equalsIgnoreCase("SI")) {
                     System.out.println(Colores.ROJO + "❌ Carga cancelada. Volviendo al menú principal..." + Colores.RESET);
-                    return; // Sale del metodo completamente
+                    return; // Sale del metodo completamente y retorna al menu principal
+
                 } else {
                     System.out.println(Colores.AZUL + "🔄 Reiniciando formulario..." + Colores.RESET);
-                    continue; // Vuelve al inicio del while (Lamentablemente reinicia el form, es complejo reanudar en consola)
+                    continue; // Vuelve al inicio del while (Reinicia el form, es complejo reanudar desde el ultimo punto en consola)
                 }
             }
 
-            // 2. MENU DE DECISIÓN (Siguiente / Cancelar)
-            // Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar
+            //MENU DE DECISIÓN (Siguiente / Cancelar)
+            //Agregamos este bucle 'decisionPendiente' para no perder datos al cancelar al final del formulario. La idea es que, hasta que no se diga que esta seguro de cancelar la carga, no se pierda lo ingresado
             boolean decisionPendiente = true;
 
             // [BUCLE 2]: Menú de Acciones Post-Formulario.
-            // Mantiene al usuario en la pantalla de decisión ("Siguiente" o "Cancelar") hasta que elija una opción válida.
+            // Mantiene al usuario en la pantalla de decisión ("Siguiente" o "Cancelar") hasta que elija una opción válida
             // Evita que el programa se cierre si el usuario se equivoca al elegir una opción.
             while (decisionPendiente) {
                 System.out.println(Colores.CYAN + "\n────────── Fin del Formulario ──────────" + Colores.RESET);
@@ -280,7 +294,7 @@ public class Pantalla {
                 System.out.print(">> Ingrese una opción: ");
 
                 int opcionBoton = -1;
-                try {//validacion mas robusta
+                try {//validacion de ingreso
                     String entrada = scanner.nextLine();
                     opcionBoton = Integer.parseInt(entrada);
                 } catch (NumberFormatException e) {
@@ -291,13 +305,15 @@ public class Pantalla {
                 if (opcionBoton == 1) { // presiono SIGUIENTE
                     System.out.println(Colores.AZUL + "⏳ Procesando datos..." + Colores.RESET);
 
-                    //aca hay que llamar al gestor para que valide los datos
+                    //llamar al gestor para que haga las validaciones de negocio
                     List<String> errores;
                     //Metodo que retorna una lista de todos los errores en la validacion de negocio
                     errores = gestorHuesped.validarDatosHuesped(datosIngresados);
 
                     //Actuamos en consecuencia, dependiendo si hubo errores o no
-                    if (!errores.isEmpty()) {
+
+                    if (!errores.isEmpty()) {//Si hubo errores
+
                         System.out.println(Colores.ROJO + "\n╔══════════════════════════════════════════╗");
                         System.out.println("║ ❌ ERROR DE VALIDACIÓN DE DATOS          ║");
                         System.out.println("╚══════════════════════════════════════════╝" + Colores.RESET);
@@ -305,7 +321,7 @@ public class Pantalla {
                             System.out.println(Colores.ROJO + "  • " + error + Colores.RESET);
                         }
                         System.out.println("\nPor favor, ingrese los datos nuevamente.");
-                        decisionPendiente = false;//Salimos del bucle de decisión para recargar datos
+                        decisionPendiente = false;//Salimos del bucle de decisión para recargar datos en formulario
                         continue; //fuerza al inicio del while principal
                     }
 
@@ -313,8 +329,8 @@ public class Pantalla {
                     try {
                         boolean verificacionPendiente = true;
 
-                        // [BUCLE 3]: Verificación y Corrección de Duplicados.
-                        // Este bucle permite que, si el usuario elige "CORREGIR", se pidan de nuevo SOLO los datos conflictivos
+                        // [BUCLE 3]: Verificación y Corrección de Duplicados
+                        // Este bucle permite que, si el usuario elige "CORREGIR", se pidan de nuevo SOLO los datos conflictivos (tipo y nro documento)
                         // y se vuelva a verificar la duplicidad sin perder el resto de la información cargada.
                         while (verificacionPendiente) {
 
@@ -340,7 +356,7 @@ public class Pantalla {
                                 while (!opcionValida2) {
                                     System.out.println("Opciones:");
                                     System.out.println(Colores.AMARILLO + "   [1]" + Colores.RESET + " ACEPTAR IGUALMENTE (Sobreescribir/Actualizar)");
-                                    System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS (Solo documento)");
+                                    System.out.println(Colores.AMARILLO + "   [2]" + Colores.RESET + " CORREGIR DATOS (Solo Tipo y Número de Documento)");
                                     System.out.print(">> Ingrese una opción: ");
 
                                     try {
@@ -377,7 +393,7 @@ public class Pantalla {
                                         continue;
                                     }
                                 }
-                                // Si elige 1 (ACEPTAR IGUALMENTE), salimos del bucle 3 y guardamos
+                                // Si elige 1 (ACEPTAR IGUALMENTE), salimos del bucle 3 y guardamos (se sobrescribira el huesped)
                                 verificacionPendiente = false;
 
                             } else {
@@ -390,7 +406,7 @@ public class Pantalla {
                         gestorHuesped.upsertHuesped(datosIngresados);
                         System.out.println("\n" + Colores.VERDE + "✅ ¡El huésped ha sido guardado exitosamente!" + Colores.RESET);
 
-                        // AQUÍ VA LA LOGICA DE CARGAR OTRO (Dentro del éxito del alta)
+                        // Luego del exito del alta, se pregunta si se desea cargar otro huesped
                         System.out.print(Colores.CYAN + "\n🔄 ¿Desea cargar otro huésped? (SI/NO): " + Colores.RESET);
 
                         //validacion de ingreso correcto
@@ -400,7 +416,7 @@ public class Pantalla {
                             ingresoOtroHuesped = scanner.nextLine();
                         }
 
-                        //si ingreso NO termina el bucle principal, si ingreso SI se repite
+                        //si ingresó NO, termina el bucle principal. Si ingresó SI, se repite
                         if (ingresoOtroHuesped.equalsIgnoreCase("NO")) {
                             continuarCargando = false;
                         } else {
@@ -440,7 +456,7 @@ public class Pantalla {
         } // Fin while continuarCargando
 
         System.out.println(Colores.CYAN + "--- Fin CU9 'Dar de alta huésped' ---" + Colores.RESET + "\n");
-    }
+    }//Fin de CU 9
 
 
     //metodo privado para pedir los datos del huesped a dar de alta, CU9 (formulario)
@@ -452,8 +468,8 @@ public class Pantalla {
         System.out.println("   └──────────────────────────────────────────────────┘" + Colores.RESET);
 
         //Cada uno de estos métodos solicita por teclado el ingreso de cada campo del formulario
-        //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida)
-        //en el momento, evitando datos sin sentido
+        //Además, se hace una VALIDACIÓN DE FORMATO (que el email tenga @, que el DNI sean números, que la fecha sea válida, etc)
+        //en el momento, evitando datos sin sentido y tener que reingresar todo a posteriori
 
         //Las validaciones de negocio las realizará el Gestor
         // Todos los métodos 'pedir...' pueden lanzar la excepción si el usuario escribe "CANCELAR"
@@ -461,18 +477,14 @@ public class Pantalla {
         // --- SECCIÓN 1: DATOS PERSONALES ---
         System.out.println(Colores.AMARILLO + "\n   === 👤 DATOS PERSONALES ===" + Colores.RESET);
 
-        // Agregamos colores y sangría (espacios) a los mensajes
         String apellido = pedirStringTexto(Colores.VERDE + "   > Apellido: " + Colores.RESET);
 
         String nombres = pedirStringTexto(Colores.VERDE + "   > Nombres: " + Colores.RESET);
 
-        // Asumo que este metodo imprime su propio menú, así que solo lo llamamos
-
         TipoDocumento tipoDocumento = pedirTipoDocumento();
 
         String numeroDocumento = pedirDocumento(tipoDocumento, false);
-
-        // Posición IVA
+        
         String posIva = pedirPosIva();
 
         // CUIT (Opcional)
@@ -1336,6 +1348,11 @@ public class Pantalla {
             // A. Selección de Habitación
             System.out.print(Colores.VERDE + "   > Ingrese Nro Habitación a reservar: " + Colores.RESET);
             String nro = scanner.nextLine().trim().toUpperCase();
+            while(nro.isEmpty()){
+                System.out.println(Colores.ROJO +"     ❌ Error: Campo Obligatorio." + Colores.RESET);
+                System.out.print("\nIngrese Nro Habitación a reservar: ");
+                nro = scanner.nextLine().trim().toUpperCase();
+            }
 
             // Validar que la habitación exista en la grilla que estamos viendo (o en la BD)
             Habitacion habSeleccionada = null;
@@ -1612,7 +1629,7 @@ public class Pantalla {
         }
         System.out.println("REF: [L]ibre | " + Colores.AMARILLO + "[R]eservada" + Colores.RESET + " | "
                 + Colores.ROJO + "[X]Ocupada" + Colores.RESET + " | " + Colores.VERDE + "[*] Tu Selección" + Colores.RESET
-                + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
+               + " | " + Colores.CYAN + "[-]Fuera de servicio" + Colores.RESET);
     }
 
     // CU5: Mostrar Estado de Habitaciones
@@ -1771,7 +1788,11 @@ public class Pantalla {
             while (habSeleccionada == null) {
                 System.out.print("\nIngrese Nro Habitación a Ocupar: ");
                 String nro = scanner.nextLine().trim().toUpperCase();
-
+                while(nro.isEmpty()){
+                    System.out.println(Colores.ROJO +"     ❌ Error: Campo Obligatorio." + Colores.RESET);
+                    System.out.print("\nIngrese Nro Habitación a Ocupar: ");
+                    nro = scanner.nextLine().trim().toUpperCase();
+                }
                 // 1. Validar existencia en la lista
                 Habitacion candidata = null;
                 for (Habitacion h : grilla.keySet()) {
@@ -1846,9 +1867,20 @@ public class Pantalla {
             // Mostramos todo lo acumulado hasta ahora + la nueva selección
             pintarHabitacionOcupada(grilla, null, null, estadiasParaProcesar, null);
 
-            System.out.println("\n¿Desea ocupar OTRA habitación? (SI/NO): ");
-            if (!scanner.nextLine().trim().equalsIgnoreCase("SI")) {
-                deseaCargarOtra = false;
+            boolean flagIngreso = true; //flag por si toca otro boton o ingresa algo distinto a SI o NO
+            while(flagIngreso) {
+                System.out.print("\n¿Desea ocupar otra habitación? (SI/NO): ");
+                String resp = scanner.nextLine().trim();
+                if (resp.equalsIgnoreCase("SI")) {
+                    deseaCargarOtra = true;
+                    flagIngreso = false; //no repetimos while
+                } else if (resp.equalsIgnoreCase("NO")) {
+                    deseaCargarOtra = false;
+                    flagIngreso = false; //no repetimos while
+                } else {
+                    System.out.println("    ❌ Por favor ingrese SI o NO.");
+                    flagIngreso = true; //repetimos while
+                }
             }
         }
 
@@ -1925,8 +1957,14 @@ public class Pantalla {
                     mostrarListaDatosEspecificos(res);
                     System.out.print("ID a seleccionar (0 cancelar): ");
                     int id = leerOpcionNumerica();
-                    if (id > 0 && id <= res.size()) {
-                        seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
+                    while (true) {
+                        if (id == 0) break; // Cancelar
+                        if (id > 0 && id <= res.size()) {
+                            seleccionado = MapearHuesped.mapearEntidadADto(res.get(id - 1));
+                            break;
+                        }
+                        System.out.print(Colores.ROJO + "   ❌ ID inválido." + Colores.RESET + "\n" + "Ingrese un ID entre 1 y " + res.size() + " o 0 para cancelar: " + Colores.RESET);
+                        id = leerOpcionNumerica();
                     }
                 }
             }
