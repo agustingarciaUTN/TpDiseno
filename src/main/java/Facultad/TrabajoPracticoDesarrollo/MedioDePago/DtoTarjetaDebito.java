@@ -1,0 +1,88 @@
+package Facultad.TrabajoPracticoDesarrollo.MedioDePago;
+
+import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import Facultad.TrabajoPracticoDesarrollo.enums.RedDePago;
+
+import java.util.Date;
+
+public class DtoTarjetaDebito {
+    private int idPago;
+    private RedDePago redDePago;
+    private String banco;
+    private String numeroDeTarjeta;
+    private Date fechaVencimiento;
+    private int codigoSeguridad;
+    private float monto;
+    private Moneda moneda;
+    private Date fechaDePago;
+
+    private DtoTarjetaDebito(Builder builder) {
+        this.idPago = builder.idPago;
+        this.redDePago = builder.redDePago;
+        this.banco = builder.banco;
+        this.numeroDeTarjeta = builder.numeroDeTarjeta;
+        this.fechaVencimiento = builder.fechaVencimiento;
+        this.codigoSeguridad = builder.codigoSeguridad;
+        this.monto = builder.monto;
+        this.moneda = builder.moneda;
+        this.fechaDePago = builder.fechaDePago;
+    }
+
+    public DtoTarjetaDebito() {}
+
+    // Getters y Setters
+    public int getIdPago() { return idPago; }
+    public void setIdPago(int idPago) { this.idPago = idPago; }
+
+    public RedDePago getRedDePago() { return redDePago; }
+    public void setRedDePago(RedDePago redDePago) { this.redDePago = redDePago; }
+
+    public String getBanco() { return banco; }
+    public void setBanco(String banco) { this.banco = banco; }
+
+    public String getNumeroDeTarjeta() { return numeroDeTarjeta; }
+    public void setNumeroDeTarjeta(String numeroDeTarjeta) { this.numeroDeTarjeta = numeroDeTarjeta; }
+
+    public Date getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(Date fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
+
+    public int getCodigoSeguridad() { return codigoSeguridad; }
+    public void setCodigoSeguridad(int codigoSeguridad) { this.codigoSeguridad = codigoSeguridad; }
+
+    public float getMonto() { return monto; }
+    public void setMonto(float monto) { this.monto = monto; }
+
+    public Moneda getMoneda() { return moneda; }
+    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+
+    public Date getFechaDePago() { return fechaDePago; }
+    public void setFechaDePago(Date fechaDePago) { this.fechaDePago = fechaDePago; }
+
+    public static class Builder {
+        private int idPago;
+        private RedDePago redDePago;
+        private String banco;
+        private String numeroDeTarjeta;
+        private Date fechaVencimiento;
+        private int codigoSeguridad;
+        private float monto;
+        private Moneda moneda;
+        private Date fechaDePago;
+
+        public Builder() {}
+
+        public Builder idPago(int val) { idPago = val; return this; }
+        public Builder red(RedDePago val) { redDePago = val; return this; }
+        public Builder banco(String val) { banco = val; return this; }
+        public Builder numero(String val) { numeroDeTarjeta = val; return this; }
+        public Builder vencimiento(Date val) { fechaVencimiento = val; return this; }
+        public Builder seguridad(int val) { codigoSeguridad = val; return this; }
+        public Builder monto(float val) { monto = val; return this; }
+        public Builder moneda(Moneda val) { moneda = val; return this; }
+        public Builder fechaPago(Date val) { fechaDePago = val; return this; }
+
+        public DtoTarjetaDebito build() {
+            return new DtoTarjetaDebito(this);
+        }
+    }
+}
