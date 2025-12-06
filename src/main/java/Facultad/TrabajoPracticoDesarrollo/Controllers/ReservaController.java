@@ -1,40 +1,59 @@
-package Facultad.TrabajoPracticoDesarrollo.Controllers; // ⚠️ AJUSTA ESTE PACKAGE A TU PROYECTO
+package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
 import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.GestorReserva;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController // Indica que esta clase atiende peticiones web
-@RequestMapping("/api/reservas") // La dirección base: localhost:8080/api/reservas
-@CrossOrigin(origins = "*") // Permite que Next.js se conecte sin bloqueos
+@RestController
+@RequestMapping("/api/reservas")
+@CrossOrigin(origins = "*")
+@Validated // Necesario para validar Listas en el root del body
 public class ReservaController {
 
-    // Llamamos a tu Gestor de siempre (Singleton)
     private final GestorReserva gestorReserva = GestorReserva.getInstance();
 
-    // Endpoint: POST /api/reservas/crear
-    // Este método reemplaza a la opción "Reservar" de tu menú viejo
     @PostMapping("/crear")
-    public String crearReserva(@RequestBody List<DtoReserva> reservas) {
+    public ResponseEntity<?> crearReserva(@RequestBody List<@Valid DtoReserva> reservas) {
         try {
-            System.out.println("Recibida petición de reserva: " + reservas.size() + " habitaciones.");
+            if (reservas == null || reservas.isEmpty()) {
+                return ResponseEntity.badRequest().body("Debe enviar al menos una reserva.");
+            }
 
-            // Llamamos a TU lógica original
+            // --- NUEVA VALIDACIÓN MANUAL DE FECHAS ---
+            // Usamos LocalDate para comparar solo DÍA, MES y AÑO (ignorando la hora)
+            java.time.LocalDate hoy = java.time.LocalDate.now();
+            for (DtoReserva res : reservas) {
+                // Convertimos la fechaDesde (Date) a LocalDate
+                java.time.LocalDate fechaIngreso = res.getFechaDesde().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate();
+
+                // Si la fecha de ingreso es ANTERIOR a hoy, error.
+                if (fechaIngreso.isBefore(hoy)) {
+                    return ResponseEntity.badRequest().body("Error: La fecha de ingreso (" + fechaIngreso + ") no puede ser anterior a hoy." + hoy);
+                }
+            }
+            // -----------------------------------------
+
+            System.out.println("Recibida petición de reserva para " + reservas.size() + " habitaciones.");
             gestorReserva.crearReservas(reservas);
 
-            return "✅ ¡Éxito! Reservas guardadas en la base de datos.";
+            return ResponseEntity.ok("✅ Reservas registradas con éxito.");
+
         } catch (Exception e) {
             e.printStackTrace();
-            // Devolvemos el error para que el Frontend sepa qué pasó
-            throw new RuntimeException("Error al reservar: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error al reservar: " + e.getMessage());
         }
     }
 
-    // Endpoint de prueba: GET /api/reservas/hola
+
     @GetMapping("/hola")
     public String saludar() {
-        return "¡El Backend está vivo y conectado!";
+        return "¡El Backend de Reservas está activo!";
     }
 }

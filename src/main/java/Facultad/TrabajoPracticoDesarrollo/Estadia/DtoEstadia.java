@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class DtoEstadia {
+
+
     private int idEstadia;
     private Date fechaCheckIn;
     private Date fechaCheckOut;

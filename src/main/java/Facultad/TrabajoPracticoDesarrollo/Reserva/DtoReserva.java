@@ -1,20 +1,44 @@
 package Facultad.TrabajoPracticoDesarrollo.Reserva;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.*;
 
 import java.util.Date;
 
 public class DtoReserva {
+    // --- CONSTANTES (Las mismas que en DtoHuesped para consistencia) ---
+    public static final String REGEX_NOMBRE = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
+    public static final String REGEX_TELEFONO = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
+
+    //ATRIBUTOS
     private int idReserva;
     private EstadoReserva estadoReserva;
     private Date fechaReserva;
+
+    @NotNull(message = "La fecha de ingreso es obligatoria")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Argentina/Buenos_Aires")
     private Date fechaDesde;
+
+    @NotNull(message = "La fecha de egreso es obligatoria")
+    @Future(message = "La fecha de egreso debe ser futura")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Argentina/Buenos_Aires")
     private Date fechaHasta;
+
+    @NotBlank(message = "El nombre del responsable es obligatorio")
+    @Pattern(regexp = REGEX_NOMBRE, message = "El nombre solo puede contener letras")
     private String nombreHuespedResponsable;
+
+    @NotBlank(message = "El apellido del responsable es obligatorio")
+    @Pattern(regexp = REGEX_NOMBRE, message = "El apellido solo puede contener letras")
     private String apellidoHuespedResponsable;
+
+    @NotBlank(message = "El teléfono es obligatorio")
+    @Pattern(regexp = REGEX_TELEFONO, message = "El formato del teléfono no es válido")
     private String telefonoHuespedResponsable;
 
-    // Solo ID para el DTO
+    // Validación de la Habitación
+    @NotBlank(message = "El número de habitación es obligatorio")
     private String idHabitacion;
 
     // --- CONSTRUCTOR PRIVADO ---
