@@ -4,6 +4,7 @@ import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 
@@ -11,13 +12,14 @@ import java.util.Date;
 import java.util.List;
 
 public class DtoHuesped {
-    // --- CONSTANTES DE VALIDACIÓN (Útiles para usarlas en la UI también) ---
-    // Nombre: Letras, espacios y acentos (incluida la ñ)
+
+    // --- CONSTANTES DE VALIDACIÓN ---
     public static final String REGEX_NOMBRE = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
-    // Telefono: Acepta +, espacios, guiones y números
     public static final String REGEX_TELEFONO = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
-    // DNI/Pasaporte: Alfanumérico (para pasaportes extranjeros) sin espacios
+    // Alfanumérico para documentos (acepta pasaportes extranjeros)
     public static final String REGEX_DOCUMENTO = "^[a-zA-Z0-9]+$";
+    // CUIT: 11 dígitos, opcionalmente separados por guiones
+    public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
 
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -38,10 +40,10 @@ public class DtoHuesped {
     @Size(min = 6, max = 15, message = "El documento debe tener entre 6 y 15 caracteres")
     private String nroDocumento;
 
-
+    @Pattern(regexp = REGEX_CUIT, message = "El CUIT debe tener 11 dígitos (con o sin guiones)")
     private String cuit;
 
-
+    @NotNull(message = "La posición frente al IVA es obligatoria")
     private PosIva posicionIva;
 
     @NotNull(message = "La fecha de nacimiento es obligatoria")
@@ -53,14 +55,22 @@ public class DtoHuesped {
     private String nacionalidad;
 
     // traemos todos porque si necesitamos solo uno, después lo filtramos y el acceso a la tabla intermedia es solo 1
-    private List<String> email;
+    // Valida que la lista no sea null y que CADA elemento sea un email válido
+    @NotEmpty(message = "Debe ingresar al menos un email")
+    private List<@Email(message = "Formato de email inválido") String> email;
+
+    //No tiene formato
     private List<String> ocupacion;
 
-    
-    private List<Long> telefono;
+    @NotEmpty(message = "Debe ingresar al menos un teléfono")
+    private List<@NotNull Long> telefono;
 
     // relaciones
+    @NotNull(message = "La dirección es obligatoria")
+    @Valid // CLAVE: Esto le dice a Spring "entrá y validame los atributos de DtoDireccion también"
     private DtoDireccion dtoDireccion;
+
+    @Valid // Para validar estadías si vienen en la petición (opcional)
     private List<DtoEstadia> dtoEstadias;
 
     // 1. Constructor Privado (Recibe el Builder)
@@ -214,7 +224,7 @@ public class DtoHuesped {
         boolean nombresVacio = (nombres == null || nombres.trim().isEmpty());
         boolean tipoDocVacio = (tipoDocumento == null);
 
-        // onsideramos vacío si es null, blanco O si es "0"
+        // consideramos vacío si es null, blanco O si es "0"
         boolean docVacio = (nroDocumento == null || nroDocumento.trim().isEmpty() || nroDocumento.equals("0"));
 
         // Retorna TRUE solo si TODOS los campos son "vacíos"

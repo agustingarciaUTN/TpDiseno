@@ -18,6 +18,7 @@ import Facultad.TrabajoPracticoDesarrollo.Utils.PantallaHelper;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.CancelacionException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -39,7 +40,6 @@ public class Pantalla {
     private String nombreUsuarioActual;
 
     // Excepción interna para manejar la cancelación en cualquier momento
-    private static class CancelacionException extends Exception {}
 
 
     //constructor
@@ -1105,7 +1105,7 @@ public class Pantalla {
         // Usamos un metodo especial que permite validación flexible si no hay tipo seleccionado
         try{String nroDoc = pedirDocumento(criterios.getTipoDocumento(), true);
             criterios.setNroDocumento(nroDoc);}
-        catch (CancelacionException _){}
+        catch (CancelacionException ignored){}
 
 
         return criterios;
