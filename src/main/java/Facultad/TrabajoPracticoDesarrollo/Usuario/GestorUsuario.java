@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Usuario;
 
-import static Utils.UsuarioHelper.generarHashMD5;
+import static Facultad.TrabajoPracticoDesarrollo.Utils.UsuarioHelper.generarHashMD5;
 
 public class GestorUsuario {
 

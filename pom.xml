@@ -8,7 +8,7 @@
 		<version>4.0.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>Faculatd</groupId>
+	<groupId>Facultad</groupId>
 	<artifactId>TrabajoPracticoDesarrollo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>TrabajoPracticoDesarrollo</name>

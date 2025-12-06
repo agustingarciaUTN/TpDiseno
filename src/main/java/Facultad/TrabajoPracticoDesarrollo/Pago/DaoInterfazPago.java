@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Pago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 
 public interface DaoInterfazPago {

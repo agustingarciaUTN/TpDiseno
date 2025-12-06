@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Usuario;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Usuario;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 public interface DaoUsuarioInterfaz {
     // Para persistir, recibimos la entidad completa con el hash ya calculado por el Gestor

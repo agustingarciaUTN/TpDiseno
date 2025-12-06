@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Reserva;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 import java.util.ArrayList;
 

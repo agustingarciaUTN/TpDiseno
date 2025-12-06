@@ -1,8 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDedatos.Conexion;
+import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaJuridica;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 import java.sql.*;
 
@@ -58,10 +58,10 @@ public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw new PersistenciaException("Error persistir PJ", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
         }
     }
 

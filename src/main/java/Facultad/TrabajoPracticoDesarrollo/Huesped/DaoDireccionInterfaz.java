@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
-import Excepciones.PersistenciaException;
+ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 public interface DaoDireccionInterfaz {
     boolean persistirDireccion(Direccion direccion) throws PersistenciaException;

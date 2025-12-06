@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Habitacion;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDedatos.Conexion;
+import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;

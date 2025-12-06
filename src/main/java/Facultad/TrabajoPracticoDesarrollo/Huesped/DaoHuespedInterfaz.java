@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 
 import java.util.ArrayList;

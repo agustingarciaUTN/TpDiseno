@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaJuridica;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 public interface DaoInterfazPersonaJuridica {
     boolean persistirPersonaJuridica(PersonaJuridica pj) throws PersistenciaException;

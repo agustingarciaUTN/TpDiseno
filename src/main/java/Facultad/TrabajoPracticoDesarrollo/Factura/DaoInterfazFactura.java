@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 public interface DaoInterfazFactura {
     boolean persistirFactura(Factura factura) throws PersistenciaException;

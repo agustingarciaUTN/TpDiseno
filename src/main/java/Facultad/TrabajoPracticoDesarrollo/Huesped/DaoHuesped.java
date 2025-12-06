@@ -1,8 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDedatos.Conexion;
+import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
@@ -53,10 +53,10 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             return true;
 
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw new PersistenciaException("Error al persistir huésped", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
         }
     }
 
@@ -92,10 +92,10 @@ public class DaoHuesped implements DaoHuespedInterfaz {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            if (conn != null) try { conn.rollback(); } catch (SQLException _) {}
+            if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
             throw new PersistenciaException("Error al modificar huésped", e);
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException _) {}
+            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ignored) {}
         }
     }
 

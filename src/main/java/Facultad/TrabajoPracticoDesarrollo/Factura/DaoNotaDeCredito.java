@@ -1,8 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.Factura;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDedatos.Conexion;
+import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.NotaDeCredito;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

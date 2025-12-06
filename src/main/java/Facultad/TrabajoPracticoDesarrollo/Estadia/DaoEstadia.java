@@ -87,7 +87,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
         } catch (SQLException e) {
             if (conn != null) try {
                 conn.rollback();
-            } catch (SQLException _) {
+            } catch (SQLException ignored) {
             }
             // Pasamos la excepción 'e' para poder ver la causa real con getCause()
             throw new PersistenciaException("Error al persistir estadía: " + e.getMessage(), e);
@@ -95,7 +95,7 @@ public class DaoEstadia implements DaoInterfazEstadia {
             if (conn != null) try {
                 conn.setAutoCommit(true);
                 conn.close();
-            } catch (SQLException _) {
+            } catch (SQLException ignored) {
             }
         }
     }

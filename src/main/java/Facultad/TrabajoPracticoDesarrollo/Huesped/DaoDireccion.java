@@ -1,8 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDedatos.Conexion;
+import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
-import Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 
 import java.sql.*;
 
