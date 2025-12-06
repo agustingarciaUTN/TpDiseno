@@ -1,14 +1,56 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
+import jakarta.validation.constraints.*;
+
 public class DtoDireccion {
+
+    // --- CONSTANTES DE VALIDACIÓN ---
+
+    // Calle: Acepta letras, números, espacios, puntos y comas (Ej: "Av. Libertador, 1234")
+    public static final String REGEX_CALLE = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\s\\.\\,]+$";
+
+    // Texto Geográfico: Solo letras y espacios (Para Ciudad, Provincia, País)
+    public static final String REGEX_TEXTO = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
+
+    // Alfanumérico Corto: Para piso y depto (Ej: "4", "B", "PB") - Sin espacios ni símbolos
+    public static final String REGEX_ALFANUMERICO = "^[a-zA-Z0-9]+$";
+
+
     private int idDireccion;
+
+    @NotBlank(message = "La calle es obligatoria")
+    @Pattern(regexp = REGEX_CALLE, message = "La calle contiene caracteres inválidos")
+    @Size(max = 100, message = "La calle no puede superar los 100 caracteres")
     private String calle;
-    private int numero;
+
+    @NotNull(message = "El número de calle es obligatorio")
+    @Min(value = 1, message = "El número debe ser positivo")
+    @Max(value = 99999, message = "El número ingresado es demasiado grande")
+    private Integer numero;
+
+    @Pattern(regexp = REGEX_ALFANUMERICO, message = "El departamento solo acepta letras y números (Ej: A, 2, PB)")
+    @Size(max = 5, message = "El departamento es muy largo")
     private String departamento;
+
+    @Pattern(regexp = REGEX_ALFANUMERICO, message = "El piso solo acepta letras y números")
+    @Size(max = 5, message = "El piso es muy largo")
     private String piso;
-    private int codPostal;
+
+    @NotNull(message = "El código postal es obligatorio")
+    @Min(value = 1000, message = "El código postal debe ser válido (min 1000)")
+    @Max(value = 9999, message = "El código postal debe ser válido (max 9999)")
+    private Integer codPostal;
+
+    @NotBlank(message = "La localidad es obligatoria")
+    @Pattern(regexp = REGEX_TEXTO, message = "La localidad solo puede contener letras y espacios")
     private String localidad;
+
+    @NotBlank(message = "La provincia es obligatoria")
+    @Pattern(regexp = REGEX_TEXTO, message = "La provincia solo puede contener letras y espacios")
     private String provincia;
+
+    @NotBlank(message = "El país es obligatorio")
+    @Pattern(regexp = REGEX_TEXTO, message = "El país solo puede contener letras y espacios")
     private String pais;
 
     // Constructor por defecto
