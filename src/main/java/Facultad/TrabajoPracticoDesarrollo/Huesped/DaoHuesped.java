@@ -6,20 +6,14 @@ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class DaoHuesped implements DaoHuespedInterfaz {
-
-    private static DaoHuesped instancia;
-    private DaoHuesped() {}
-
-    public static synchronized DaoHuesped getInstance() {
-        if (instancia == null) instancia = new DaoHuesped();
-        return instancia;
-    }
 
     // --- PERSISTIR (CREATE) ---
     @Override
