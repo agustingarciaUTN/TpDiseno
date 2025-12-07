@@ -17,7 +17,7 @@ public class GestorHuesped {
     private static GestorHuesped instancia;
 
     // Referencias a los DAO que este gestor necesita
-    private final DaoHuespedInterfaz daoHuesped;
+    private final HuespedRepository daoHuesped;
     private final DaoDireccionInterfaz daoDireccion; // Ejemplo si necesita validar habitación
 
     // 2. Constructor PRIVADO
