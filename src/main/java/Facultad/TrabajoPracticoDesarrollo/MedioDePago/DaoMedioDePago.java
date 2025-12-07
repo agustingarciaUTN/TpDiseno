@@ -1,20 +1,17 @@
 package Facultad.TrabajoPracticoDesarrollo.MedioDePago;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class DaoMedioDePago implements DaoInterfazMedioDePago {
 
-    private static DaoMedioDePago instancia;
-    private DaoMedioDePago() {}
 
-    public static synchronized DaoMedioDePago getInstance() {
-        if (instancia == null) {
-            instancia = new DaoMedioDePago();
-        }
-        return instancia;
-    }
+    public DaoMedioDePago() {}
+
+
 
     @Override
     public void persistirMedioPagoTransaccional(MedioPago mp, int idPago, Connection conn) throws SQLException {

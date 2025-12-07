@@ -3,16 +3,14 @@ package Facultad.TrabajoPracticoDesarrollo.Factura;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class DaoFactura implements DaoInterfazFactura {
-    private static DaoFactura instancia;
-    private DaoFactura() {}
-    public static synchronized DaoFactura getInstance() {
-        if (instancia == null) instancia = new DaoFactura();
-        return instancia;
-    }
+    public DaoFactura() {}
+
 
     @Override
     public boolean persistirFactura(Factura factura) throws PersistenciaException {

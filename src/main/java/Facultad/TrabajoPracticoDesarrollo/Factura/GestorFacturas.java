@@ -1,24 +1,25 @@
 package Facultad.TrabajoPracticoDesarrollo.Factura;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
 public class GestorFacturas {
 
     // 1. La única instancia (static y private)
     private static GestorFacturas instancia;
+    private final DaoFactura daoFactura;
+    private final DaoNotaDeCredito daoNotaDeCredito;
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorFacturas() desde fuera.
-    private GestorFacturas() {
+    @Autowired
+    private GestorFacturas(DaoFactura daoFactura, DaoNotaDeCredito daoNotaDeCredito) {
         //Obtenemos las instancias de los DAOs
         // Referencias a los DAOs que necesita
-        DaoInterfazNotaDeCredito daoNotaDeCredito = DaoNotaDeCredito.getInstance();
-        DaoInterfazFactura daoFactura = DaoFactura.getInstance();
+        this.daoNotaDeCredito = daoNotaDeCredito;
+        this.daoFactura = daoFactura;
     }
 
-    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorFacturas getInstance() {
-        if (instancia == null) {
-            instancia = new GestorFacturas();
-        }
-        return instancia;
-    }
+
 }
