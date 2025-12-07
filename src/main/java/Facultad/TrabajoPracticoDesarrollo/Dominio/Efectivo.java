@@ -1,88 +1,59 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
-
-import java.util.ArrayList;
+import jakarta.persistence.*;
 import java.util.Date;
 
-public class Efectivo extends MedioPago{
+@Entity
+@Table(name = "efectivo")
+public class Efectivo {
 
-    private int idEfectivo;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_efectivo")
+    private Integer idEfectivo;
+
+    @Column(name = "monto")
+    private Double monto;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moneda")
     private Moneda moneda;
-    private float monto;
-    private Date fechaDePago;
 
-    // --- CONSTRUCTOR PRIVADO (Usado por el Builder) ---
-    private Efectivo(Builder builder) {
-        // Llamamos al constructor del padre (MedioPago)
-        super(builder.idPago, builder.pagos);
+    @Column(name = "fecha_de_pago")
+    @Temporal(TemporalType.DATE)
+    private Date fechaPago;
 
-        this.idEfectivo = builder.idEfectivo;
-        this.moneda = builder.moneda;
-        this.monto = builder.monto;
-        this.fechaDePago = builder.fechaDePago;
-    }
+    public Efectivo() {}
 
-    // Constructor por defecto (opcional)
-    public Efectivo() {
-        super(0, new ArrayList<>());
-    }
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdEfectivo() { return idEfectivo; }
-    public void setIdEfectivo(int idEfectivo) { this.idEfectivo = idEfectivo; }
-
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-
-    public float getMonto() { return monto; }
-    public void setMonto(float monto) { this.monto = monto; }
-
-    public Date getFechaDePago() { return fechaDePago; }
-    public void setFechaDePago(Date fechaDePago) { this.fechaDePago = fechaDePago; }
-
-    // --- CLASE STATIC BUILDER ---
+    // Builder
     public static class Builder {
-        // Atributos propios
-        private int idEfectivo = 0;
+        private Double monto;
         private Moneda moneda;
-        private float monto;
-        private Date fechaDePago;
+        private Date fechaPago;
 
-        // Atributos heredados de MedioPago
-        private int idPago = 0;
-        private ArrayList<Pago> pagos = new ArrayList<>();
-
-        // Constructor con los datos OBLIGATORIOS
-        public Builder(Moneda moneda, float monto, Date fechaDePago) {
-            this.moneda = moneda;
+        public Builder(Double monto, Moneda moneda) {
             this.monto = monto;
-            this.fechaDePago = fechaDePago;
+            this.moneda = moneda;
         }
-
-        // Métodos fluidos
-        public Builder idEfectivo(int val) { idEfectivo = val; return this; }
-
-        // Métodos para atributos del padre
-        public Builder idPago(int val) { idPago = val; return this; }
-        public Builder pagos(ArrayList<Pago> val) { pagos = val; return this; }
-        public Builder agregarPago(Pago val) {
-            if (this.pagos == null) this.pagos = new ArrayList<>();
-            this.pagos.add(val);
-            return this;
-        }
+        public Builder fecha(Date val) { fechaPago = val; return this; }
 
         public Efectivo build() {
-            // Validaciones de Dominio
-            if (monto < 0) {
-                throw new IllegalArgumentException("El monto no puede ser negativo.");
-            }
-            if (moneda == null) {
-                throw new IllegalArgumentException("La moneda es obligatoria.");
-            }
-            if (fechaDePago == null) {
-                throw new IllegalArgumentException("La fecha de pago es obligatoria.");
-            }
-            return new Efectivo(this);
+            Efectivo e = new Efectivo();
+            e.setMonto(monto);
+            e.setMoneda(moneda);
+            e.setFechaPago(fechaPago);
+            return e;
         }
-    }}
+    }
+
+    // Getters y Setters
+    public Integer getIdEfectivo() { return idEfectivo; }
+    public void setIdEfectivo(Integer idEfectivo) { this.idEfectivo = idEfectivo; }
+    public Double getMonto() { return monto; }
+    public void setMonto(Double monto) { this.monto = monto; }
+    public Moneda getMoneda() { return moneda; }
+    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+    public Date getFechaPago() { return fechaPago; }
+    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
+}
