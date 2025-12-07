@@ -6,7 +6,8 @@ import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 
 import java.util.ArrayList;
 
-public interface HuespedRepository {
+
+public interface DaoHuespedInterfaz {
 
     // Persistencia (Recibe Entidad completa y valida)
     boolean persistirHuesped(Huesped huesped) throws PersistenciaException;

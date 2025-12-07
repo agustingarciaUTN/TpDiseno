@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class DaoHuesped implements HuespedRepository {
+public class DaoHuesped implements DaoHuespedInterfaz {
 
     // --- PERSISTIR (CREATE) ---
     @Override
