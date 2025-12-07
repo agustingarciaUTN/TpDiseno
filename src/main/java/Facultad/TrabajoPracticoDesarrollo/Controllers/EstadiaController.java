@@ -12,7 +12,11 @@ import org.springframework.web.bind.annotation.*;
 public class EstadiaController {
 
     // Usamos el GestorSingleton tal como está en tu arquitectura actual
-    private final GestorEstadia gestorEstadia = GestorEstadia.getInstance();
+    private final GestorEstadia gestorEstadia;
+    // 2. Inyección por Constructor (Spring te pasa el Gestor listo)
+    public EstadiaController(GestorEstadia gestorEstadia) {
+        this.gestorEstadia = gestorEstadia;
+    }
 
     @PostMapping("/crear")
     public ResponseEntity<?> crearEstadia(@Valid @RequestBody DtoEstadia dtoEstadia) {

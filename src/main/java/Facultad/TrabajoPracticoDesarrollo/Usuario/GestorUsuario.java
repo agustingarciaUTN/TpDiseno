@@ -1,7 +1,11 @@
 package Facultad.TrabajoPracticoDesarrollo.Usuario;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import static Facultad.TrabajoPracticoDesarrollo.Utils.UsuarioHelper.generarHashMD5;
 
+@Service
 public class GestorUsuario {
 
     // 1. La única instancia (static y private)
@@ -12,18 +16,13 @@ public class GestorUsuario {
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorUsuario() desde fuera.
-    private GestorUsuario() {
+    @Autowired
+    private GestorUsuario(DaoUsuario daoUsuario) {
         // Obtenemos las instancias de los DAOs
-        this.daoUsuario = DaoUsuario.getInstance();
+        this.daoUsuario = daoUsuario;
     }
 
-    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorUsuario getInstance() {
-        if (instancia == null) {
-            instancia = new GestorUsuario();
-        }
-        return instancia;
-    }
+
 
 
 

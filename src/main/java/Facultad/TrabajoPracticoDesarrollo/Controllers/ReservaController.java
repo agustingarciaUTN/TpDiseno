@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
+import Facultad.TrabajoPracticoDesarrollo.Huesped.GestorHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.GestorReserva;
 import jakarta.validation.Valid;
@@ -15,7 +16,11 @@ import java.util.List;
 @Validated // Necesario para validar Listas en el root del body
 public class ReservaController {
 
-    private final GestorReserva gestorReserva = GestorReserva.getInstance();
+    private final GestorReserva gestorReserva;
+    // 2. Inyección por Constructor (Spring te pasa el Gestor listo)
+    public ReservaController(GestorReserva gestorReserva) {
+        this.gestorReserva = gestorReserva;
+    }
 
     @PostMapping("/crear")
     public ResponseEntity<?> crearReserva(@RequestBody List<@Valid DtoReserva> reservas) {

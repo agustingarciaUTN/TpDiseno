@@ -3,24 +3,20 @@ package Facultad.TrabajoPracticoDesarrollo.Usuario;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Usuario;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Repository
 public class DaoUsuario implements DaoUsuarioInterfaz {
 
     // 1. SINGLETON
-    private static DaoUsuario instancia;
     private DaoUsuario() {}
 
-    public static synchronized DaoUsuario getInstance() {
-        if (instancia == null) {
-            instancia = new DaoUsuario();
-        }
-        return instancia;
-    }
+
 
     @Override
     public boolean persistir(Usuario usuario) throws PersistenciaException {
