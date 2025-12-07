@@ -2,7 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
 
 public class MapearReserva {
 

@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.GestorHuesped;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
+import Facultad.TrabajoPracticoDesarrollo.Services.GestorHuesped;
 import jakarta.validation.Valid; // Importante
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

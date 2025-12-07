@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.TarjetaCredito;
-import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DtoTarjetaCredito;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoTarjetaCredito;
 
 public class MapearTarjetaCredito  {
 

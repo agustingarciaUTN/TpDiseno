@@ -1,16 +1,14 @@
 package Facultad.TrabajoPracticoDesarrollo.PantallaDeTrabajo;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoEstadia;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.GestorEstadia;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
+import Facultad.TrabajoPracticoDesarrollo.Services.*;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
-import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Habitacion.GestorHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.*;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.GestorReserva;
-import Facultad.TrabajoPracticoDesarrollo.Usuario.*;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Colores;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;

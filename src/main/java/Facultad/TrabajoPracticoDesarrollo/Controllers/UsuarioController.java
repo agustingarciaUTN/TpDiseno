@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
-import Facultad.TrabajoPracticoDesarrollo.Usuario.DtoUsuario;
-import Facultad.TrabajoPracticoDesarrollo.Usuario.GestorUsuario;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoUsuario;
+import Facultad.TrabajoPracticoDesarrollo.Services.GestorUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
