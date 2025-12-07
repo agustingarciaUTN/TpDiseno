@@ -1,58 +1,52 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoCama;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "cama")
 public class Cama {
 
-private int idCama;
-private TipoCama tipoCama;
-private Habitacion habitacion;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_cama")
+    private Integer idCama;
 
-    // --- CONSTRUCTOR PRIVADO (Builder) ---
-    private Cama(Builder builder) {
-    this.idCama = builder.idCama;
-    this.tipoCama = builder.tipoCama;
-    this.habitacion = builder.habitacion;
-}
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_cama")
+    private TipoCama tipoCama;
 
-    // Constructor por defecto
+    // Relación ManyToOne con Habitación
+    @ManyToOne
+    @JoinColumn(name = "id_habitacion", nullable = false) // Nombre de la columna FK en BD
+    private Habitacion habitacion;
+
     public Cama() {}
 
-//setters y getters
-public int getIdCama() {
-    return idCama;
-}
-public void setIdCama(int idCama) {
-    this.idCama = idCama;
-}
-public TipoCama getTipoCama() {
-    return tipoCama;
-}
-public void setTipoCama(TipoCama tipoCama) {
-    this.tipoCama = tipoCama;
-}
-public Habitacion getHabitacion() {
-    return habitacion;
-}
-public void setHabitacion(Habitacion habitacion) {
-    this.habitacion = habitacion;
-}
+    private Cama(Builder builder) {
+        this.idCama = builder.idCama;
+        this.tipoCama = builder.tipoCama;
+        this.habitacion = builder.habitacion;
+    }
 
-    // --- CLASE STATIC BUILDER ---
+    // Getters y Setters...
+    public Integer getIdCama() { return idCama; }
+    public void setIdCama(Integer idCama) { this.idCama = idCama; }
+    public TipoCama getTipoCama() { return tipoCama; }
+    public void setTipoCama(TipoCama tipoCama) { this.tipoCama = tipoCama; }
+    public Habitacion getHabitacion() { return habitacion; }
+    public void setHabitacion(Habitacion habitacion) { this.habitacion = habitacion; }
+
+    // Builder...
     public static class Builder {
-        private int idCama;
+        private Integer idCama;
         private TipoCama tipoCama;
         private Habitacion habitacion;
 
         public Builder() {}
-
-        public Builder idCama(int val) { idCama = val; return this; }
+        public Builder idCama(Integer val) { idCama = val; return this; }
         public Builder tipoCama(TipoCama val) { tipoCama = val; return this; }
         public Builder habitacion(Habitacion val) { habitacion = val; return this; }
-
-        public Cama build() {
-            return new Cama(this);
-        }
+        public Cama build() { return new Cama(this); }
     }
-
 }

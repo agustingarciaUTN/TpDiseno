@@ -1,26 +1,52 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
-
+import jakarta.persistence.*;
 import java.util.Date;
 
+@Entity
+@Table(name = "reserva")
 public class Reserva {
 
-    private int idReserva;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_reserva")
+    private Integer idReserva;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_reserva")
     private EstadoReserva estadoReserva;
+
+    @Column(name = "fecha_reserva")
+    @Temporal(TemporalType.DATE)
     private Date fechaReserva;
+
+    @Column(name = "fecha_desde")
+    @Temporal(TemporalType.DATE)
     private Date fechaDesde;
+
+    @Column(name = "fecha_hasta")
+    @Temporal(TemporalType.DATE)
     private Date fechaHasta;
 
-    // Datos del responsable
+    // Datos del responsable (se guardan directo en la tabla reserva según tu JSON)
+    @Column(name = "\"NombreHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String nombreHuespedResponsable;
+
+    @Column(name = "\"ApellidoHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String apellidoHuespedResponsable;
+
+    // CORRECCIÓN SOLICITADA: Mapeo exacto de la columna de teléfono
+    @Column(name = "\"TelefonoHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String telefonoHuespedResponsable;
 
-    // Relación
+    // Relación con Habitación
+    @ManyToOne
+    @JoinColumn(name = "id_habitacion") // FK en tabla reserva
     private Habitacion habitacion;
 
-    // --- CONSTRUCTOR PRIVADO ---
+    public Reserva() {}
+
     private Reserva(Builder builder) {
         this.idReserva = builder.idReserva;
         this.estadoReserva = builder.estadoReserva;
@@ -33,11 +59,9 @@ public class Reserva {
         this.habitacion = builder.habitacion;
     }
 
-    public Reserva() {}
-
     // --- GETTERS Y SETTERS ---
-    public int getIdReserva() { return idReserva; }
-    public void setIdReserva(int idReserva) { this.idReserva = idReserva; }
+    public Integer getIdReserva() { return idReserva; }
+    public void setIdReserva(Integer idReserva) { this.idReserva = idReserva; }
 
     public EstadoReserva getEstadoReserva() { return estadoReserva; }
     public void setEstadoReserva(EstadoReserva estadoReserva) { this.estadoReserva = estadoReserva; }
@@ -60,16 +84,12 @@ public class Reserva {
     public String getTelefonoHuespedResponsable() { return telefonoHuespedResponsable; }
     public void setTelefonoHuespedResponsable(String telefonoHuespedResponsable) { this.telefonoHuespedResponsable = telefonoHuespedResponsable; }
 
-
-
     public Habitacion getHabitacion() { return habitacion; }
-    public void setHabitacion(Habitacion habitacion) {
-        this.habitacion = habitacion;
-    }
+    public void setHabitacion(Habitacion habitacion) { this.habitacion = habitacion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
-        private int idReserva = 0;
+        private Integer idReserva;
         private EstadoReserva estadoReserva;
         private Date fechaReserva;
         private Date fechaDesde;
@@ -79,31 +99,21 @@ public class Reserva {
         private String telefonoHuespedResponsable;
         private Habitacion habitacion;
 
-        // Constructor con lo mínimo indispensable para reservar
+        // Constructor con lo mínimo indispensable
         public Builder(Date fechaDesde, Date fechaHasta, Habitacion habitacion) {
             this.fechaDesde = fechaDesde;
             this.fechaHasta = fechaHasta;
             this.habitacion = habitacion;
         }
 
-        public Builder id(int val) { idReserva = val; return this; }
+        public Builder id(Integer val) { idReserva = val; return this; }
         public Builder estado(EstadoReserva val) { estadoReserva = val; return this; }
         public Builder fechaReserva(Date val) { fechaReserva = val; return this; }
-
         public Builder nombreResponsable(String val) { nombreHuespedResponsable = val; return this; }
         public Builder apellidoResponsable(String val) { apellidoHuespedResponsable = val; return this; }
         public Builder telefonoResponsable(String val) { telefonoHuespedResponsable = val; return this; }
+        public Builder habitacion(Habitacion val) { habitacion = val; return this; }
 
-        public Builder habitacion(Habitacion val) {
-            this.habitacion = val;
-            return this;
-        }
-
-        public Reserva build() {
-            if (fechaReserva == null) fechaReserva = new Date(); // Default hoy
-            if (estadoReserva == null) estadoReserva = EstadoReserva.ACTIVA; // Default activa
-
-            return new Reserva(this);
-        }
+        public Reserva build() { return new Reserva(this); }
     }
 }
