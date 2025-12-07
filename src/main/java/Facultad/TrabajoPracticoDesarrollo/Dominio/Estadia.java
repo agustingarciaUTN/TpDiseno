@@ -1,24 +1,64 @@
-// src/Dominio/Estadia.java
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Entity
+@Table(name = "estadia")
 public class Estadia {
-    private int idEstadia;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_estadia")
+    private Integer idEstadia;
+
+    @Column(name = "\"fecha_check-in\"")
+    @Temporal(TemporalType.DATE)
     private Date fechaCheckIn;
+
+    @Column(name = "\"fecha_check-out\"")
+    @Temporal(TemporalType.DATE)
     private Date fechaCheckOut;
-    private double valorEstadia;
+
+    @Column(name = "valor_estadia")
+    private Double valorEstadia;
+
+    // --- RELACIONES ---
+
+    @OneToOne
+    @JoinColumn(name = "id_reserva")
     private Reserva reserva;
+
+    @ManyToOne
+    @JoinColumn(name = "numero_habitacion")
     private Habitacion habitacion;
-    private ArrayList<Huesped> huespedes;
 
-    public Estadia() {
-        // constructor por defecto
-    }
+    // Relación Muchos a Muchos con Huésped
+    // Esta SÍ se mantiene porque la estadía necesita saber quiénes se alojaron
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "estadia_huesped",
+            joinColumns = @JoinColumn(name = "id_estadia"),
+            inverseJoinColumns = {
+                    @JoinColumn(name = "tipo_documento", referencedColumnName = "tipo_documento"),
+                    @JoinColumn(name = "nro_documento", referencedColumnName = "numero_documento")
+            }
+    )
+    private List<Huesped> huespedes = new ArrayList<>();
 
-    // Constructor Privado: Solo el Builder puede usarlo
+    // NOTA: Se eliminó la lista de ServiciosAdicionales.
+    // Ahora la relación es unidireccional: el Servicio conoce a la Estadía, pero la Estadía no guarda la lista.
+
+    // Relación con Facturas (1 a N)
+    // Se mantiene si es necesario navegar desde la estadía a sus facturas.
+    @OneToMany(mappedBy = "estadia")
+    private List<Factura> facturas = new ArrayList<>();
+
+    // --- CONSTRUCTORES ---
+    public Estadia() {}
+
     private Estadia(Builder builder) {
         this.idEstadia = builder.idEstadia;
         this.fechaCheckIn = builder.fechaCheckIn;
@@ -27,88 +67,58 @@ public class Estadia {
         this.reserva = builder.reserva;
         this.habitacion = builder.habitacion;
         this.huespedes = builder.huespedes;
+        // Servicios removidos del constructor
     }
 
-    public int getIdEstadia() {
-        return idEstadia;
-    }
-    public void setIdEstadia(int idEstadia) {
-        this.idEstadia = idEstadia;
-    }
+    // --- GETTERS Y SETTERS ---
+    public Integer getIdEstadia() { return idEstadia; }
+    public void setIdEstadia(Integer idEstadia) { this.idEstadia = idEstadia; }
 
-    public Date getFechaCheckIn() {
-        return (fechaCheckIn == null) ? null : new Date(fechaCheckIn.getTime());
-    }
-    public void setFechaCheckIn(Date fechaCheckIn) {
-        this.fechaCheckIn = (fechaCheckIn == null) ? null : new Date(fechaCheckIn.getTime());
-    }
+    public Date getFechaCheckIn() { return fechaCheckIn; }
+    public void setFechaCheckIn(Date fechaCheckIn) { this.fechaCheckIn = fechaCheckIn; }
 
-    public Date getFechaCheckOut() {
-        return (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
-    }
-    public void setFechaCheckOut(Date fechaCheckOut) {
-        this.fechaCheckOut = (fechaCheckOut == null) ? null : new Date(fechaCheckOut.getTime());
-    }
+    public Date getFechaCheckOut() { return fechaCheckOut; }
+    public void setFechaCheckOut(Date fechaCheckOut) { this.fechaCheckOut = fechaCheckOut; }
 
-    public double getValorEstadia() {
-        return valorEstadia;
-    }
-    public void setValorEstadia(double valorEstadia) {
-        this.valorEstadia = valorEstadia;
-    }
+    public Double getValorEstadia() { return valorEstadia; }
+    public void setValorEstadia(Double valorEstadia) { this.valorEstadia = valorEstadia; }
 
-    public void setReserva(Reserva reserva){this.reserva = reserva;}
-    public Reserva getReserva(){return reserva;}
+    public Reserva getReserva() { return reserva; }
+    public void setReserva(Reserva reserva) { this.reserva = reserva; }
 
-    public List<Huesped> getHuespedes(){return huespedes;}
-    public void setHuespedes(ArrayList<Huesped> huespedes){this.huespedes = huespedes;}
+    public Habitacion getHabitacion() { return habitacion; }
+    public void setHabitacion(Habitacion habitacion) { this.habitacion = habitacion; }
 
-    public void setHabitacion(Habitacion habitacion){this.habitacion = habitacion;}
-    public Habitacion getHabitacion(){return habitacion;}
+    public List<Huesped> getHuespedes() { return huespedes; }
+    public void setHuespedes(List<Huesped> huespedes) { this.huespedes = huespedes; }
 
+    public List<Factura> getFacturas() { return facturas; }
+    public void setFacturas(List<Factura> facturas) { this.facturas = facturas; }
 
-    // --- CLASE BUILDER ---
+    // --- BUILDER ---
     public static class Builder {
-        // Campos obligatorios o importantes
-        private int idEstadia = 0; // Por defecto 0 (nuevo)
+        private Integer idEstadia;
         private Date fechaCheckIn;
-        private ArrayList<Huesped> huespedes = new ArrayList<>();
-
-        // Campos opcionales
         private Date fechaCheckOut;
-        private double valorEstadia;
+        private Double valorEstadia;
         private Reserva reserva;
         private Habitacion habitacion;
+        private List<Huesped> huespedes = new ArrayList<>();
 
-        // Constructor con los datos MÍNIMOS para que una estadía tenga sentido
-        public Builder(Date fechaCheckIn) {
-            this.fechaCheckIn = fechaCheckIn;
-        }
+        public Builder() {}
 
-        // Métodos
-        public Builder idEstadia(int val) { idEstadia = val; return this; }
-        public Builder fechaCheckOut(Date val) { fechaCheckOut = val; return this; }
-        public Builder valorEstadia(double val) { valorEstadia = val; return this; }
+        public Builder id(Integer val) { idEstadia = val; return this; }
+        public Builder checkIn(Date val) { fechaCheckIn = val; return this; }
+        public Builder checkOut(Date val) { fechaCheckOut = val; return this; }
+        public Builder valor(Double val) { valorEstadia = val; return this; }
         public Builder reserva(Reserva val) { reserva = val; return this; }
         public Builder habitacion(Habitacion val) { habitacion = val; return this; }
-
-        // Métodos para listas (puedes pasar la lista entera o agregar uno a uno)
-        public Builder huespedes(ArrayList<Huesped> val) { huespedes = val; return this; }
-        public void agregarHuesped(Huesped val) {
-            if (this.huespedes == null) this.huespedes = new ArrayList<>();
-            this.huespedes.add(val);
+        public Builder agregarHuesped(Huesped val) {
+            if (huespedes == null) huespedes = new ArrayList<>();
+            huespedes.add(val);
+            return this;
         }
 
-        public Estadia build() {
-            // Validaciones de Dominio antes de crear el objeto
-            if (fechaCheckIn == null) {
-                throw new IllegalArgumentException("La fecha de inicio no puede ser nula");
-            }
-            if (huespedes == null || huespedes.isEmpty()) {
-                throw new IllegalArgumentException("La estadía debe tener al menos un huésped");
-            }
-            return new Estadia(this);
-        }
+        public Estadia build() { return new Estadia(this); }
     }
-
 }

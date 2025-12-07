@@ -1,85 +1,79 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoServicio;
-
+import jakarta.persistence.*;
 import java.util.Date;
 
+@Entity
+@Table(name = "servicios_adicionales")
 public class ServiciosAdicionales {
 
-    private int idServicio; // PK autogenerada
-    private TipoServicio tipoServicio;
-    private String descripcionServicio;
-    private double valorServicio; // double por consistencia con moneda
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_servicio_adicional")
+    private Integer id;
+
+    @Column(name = "descripcion_servicio")
+    private String descripcion;
+
+    @Column(name = "valor_servicio")
+    private Double valor;
+
+    @Column(name = "fecha_consumo")
+    @Temporal(TemporalType.DATE)
     private Date fechaConsumo;
 
-    // Relación
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_servicio")
+    private TipoServicio tipoServicio;
+
+    // Relación ManyToOne (Muchos servicios, una estadía)
+    @ManyToOne(fetch = FetchType.LAZY) // Lazy es mejor para rendimiento
+    @JoinColumn(name = "id_estadia", nullable = false) // FK obligatoria (Composición)
     private Estadia estadia;
-
-
-    // --- CONSTRUCTOR PRIVADO ---
-    private ServiciosAdicionales(Builder builder) {
-        this.idServicio = builder.idServicio;
-        this.tipoServicio = builder.tipoServicio;
-        this.descripcionServicio = builder.descripcionServicio;
-        this.valorServicio = builder.valorServicio;
-        this.fechaConsumo = builder.fechaConsumo;
-        this.estadia = builder.estadia;
-    }
 
     public ServiciosAdicionales() {}
 
-    // --- GETTERS Y SETTERS ---
-    public int getIdServicio() { return idServicio; }
-    public void setIdServicio(int idServicio) { this.idServicio = idServicio; }
-
-    public TipoServicio getTipoServicio() { return tipoServicio; }
-    public void setTipoServicio(TipoServicio tipoServicio) { this.tipoServicio = tipoServicio; }
-
-    public String getDescripcionServicio() { return descripcionServicio; }
-    public void setDescripcionServicio(String descripcionServicio) { this.descripcionServicio = descripcionServicio; }
-
-    public double getValorServicio() { return valorServicio; }
-    public void setValorServicio(double valorServicio) { this.valorServicio = valorServicio; }
-
-    public Date getFechaConsumo() { return fechaConsumo; }
-    public void setFechaConsumo(Date fechaConsumo) { this.fechaConsumo = fechaConsumo; }
-
-    public Estadia getEstadia() { return estadia; }
-    public void setEstadia(Estadia estadia) {
-        this.estadia = estadia;
+    private ServiciosAdicionales(Builder builder) {
+        this.id = builder.id;
+        this.descripcion = builder.descripcion;
+        this.valor = builder.valor;
+        this.fechaConsumo = builder.fechaConsumo;
+        this.tipoServicio = builder.tipoServicio;
+        this.estadia = builder.estadia;
     }
 
-    // --- CLASE STATIC BUILDER ---
+    // Getters y Setters...
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public Double getValor() { return valor; }
+    public void setValor(Double valor) { this.valor = valor; }
+    public Date getFechaConsumo() { return fechaConsumo; }
+    public void setFechaConsumo(Date fechaConsumo) { this.fechaConsumo = fechaConsumo; }
+    public TipoServicio getTipoServicio() { return tipoServicio; }
+    public void setTipoServicio(TipoServicio tipoServicio) { this.tipoServicio = tipoServicio; }
+    public Estadia getEstadia() { return estadia; }
+    public void setEstadia(Estadia estadia) { this.estadia = estadia; }
+
+    // Builder...
     public static class Builder {
-        private int idServicio = 0;
-        private TipoServicio tipoServicio;
-        private String descripcionServicio;
-        private double valorServicio;
+        private Integer id;
+        private String descripcion;
+        private Double valor;
         private Date fechaConsumo;
+        private TipoServicio tipoServicio;
         private Estadia estadia;
 
-        // Constructor con obligatorios
-        public Builder(TipoServicio tipo, double valor, Date fecha) {
-            this.tipoServicio = tipo;
-            this.valorServicio = valor;
-            this.fechaConsumo = fecha;
-        }
+        public Builder() {}
+        public Builder id(Integer val) { id = val; return this; }
+        public Builder descripcion(String val) { descripcion = val; return this; }
+        public Builder valor(Double val) { valor = val; return this; }
+        public Builder fecha(Date val) { fechaConsumo = val; return this; }
+        public Builder tipo(TipoServicio val) { tipoServicio = val; return this; }
+        public Builder estadia(Estadia val) { estadia = val; return this; }
 
-        public Builder id(int val) { idServicio = val; return this; }
-        public Builder descripcion(String val) { descripcionServicio = val; return this; }
-        public Builder estadia(Estadia val) {
-            estadia = val;
-            return this;
-        }
-
-        public ServiciosAdicionales build() {
-            if (valorServicio < 0) {
-                throw new IllegalArgumentException("El valor del servicio no puede ser negativo.");
-            }
-            if (fechaConsumo == null) {
-                throw new IllegalArgumentException("La fecha de consumo es obligatoria.");
-            }
-            return new ServiciosAdicionales(this);
-        }
+        public ServiciosAdicionales build() { return new ServiciosAdicionales(this); }
     }
 }
