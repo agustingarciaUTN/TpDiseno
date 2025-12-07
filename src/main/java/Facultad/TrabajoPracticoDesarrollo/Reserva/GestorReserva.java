@@ -3,11 +3,14 @@ package Facultad.TrabajoPracticoDesarrollo.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearReserva;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Service
 public class GestorReserva {
     // 1. La única instancia (static y private)
     private static GestorReserva instancia;
@@ -17,17 +20,10 @@ public class GestorReserva {
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorReserva() desde fuera.
-    private GestorReserva() {
+    @Autowired
+    private GestorReserva(DaoReserva daoReserva) {
         // Obtenemos las instancias del DAO
-        this.daoReserva = DaoReserva.getInstance();
-    }
-
-    // 3. Metodo de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorReserva getInstance() {
-        if (instancia == null) {
-            instancia = new GestorReserva();
-        }
-        return instancia;
+        this.daoReserva = daoReserva;
     }
 
     // Metodo para saber si existe una reserva en x fecha, usamos para mapear las reservas de una habitación.

@@ -4,17 +4,15 @@ import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 
+@Repository
 public class DaoHabitacion implements DaoInterfazHabitacion {
-    private static DaoHabitacion instancia;
-    private DaoHabitacion() {}
-    public static synchronized DaoHabitacion getInstance() {
-        if (instancia == null) instancia = new DaoHabitacion();
-        return instancia;
-    }
+    public DaoHabitacion() {}
+
 
     @Override
     public DtoHabitacion obtenerPorNumero(String numero) {

@@ -5,20 +5,15 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoHabitacion;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 
+@Repository
 public class DaoEstadia implements DaoInterfazEstadia {
-    private static DaoEstadia instancia;
 
-    private DaoEstadia() {
-    }
-
-    public static synchronized DaoEstadia getInstance() {
-        if (instancia == null) instancia = new DaoEstadia();
-        return instancia;
-    }
+    private DaoEstadia() {}
 
     @Override
     public boolean persistirEstadia(Estadia estadia) throws PersistenciaException {

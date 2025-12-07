@@ -3,17 +3,15 @@ package Facultad.TrabajoPracticoDesarrollo.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 
+@Repository
 public class DaoReserva implements DaoInterfazReserva {
-    private static DaoReserva instancia;
-    private DaoReserva() {}
-    public static synchronized DaoReserva getInstance() {
-        if (instancia == null) instancia = new DaoReserva();
-        return instancia;
-    }
+    public DaoReserva() {}
+
 
     @Override
     public boolean persistirReserva(Reserva reserva) throws PersistenciaException {
