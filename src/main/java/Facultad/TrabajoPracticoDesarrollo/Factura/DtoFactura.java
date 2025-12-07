@@ -17,9 +17,9 @@ public class DtoFactura {
     private double iva;
 
     // Solo IDs para el DTO
-    private int idEstadia;
-    private int idResponsable;
-    private Integer idNotaDeCredito; // Integer porque permite null
+    private DtoEstadia dtoEstadia;
+    private Dto dtoResponsable;
+    private Integer dtoNotaDeCredito; // Integer porque permite null
 
     // --- CONSTRUCTOR PRIVADO ---
     private DtoFactura(Builder builder) {
