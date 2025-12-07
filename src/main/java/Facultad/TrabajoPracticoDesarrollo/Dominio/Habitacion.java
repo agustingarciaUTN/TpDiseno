@@ -26,7 +26,7 @@ public class Habitacion {
     private EstadoHabitacion estadoHabitacion;
 
     @Column(name = "\"Costo_por_noche\"") // Ojo con las mayúsculas en tu BD
-    private Double costoPorNoche;
+    private Float costoPorNoche;
 
     // --- RELACIÓN CON CAMAS (1 a N) ---
     // mappedBy = "habitacion" significa que la clase Cama es la dueña de la relación (tiene la FK)
@@ -46,7 +46,7 @@ public class Habitacion {
         this.tipoHabitacion = builder.tipoHabitacion;
         this.capacidad = builder.capacidad;
         this.estadoHabitacion = builder.estadoHabitacion;
-        this.costoPorNoche = (double) builder.costoPorNoche;
+        this.costoPorNoche = (float) builder.costoPorNoche;
         this.reservas = builder.reservas;
     }
 
@@ -63,8 +63,8 @@ public class Habitacion {
     public EstadoHabitacion getEstadoHabitacion() { return estadoHabitacion; }
     public void setEstadoHabitacion(EstadoHabitacion estadoHabitacion) { this.estadoHabitacion = estadoHabitacion; }
 
-    public Double getCostoPorNoche() { return costoPorNoche; }
-    public void setCostoPorNoche(Double costoPorNoche) { this.costoPorNoche = costoPorNoche; }
+    public Float getCostoPorNoche() { return costoPorNoche; }
+    public void setCostoPorNoche(Float costoPorNoche) { this.costoPorNoche = costoPorNoche; }
 
     public List<Reserva> getReservas() { return reservas; }
     public void setReservas(List<Reserva> reservas) { this.reservas = reservas; }
