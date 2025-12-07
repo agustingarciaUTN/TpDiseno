@@ -21,18 +21,18 @@ public class MapearHuesped  {
         if (dto == null) return null;
 
         return new Huesped.Builder(
-                dto.getNombres(),
-                dto.getApellido(),
                 dto.getTipoDocumento(),
+                dto.getApellido(),
+                dto.getNombres(),
                 dto.getNroDocumento()
         )
-                .telefono(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
+                .telefonos(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
                 .cuit(dto.getCuit())
                 // Manejo seguro de Enum y conversión de String
                 .posicionIva(dto.getPosicionIva() != null ? dto.getPosicionIva() : null)
                 .fechaNacimiento(dto.getFechaNacimiento())
-                .email(dto.getEmail())
-                .ocupacion(dto.getOcupacion())
+                .emails(dto.getEmail())
+                .ocupaciones(dto.getOcupacion())
                 .nacionalidad(dto.getNacionalidad())
                 // AQUÍ USAMOS EL OTRO MAPPER
                 .direccion(MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion()))
@@ -43,18 +43,18 @@ public class MapearHuesped  {
         if (dto == null) return null;
 
         return new Huesped.Builder(
-                dto.getNombres(),
-                dto.getApellido(),
                 dto.getTipoDocumento(),
+                dto.getApellido(),
+                dto.getNombres(),
                 dto.getNroDocumento()
         )
-                .telefono(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
+                .telefonos(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
                 .cuit(dto.getCuit())
                 // Manejo seguro de Enum y conversión de String
                 .posicionIva(dto.getPosicionIva() != null ? dto.getPosicionIva() : null)
                 .fechaNacimiento(dto.getFechaNacimiento())
-                .email(dto.getEmail())
-                .ocupacion(dto.getOcupacion())
+                .emails(dto.getEmail())
+                .ocupaciones(dto.getOcupacion())
                 .nacionalidad(dto.getNacionalidad())
 
                 .direccion(direccion)
