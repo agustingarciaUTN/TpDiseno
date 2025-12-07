@@ -2,12 +2,15 @@ package Facultad.TrabajoPracticoDesarrollo.Habitacion;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+@Service
 public class GestorHabitacion {
 
     // 1. La única instancia (static y private)
@@ -18,18 +21,12 @@ public class GestorHabitacion {
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorHabitacion() desde fuera.
-    private GestorHabitacion() {
+    @Autowired
+    private GestorHabitacion(DaoHabitacion daoHabitacion) {
         //Obtenemos las instancias de los DAO
-        this.daoHabitacion = DaoHabitacion.getInstance();
+        this.daoHabitacion = daoHabitacion;
     }
 
-    // 3. Metodo de acceso global, synchronized para guardar peligro por multihilos
-    public static synchronized GestorHabitacion getInstance() {
-        if (instancia == null) {
-            instancia = new GestorHabitacion();
-        }
-        return instancia;
-    }
 
     public ArrayList<Habitacion> obtenerTodasLasHabitacionesOrdenadas() {
         ArrayList<DtoHabitacion> entidades = daoHabitacion.obtenerTodas();

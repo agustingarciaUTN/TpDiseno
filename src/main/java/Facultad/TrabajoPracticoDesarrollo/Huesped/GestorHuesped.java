@@ -25,20 +25,10 @@ public class GestorHuesped {
     // 2. Constructor PRIVADO
     // Nadie puede hacer "new GestorReserva()" desde afuera.
     @Autowired
-    private GestorHuesped(DaoHuespedInterfaz daoHuesped){
+    private GestorHuesped(DaoHuespedInterfaz daoHuesped, DaoDireccion daoDireccion){
         this.daoHuesped = daoHuesped;
-        this.daoDireccion = DaoDireccion.getInstance();
+        this.daoDireccion = daoDireccion;
     }
-
-    /*// 3. Metodo de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorHuesped getInstance() {
-        if (instancia == null) {
-            instancia = new GestorHuesped();
-        }
-        return instancia;
-    }*/
-
-
 
    public ArrayList<Huesped> buscarHuespedes(DtoHuesped criterios){
 

@@ -6,6 +6,7 @@ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -14,6 +15,12 @@ import java.util.List;
 
 @Repository
 public class DaoHuesped implements DaoHuespedInterfaz {
+    private final DaoDireccionInterfaz daoDireccion;
+    @Autowired
+    public DaoHuesped(DaoDireccionInterfaz daoDireccion) {
+        this.daoDireccion = daoDireccion;
+    }
+
 
     // --- PERSISTIR (CREATE) ---
     @Override
@@ -333,7 +340,7 @@ public class DaoHuesped implements DaoHuespedInterfaz {
         }
 
         // 3. Cargar Dirección
-        DtoDireccion dir = DaoDireccion.getInstance().obtenerDireccion(rs.getInt("id_direccion"));
+        DtoDireccion dir = this.daoDireccion.obtenerDireccion(rs.getInt("id_direccion"));
 
         // 4. Preparar Enums de forma segura
         PosIva pIva = null;

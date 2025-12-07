@@ -4,32 +4,28 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearEstadia;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
 
+
+@Service
 public class GestorEstadia {
 
 
     // 1. La única instancia (static y private)
     private static GestorEstadia instancia;
-
     // Referencias a los DAO que necesita
     private final DaoInterfazEstadia daoEstadia;
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorEstadia() desde fuera.
-    private GestorEstadia() {
+    @Autowired
+    private GestorEstadia(DaoInterfazEstadia daoEstadia) {
         //Obtenemos las instancias de los DAO
-        this.daoEstadia = DaoEstadia.getInstance();
-    }
-
-    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorEstadia getInstance() {
-        if (instancia == null) {
-            instancia = new GestorEstadia();
-        }
-        return instancia;
+        this.daoEstadia = daoEstadia;
     }
 
 

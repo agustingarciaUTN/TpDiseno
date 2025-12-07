@@ -3,17 +3,14 @@ package Facultad.TrabajoPracticoDesarrollo.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class DaoDireccion implements DaoDireccionInterfaz {
-    private static DaoDireccion instancia;
     private DaoDireccion() {}
 
-    public static synchronized DaoDireccion getInstance() {
-        if (instancia == null) instancia = new DaoDireccion();
-        return instancia;
-    }
 
     @Override
     public boolean persistirDireccion(Direccion direccion) throws PersistenciaException {
