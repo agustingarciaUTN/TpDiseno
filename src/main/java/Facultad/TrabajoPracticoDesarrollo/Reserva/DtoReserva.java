@@ -10,6 +10,7 @@ public class DtoReserva {
     // --- CONSTANTES (Las mismas que en DtoHuesped para consistencia) ---
     public static final String REGEX_NOMBRE = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
     public static final String REGEX_TELEFONO = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
+    public static final String REGEX_HABITACION = "^[0-9]{1,3}$";
 
     //ATRIBUTOS
     private int idReserva;
@@ -39,6 +40,7 @@ public class DtoReserva {
 
     // Validación de la Habitación
     @NotBlank(message = "El número de habitación es obligatorio")
+    @Pattern(regexp = REGEX_HABITACION, message = "El número de habitación debe ser numérico y estar entre 1 y 999.")
     private String idHabitacion;
 
     // --- CONSTRUCTOR PRIVADO ---
