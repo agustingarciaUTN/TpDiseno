@@ -87,14 +87,7 @@ public class GestorHuesped {
     }
 
     public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped){
-        DtoDireccion dtoDireccion = dtoHuesped.getDtoDireccion();
-        Direccion direccion = new Direccion();
-        direccion = direccion.crearSinPersistirDireccion(dtoDireccion);
-
-        Huesped huesped = new Huesped();
-        huesped = huesped.crearSinPersistirHuesped(dtoHuesped, direccion);
-
-        return huesped;
+        return MapearHuesped.mapearDtoAEntidad(dtoHuesped);
     }
 
     //Lógica de UPSERT para CU9

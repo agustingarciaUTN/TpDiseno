@@ -22,7 +22,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
             ps.setInt(2, direccion.getNumero());
             ps.setString(3, direccion.getDepartamento());
             ps.setString(4, direccion.getPiso());
-            ps.setInt(5, direccion.getCodigoPostal());
+            ps.setInt(5, direccion.getCodPostal());
             ps.setString(6, direccion.getLocalidad());
             ps.setString(7, direccion.getProvincia());
             ps.setString(8, direccion.getPais());
@@ -47,7 +47,7 @@ public class DaoDireccion implements DaoDireccionInterfaz {
             ps.setInt(2, direccion.getNumero());
             ps.setString(3, direccion.getDepartamento());
             ps.setString(4, direccion.getPiso());
-            ps.setInt(5, direccion.getCodigoPostal());
+            ps.setInt(5, direccion.getCodPostal());
             ps.setString(6, direccion.getLocalidad());
             ps.setString(7, direccion.getProvincia());
             ps.setString(8, direccion.getPais());
