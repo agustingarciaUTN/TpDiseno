@@ -1,11 +1,11 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearReserva;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoInterfazReserva;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoReserva;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoInterfazReserva;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoReserva;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

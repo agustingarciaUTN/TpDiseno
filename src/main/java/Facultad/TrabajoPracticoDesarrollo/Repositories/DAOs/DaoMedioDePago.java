@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Repositories;
+package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
 import org.springframework.stereotype.Repository;

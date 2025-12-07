@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
@@ -7,9 +7,9 @@ import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearDireccion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoDireccion;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoDireccionInterfaz;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoHuespedInterfaz;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoDireccionInterfaz;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoHuespedInterfaz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,7 +69,7 @@ public class GestorHuesped {
 
         // Regla especial CUIT/IVA
         //Si la posición IVA es "Responsable Inscripto", el CUIT no puede ser vacio
-        if (datos.getPosicionIva().equals(PosIva.ResponsableInscripto) ) {
+        if (datos.getPosicionIva().equals(PosIva.RESPONSABLE_INSCRIPTO) ) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
             }

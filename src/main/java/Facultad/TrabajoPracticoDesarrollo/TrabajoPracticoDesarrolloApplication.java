@@ -8,7 +8,7 @@ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPersonaFisica;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPersonaJuridica;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoUsuario;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoInterfazPersonaFisica;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoInterfazPersonaFisica;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Repository;

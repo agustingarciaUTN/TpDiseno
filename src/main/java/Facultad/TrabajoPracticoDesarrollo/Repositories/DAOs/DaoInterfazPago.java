@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Repositories;
+package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPago;

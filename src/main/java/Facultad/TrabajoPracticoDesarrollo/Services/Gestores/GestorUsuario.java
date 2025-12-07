@@ -1,8 +1,8 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.TrabajoPracticoDesarrolloApplication;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoUsuario;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoUsuario;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoUsuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

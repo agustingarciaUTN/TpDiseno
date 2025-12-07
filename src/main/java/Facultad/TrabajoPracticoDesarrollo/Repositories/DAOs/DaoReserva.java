@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Repositories;
+package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;

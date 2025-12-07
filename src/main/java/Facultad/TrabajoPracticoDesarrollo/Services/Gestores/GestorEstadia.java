@@ -1,11 +1,11 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearEstadia;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoInterfazEstadia;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoInterfazEstadia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

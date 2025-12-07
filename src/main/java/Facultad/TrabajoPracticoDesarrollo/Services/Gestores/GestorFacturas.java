@@ -1,7 +1,7 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoFactura;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoNotaDeCredito;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoFactura;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoNotaDeCredito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

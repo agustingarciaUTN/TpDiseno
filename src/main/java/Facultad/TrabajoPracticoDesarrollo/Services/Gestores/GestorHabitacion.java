@@ -1,10 +1,10 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoInterfazHabitacion;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoHabitacion;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoInterfazHabitacion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

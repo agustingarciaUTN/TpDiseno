@@ -1,8 +1,8 @@
-package Facultad.TrabajoPracticoDesarrollo.Services;
+package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoMedioDePago;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoMedioDePago;
 import Facultad.TrabajoPracticoDesarrollo.TrabajoPracticoDesarrolloApplication;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DaoPago;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs.DaoPago;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
