@@ -3,6 +3,7 @@ package Facultad.TrabajoPracticoDesarrollo.Factura;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.NotaDeCredito;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,13 +11,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+@Repository
 public class DaoNotaDeCredito implements DaoInterfazNotaDeCredito {
-    private static DaoNotaDeCredito instancia;
-    private DaoNotaDeCredito() {}
-    public static synchronized DaoNotaDeCredito getInstance() {
-        if (instancia == null) instancia = new DaoNotaDeCredito();
-        return instancia;
-    }
+    public DaoNotaDeCredito() {}
+
 
     @Override
     public boolean persistirNota(NotaDeCredito nota) throws PersistenciaException {

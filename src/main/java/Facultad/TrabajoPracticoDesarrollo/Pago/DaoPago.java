@@ -4,17 +4,17 @@ import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DaoInterfazMedioDePago;
 import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DaoMedioDePago;
 
 import java.sql.*;
 
 public class DaoPago implements DaoInterfazPago {
-    private static DaoPago instancia;
-    private DaoPago() {}
-    public static synchronized DaoPago getInstance() {
-        if (instancia == null) instancia = new DaoPago();
-        return instancia;
+    private final DaoInterfazMedioDePago daoInterfazMedioDePago;
+    public DaoPago(DaoInterfazMedioDePago daoInterfazMedioDePago) {
+        this.daoInterfazMedioDePago = daoInterfazMedioDePago;
     }
+
 
     @Override
     public boolean persistirPago(Pago pago) throws PersistenciaException {
@@ -41,10 +41,9 @@ public class DaoPago implements DaoInterfazPago {
             }
 
             // Guardar Medios de Pago
-            DaoMedioDePago daoMedio = DaoMedioDePago.getInstance();
             if (pago.getMediosPago() != null) {
                 for (MedioPago mp : pago.getMediosPago()) {
-                    daoMedio.persistirMedioPagoTransaccional(mp, idPago, conn);
+                    this.daoInterfazMedioDePago.persistirMedioPagoTransaccional(mp, idPago, conn);
                 }
             }
 
