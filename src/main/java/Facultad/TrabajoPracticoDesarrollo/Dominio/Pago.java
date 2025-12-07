@@ -1,97 +1,129 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
-
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-
+@Entity
+@Table(name = "pago")
 public class Pago {
 
-    private int idPago;
-    private Moneda moneda;
-    private double montoTotal; // double por consistencia
-    private double cotizacion;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_pago")
+    private Integer idPago;
+
+    @Column(name = "monto_total")
+    private Double montoTotal;
+
+    @Column(name = "cotizacion")
+    private Double cotizacion;
+
+    @Column(name = "fecha_pago")
+    @Temporal(TemporalType.DATE)
     private Date fechaPago;
 
-    // relación
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moneda")
+    private Moneda moneda;
+
+    // --- RELACIONES ---
+
+    // Relación Muchos a Uno con Factura (La tabla pago tiene la FK 'id_factura')
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_factura", referencedColumnName = "numero_factura")
     private Factura factura;
 
-    // Relación con Medios de Pago
-    private ArrayList<MedioPago> mediosPago;
+    // Relación Uno a Muchos con MedioPago (Un pago se compone de uno o más medios)
+    @OneToMany(mappedBy = "pago", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MedioPago> mediosPago = new ArrayList<>();
 
-    // --- CONSTRUCTOR PRIVADO ---
+    // --- CONSTRUCTORES ---
+    public Pago() {}
+
     private Pago(Builder builder) {
         this.idPago = builder.idPago;
-        this.moneda = builder.moneda;
         this.montoTotal = builder.montoTotal;
         this.cotizacion = builder.cotizacion;
         this.fechaPago = builder.fechaPago;
+        this.moneda = builder.moneda;
         this.factura = builder.factura;
-        this.mediosPago = builder.mediosPago;
+
+        // Asignamos la lista y vinculamos la relación bidireccional
+        if (builder.mediosPago != null) {
+            for (MedioPago mp : builder.mediosPago) {
+                this.agregarMedioPago(mp);
+            }
+        }
     }
 
-    // Constructor por defecto
-    public Pago() {}
+    // --- MÉTODOS HELPER (Relación Bidireccional) ---
+    public void agregarMedioPago(MedioPago medio) {
+        mediosPago.add(medio);
+        medio.setPago(this);
+    }
+
+    public void removerMedioPago(MedioPago medio) {
+        mediosPago.remove(medio);
+        medio.setPago(null);
+    }
 
     // --- GETTERS Y SETTERS ---
-    public int getIdPago() { return idPago; }
-    public void setIdPago(int idPago) { this.idPago = idPago; }
+    public Integer getIdPago() { return idPago; }
+    public void setIdPago(Integer idPago) { this.idPago = idPago; }
 
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+    public Double getMontoTotal() { return montoTotal; }
+    public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
 
-    public double getMontoTotal() { return montoTotal; }
-    public void setMontoTotal(double montoTotal) { this.montoTotal = montoTotal; }
-
-    public double getCotizacion() { return cotizacion; }
-    public void setCotizacion(double cotizacion) { this.cotizacion = cotizacion; }
+    public Double getCotizacion() { return cotizacion; }
+    public void setCotizacion(Double cotizacion) { this.cotizacion = cotizacion; }
 
     public Date getFechaPago() { return fechaPago; }
     public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
 
+    public Moneda getMoneda() { return moneda; }
+    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
+
     public Factura getFactura() { return factura; }
-    public void setFactura(Factura factura) {
-        this.factura = factura;
-    }
+    public void setFactura(Factura factura) { this.factura = factura; }
 
-    public ArrayList<MedioPago> getMediosPago() { return mediosPago; }
-    public void setMediosPago(ArrayList<MedioPago> mediosPago) { this.mediosPago = mediosPago; }
+    public List<MedioPago> getMediosPago() { return mediosPago; }
+    public void setMediosPago(List<MedioPago> mediosPago) { this.mediosPago = mediosPago; }
 
-    // --- CLASE STATIC BUILDER ---
+    // --- BUILDER ---
     public static class Builder {
-        private int idPago = 0;
-        private Moneda moneda;
-        private double montoTotal;
-        private double cotizacion;
+        private Integer idPago;
+        private Double montoTotal;
+        private Double cotizacion;
         private Date fechaPago;
+        private Moneda moneda;
         private Factura factura;
+        private List<MedioPago> mediosPago = new ArrayList<>();
 
-        // Opcionales
-        private ArrayList<MedioPago> mediosPago = new ArrayList<>();
+        public Builder() {}
 
-        // Constructor con obligatorios
-        public Builder(Moneda moneda, double montoTotal, Date fechaPago, Factura factura) {
-            this.moneda = moneda;
-            this.montoTotal = montoTotal;
-            this.fechaPago = fechaPago;
-            this.factura = factura;
-        }
-
-        public Builder idPago(int val) { idPago = val; return this; }
-        public Builder cotizacion(double val) { cotizacion = val; return this; }
-
-        // Relaciones
+        public Builder id(Integer val) { idPago = val; return this; }
+        public Builder monto(Double val) { montoTotal = val; return this; }
+        public Builder cotizacion(Double val) { cotizacion = val; return this; }
+        public Builder fecha(Date val) { fechaPago = val; return this; }
+        public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder factura(Factura val) { factura = val; return this; }
 
-        public Builder mediosPago(ArrayList<MedioPago> val) { mediosPago = val; return this; }
-        public Builder agregarMedioPago(MedioPago val) {
-            if (this.mediosPago == null) this.mediosPago = new ArrayList<>();
-            this.mediosPago.add(val);
+        public Builder agregarMedio(MedioPago val) {
+            if (mediosPago == null) mediosPago = new ArrayList<>();
+            mediosPago.add(val);
             return this;
         }
 
         public Pago build() {
+            return new Pago(this);
+        }
+    }
+
+
+    public Pago build() {
             if (montoTotal < 0) {
                 throw new IllegalArgumentException("El monto total no puede ser negativo.");
             }
@@ -105,6 +137,6 @@ public class Pago {
                 throw new IllegalArgumentException("Debe existir una factura asociada.");
             }
             return new Pago(this);
-        }
     }
 }
+

@@ -68,7 +68,7 @@ public class DaoUsuario implements DaoUsuarioInterfaz {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, usuario.getHashContrasenia());
-            pstmt.setInt(2, usuario.getIdUsuario());
+            pstmt.setInt(2, usuario.getId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
