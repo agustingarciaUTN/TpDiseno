@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*") // Permite peticiones desde cualquier Frontend (React/Angular/Postman)
 public class HuespedController {
 
-    private final GestorHuesped gestorHuesped = GestorHuesped.getInstance();
+    private final GestorHuesped gestorHuesped;
+    // 2. Inyección por Constructor (Spring te pasa el Gestor listo)
+    public HuespedController(GestorHuesped gestorHuesped) {
+        this.gestorHuesped = gestorHuesped;
+    }
 
     @PostMapping("/crear")
     public ResponseEntity<?> crearHuesped(@Valid @RequestBody DtoHuesped dtoHuesped) {

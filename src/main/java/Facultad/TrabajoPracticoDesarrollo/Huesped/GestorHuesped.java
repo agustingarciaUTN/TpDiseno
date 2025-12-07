@@ -6,11 +6,13 @@ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearDireccion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Service
 public class GestorHuesped {
 
     // 1. La única instancia (static y private)
@@ -22,19 +24,19 @@ public class GestorHuesped {
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer "new GestorReserva()" desde afuera.
-    private GestorHuesped() {
-        this.daoHuesped = DaoHuesped.getInstance();
+    @Autowired
+    private GestorHuesped(DaoHuespedInterfaz daoHuesped){
+        this.daoHuesped = daoHuesped;
         this.daoDireccion = DaoDireccion.getInstance();
-
     }
 
-    // 3. Metodo de Acceso Global (Synchronized para seguridad en hilos)
+    /*// 3. Metodo de Acceso Global (Synchronized para seguridad en hilos)
     public static synchronized GestorHuesped getInstance() {
         if (instancia == null) {
             instancia = new GestorHuesped();
         }
         return instancia;
-    }
+    }*/
 
 
 

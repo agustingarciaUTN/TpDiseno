@@ -19,6 +19,9 @@ import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.CancelacionException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -28,34 +31,45 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class Pantalla {
+@Component // <--- 1. ¡Convertimos Pantalla en un Bean de Spring!
+public class Pantalla implements CommandLineRunner { // <--- 2. Implementamos CommandLineRunner
 
+    // Inyectado por Spring
     private final GestorHuesped gestorHuesped;
-    private final Scanner scanner;//para la entrada por teclado
+
+    // Estos siguen siendo "Manuales" por ahora (hasta que los migres)
     private final GestorUsuario gestorUsuario;
     private final GestorHabitacion gestorHabitacion;
     private final GestorEstadia gestorEstadia;
     private final GestorReserva gestorReserva;
+
+    private final Scanner scanner;
     private boolean usuarioAutenticado;
     private String nombreUsuarioActual;
 
-    // Excepción interna para manejar la cancelación en cualquier momento
+    // 3. Constructor con INYECCIÓN del GestorHuesped migrado
+    @Autowired
+    public Pantalla(GestorHuesped gestorHuesped) {
+        // Este viene de Spring (el @Service)
+        this.gestorHuesped = gestorHuesped;
 
-
-    //constructor
-    public Pantalla() {
+        // Estos los pedimos a la antigua (Singletons) porque aún no se migran
         this.gestorHabitacion = GestorHabitacion.getInstance();
         this.gestorEstadia = GestorEstadia.getInstance();
         this.gestorReserva = GestorReserva.getInstance();
-        this.gestorHuesped = GestorHuesped.getInstance();
         this.gestorUsuario = GestorUsuario.getInstance();
 
-        //inicializamos el scanner
         this.scanner = new Scanner(System.in);
         this.usuarioAutenticado = false;
         this.nombreUsuarioActual = "";
     }
 
+    // 4. Método run de CommandLineRunner (Spring lo llama al iniciar)
+    @Override
+    public void run(String... args) throws Exception {
+        // Llamamos a tu lógica original
+        iniciarSistema();
+    }
     //METODO PRINCIPAL PARA INICIAR EL SISTEMA
     public void iniciarSistema() throws Exception {
         System.out.println(Colores.CYAN + "╔════════════════════════════════════════════════════╗");
