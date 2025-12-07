@@ -1,79 +1,64 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
+import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
-
+@Entity
+@Table(name = "persona_juridica")
+@PrimaryKeyJoinColumn(name = "id_responsable")
 public class PersonaJuridica extends ResponsablePago {
 
+    @Column(name = "razon_social")
     private String razonSocial;
+
+    @Column(name = "cuit")
     private String cuit;
-    private long telefono;
-    private Direccion direccion;
 
+    // Lista de teléfonos (Tabla satélite "telefonos_personaJuridica")
+    @ElementCollection
+    @CollectionTable(
+            name = "\"telefonos_personaJuridica\"", // Comillas porque tiene mayúsculas en BD
+            joinColumns = @JoinColumn(name = "id_responsable")
+    )
+    @Column(name = "telefonos")
+    private List<Long> telefonos = new ArrayList<>();
 
-    // --- CONSTRUCTOR PRIVADO ---
-    private PersonaJuridica(Builder builder) {
-        // Llamada al constructor del padre
-        super(builder.idResponsablePago);
-
-        this.razonSocial = builder.razonSocial;
-        this.cuit = builder.cuit;
-        this.telefono = builder.telefono;
-        this.direccion = builder.direccion;
-    }
-
-    // Constructor por defecto
     public PersonaJuridica() {
-        super(0);
+        super();
+        this.setTipoResponsable("J");
     }
 
-    // --- GETTERS Y SETTERS ---
+    // Getters y Setters
     public String getRazonSocial() { return razonSocial; }
     public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
 
     public String getCuit() { return cuit; }
     public void setCuit(String cuit) { this.cuit = cuit; }
 
-    public long getTelefono() { return telefono; }
-    public void setTelefono(long telefono) { this.telefono = telefono; }
+    public List<Long> getTelefonos() { return telefonos; }
+    public void setTelefonos(List<Long> telefonos) { this.telefonos = telefonos; }
 
-    public Direccion getDireccion() { return direccion; }
-    public void setDireccion(Direccion direccion) { this.direccion = direccion; }
-
-    // --- CLASE STATIC BUILDER ---
+    // Builder
     public static class Builder {
-        // Propios
+        private Direccion direccion;
         private String razonSocial;
         private String cuit;
-        private long telefono;
-        private Direccion direccion;
+        private List<Long> telefonos = new ArrayList<>();
 
-        // Heredados de ResponsablePago
-        private int idResponsablePago = 0;
-
-        // Constructor con obligatorios
-        public Builder(String razonSocial, String cuit, Direccion direccion) {
-            this.razonSocial = razonSocial;
-            this.cuit = cuit;
-            this.direccion = direccion;
-        }
-
-        // Métodos fluidos
-        public Builder telefono(long val) { telefono = val; return this; }
-
-        public Builder idResponsablePago(int val) { idResponsablePago = val; return this; }
+        public Builder() {}
+        public Builder direccion(Direccion val) { direccion = val; return this; }
+        public Builder razonSocial(String val) { razonSocial = val; return this; }
+        public Builder cuit(String val) { cuit = val; return this; }
+        public Builder telefonos(List<Long> val) { telefonos = val; return this; }
 
         public PersonaJuridica build() {
-            // Validaciones de Dominio
-            if (razonSocial == null || razonSocial.isEmpty()) {
-                throw new IllegalArgumentException("La razón social no puede estar vacía.");
-            }
-            if (cuit == null || cuit.isEmpty()) {
-                throw new IllegalArgumentException("El CUIT es obligatorio.");
-            }
-            if (direccion == null) {
-                throw new IllegalArgumentException("La persona jurídica debe tener una dirección asignada.");
-            }
-            return new PersonaJuridica(this);
+            PersonaJuridica pj = new PersonaJuridica();
+            pj.setDireccion(direccion);
+            pj.setRazonSocial(razonSocial);
+            pj.setCuit(cuit);
+            pj.setTelefonos(telefonos);
+            return pj;
         }
     }
 }

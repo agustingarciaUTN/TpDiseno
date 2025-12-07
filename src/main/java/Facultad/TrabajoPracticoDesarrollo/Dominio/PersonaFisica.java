@@ -1,41 +1,42 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "persona_fisica")
+@PrimaryKeyJoinColumn(name = "id_responsable") // PK y FK al padre
 public class PersonaFisica extends ResponsablePago {
 
+    // Relación con Huesped (Usando su clave compuesta)
+    @OneToOne
+    @JoinColumns({
+            @JoinColumn(name = "tipo_documento", referencedColumnName = "tipo_documento"),
+            @JoinColumn(name = "nro_documento", referencedColumnName = "numero_documento")
+    })
     private Huesped huesped;
 
-    // --- CONSTRUCTOR PRIVADO ---
-    private PersonaFisica(Builder builder) {
-        super(builder.idResponsablePago);
-        this.huesped = builder.huesped;
-    }
-
-    // Constructor por defecto
     public PersonaFisica() {
-        super(0);
+        super();
+        this.setTipoResponsable("F"); // Valor fijo para Física
     }
 
-    // --- GETTERS Y SETTERS ---
     public Huesped getHuesped() { return huesped; }
     public void setHuesped(Huesped huesped) { this.huesped = huesped; }
 
-
-    // --- CLASE STATIC BUILDER ---
+    // Builder estático
     public static class Builder {
+        private Direccion direccion;
         private Huesped huesped;
-        private int idResponsablePago = 0;
 
-        public Builder(Huesped huesped) {
-            this.huesped = huesped;
-        }
-
-        public Builder idResponsablePago(int val) { idResponsablePago = val; return this; }
+        public Builder(Huesped huesped) {}
+        public Builder direccion(Direccion val) { direccion = val; return this; }
+        public Builder huesped(Huesped val) { huesped = val; return this; }
 
         public PersonaFisica build() {
-            if (huesped == null) {
-                throw new IllegalArgumentException("La persona física debe ser un huésped.");
-            }
-            return new PersonaFisica(this);
+            PersonaFisica pf = new PersonaFisica();
+            pf.setDireccion(direccion);
+            pf.setHuesped(huesped);
+            return pf;
         }
     }
 }

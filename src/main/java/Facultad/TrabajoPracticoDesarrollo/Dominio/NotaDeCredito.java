@@ -1,47 +1,47 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "nota_de_credito")
 public class NotaDeCredito {
 
-    private String numeroNotaCredito;
-    private double montoDevolucion;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "numero_nota_credito")
+    private Integer numeroNotaCredito; // Integer para coincidir con SERIAL de BD
 
+    @Column(name = "monto_devolucion")
+    private Double montoDevolucion;
 
-    // --- CONSTRUCTOR PRIVADO ---
+    // --- CONSTRUCTOR PRIVADO (Builder) ---
     private NotaDeCredito(Builder builder) {
         this.numeroNotaCredito = builder.numeroNotaCredito;
         this.montoDevolucion = builder.montoDevolucion;
     }
 
-    // Constructor por defecto
+    // Constructor por defecto (Obligatorio JPA)
     public NotaDeCredito() {}
 
     // --- GETTERS Y SETTERS ---
-    public String getNumeroNotaCredito() { return numeroNotaCredito; }
-    public void setNumeroNotaCredito(String numeroNotaCredito) { this.numeroNotaCredito = numeroNotaCredito; }
+    public Integer getNumeroNotaCredito() { return numeroNotaCredito; }
+    public void setNumeroNotaCredito(Integer numeroNotaCredito) { this.numeroNotaCredito = numeroNotaCredito; }
 
-    public double getMontoDevolucion() { return montoDevolucion; }
-    public void setMontoDevolucion(double montoDevolucion) { this.montoDevolucion = montoDevolucion; }
-
+    public Double getMontoDevolucion() { return montoDevolucion; }
+    public void setMontoDevolucion(Double montoDevolucion) { this.montoDevolucion = montoDevolucion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
-        // Obligatorios
-        private String numeroNotaCredito;
-        private double montoDevolucion;
+        private Integer numeroNotaCredito;
+        private Double montoDevolucion;
 
+        public Builder() {}
 
-        public Builder(String numeroNotaCredito, double montoDevolucion) {
-            this.numeroNotaCredito = numeroNotaCredito;
-            this.montoDevolucion = montoDevolucion;
-        }
+        // El ID puede ser nulo al crear si es autoincremental
+        public Builder numero(Integer val) { numeroNotaCredito = val; return this; }
+        public Builder monto(Double val) { montoDevolucion = val; return this; }
 
         public NotaDeCredito build() {
-            if (montoDevolucion < 0) {
-                throw new IllegalArgumentException("El monto de devolución no puede ser negativo.");
-            }
-            if (numeroNotaCredito == null || numeroNotaCredito.isEmpty()) {
-                throw new IllegalArgumentException("El número de la nota de crédito es obligatorio (PK).");
-            }
             return new NotaDeCredito(this);
         }
     }

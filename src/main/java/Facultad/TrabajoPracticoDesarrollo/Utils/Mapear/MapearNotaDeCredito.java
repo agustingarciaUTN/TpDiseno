@@ -18,7 +18,7 @@ public class MapearNotaDeCredito  {
         if (dtoNotaDeCredito.getIdsFacturas() != null) {
             for (Integer idFactura : dtoNotaDeCredito.getIdsFacturas()) {
                 Factura facRef = new Factura.Builder(null, null, 0, null, null).build();
-                facRef.setIdFactura(idFactura);
+                facRef.setNumeroFactura(idFactura);
             }
         }
 
