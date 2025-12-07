@@ -5,12 +5,16 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DaoInterfazMedioDePago;
-import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DaoMedioDePago;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class DaoPago implements DaoInterfazPago {
     private final DaoInterfazMedioDePago daoInterfazMedioDePago;
+
+    @Autowired
     public DaoPago(DaoInterfazMedioDePago daoInterfazMedioDePago) {
         this.daoInterfazMedioDePago = daoInterfazMedioDePago;
     }

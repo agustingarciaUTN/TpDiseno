@@ -3,17 +3,16 @@ package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaJuridica;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
+@Repository
 public class DaoPersonaJuridica implements DaoInterfazPersonaJuridica {
-    private static DaoPersonaJuridica instancia;
-    private DaoPersonaJuridica() {}
 
-    public static synchronized DaoPersonaJuridica getInstance() {
-        if (instancia == null) instancia = new DaoPersonaJuridica();
-        return instancia;
-    }
+    public DaoPersonaJuridica() {}
+
+
 
     @Override
     public boolean persistirPersonaJuridica(PersonaJuridica pj) throws PersistenciaException {

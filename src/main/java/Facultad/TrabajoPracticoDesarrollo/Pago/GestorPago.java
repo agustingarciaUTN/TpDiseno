@@ -6,28 +6,30 @@ import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DaoInterfazPersonaFisi
 import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DaoInterfazPersonaJuridica;
 import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DaoPersonaFisica;
 import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DaoPersonaJuridica;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class GestorPago {
 
     // 1. La única instancia (static y private)
     private static GestorPago instancia;
+    private final DaoPago daoPago;
+    private final DaoMedioDePago daoMedioDePago;
+    private final DaoPersonaJuridica daoPersonaJuridica;
+    private final DaoPersonaFisica daoPersonaFisica;
 
     // 2. Constructor PRIVADO
     // Nadie puede hacer new GestorPago() desde fuera.
-    private GestorPago() {
+    @Autowired
+    private GestorPago(DaoPago daoPago, DaoMedioDePago daoMedioDePago, DaoPersonaJuridica daoPersonaJuridica, DaoPersonaFisica daoPersonaFisica) {
         // Obtenemos las instancias de los DAOs
         // Referencias a los DAOs que este gestor necesita
-        DaoInterfazPago daoPago = DaoPago.getInstance();
-        DaoInterfazMedioDePago daoMedioDePago = DaoMedioDePago.getInstance();
-        DaoInterfazPersonaFisica daoPersonaFisica = DaoPersonaFisica.getInstance();
-        DaoInterfazPersonaJuridica daoPersonaJuridica = DaoPersonaJuridica.getInstance();
+        this.daoPago = daoPago;
+        this.daoMedioDePago = daoMedioDePago;
+        this.daoPersonaJuridica = daoPersonaJuridica;
+        this.daoPersonaFisica = daoPersonaFisica;
     }
 
-    // 3. Método de Acceso Global (Synchronized para seguridad en hilos)
-    public static synchronized GestorPago getInstance() {
-        if (instancia == null) {
-            instancia = new GestorPago();
-        }
-        return instancia;
-    }
+
 }
