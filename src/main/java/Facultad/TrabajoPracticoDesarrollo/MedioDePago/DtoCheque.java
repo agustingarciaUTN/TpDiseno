@@ -1,10 +1,13 @@
 package Facultad.TrabajoPracticoDesarrollo.MedioDePago;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import lombok.Data;
 
 import java.util.Date;
 
+@Data
 public class DtoCheque {
+    // --- GETTERS Y SETTERS ---
     private int idPago; // ID del MedioPago
     private String numeroCheque;
     private String banco;
@@ -25,34 +28,6 @@ public class DtoCheque {
         this.fechaDePago = builder.fechaDePago;
         this.moneda = builder.moneda;
     }
-
-    // Constructor por defecto
-    public DtoCheque() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdPago() { return idPago; }
-    public void setIdPago(int idPago) { this.idPago = idPago; }
-
-    public String getNumeroCheque() { return numeroCheque; }
-    public void setNumeroCheque(String numeroCheque) { this.numeroCheque = numeroCheque; }
-
-    public String getBanco() { return banco; }
-    public void setBanco(String banco) { this.banco = banco; }
-
-    public String getPlaza() { return plaza; }
-    public void setPlaza(String plaza) { this.plaza = plaza; }
-
-    public float getMonto() { return monto; }
-    public void setMonto(float monto) { this.monto = monto; }
-
-    public Date getFechaCobro() { return fechaCobro; }
-    public void setFechaCobro(Date fechaCobro) { this.fechaCobro = fechaCobro; }
-
-    public Date getFechaDePago() { return fechaDePago; }
-    public void setFechaDePago(Date fechaDePago) { this.fechaDePago = fechaDePago; }
-
-    public void setMoneda(Moneda moneda){this.moneda = moneda;}
-    public Moneda getMoneda(){return moneda;}
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

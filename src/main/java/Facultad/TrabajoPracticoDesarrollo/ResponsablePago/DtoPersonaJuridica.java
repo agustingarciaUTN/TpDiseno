@@ -1,8 +1,22 @@
 package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 
+import Facultad.TrabajoPracticoDesarrollo.Factura.DtoNotaDeCredito;
 import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoDireccion;
 
-public class DtoPersonaJuridica {
+
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+
+
+@Data
+@SuperBuilder
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DtoPersonaJuridica extends DtoResponsableDePago {
+    // --- GETTERS Y SETTERS ---
     private int idResponsablePago;
     private String razonSocial;
     private String cuit;
@@ -19,20 +33,6 @@ public class DtoPersonaJuridica {
         this.dtoDireccion = builder.dtoDireccion;
     }
 
-    public DtoPersonaJuridica() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdResponsablePago() { return idResponsablePago; }
-    public void setIdResponsablePago(int idResponsablePago) { this.idResponsablePago = idResponsablePago; }
-
-    public String getRazonSocial() { return razonSocial; }
-    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
-
-    public String getCuit() { return cuit; }
-    public void setCuit(String cuit) { this.cuit = cuit; }
-
-    public long getTelefono() { return telefono; }
-    public void setTelefono(long telefono) { this.telefono = telefono; }
 
     public DtoDireccion getDireccion() { return dtoDireccion; }
     public void setDireccion(DtoDireccion dtoDireccion) { this.dtoDireccion = dtoDireccion; }

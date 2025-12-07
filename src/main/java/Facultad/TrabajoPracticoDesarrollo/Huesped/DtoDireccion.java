@@ -1,7 +1,9 @@
 package Facultad.TrabajoPracticoDesarrollo.Huesped;
 
 import jakarta.validation.constraints.*;
+import lombok.Data;
 
+@Data
 public class DtoDireccion {
 
     // --- CONSTANTES DE VALIDACIÓN ---
@@ -78,53 +80,17 @@ public class DtoDireccion {
     public void setId(int id) {
         this.idDireccion = id;
     }
-    public String getCalle() {
-        return calle;
-    }
-    public void setCalle(String calle) {
-        this.calle = calle;
-    }
     public int getNumero() {
         return numero;
     }
     public void setNumero(int numero) {
         this.numero = numero;
     }
-    public String getDepartamento() {
-        return departamento;
-    }
-    public void setDepartamento(String departamento) {
-        this.departamento = departamento;
-    }
-    public String getPiso() {
-        return piso;
-    }
-    public void setPiso(String piso) {
-        this.piso = piso;
-    }
     public int getCodPostal() {
         return codPostal;
     }
     public void setCodPostal(int codPostal) {
         this.codPostal = codPostal;
-    }
-    public String getLocalidad() {
-        return localidad;
-    }
-    public void setLocalidad(String localidad) {
-        this.localidad = localidad;
-    }
-    public String getProvincia() {
-        return provincia;
-    }
-    public void setProvincia(String provincia) {
-        this.provincia = provincia;
-    }
-    public String getPais() {
-        return pais;
-    }
-    public void setPais(String pais) {
-        this.pais = pais;
     }
 
     // --- CLASE STATIC BUILDER ---

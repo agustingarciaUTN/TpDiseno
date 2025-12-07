@@ -7,11 +7,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import lombok.Data;
 
 
 import java.util.Date;
 import java.util.List;
 
+@Data
 public class DtoHuesped {
 
     // --- CONSTANTES DE VALIDACIÓN ---
@@ -95,80 +97,7 @@ public class DtoHuesped {
     // Constructor vacío (necesario a veces para frameworks o serialización)
     public DtoHuesped() {}
 
-    // Getters y Setters... (Mantenlos todos igual)
-// Getters y Setters
-    public String getNombres() {
-        return nombres;
-    }
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
-    }
-    public String getApellido() {
-        return apellido;
-    }
-    public void setApellido(String apellido) {
-        this.apellido = apellido;
-    }
-    public List<Long> getTelefono() {
-        return telefono;
-    }
-    public void setTelefono(List<Long> telefono) {
-        this.telefono = telefono;
-    }
-    public TipoDocumento getTipoDocumento() {
-        return tipoDocumento;
-    }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) {
-        this.tipoDocumento = tipoDocumento;
-    }
-    public String getNroDocumento() {
-        return nroDocumento;
-    }
-    public void setNroDocumento(String documento) {
-        this.nroDocumento = documento;
-    }
-    public String getCuit() {
-        return cuit;
-    }
-    public void setCuit(String cuit) {
-        this.cuit = cuit;
-    }
-    public PosIva getPosicionIva() {
-        return posicionIva;
-    }
-    public void setPosicionIva(PosIva posicionIva) {
-        this.posicionIva = posicionIva;
-    }
-    public Date getFechaNacimiento() {
-        return fechaNacimiento;
-    }
-    public void setFechaNacimiento(Date fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
-    }
-    public List<String> getEmail() {
-        return email;
-    }
-    public void setEmail(List<String> email) {
-        this.email = email;
-    }
-    public List<String> getOcupacion() {
-        return ocupacion;
-    }
-    public void setOcupacion(List<String> ocupacion) {
-        this.ocupacion = ocupacion;
-    }
-    public String getNacionalidad() {
-        return nacionalidad;
-    }
-    public void setNacionalidad(String nacionalidad) {
-        this.nacionalidad = nacionalidad;
-    }
-    public void setDtoDireccion(DtoDireccion dtoDireccion) {
-        if (dtoDireccion == null) {
-            throw new IllegalArgumentException("La dirección no puede ser nula");
-        }
-        this.dtoDireccion = dtoDireccion;
-    }
+
     public DtoDireccion getDtoDireccion() {
         return dtoDireccion;
     }

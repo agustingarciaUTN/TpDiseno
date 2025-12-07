@@ -2,11 +2,14 @@ package Facultad.TrabajoPracticoDesarrollo.MedioDePago;
 
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import lombok.Data;
 
 import java.util.Date;
 
+@Data
 public class DtoEfectivo {
 
+    // --- GETTERS Y SETTERS ---
     private int idPago;      // ID del MedioPago general
     private int idEfectivo;  // ID específico de la tabla efectivo
     private Moneda moneda;
@@ -22,24 +25,6 @@ public class DtoEfectivo {
         this.fechaDePago = builder.fechaDePago;
     }
 
-    // Constructor por defecto
-    public DtoEfectivo() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdPago() { return idPago; }
-    public void setIdPago(int idPago) { this.idPago = idPago; }
-
-    public int getIdEfectivo() { return idEfectivo; }
-    public void setIdEfectivo(int idEfectivo) { this.idEfectivo = idEfectivo; }
-
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-
-    public float getMonto() { return monto; }
-    public void setMonto(float monto) { this.monto = monto; }
-
-    public Date getFechaDePago() { return fechaDePago; }
-    public void setFechaDePago(Date fechaDePago) { this.fechaDePago = fechaDePago; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

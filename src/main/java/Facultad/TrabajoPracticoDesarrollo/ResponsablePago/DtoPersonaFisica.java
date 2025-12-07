@@ -3,8 +3,18 @@ package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
 import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
 
-public class DtoPersonaFisica {
+
+@Data
+@SuperBuilder
+
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DtoPersonaFisica extends DtoResponsableDePago {
     // --- GETTERS Y SETTERS ---
     @Getter
     private int idResponsablePago;
@@ -16,7 +26,6 @@ public class DtoPersonaFisica {
         this.dtoHuesped = builder.dtoHuesped;
     }
 
-    public DtoPersonaFisica() {}
 
     public DtoHuesped getHuesped() { return dtoHuesped; }
     public void setHuesped(DtoHuesped huesped) { this.dtoHuesped = huesped; }

@@ -1,8 +1,11 @@
 package Facultad.TrabajoPracticoDesarrollo.Factura;
 
+import lombok.Data;
 import java.util.ArrayList;
 
+@Data
 public class DtoNotaDeCredito {
+    // --- GETTERS Y SETTERS ---
     private String numeroNotaCredito; // Este es el ID ahora
     private double montoDevolucion;
 
@@ -16,17 +19,6 @@ public class DtoNotaDeCredito {
         this.idsFacturas = builder.idsFacturas;
     }
 
-    public DtoNotaDeCredito() {}
-
-    // --- GETTERS Y SETTERS ---
-    public String getNumeroNotaCredito() { return numeroNotaCredito; }
-    public void setNumeroNotaCredito(String numeroNotaCredito) { this.numeroNotaCredito = numeroNotaCredito; }
-
-    public double getMontoDevolucion() { return montoDevolucion; }
-    public void setMontoDevolucion(double montoDevolucion) { this.montoDevolucion = montoDevolucion; }
-
-    public ArrayList<Integer> getIdsFacturas() { return idsFacturas; }
-    public void setIdsFacturas(ArrayList<Integer> idsFacturas) { this.idsFacturas = idsFacturas; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

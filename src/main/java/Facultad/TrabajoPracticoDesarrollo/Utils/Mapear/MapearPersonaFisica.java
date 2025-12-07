@@ -11,7 +11,7 @@ public class MapearPersonaFisica  {
         PersonaFisica.Builder builder = new PersonaFisica.Builder(
                 MapearHuesped.mapearDtoAEntidad(dtoPersonaFisica.getHuesped())
         )
-                .idResponsablePago(dtoPersonaFisica.getIdResponsablePago());
+                .dtoPersonaFisica.getIdResponsablePago();
 
 
         return builder.build();

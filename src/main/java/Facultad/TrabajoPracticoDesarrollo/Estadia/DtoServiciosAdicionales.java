@@ -1,10 +1,13 @@
 package Facultad.TrabajoPracticoDesarrollo.Estadia;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoServicio;
+import lombok.Data;
 
 import java.util.Date;
 
+@Data
 public class DtoServiciosAdicionales {
+    // --- GETTERS Y SETTERS ---
     private int idServicio;
     private TipoServicio tipoServicio;
     private String descripcionServicio;
@@ -22,26 +25,6 @@ public class DtoServiciosAdicionales {
         this.idEstadia = builder.idEstadia;
     }
 
-    public DtoServiciosAdicionales() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdServicio() { return idServicio; }
-    public void setIdServicio(int idServicio) { this.idServicio = idServicio; }
-
-    public TipoServicio getTipoServicio() { return tipoServicio; }
-    public void setTipoServicio(TipoServicio tipoServicio) { this.tipoServicio = tipoServicio; }
-
-    public String getDescripcionServicio() { return descripcionServicio; }
-    public void setDescripcionServicio(String descripcionServicio) { this.descripcionServicio = descripcionServicio; }
-
-    public double getValorServicio() { return valorServicio; }
-    public void setValorServicio(double valorServicio) { this.valorServicio = valorServicio; }
-
-    public Date getFechaConsumo() { return fechaConsumo; }
-    public void setFechaConsumo(Date fechaConsumo) { this.fechaConsumo = fechaConsumo; }
-
-    public int getIdEstadia() { return idEstadia; }
-    public void setIdEstadia(int idEstadia) { this.idEstadia = idEstadia; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

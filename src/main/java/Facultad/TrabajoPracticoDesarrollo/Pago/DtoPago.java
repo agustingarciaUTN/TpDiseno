@@ -1,11 +1,14 @@
 package Facultad.TrabajoPracticoDesarrollo.Pago;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.Date;
 
+@Data
 public class DtoPago {
+    // --- GETTERS Y SETTERS ---
     private int idPago;
     private Moneda moneda;
     private double montoTotal;
@@ -26,30 +29,6 @@ public class DtoPago {
         this.idFactura = builder.idFactura;
         this.idsMediosPago = builder.idsMediosPago;
     }
-
-    public DtoPago() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdPago() { return idPago; }
-    public void setIdPago(int idPago) { this.idPago = idPago; }
-
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-
-    public double getMontoTotal() { return montoTotal; }
-    public void setMontoTotal(double montoTotal) { this.montoTotal = montoTotal; }
-
-    public double getCotizacion() { return cotizacion; }
-    public void setCotizacion(double cotizacion) { this.cotizacion = cotizacion; }
-
-    public Date getFechaPago() { return fechaPago; }
-    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
-
-    public int getIdFactura() { return idFactura; }
-    public void setIdFactura(int idFactura) { this.idFactura = idFactura; }
-
-    public ArrayList<Integer> getIdsMediosPago() { return idsMediosPago; }
-    public void setIdsMediosPago(ArrayList<Integer> idsMediosPago) { this.idsMediosPago = idsMediosPago; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
