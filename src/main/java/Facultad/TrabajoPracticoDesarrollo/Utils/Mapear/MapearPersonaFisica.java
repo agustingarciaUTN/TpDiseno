@@ -9,7 +9,7 @@ public class MapearPersonaFisica  {
         if (dtoPersonaFisica == null) return null;
 
         PersonaFisica.Builder builder = new PersonaFisica.Builder(
-                dtoPersonaFisica.getHuesped()
+                MapearHuesped.mapearDtoAEntidad(dtoPersonaFisica.getHuesped())
         )
                 .idResponsablePago(dtoPersonaFisica.getIdResponsablePago());
 
@@ -22,7 +22,7 @@ public class MapearPersonaFisica  {
 
         DtoPersonaFisica.Builder builder = new DtoPersonaFisica.Builder()
                 .id(personaFisica.getIdResponsablePago())
-                .huesped(personaFisica.getHuesped());
+                .huesped(MapearHuesped.mapearEntidadADto(personaFisica.getHuesped()));
 
         return builder.build();
     }
