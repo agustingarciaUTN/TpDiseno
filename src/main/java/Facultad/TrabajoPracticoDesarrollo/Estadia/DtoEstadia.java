@@ -4,6 +4,11 @@ package Facultad.TrabajoPracticoDesarrollo.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,12 +17,25 @@ public class DtoEstadia {
 
 
     private int idEstadia;
+
+    @NotNull(message = "La fecha de Check-In es obligatoria")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Argentina/Buenos_Aires")
     private Date fechaCheckIn;
+
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "America/Argentina/Buenos_Aires")
     private Date fechaCheckOut;
+
+    @Positive(message = "El valor de la estadía debe ser mayor a cero")
     private double valorEstadia;
 
+    // Puede ser Null si hace una estadia sin reservar
     private DtoReserva dtoReserva;
+
+    @Valid // Valida cada huésped de la lista
+    @NotEmpty(message = "Debe haber al menos un huésped asociado a la estadía")
     private ArrayList<DtoHuesped> dtoHuespedes;
+
+    @NotNull(message = "La habitación es obligatoria")
     private DtoHabitacion dtoHabitacion;
 
 
