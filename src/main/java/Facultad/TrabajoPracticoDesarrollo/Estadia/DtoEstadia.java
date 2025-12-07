@@ -5,6 +5,7 @@ import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -31,6 +32,8 @@ public class DtoEstadia {
     // Puede ser Null si hace una estadia sin reservar
     private DtoReserva dtoReserva;
 
+
+    @JsonIgnore
     @Valid // Valida cada huésped de la lista
     @NotEmpty(message = "Debe haber al menos un huésped asociado a la estadía")
     private ArrayList<DtoHuesped> dtoHuespedes;
@@ -68,6 +71,7 @@ public class DtoEstadia {
     public DtoReserva getDtoReserva() { return dtoReserva; }
     public void setDtoReserva(DtoReserva dtoReserva) { this.dtoReserva = dtoReserva; }
 
+    @JsonIgnore
     public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
     public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
 

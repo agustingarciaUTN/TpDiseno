@@ -4,6 +4,7 @@ import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -70,6 +71,7 @@ public class DtoHuesped {
     @Valid // CLAVE: Esto le dice a Spring "entrá y validame los atributos de DtoDireccion también"
     private DtoDireccion dtoDireccion;
 
+    @JsonIgnore
     @Valid // Para validar estadías si vienen en la petición (opcional)
     private List<DtoEstadia> dtoEstadias;
 
@@ -170,6 +172,8 @@ public class DtoHuesped {
     public DtoDireccion getDtoDireccion() {
         return dtoDireccion;
     }
+
+    @JsonIgnore
     public List<DtoEstadia> getDtoEstadias(){
         return dtoEstadias;
     }
