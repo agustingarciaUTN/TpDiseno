@@ -1,6 +1,10 @@
 package Facultad.TrabajoPracticoDesarrollo.Usuario;
 
+import lombok.Data;
+
+@Data
 public class DtoUsuario {
+    // --- GETTERS Y SETTERS ---
     private int idUsuario;
     private String nombre;
 
@@ -13,18 +17,6 @@ public class DtoUsuario {
         this.nombre = builder.nombre;
         this.contrasenia = builder.contrasenia;
     }
-
-    public DtoUsuario() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdUsuario() { return idUsuario; }
-    public void setIdUsuario(int idUsuario) { this.idUsuario = idUsuario; }
-
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getContrasenia() { return contrasenia; }
-    public void setContrasenia(String contrasenia) { this.contrasenia = contrasenia; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {

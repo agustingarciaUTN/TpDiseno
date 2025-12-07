@@ -3,9 +3,11 @@ package Facultad.TrabajoPracticoDesarrollo.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;
+import lombok.Data;
 
 import java.util.ArrayList;
 
+@Data
 public class DtoHabitacion {
     private String numero;
     private TipoHabitacion tipoHabitacion;
@@ -25,24 +27,6 @@ public class DtoHabitacion {
         this.costoPorNoche = builder.costoPorNoche;
         this.dtoReservas = builder.dtoReservas;
     }
-    // Constructor por defecto (opcional, por compatibilidad)
-    public DtoHabitacion() {}
-
-    // --- GETTERS Y SETTERS ---
-    public String getNumero() { return numero; }
-    public void setNumero(String numero) { this.numero = numero; }
-
-    public TipoHabitacion getTipoHabitacion() { return tipoHabitacion; }
-    public void setTipoHabitacion(TipoHabitacion tipoHabitacion) { this.tipoHabitacion = tipoHabitacion; }
-
-    public int getCapacidad() { return capacidad; }
-    public void setCapacidad(int capacidad) { this.capacidad = capacidad; }
-
-    public EstadoHabitacion getEstadoHabitacion() { return estadoHabitacion; }
-    public void setEstadoHabitacion(EstadoHabitacion estadoHabitacion) { this.estadoHabitacion = estadoHabitacion; }
-
-    public float getCostoPorNoche() { return costoPorNoche; }
-    public void setCostoPorNoche(float costoPorNoche) { this.costoPorNoche = costoPorNoche; }
 
     public ArrayList<DtoReserva> getReservas() { return dtoReservas; }
     public void setReservas(ArrayList<DtoReserva> reservas) { this.dtoReservas = reservas; }

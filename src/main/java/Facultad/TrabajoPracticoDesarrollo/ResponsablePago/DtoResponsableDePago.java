@@ -1,8 +1,5 @@
 package Facultad.TrabajoPracticoDesarrollo.ResponsablePago;
 
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoDireccion;
-import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DtoPersonaFisica;
-import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DtoPersonaJuridica;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
@@ -11,8 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
-@SuperBuilder // Usamos SuperBuilder para que la herencia funcione
 @NoArgsConstructor
+@SuperBuilder // Usamos SuperBuilder para que la herencia funcione
 @AllArgsConstructor
 // Configuración para que el JSON sepa qué hijo es
 @JsonTypeInfo(

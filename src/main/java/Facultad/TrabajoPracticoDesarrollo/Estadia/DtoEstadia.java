@@ -10,10 +10,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.Date;
 
+@Data
 public class DtoEstadia {
 
 
@@ -41,10 +43,6 @@ public class DtoEstadia {
     @NotNull(message = "La habitación es obligatoria")
     private DtoHabitacion dtoHabitacion;
 
-
-    public DtoEstadia() {
-        // constructor por defecto
-    }
     private DtoEstadia(Builder builder) {
         this.idEstadia = builder.idEstadia;
         this.fechaCheckIn = builder.fechaCheckIn;
@@ -55,28 +53,10 @@ public class DtoEstadia {
         this.dtoHabitacion = builder.dtoHabitacion;
     }
 
-
-    public int getIdEstadia() { return idEstadia; }
-    public void setIdEstadia(int idEstadia) { this.idEstadia = idEstadia; }
-
-    public Date getFechaCheckIn() { return fechaCheckIn; }
-    public void setFechaCheckIn(Date fechaCheckIn) { this.fechaCheckIn = fechaCheckIn; }
-
-    public Date getFechaCheckOut() { return fechaCheckOut; }
-    public void setFechaCheckOut(Date fechaCheckOut) { this.fechaCheckOut = fechaCheckOut; }
-
-    public double getValorEstadia() { return valorEstadia; }
-    public void setValorEstadia(double valorEstadia) { this.valorEstadia = valorEstadia; }
-
-    public DtoReserva getDtoReserva() { return dtoReserva; }
-    public void setDtoReserva(DtoReserva dtoReserva) { this.dtoReserva = dtoReserva; }
-
     @JsonIgnore
     public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
-    public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
 
     public DtoHabitacion getDtoHabitacion(){return dtoHabitacion;}
-    public void setDtoHabitacion(DtoHabitacion dtoHabitacion){this.dtoHabitacion = dtoHabitacion;}
 
 
     // --- CLASE STATIC BUILDER ---

@@ -1,7 +1,9 @@
 package Facultad.TrabajoPracticoDesarrollo.Habitacion;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoCama;
+import lombok.Data;
 
+@Data
 public class DtoCama {
     private int idCama;
     private TipoCama tipoCama;
@@ -14,19 +16,6 @@ public class DtoCama {
         this.tipoCama = builder.tipoCama;
         this.idHabitacion = builder.idHabitacion;
     }
-
-    // Constructor por defecto
-    public DtoCama() {}
-
-    // --- GETTERS Y SETTERS ---
-    public int getIdCama() { return idCama; }
-    public void setIdCama(int idCama) { this.idCama = idCama; }
-
-    public TipoCama getTipoCama() { return tipoCama; }
-    public void setTipoCama(TipoCama tipoCama) { this.tipoCama = tipoCama; }
-
-    public String getIdHabitacion() { return idHabitacion; }
-    public void setIdHabitacion(String idHabitacion) { this.idHabitacion = idHabitacion; }
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
