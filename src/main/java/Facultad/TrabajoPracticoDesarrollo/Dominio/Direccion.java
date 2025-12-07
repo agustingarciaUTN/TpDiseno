@@ -9,22 +9,19 @@ public class Direccion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_direccion")
-    private Integer id; // Cambié 'idDireccion' a 'id' para ser más estándar, pero mapeado a la columna correcta
+    private Integer id;
 
     @Column(name = "calle")
     private String calle;
 
     @Column(name = "numero")
-    private Integer numero; // Integer permite nulls, int no. JPA prefiere objetos.
+    private Integer numero;
 
     @Column(name = "departamento")
     private String departamento;
 
     @Column(name = "piso")
     private String piso;
-
-    @Column(name = "codpostal") // Revisa si en tu BD es "codPostal" o "codpostal"
-    private Integer codPostal;
 
     @Column(name = "localidad")
     private String localidad;
@@ -35,11 +32,13 @@ public class Direccion {
     @Column(name = "pais")
     private String pais;
 
-    // --- 1. CONSTRUCTOR VACÍO (Obligatorio para JPA) ---
-    public Direccion() {
-    }
+    @Column(name = "\"codPostal\"")
+    private Integer codPostal;
 
-    // --- 2. CONSTRUCTOR PRIVADO (Para el Builder) ---
+    // --- Constructor Vacío (Obligatorio JPA) ---
+    public Direccion() {}
+
+    // --- Constructor para Builder ---
     private Direccion(Builder builder) {
         this.id = builder.id;
         this.calle = builder.calle;
@@ -51,6 +50,8 @@ public class Direccion {
         this.provincia = builder.provincia;
         this.pais = builder.pais;
     }
+
+    // Getters y Setters...
 
     // --- GETTERS Y SETTERS (Necesarios para JPA y para usarlos) ---
     public Integer getId() { return id; }
@@ -80,9 +81,8 @@ public class Direccion {
     public String getPais() { return pais; }
     public void setPais(String pais) { this.pais = pais; }
 
-    // --- 3. CLASE BUILDER (Tu patrón de diseño) ---
+    // --- BUILDER ---
     public static class Builder {
-        // Mismos atributos para acumular datos
         private Integer id;
         private String calle;
         private Integer numero;
@@ -95,19 +95,16 @@ public class Direccion {
 
         public Builder() {}
 
-        public Builder id(Integer val) { id = val; return this; }
         public Builder calle(String val) { calle = val; return this; }
         public Builder numero(Integer val) { numero = val; return this; }
         public Builder departamento(String val) { departamento = val; return this; }
         public Builder piso(String val) { piso = val; return this; }
-        public Builder codPostal(Integer val) { codPostal = val; return this; }
+        public Builder codigoPostal(Integer val) { codPostal = val; return this; }
         public Builder localidad(String val) { localidad = val; return this; }
         public Builder provincia(String val) { provincia = val; return this; }
         public Builder pais(String val) { pais = val; return this; }
+        public Builder id(Integer val) { id = val; return this; }
 
-        public Direccion build() {
-            return new Direccion(this);
-        }
+        public Direccion build() { return new Direccion(this); }
     }
-}
 }
