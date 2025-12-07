@@ -8,17 +8,16 @@ public class MapearDireccion  {
 
     public static Direccion mapearDtoAEntidad(DtoDireccion dto) {
         if (dto == null) return null;
-        return new Direccion.Builder(
-                dto.getCalle(),
-                dto.getNumero(),
-                dto.getLocalidad(),
-                dto.getProvincia(),
-                dto.getPais()
-        )
+        return new Direccion.Builder()
                 .id(dto.getId())
+                .calle(dto.getCalle())
+                .numero((dto.getNumero()))
                 .departamento(dto.getDepartamento())
                 .piso(dto.getPiso())
                 .codigoPostal(dto.getCodPostal())
+                .localidad(dto.getLocalidad())
+                .provincia(dto.getProvincia())
+                .pais(dto.getPais())
                 .build();
     }
 
@@ -34,7 +33,7 @@ public class MapearDireccion  {
                 .idDireccion(entity.getId())
                 .departamento(entity.getDepartamento())
                 .piso(entity.getPiso())
-                .codPostal(entity.getCodigoPostal())
+                .codPostal(entity.getCodPostal())
                 .build();
     }
 }
