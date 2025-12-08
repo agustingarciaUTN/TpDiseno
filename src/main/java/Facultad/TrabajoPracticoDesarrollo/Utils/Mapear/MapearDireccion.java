@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
 
 public class MapearDireccion  {
 
@@ -9,7 +9,7 @@ public class MapearDireccion  {
     public static Direccion mapearDtoAEntidad(DtoDireccion dto) {
         if (dto == null) return null;
         return new Direccion.Builder()
-                .id(dto.getId())
+                .id(dto.getIdDireccion())
                 .calle(dto.getCalle())
                 .numero((dto.getNumero()))
                 .departamento(dto.getDepartamento())

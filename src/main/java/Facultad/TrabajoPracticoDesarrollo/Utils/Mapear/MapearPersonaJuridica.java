@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaJuridica;
-import Facultad.TrabajoPracticoDesarrollo.ResponsablePago.DtoPersonaJuridica;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPersonaJuridica;
 
 
 public class MapearPersonaJuridica  {

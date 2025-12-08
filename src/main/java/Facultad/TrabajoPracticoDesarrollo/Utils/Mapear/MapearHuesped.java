@@ -2,8 +2,8 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoDireccion;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 
@@ -114,7 +114,7 @@ public class MapearHuesped  {
         int idDir = rs.getInt("id_direccion");
         if (!rs.wasNull() && idDir > 0) {
             DtoDireccion dtoDirTemp = new DtoDireccion();
-            dtoDirTemp.setId(idDir);
+            dtoDirTemp.setIdDireccion(idDir);
             dto.setDtoDireccion(dtoDirTemp);
         }
 

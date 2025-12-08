@@ -3,12 +3,16 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
 @Entity
 @Table(name = "huesped")
+@Getter @Setter
 @IdClass(HuespedId.class) // Usamos la clave compuesta (Tipo + Numero)
 public class Huesped {
 
@@ -98,43 +102,6 @@ public class Huesped {
         this.email = builder.email;
         this.ocupacion = builder.ocupacion;
     }
-
-    // --- GETTERS Y SETTERS ---
-    public TipoDocumento getTipoDocumento() { return tipoDocumento; }
-    public void setTipoDocumento(TipoDocumento tipoDocumento) { this.tipoDocumento = tipoDocumento; }
-
-    public String getNroDocumento() { return nroDocumento; }
-    public void setNroDocumento(String nroDocumento) { this.nroDocumento = nroDocumento; }
-
-    public String getApellido() { return apellido; }
-    public void setApellido(String apellido) { this.apellido = apellido; }
-
-    public String getNombres() { return nombres; }
-    public void setNombres(String nombres) { this.nombres = nombres; }
-
-    public Date getFechaNacimiento() { return fechaNacimiento; }
-    public void setFechaNacimiento(Date fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
-
-    public String getNacionalidad() { return nacionalidad; }
-    public void setNacionalidad(String nacionalidad) { this.nacionalidad = nacionalidad; }
-
-    public PosIva getPosicionIva() { return posicionIva; }
-    public void setPosicionIva(PosIva posicionIva) { this.posicionIva = posicionIva; }
-
-    public String getCuit() { return cuit; }
-    public void setCuit(String cuit) { this.cuit = cuit; }
-
-    public Direccion getDireccion() { return direccion; }
-    public void setDireccion(Direccion direccion) { this.direccion = direccion; }
-
-    public List<Long> getTelefono() { return telefono; }
-    public void setTelefono(List<Long> telefono) { this.telefono = telefono; }
-
-    public List<String> getEmail() { return email; }
-    public void setEmail(List<String> email) { this.email = email; }
-
-    public List<String> getOcupacion() { return ocupacion; }
-    public void setOcupacion(List<String> ocupacion) { this.ocupacion = ocupacion; }
 
     // --- 3. CLASE BUILDER ---
     public static class Builder {

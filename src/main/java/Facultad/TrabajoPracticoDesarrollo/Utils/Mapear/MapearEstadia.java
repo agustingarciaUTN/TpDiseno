@@ -2,8 +2,8 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoEstadia;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoHuesped;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 
 import java.util.ArrayList;
 

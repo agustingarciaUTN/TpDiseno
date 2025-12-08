@@ -3,11 +3,15 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "habitacion")
+@Getter @Setter
 public class Habitacion {
 
     @Id
@@ -49,28 +53,6 @@ public class Habitacion {
         this.costoPorNoche = (float) builder.costoPorNoche;
         this.reservas = builder.reservas;
     }
-
-    // --- Getters y Setters ---
-    public String getNumero() { return numero; }
-    public void setNumero(String numero) { this.numero = numero; }
-
-    public TipoHabitacion getTipoHabitacion() { return tipoHabitacion; }
-    public void setTipoHabitacion(TipoHabitacion tipoHabitacion) { this.tipoHabitacion = tipoHabitacion; }
-
-    public Integer getCapacidad() { return capacidad; }
-    public void setCapacidad(Integer capacidad) { this.capacidad = capacidad; }
-
-    public EstadoHabitacion getEstadoHabitacion() { return estadoHabitacion; }
-    public void setEstadoHabitacion(EstadoHabitacion estadoHabitacion) { this.estadoHabitacion = estadoHabitacion; }
-
-    public Float getCostoPorNoche() { return costoPorNoche; }
-    public void setCostoPorNoche(Float costoPorNoche) { this.costoPorNoche = costoPorNoche; }
-
-    public List<Reserva> getReservas() { return reservas; }
-    public void setReservas(List<Reserva> reservas) { this.reservas = reservas; }
-
-    public List<Cama> getCamas() { return camas; }
-    public void setCamas(List<Cama> camas) { this.camas = camas; }
 
     // --- BUILDER (Intacto) ---
     public static class Builder {

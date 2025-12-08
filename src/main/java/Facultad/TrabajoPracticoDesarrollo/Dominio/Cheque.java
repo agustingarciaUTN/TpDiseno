@@ -2,10 +2,14 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "cheque")
+@Getter @Setter
 public class Cheque {
 
     @Id
@@ -24,7 +28,7 @@ public class Cheque {
 
     @Column(name = "fecha_de_pago")
     @Temporal(TemporalType.DATE)
-    private Date fechaPago;
+    private Date fechaDePago;
 
     @Column(name = "monto")
     private Double monto;
@@ -43,17 +47,17 @@ public class Cheque {
         private Double monto;
         private Moneda moneda;
         private String plaza;
-        private Date fechaPago;
+        private Date fechaDePago;
 
         public Builder(String nro, String banco, Double monto) {
             this.numeroCheque = nro;
             this.banco = banco;
             this.monto = monto;
         }
-        public Builder cobro(Date val) { fechaCobro = val; return this; }
+        public Builder fechaCobro(Date val) { fechaCobro = val; return this; }
         public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder plaza(String val) { plaza = val; return this; }
-        public Builder pago(Date val) { fechaPago = val; return this; }
+        public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
 
         public Cheque build() {
             Cheque c = new Cheque();
@@ -63,24 +67,8 @@ public class Cheque {
             c.setFechaCobro(fechaCobro);
             c.setMoneda(moneda);
             c.setPlaza(plaza);
-            c.setFechaPago(fechaPago);
+            c.setFechaDePago(fechaDePago);
             return c;
         }
     }
-
-    // Getters y Setters
-    public String getNumeroCheque() { return numeroCheque; }
-    public void setNumeroCheque(String numeroCheque) { this.numeroCheque = numeroCheque; }
-    public String getBanco() { return banco; }
-    public void setBanco(String banco) { this.banco = banco; }
-    public String getPlaza() { return plaza; }
-    public void setPlaza(String plaza) { this.plaza = plaza; }
-    public Date getFechaCobro() { return fechaCobro; }
-    public void setFechaCobro(Date fechaCobro) { this.fechaCobro = fechaCobro; }
-    public Date getFechaPago() { return fechaPago; }
-    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
-    public Double getMonto() { return monto; }
-    public void setMonto(Double monto) { this.monto = monto; }
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
 }

@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "direccion")
+@Getter @Setter
 public class Direccion {
 
     @Id
@@ -50,36 +53,6 @@ public class Direccion {
         this.provincia = builder.provincia;
         this.pais = builder.pais;
     }
-
-    // Getters y Setters...
-
-    // --- GETTERS Y SETTERS (Necesarios para JPA y para usarlos) ---
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-
-    public String getCalle() { return calle; }
-    public void setCalle(String calle) { this.calle = calle; }
-
-    public Integer getNumero() { return numero; }
-    public void setNumero(Integer numero) { this.numero = numero; }
-
-    public String getDepartamento() { return departamento; }
-    public void setDepartamento(String departamento) { this.departamento = departamento; }
-
-    public String getPiso() { return piso; }
-    public void setPiso(String piso) { this.piso = piso; }
-
-    public Integer getCodPostal() { return codPostal; }
-    public void setCodPostal(Integer codPostal) { this.codPostal = codPostal; }
-
-    public String getLocalidad() { return localidad; }
-    public void setLocalidad(String localidad) { this.localidad = localidad; }
-
-    public String getProvincia() { return provincia; }
-    public void setProvincia(String provincia) { this.provincia = provincia; }
-
-    public String getPais() { return pais; }
-    public void setPais(String pais) { this.pais = pais; }
 
     // --- BUILDER ---
     public static class Builder {

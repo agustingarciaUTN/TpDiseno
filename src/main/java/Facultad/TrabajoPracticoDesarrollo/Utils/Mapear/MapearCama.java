@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Cama;
-import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoCama;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoCama;
 
 public class MapearCama{
 

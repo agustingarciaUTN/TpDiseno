@@ -1,8 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
-import Facultad.TrabajoPracticoDesarrollo.Huesped.GestorHuesped;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.GestorReserva;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
+import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.GestorReserva;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;

@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "nota_de_credito")
+@Getter @Setter
 public class NotaDeCredito {
 
     @Id
@@ -23,19 +26,14 @@ public class NotaDeCredito {
     // Constructor por defecto (Obligatorio JPA)
     public NotaDeCredito() {}
 
-    // --- GETTERS Y SETTERS ---
-    public Integer getNumeroNotaCredito() { return numeroNotaCredito; }
-    public void setNumeroNotaCredito(Integer numeroNotaCredito) { this.numeroNotaCredito = numeroNotaCredito; }
-
-    public Double getMontoDevolucion() { return montoDevolucion; }
-    public void setMontoDevolucion(Double montoDevolucion) { this.montoDevolucion = montoDevolucion; }
-
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
         private Integer numeroNotaCredito;
         private Double montoDevolucion;
 
         public Builder() {}
+
+        public Builder (Integer numeroNotaCredito, double montoDevolucion) {}
 
         // El ID puede ser nulo al crear si es autoincremental
         public Builder numero(Integer val) { numeroNotaCredito = val; return this; }

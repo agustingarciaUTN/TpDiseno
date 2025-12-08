@@ -1,16 +1,14 @@
 package Facultad.TrabajoPracticoDesarrollo.PantallaDeTrabajo;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoEstadia;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.GestorEstadia;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
-import Facultad.TrabajoPracticoDesarrollo.Habitacion.DtoHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Habitacion.GestorHabitacion;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.*;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.DtoReserva;
-import Facultad.TrabajoPracticoDesarrollo.Reserva.GestorReserva;
-import Facultad.TrabajoPracticoDesarrollo.Usuario.*;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
+import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.*;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Colores;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
@@ -1010,20 +1008,20 @@ public class Pantalla implements CommandLineRunner {
                 switch (opcion) {
                     case 0: // Caso Enter vacío
                     case 1:
-                        posIva = PosIva.ConsumidorFinal.name();
+                        posIva = PosIva.CONSUMIDOR_FINAL.name();
                         valido = true;
                         if(opcion == 0) System.out.println(Colores.CYAN + "        (Seleccionado: Consumidor Final)" + Colores.RESET);
                         break;
                     case 2:
-                        posIva = PosIva.Monotributista.name();
+                        posIva = PosIva.MONOTRIBUTISTA.name();
                         valido = true;
                         break;
                     case 3:
-                        posIva = PosIva.ResponsableInscripto.name();
+                        posIva = PosIva.RESPONSABLE_INSCRIPTO.name();
                         valido = true;
                         break;
                     case 4:
-                        posIva = PosIva.Exento.name();
+                        posIva = PosIva.EXENTO.name();
                         valido = true;
                         break;
                     default:
