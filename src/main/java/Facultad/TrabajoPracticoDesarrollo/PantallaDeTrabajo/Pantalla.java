@@ -9,6 +9,7 @@ import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
 import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.*;
+import Facultad.TrabajoPracticoDesarrollo.Services.HabitacionService;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Colores;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
@@ -35,7 +36,6 @@ public class Pantalla implements CommandLineRunner {
     // Todos inyectados por Spring
     private final GestorHuesped gestorHuesped;
     private final GestorUsuario gestorUsuario;
-    private final GestorHabitacion gestorHabitacion;
     private final GestorReserva gestorReserva;
     private final GestorEstadia gestorEstadia; // <--- Ahora este también
 
@@ -46,13 +46,12 @@ public class Pantalla implements CommandLineRunner {
     @Autowired // Constructor Único
     public Pantalla(GestorHuesped gestorHuesped,
                     GestorUsuario gestorUsuario,
-                    GestorHabitacion gestorHabitacion,
+                    HabitacionService habitacionService,
                     GestorReserva gestorReserva,
                     GestorEstadia gestorEstadia) {
 
         this.gestorHuesped = gestorHuesped;
         this.gestorUsuario = gestorUsuario;
-        this.gestorHabitacion = gestorHabitacion;
         this.gestorReserva = gestorReserva;
         this.gestorEstadia = gestorEstadia; // Inyectado
 
@@ -1329,7 +1328,7 @@ public class Pantalla implements CommandLineRunner {
                 .thenComparing(Habitacion::getNumero));
 
         // 2. Procesar en Memoria (Sin ir a la BD)
-        for (Habitacion hab : habitaciones) {
+        for  (Habitacion hab : habitaciones) {
             Map<Date, String> estadosDia = new HashMap<>();
 
             // Filtramos las listas globales para quedarnos solo con lo de ESTA habitación
