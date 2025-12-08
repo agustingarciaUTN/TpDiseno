@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
+
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaFisica;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaJuridica;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Usuario;

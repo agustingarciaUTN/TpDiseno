@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
+
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;

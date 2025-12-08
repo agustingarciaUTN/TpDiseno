@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
+
 import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
