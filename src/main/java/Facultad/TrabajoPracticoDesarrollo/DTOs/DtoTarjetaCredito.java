@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class DtoTarjetaCredito {
+public class DtoTarjetaCredito extends DtoMedioPago {
     private int idPago;
     private RedDePago redDePago;
     private String banco;
