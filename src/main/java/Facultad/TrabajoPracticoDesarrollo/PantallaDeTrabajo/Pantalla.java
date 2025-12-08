@@ -8,8 +8,11 @@ import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
+import Facultad.TrabajoPracticoDesarrollo.Services.EstadiaService;
 import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.*;
 import Facultad.TrabajoPracticoDesarrollo.Services.HabitacionService;
+import Facultad.TrabajoPracticoDesarrollo.Services.HuespedService;
+import Facultad.TrabajoPracticoDesarrollo.Services.ReservaService;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Colores;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
@@ -34,26 +37,18 @@ import java.util.*;
 public class Pantalla implements CommandLineRunner {
 
     // Todos inyectados por Spring
-    private final GestorHuesped gestorHuesped;
     private final GestorUsuario gestorUsuario;
-    private final GestorReserva gestorReserva;
-    private final GestorEstadia gestorEstadia; // <--- Ahora este también
 
     private final Scanner scanner;
     private boolean usuarioAutenticado;
     private String nombreUsuarioActual;
 
     @Autowired // Constructor Único
-    public Pantalla(GestorHuesped gestorHuesped,
+    public Pantalla(HuespedService huespedService,
                     GestorUsuario gestorUsuario,
                     HabitacionService habitacionService,
-                    GestorReserva gestorReserva,
-                    GestorEstadia gestorEstadia) {
-
-        this.gestorHuesped = gestorHuesped;
-        this.gestorUsuario = gestorUsuario;
-        this.gestorReserva = gestorReserva;
-        this.gestorEstadia = gestorEstadia; // Inyectado
+                    EstadiaService estadiaService,
+                    ReservaService reservaService) {
 
         this.scanner = new Scanner(System.in);
         this.usuarioAutenticado = false;
@@ -356,7 +351,7 @@ public class Pantalla implements CommandLineRunner {
                         while (verificacionPendiente) {
 
                             //Debemos fijarnos en la DB si existe un Huesped con el mismo TipoDoc y NroDoc que el ingresado
-                            Huesped duplicado = gestorHuesped.chequearDuplicado(datosIngresados);
+                            Huesped duplicado = HuespedService.chequearDuplicado(datosIngresados);
                             //Si chequearDuplicado retorna NULL, no hay duplicado
 
                             if (duplicado != null) {//si encuentra duplicado
