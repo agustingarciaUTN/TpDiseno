@@ -3,10 +3,14 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import Facultad.TrabajoPracticoDesarrollo.enums.RedDePago;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "tarjeta")
+@Getter @Setter
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Tarjeta {
 
@@ -41,21 +45,4 @@ public abstract class Tarjeta {
 
     public Tarjeta() {}
 
-    // Getters y Setters
-    public String getNumeroTarjeta() { return numeroTarjeta; }
-    public void setNumeroTarjeta(String numeroTarjeta) { this.numeroTarjeta = numeroTarjeta; }
-    public String getBanco() { return banco; }
-    public void setBanco(String banco) { this.banco = banco; }
-    public RedDePago getRedDePago() { return redDePago; }
-    public void setRedDePago(RedDePago redDePago) { this.redDePago = redDePago; }
-    public Date getFechaVencimiento() { return fechaVencimiento; }
-    public void setFechaVencimiento(Date fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
-    public Integer getCodigoSeguridad() { return codigoSeguridad; }
-    public void setCodigoSeguridad(Integer codigoSeguridad) { this.codigoSeguridad = codigoSeguridad; }
-    public Double getMonto() { return monto; }
-    public void setMonto(Double monto) { this.monto = monto; }
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-    public Date getFechaPago() { return fechaPago; }
-    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
 }

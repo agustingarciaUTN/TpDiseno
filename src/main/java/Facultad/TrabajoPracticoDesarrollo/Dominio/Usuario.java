@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "usuario")
+@Getter @Setter
 public class Usuario {
 
     @Id
@@ -25,13 +28,4 @@ public class Usuario {
         this.hashContrasenia = hashContrasenia;
     }
 
-    // --- Getters y Setters ---
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getHashContrasenia() { return hashContrasenia; }
-    public void setHashContrasenia(String hashContrasenia) { this.hashContrasenia = hashContrasenia; }
 }

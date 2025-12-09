@@ -29,10 +29,10 @@ public class MapearServiciosAdicionales  {
         if (serviciosAdicionales == null) return null;
 
         return new DtoServiciosAdicionales.Builder()
-                .id(serviciosAdicionales.getIdServicio())
+                .id(serviciosAdicionales.getId())
                 .tipo(serviciosAdicionales.getTipoServicio())
-                .descripcion(serviciosAdicionales.getDescripcionServicio())
-                .valor(serviciosAdicionales.getValorServicio())
+                .descripcion(serviciosAdicionales.getDescripcion())
+                .valor(serviciosAdicionales.getValor())
                 .fecha(serviciosAdicionales.getFechaConsumo())
                 .idEstadia(serviciosAdicionales.getEstadia().getIdEstadia())
                 .build();

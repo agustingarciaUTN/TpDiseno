@@ -86,6 +86,13 @@ public class Pago {
 
         public Builder() {}
 
+        public Builder(Moneda moneda, double montoTotal, Date fechaPago, Factura facturaRef) {
+            this.moneda = moneda;
+            this.montoTotal = montoTotal;
+            this.fechaPago = fechaPago;
+            this.factura = facturaRef;
+        }
+
         public Builder id(Integer val) { idPago = val; return this; }
         public Builder monto(Double val) { montoTotal = val; return this; }
         public Builder cotizacion(Double val) { cotizacion = val; return this; }

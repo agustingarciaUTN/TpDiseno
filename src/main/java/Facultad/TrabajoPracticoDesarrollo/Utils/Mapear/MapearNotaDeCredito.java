@@ -15,13 +15,12 @@ public class MapearNotaDeCredito  {
                 dtoNotaDeCredito.getMontoDevolucion()
         );
 
-      /*  if (dtoNotaDeCredito.getIdsFacturas() != null) {
+      /* if (dtoNotaDeCredito.getIdsFacturas() != null) {
             for (Integer idFactura : dtoNotaDeCredito.getIdsFacturas()) {
                 Factura facRef = new Factura.Builder(null, null, 0, null, null).build();
                 facRef.setNumeroFactura(idFactura);
             }
-        }   */
-
+        }  */
         return builder.build();
     }
 

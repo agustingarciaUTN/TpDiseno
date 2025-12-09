@@ -33,7 +33,7 @@ public class DtoNotaDeCredito {
 
       //  public Builder idsFacturas(ArrayList<Integer> val) { idsFacturas = val; return this; }
 
-      /*  public Builder agregarIdFactura(Integer idFactura) {
+       /* public Builder agregarIdFactura(Integer idFactura) {
             if (this.idsFacturas == null) this.idsFacturas = new ArrayList<>();
             this.idsFacturas.add(idFactura);
             return this;

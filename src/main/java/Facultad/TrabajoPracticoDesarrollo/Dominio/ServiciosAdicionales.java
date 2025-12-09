@@ -2,10 +2,14 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoServicio;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "servicios_adicionales")
+@Getter @Setter
 public class ServiciosAdicionales {
 
     @Id
@@ -43,20 +47,6 @@ public class ServiciosAdicionales {
         this.estadia = builder.estadia;
     }
 
-    // Getters y Setters...
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public Double getValor() { return valor; }
-    public void setValor(Double valor) { this.valor = valor; }
-    public Date getFechaConsumo() { return fechaConsumo; }
-    public void setFechaConsumo(Date fechaConsumo) { this.fechaConsumo = fechaConsumo; }
-    public TipoServicio getTipoServicio() { return tipoServicio; }
-    public void setTipoServicio(TipoServicio tipoServicio) { this.tipoServicio = tipoServicio; }
-    public Estadia getEstadia() { return estadia; }
-    public void setEstadia(Estadia estadia) { this.estadia = estadia; }
-
     // Builder...
     public static class Builder {
         private Integer id;
@@ -67,6 +57,14 @@ public class ServiciosAdicionales {
         private Estadia estadia;
 
         public Builder() {}
+
+        public Builder(TipoServicio tipoServicio, double valorServicio, Date fechaConsumo) {
+            this.tipoServicio = tipoServicio;
+            this.valor = valorServicio;
+            this.fechaConsumo = fechaConsumo;
+        }
+
+
         public Builder id(Integer val) { id = val; return this; }
         public Builder descripcion(String val) { descripcion = val; return this; }
         public Builder valor(Double val) { valor = val; return this; }

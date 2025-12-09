@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 import lombok.AllArgsConstructor;
 
+import java.util.List;
+
 
 @Data
 @SuperBuilder
@@ -16,7 +18,7 @@ public class DtoPersonaJuridica extends DtoResponsableDePago {
     private int idResponsablePago;
     private String razonSocial;
     private String cuit;
-    private long telefono;
+    private List<Long> telefono;
     private DtoDireccion dtoDireccion;
 
 
@@ -38,7 +40,7 @@ public class DtoPersonaJuridica extends DtoResponsableDePago {
         private int idResponsablePago;
         private String razonSocial;
         private String cuit;
-        private long telefono;
+        private List<Long> telefono;
         private DtoDireccion dtoDireccion;
 
         public Builder() {}
@@ -46,7 +48,7 @@ public class DtoPersonaJuridica extends DtoResponsableDePago {
         public Builder id(int val) { idResponsablePago = val; return this; }
         public Builder razonSocial(String val) { razonSocial = val; return this; }
         public Builder cuit(String val) { cuit = val; return this; }
-        public Builder telefono(long val) { telefono = val; return this; }
+        public Builder telefono(List<Long> val) { telefono = val; return this; }
         public Builder dtoDireccion(DtoDireccion val) { dtoDireccion = val; return this; }
 
         public DtoPersonaJuridica build() {

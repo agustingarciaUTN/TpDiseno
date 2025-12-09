@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "medio_pago")
+@Getter @Setter
 public class MedioPago {
 
     @Id
@@ -54,15 +57,4 @@ public class MedioPago {
         }
     }
 
-    // Getters y Setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public Pago getPago() { return pago; }
-    public void setPago(Pago pago) { this.pago = pago; }
-    public Efectivo getEfectivo() { return efectivo; }
-    public void setEfectivo(Efectivo efectivo) { this.efectivo = efectivo; }
-    public Cheque getCheque() { return cheque; }
-    public void setCheque(Cheque cheque) { this.cheque = cheque; }
-    public Tarjeta getTarjeta() { return tarjeta; }
-    public void setTarjeta(Tarjeta tarjeta) { this.tarjeta = tarjeta; }
 }

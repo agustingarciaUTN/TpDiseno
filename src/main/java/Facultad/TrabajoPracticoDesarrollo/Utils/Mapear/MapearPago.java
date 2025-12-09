@@ -12,8 +12,8 @@ public class MapearPago {
         if (dtoPago == null) return null;
 
         // Referencia Factura
-        Factura facturaRef = new Factura.Builder(null, null, 0, null, null).build();
-        facturaRef.setIdFactura(dtoPago.getIdFactura());
+        Factura facturaRef = new Factura.Builder(null, null, 0.0).build();
+        facturaRef.setNumeroFactura(dtoPago.getFactura().getNumeroFactura());
 
         // Nota: No podemos reconstruir los objetos MedioPago solo desde una lista de IDs genéricos.
         // La lista de medios quedará vacía en la entidad y deberá cargarse por separado si hace falta.
@@ -24,9 +24,10 @@ public class MapearPago {
                 dtoPago.getFechaPago(),
                 facturaRef
         )
-                .idPago(dtoPago.getIdPago())
+                .id(dtoPago.getIdPago())
                 .cotizacion(dtoPago.getCotizacion())
                 .build();
+
     }
 
     public static DtoPago mapearEntidadADto(Pago pago) {
@@ -38,11 +39,11 @@ public class MapearPago {
                 .montoTotal(pago.getMontoTotal())
                 .cotizacion(pago.getCotizacion())
                 .fechaPago(pago.getFechaPago())
-                .idFactura(pago.getFactura().getIdFactura());
+                .Factura(pago.getFactura());
 
         if (pago.getMediosPago() != null) {
             for (MedioPago mp : pago.getMediosPago()) {
-                builder.agregarIdMedioPago(mp.getIdPago()); // ID del padre MedioPago
+                builder.agregarIdMedioPago(mp.getPago().getIdPago()); // ID del padre MedioPago
             }
         }
 
