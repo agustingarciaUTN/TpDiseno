@@ -36,4 +36,19 @@ public class MapearDireccion  {
                 .codPostal(entity.getCodPostal())
                 .build();
     }
+
+    // (Sirve para MODIFICAR / ACTUALIZAR)
+    public static void actualizarEntidadDesdeDto(Direccion direccion, DtoDireccion dto) {
+        if (direccion == null || dto == null) return;
+
+        // Solo actualizamos los campos, NO hacemos 'new'
+        direccion.setCalle(dto.getCalle());
+        direccion.setNumero(dto.getNumero());
+        direccion.setDepartamento(dto.getDepartamento());
+        direccion.setPiso(dto.getPiso());
+        direccion.setCodPostal(dto.getCodPostal());
+        direccion.setLocalidad(dto.getLocalidad());
+        direccion.setProvincia(dto.getProvincia());
+        direccion.setPais(dto.getPais());
+    }
 }

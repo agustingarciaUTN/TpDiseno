@@ -2,14 +2,12 @@ package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.GestorHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Services.HuespedService;
-import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import jakarta.validation.Valid; // Importante
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController//Declarado como API, le dice a Spring que atiende pedidos web
@@ -42,15 +40,50 @@ public class HuespedController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    // Endpoint para verificar existencia antes de guardar (Requerido por CU9)
+    // En HuespedController.java
+
+    @GetMapping("/existe/{tipo}/{nro}")
+    public ResponseEntity<?> verificarExistencia(@PathVariable String tipo, @PathVariable String nro) {
+        try {
+            // --- PASO 1: Cumplir con el Diagrama (Armar DTO Dummy) ---
+            DtoHuesped dtoDummy = new DtoHuesped();
+            // Convertimos el String al Enum (Manejar excepción si el tipo no existe)
+            dtoDummy.setTipoDocumento(TipoDocumento.valueOf(tipo.toUpperCase()));
+            dtoDummy.setNroDocumento(nro);
+
+            // --- PASO 2: Llamar al Service ---
+            Huesped existente = huespedService.chequearDuplicado(dtoDummy);
+
+            // --- PASO 3: Respuesta al Frontend ---
+            if (existente != null) {
+                // Devolver la Entidad directa
+                return ResponseEntity.ok(existente);
+
+            } else {
+                // No existe duplicado. Devolvemos 200 OK pero con cuerpo vacío (o null)
+                // El front chequeará: if (response.data) { mostrarAlerta }
+                return ResponseEntity.ok(null);
+            }
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Tipo de documento inválido: " + tipo);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @PostMapping("/crear")//Si alguien llama a la dirección base /api/huespedes PERO usando el verbo POST y agregando /crear, entra a este metodo.
-    public ResponseEntity<?> crearHuesped(@Valid @RequestBody DtoHuesped dtoHuesped) {
+    public ResponseEntity<?> darDeAltaHuesped(@Valid @RequestBody DtoHuesped dtoHuesped) {
         try {
             // Si llega a esta línea, es porque el DTO YA PASÓ todas las validaciones de formato (@NotNull, Regex, etc)
             // Si falló alguna, el GlobalExceptionHandler ya lo interceptó antes.
 
             huespedService.upsertHuesped(dtoHuesped);
 
-            return ResponseEntity.ok("✅ Huésped guardado correctamente");
+            return ResponseEntity.ok("✅ Huésped guardado correctamente");//Respuesta HTTP 200 OK
 
         } catch (Exception e) {
             // Capturamos errores de lógica de negocio (ej: base de datos caída)

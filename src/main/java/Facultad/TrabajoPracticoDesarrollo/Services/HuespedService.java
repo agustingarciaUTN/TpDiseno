@@ -81,8 +81,12 @@ public class HuespedService {
         return huespedRepository.findById(id).orElse(null);
     }
 
-    public Huesped crearHuespedSinPersistir(DtoHuesped dtoHuesped) {
-        return MapearHuesped.mapearDtoAEntidad(dtoHuesped);
+    private Huesped crearSinPersistirHuesped(DtoHuesped dto) {
+        return MapearHuesped.mapearDtoAEntidad(dto);
+    }
+
+    private Direccion crearSinPersistirDireccion(DtoDireccion dto) {
+        return MapearDireccion.mapearDtoAEntidad(dto);
     }
 
 
@@ -114,29 +118,23 @@ public class HuespedService {
             // ==========================================
             Huesped huespedExistente = existenteOpt.get();
 
-            // A. Actualizamos datos simples del Huésped
-            // (Es necesario pasar los datos nuevos del DTO a la Entidad vieja)
-            MapearHuesped.actualizarEntidadDesdeDto(huespedExistente, dto);
-
-            // B. Actualizamos la Dirección (MANUALMENTE)
+            // A. Actualizamos dirección manual (Respetando diagrama DD)
+            // 1. Primero obtenemos la dirección REAL de la base de datos (que vive dentro del huésped)
             Direccion direccionExistente = huespedExistente.getDireccion();
 
+            // 2. Verificamos que existan datos para actualizar
             if (direccionExistente != null && dto.getDtoDireccion() != null) {
-                // Pasamos los datos del DTO a la entidad Dirección existente
-                Direccion dirNueva = MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion());
 
-                direccionExistente.setCalle(dirNueva.getCalle());
-                direccionExistente.setNumero(dirNueva.getNumero());
-                direccionExistente.setDepartamento(dirNueva.getDepartamento());
-                direccionExistente.setPiso(dirNueva.getPiso());
-                direccionExistente.setCodPostal(dirNueva.getCodPostal());
-                direccionExistente.setLocalidad(dirNueva.getLocalidad());
-                direccionExistente.setProvincia(dirNueva.getProvincia());
-                direccionExistente.setPais(dirNueva.getPais());
+                // 3. Llamamos al Mapper pasándole la DIRECCIÓN
+                MapearDireccion.actualizarEntidadDesdeDto(direccionExistente, dto.getDtoDireccion());
 
-                // DIAGRAMA: "GHU -> DD: modificarYPersistirDireccion"
+                // 4. Guardamos explícitamente (DIAGRAMA: "GHU -> DD: modificarYPersistirDireccion")
                 direccionRepository.save(direccionExistente);
             }
+
+            // B. Actualizamos datos simples del Huésped
+            MapearHuesped.actualizarEntidadDesdeDto(huespedExistente, dto);
+
 
             // C. Guardamos finalmente el Huésped
             // DIAGRAMA: "GHU -> DHU: modificarYPersistirHuesped"
@@ -148,9 +146,13 @@ public class HuespedService {
             // ==========================================
 
             // 1. Instanciamos los objetos (sin ID todavía)
-            // DIAGRAMA: "create Direccion as D" y "create Huesped as H"
-            Huesped nuevoHuesped = MapearHuesped.mapearDtoAEntidad(dto);
-            Direccion nuevaDireccion = MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion());
+
+            // "GHU -> D: crearSinPersistirDireccion"
+            Direccion nuevaDireccion = crearSinPersistirDireccion(dto.getDtoDireccion());
+
+            // "GHU -> H: crearSinPersistirHuesped"
+            Huesped nuevoHuesped = crearSinPersistirHuesped(dto);
+
 
             // 2. Guardamos la Dirección PRIMERO (Independiente)
             // Esto genera el ID en la base de datos para la dirección.
