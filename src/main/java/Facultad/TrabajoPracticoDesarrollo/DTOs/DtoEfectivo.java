@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class DtoEfectivo {
+public class DtoEfectivo extends DtoMedioPago {
 
     // --- GETTERS Y SETTERS ---
     private Integer idEfectivo;  // ID específico de la tabla efectivo

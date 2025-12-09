@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class DtoTarjetaDebito {
+public class DtoTarjetaDebito extends DtoMedioPago{
     // Getters y Setters
     private int idPago;
     private RedDePago redDePago;

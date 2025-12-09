@@ -58,7 +58,7 @@ public class HuespedService {
         List<String> errores = new ArrayList<>();
 
         // Regla especial CUIT/IVA
-        if (datos.getPosicionIva() == PosIva.RESPONSABLEINSCRIPTO) {
+        if (datos.getPosicionIva() == PosIva.RESPONSABLE_INSCRIPTO) {
             if (datos.getCuit() == null || datos.getCuit().trim().isEmpty()) {
                 errores.add("El CUIT es obligatorio para Responsables Inscriptos.");
             }

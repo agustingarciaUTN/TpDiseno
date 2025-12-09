@@ -2,11 +2,13 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class DtoCheque {
+public class DtoCheque extends DtoMedioPago {
     // --- GETTERS Y SETTERS ---
     private String numeroCheque;
     private String banco;

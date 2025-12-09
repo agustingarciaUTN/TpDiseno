@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories.DAOs;
 
-import Facultad.TrabajoPracticoDesarrollo.BaseDeDatos.Conexion;
+
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Excepciones.PersistenciaException;
 import org.springframework.stereotype.Repository;
