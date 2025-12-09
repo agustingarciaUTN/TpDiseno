@@ -14,11 +14,10 @@ export enum PosIva {
   CONSUMIDOR_FINAL = "CONSUMIDOR_FINAL",
 }
 
-// Validaciones regex del backend DtoHuesped
+// Validaciones regex del backend DtoHuesped y DtoReserva
 export const VALIDATION = {
   REGEX_NOMBRE: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
-  REGEX_DOCUMENTO: /^[a-zA-Z0-9]+$/,
-  REGEX_DOCUMENTO_NUMERICO: /^\d+$/,
+  REGEX_DOCUMENTO: /^[a-zA-Z0-9]+$/, // Alfanumérico para TODOS los tipos de documento
   REGEX_CUIT: /^\d{2}-?\d{8}-?\d{1}$/,
   REGEX_TELEFONO: /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/,
 } as const;

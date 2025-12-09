@@ -21,12 +21,6 @@ export default function BuscarHuesped() {
   const [errors, setErrors] = useState<Partial<Record<keyof BuscarHuespedForm, string>>>({});
   const [isSearching, setIsSearching] = useState(false);
 
-  // Determina si el documento debe ser solo numérico
-  const isNumericDocRequired =
-    form.tipoDocumento === TipoDocumento.DNI ||
-    form.tipoDocumento === TipoDocumento.LE ||
-    form.tipoDocumento === TipoDocumento.LC;
-
   const validateField = (name: keyof BuscarHuespedForm, value: string): string => {
     switch (name) {
       case "apellido":
@@ -50,9 +44,8 @@ export default function BuscarHuesped() {
         if (!value.trim()) return "";
         if (value.length < 6 || value.length > 15)
           return "Debe tener entre 6 y 15 caracteres";
-        if (isNumericDocRequired && !VALIDATION.REGEX_DOCUMENTO_NUMERICO.test(value))
-          return "Solo se permiten números para este tipo de documento";
-        if (!isNumericDocRequired && !VALIDATION.REGEX_DOCUMENTO.test(value))
+        // REGEX DEL BACKEND DtoHuesped: ^[a-zA-Z0-9]+$ (alfanumérico para TODOS los tipos)
+        if (!VALIDATION.REGEX_DOCUMENTO.test(value))
           return "El documento no debe contener espacios ni símbolos";
         return "";
 
@@ -211,9 +204,7 @@ export default function BuscarHuesped() {
                 className={`w-full rounded-lg border ${
                   errors.nroDocumento ? "border-red-400" : "border-white/10"
                 } bg-slate-900 px-4 py-2 text-sm text-slate-50 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/30 disabled:cursor-not-allowed disabled:opacity-50`}
-                placeholder={
-                  isNumericDocRequired ? "Solo números" : "Números y letras"
-                }
+                placeholder="Alfanumérico sin espacios"
                 maxLength={15}
               />
               {errors.nroDocumento && (
@@ -222,9 +213,7 @@ export default function BuscarHuesped() {
               <p className="text-xs text-slate-200/60">
                 {!form.tipoDocumento
                   ? "Seleccioná un tipo de documento primero"
-                  : isNumericDocRequired
-                  ? "Solo números para DNI, LE y LC"
-                  : "Alfanumérico para Pasaporte y Otro"}
+                  : "Alfanumérico (letras y números) sin espacios"}
               </p>
             </div>
           </div>

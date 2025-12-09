@@ -16,13 +16,6 @@ const useCases = [
     actions: ["Validar disponibilidad", "Seleccionar habitaciones y confirmar"],
   },
   {
-    code: "CU05",
-    title: "Estado de habitaciones",
-    objective: "Mostrar el estado de las habitaciones en un rango de fechas",
-    path: "/cu/estado-habitaciones",
-    actions: ["Consultar por fecha desde/hasta", "Ver grilla por estado"],
-  },
-  {
     code: "CU09",
     title: "Alta de huésped",
     objective: "Cargar datos personales de nuevos huéspedes",
