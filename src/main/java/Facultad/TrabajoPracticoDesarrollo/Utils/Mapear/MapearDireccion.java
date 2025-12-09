@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
-import Facultad.TrabajoPracticoDesarrollo.Huesped.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
 
 public class MapearDireccion  {
 

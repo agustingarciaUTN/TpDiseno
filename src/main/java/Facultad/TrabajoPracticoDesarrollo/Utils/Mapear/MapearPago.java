@@ -3,7 +3,7 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
-import Facultad.TrabajoPracticoDesarrollo.Pago.DtoPago;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPago;
 
 
 public class MapearPago {

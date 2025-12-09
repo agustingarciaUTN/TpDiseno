@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Efectivo;
-import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DtoEfectivo;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEfectivo;
 
 public class MapearEfectivo  {
     public static Efectivo mapearDtoAEntidad(DtoEfectivo dtoEfectivo) {

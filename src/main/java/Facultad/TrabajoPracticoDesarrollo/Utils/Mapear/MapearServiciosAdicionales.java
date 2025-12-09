@@ -2,7 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.ServiciosAdicionales;
-import Facultad.TrabajoPracticoDesarrollo.Estadia.DtoServiciosAdicionales;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoServiciosAdicionales;
 
 public class MapearServiciosAdicionales  {
 

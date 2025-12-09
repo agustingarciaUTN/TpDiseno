@@ -2,7 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.NotaDeCredito;
-import Facultad.TrabajoPracticoDesarrollo.Factura.DtoNotaDeCredito;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoNotaDeCredito;
 
 public class MapearNotaDeCredito  {
 

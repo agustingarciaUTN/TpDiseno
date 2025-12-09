@@ -1,6 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Cheque;
-import Facultad.TrabajoPracticoDesarrollo.MedioDePago.DtoCheque;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoCheque;
 
 public class MapearCheque  {
 
