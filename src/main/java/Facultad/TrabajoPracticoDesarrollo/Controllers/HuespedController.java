@@ -12,16 +12,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@RestController
+@RestController//Declarado como API, le dice a Spring que atiende pedidos web
 @RequestMapping("/api/huespedes")
 @CrossOrigin(origins = "*") // Permite peticiones desde cualquier Frontend (React/Angular/Postman)
 public class HuespedController {
 
+    //Aca le decimos a Spring que necesitamos un HuespedService para trabajar
     private final HuespedService huespedService;
     // 2. Inyección por Constructor (Spring te pasa el Gestor listo)
     public HuespedController(HuespedService huespedService) {
         this.huespedService = huespedService;
     }
+
 
     @PostMapping("/buscar")
     public ResponseEntity<List<Huesped>> buscarHuespedes(@RequestBody(required = false) DtoHuesped criterios) {
@@ -40,7 +42,7 @@ public class HuespedController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    @PostMapping("/crear")
+    @PostMapping("/crear")//Si alguien llama a la dirección base /api/huespedes PERO usando el verbo POST y agregando /crear, entra a este metodo.
     public ResponseEntity<?> crearHuesped(@Valid @RequestBody DtoHuesped dtoHuesped) {
         try {
             // Si llega a esta línea, es porque el DTO YA PASÓ todas las validaciones de formato (@NotNull, Regex, etc)

@@ -3,9 +3,11 @@ package Facultad.TrabajoPracticoDesarrollo.Services;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.DireccionRepository;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.HuespedRepository;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
+import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearDireccion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Service //Le avisa a Spring que esta clase contiene Lógica de Negocio y que debe estar disponible para ser inyectada en los Controllers
 public class HuespedService {
 
+    //Pedimos la interfaz del repositorio y Spring te da una implementación que funciona
     private final HuespedRepository huespedRepository;
+    private final DireccionRepository direccionRepository;
 
     @Autowired
-    public HuespedService(HuespedRepository huespedRepository) {
+    public HuespedService(HuespedRepository huespedRepository, DireccionRepository direccionRepository) {
         this.huespedRepository = huespedRepository;
+        this.direccionRepository = direccionRepository;
     }
 
     /**
@@ -33,7 +38,7 @@ public class HuespedService {
     @Transactional(readOnly = true)
     public List<Huesped> buscarHuespedes(DtoHuesped criterios) {
 
-        // 1. Decidimos qué método del Repository llamar
+        // 1. Decidimos qué metodo del Repository llamar
         if (criterios != null && !criterios.estanVacios()) {
             System.out.println("Buscando coincidencias...");
 
@@ -80,70 +85,86 @@ public class HuespedService {
         return MapearHuesped.mapearDtoAEntidad(dtoHuesped);
     }
 
+
+    // Una vez que cargamos un objeto con findById, estamos obligados a trabajar sobre ESE objeto.
+    // No podemos traer otro nuevo a partir del mapearDtoAEntidad, ya que tendria la misma PK.
+    //a forma correcta y profesional en JPA no es "crear un objeto para pisar el viejo", sino "modificar el objeto que ya tenés en la mano"
+
+    //Traés el objeto (findById). -> Está "Limpio".
+    //
+    //Le hacés setNombre(...), setTelefono(...). -> Ahora está "Sucio" (Dirty).
+    //
+    //Termina la transacción (@Transactional).
+    //
+    //Hibernate ve que está sucio y automáticamente genera el UPDATE solo con los campos que cambiaron.
+
     /**
      * Lógica de Alta o Modificación (UPSERT).
      * Reemplaza la lógica manual de JDBC por lógica JPA.
      */
     @Transactional
     public void upsertHuesped(DtoHuesped dto) {
-        // 1. Buscamos si ya existe en la BD
+        // 1. Buscamos si ya existe en la BD (Respetando el "alt" del diagrama)
         HuespedId id = new HuespedId(dto.getTipoDocumento(), dto.getNroDocumento());
         Optional<Huesped> existenteOpt = huespedRepository.findById(id);
 
         if (existenteOpt.isPresent()) {
-            // === CAMINO: MODIFICACIÓN ===
-            // Traemos la entidad "viva" de la base de datos (Managed)
+            // ==========================================
+            // CAMINO: MODIFICACIÓN (El huésped YA existe)
+            // ==========================================
             Huesped huespedExistente = existenteOpt.get();
 
-            // Actualizamos sus campos con los datos nuevos del DTO
-            actualizarDatosHuesped(huespedExistente, dto);
+            // A. Actualizamos datos simples del Huésped
+            // (Es necesario pasar los datos nuevos del DTO a la Entidad vieja)
+            MapearHuesped.actualizarEntidadDesdeDto(huespedExistente, dto);
 
-            // Guardamos (JPA detecta que es un update porque la entidad ya existe)
+            // B. Actualizamos la Dirección (MANUALMENTE)
+            Direccion direccionExistente = huespedExistente.getDireccion();
+
+            if (direccionExistente != null && dto.getDtoDireccion() != null) {
+                // Pasamos los datos del DTO a la entidad Dirección existente
+                Direccion dirNueva = MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion());
+
+                direccionExistente.setCalle(dirNueva.getCalle());
+                direccionExistente.setNumero(dirNueva.getNumero());
+                direccionExistente.setDepartamento(dirNueva.getDepartamento());
+                direccionExistente.setPiso(dirNueva.getPiso());
+                direccionExistente.setCodPostal(dirNueva.getCodPostal());
+                direccionExistente.setLocalidad(dirNueva.getLocalidad());
+                direccionExistente.setProvincia(dirNueva.getProvincia());
+                direccionExistente.setPais(dirNueva.getPais());
+
+                // DIAGRAMA: "GHU -> DD: modificarYPersistirDireccion"
+                direccionRepository.save(direccionExistente);
+            }
+
+            // C. Guardamos finalmente el Huésped
+            // DIAGRAMA: "GHU -> DHU: modificarYPersistirHuesped"
             huespedRepository.save(huespedExistente);
 
         } else {
-            // === CAMINO: ALTA ===
-            // Convertimos DTO a Entidad nueva
-            Huesped huespedNuevo = MapearHuesped.mapearDtoAEntidad(dto);
+            // ==========================================
+            // CAMINO: ALTA (El huésped NO existe)
+            // ==========================================
 
-            // Guardamos (JPA inserta Huésped y Dirección en cascada)
-            huespedRepository.save(huespedNuevo);
+            // 1. Instanciamos los objetos (sin ID todavía)
+            // DIAGRAMA: "create Direccion as D" y "create Huesped as H"
+            Huesped nuevoHuesped = MapearHuesped.mapearDtoAEntidad(dto);
+            Direccion nuevaDireccion = MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion());
+
+            // 2. Guardamos la Dirección PRIMERO (Independiente)
+            // Esto genera el ID en la base de datos para la dirección.
+            // DIAGRAMA: "GHU -> DD: persistirDireccion"
+            direccionRepository.save(nuevaDireccion);
+
+            // 3. Asociamos la dirección persistida al huésped
+            nuevoHuesped.setDireccion(nuevaDireccion);
+
+            // 4. Guardamos el Huésped
+            // DIAGRAMA: "GHU -> DHU: persistirHuesped"
+            huespedRepository.save(nuevoHuesped);
         }
     }
 
-    // Método auxiliar para pasar datos del DTO a la Entidad existente
-    // (Esto mantiene el ID de la dirección vieja y solo cambia los valores)
-    private void actualizarDatosHuesped(Huesped entidad, DtoHuesped dto) {
-        entidad.setApellido(dto.getApellido());
-        entidad.setNombres(dto.getNombres());
-        entidad.setFechaNacimiento(dto.getFechaNacimiento());
-        entidad.setNacionalidad(dto.getNacionalidad());
-        entidad.setPosicionIva(dto.getPosicionIva());
-        entidad.setCuit(dto.getCuit());
 
-        // Actualizar listas (reemplazamos completas)
-        entidad.setTelefono(dto.getTelefono());
-        entidad.setEmail(dto.getEmail());
-        entidad.setOcupacion(dto.getOcupacion());
-
-        // Actualizar Dirección (sin perder el ID de la dirección en BD)
-        Direccion dirEntidad = entidad.getDireccion();
-        DtoDireccion dirDto = dto.getDtoDireccion();
-
-        if (dirEntidad != null && dirDto != null) {
-            dirEntidad.setCalle(dirDto.getCalle());
-            dirEntidad.setNumero(dirDto.getNumero());
-            dirEntidad.setDepartamento(dirDto.getDepartamento());
-            dirEntidad.setPiso(dirDto.getPiso());
-            dirEntidad.setCodPostal(dirDto.getCodPostal());
-            dirEntidad.setLocalidad(dirDto.getLocalidad());
-            dirEntidad.setProvincia(dirDto.getProvincia());
-            dirEntidad.setPais(dirDto.getPais());
-        } else if (dirDto != null) {
-            // Si antes no tenía dirección, le ponemos una nueva
-            // (Aquí usarías tu mapper de dirección)
-            // entidad.setDireccion(MapearDireccion.mapearDtoAEntidad(dirDto));
-            // Nota: Agrega MapearDireccion si no lo tienes importado
-        }
-    }
 }

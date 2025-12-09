@@ -46,8 +46,10 @@ public class Huesped {
     private String cuit;
 
     // --- RELACIÓN CON DIRECCIÓN ---
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "id_direccion", referencedColumnName = "id_direccion")
+    // CascadeType.MERGE permite guardar el huesped y actualizar la FK,
+    // pero NO borra la dirección si borrás el huesped (respetando independencia).
+    @OneToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "id_direccion")
     private Direccion direccion;
 
     // --- LISTAS SATÉLITE ---

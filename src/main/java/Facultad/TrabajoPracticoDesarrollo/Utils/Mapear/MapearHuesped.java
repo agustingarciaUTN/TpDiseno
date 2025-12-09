@@ -17,6 +17,7 @@ public class MapearHuesped  {
     private static MapearDireccion mapearDireccion = new MapearDireccion();
 
 
+    // (Sirve solo para ALTA / CREAR)
     public static Huesped mapearDtoAEntidad(DtoHuesped dto) {
         if (dto == null) return null;
 
@@ -37,6 +38,27 @@ public class MapearHuesped  {
                 // AQUÍ USAMOS EL OTRO MAPPER
                 .direccion(MapearDireccion.mapearDtoAEntidad(dto.getDtoDireccion()))
                 .build();
+    }
+
+    // (Sirve para MODIFICAR / ACTUALIZAR)
+    public static void actualizarEntidadDesdeDto(Huesped entidadExistente, DtoHuesped dto) {
+        if (dto == null || entidadExistente == null) return;
+
+        // Acá NO hacemos 'new'. Usamos los setters sobre el objeto que ya existe.
+        entidadExistente.setApellido(dto.getApellido());
+        entidadExistente.setNombres(dto.getNombres());
+        entidadExistente.setTipoDocumento(dto.getTipoDocumento());
+        entidadExistente.setNroDocumento(dto.getNroDocumento());
+        entidadExistente.setTelefono(dto.getTelefono());
+        entidadExistente.setEmail(dto.getEmail());
+        entidadExistente.setCuit(dto.getCuit());
+        entidadExistente.setPosicionIva(dto.getPosicionIva());
+        entidadExistente.setFechaNacimiento(dto.getFechaNacimiento());
+        entidadExistente.setNacionalidad(dto.getNacionalidad());
+        entidadExistente.setOcupacion(dto.getOcupacion());
+
+        // Nota: La dirección la manejamos afuera (en el Service)
+        // para respetar tu diagrama, así que acá no la tocamos.
     }
 
     public static Huesped mapearDtoAEntidadSinDireccion(DtoHuesped dto, Direccion direccion) {
