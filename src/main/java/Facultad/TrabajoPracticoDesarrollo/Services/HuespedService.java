@@ -124,12 +124,15 @@ public class HuespedService {
 
             // 2. Verificamos que existan datos para actualizar
             if (direccionExistente != null && dto.getDtoDireccion() != null) {
-
-                // 3. Llamamos al Mapper pasándole la DIRECCIÓN
+                // Caso 1: Tenía dirección y la actualizamos
                 MapearDireccion.actualizarEntidadDesdeDto(direccionExistente, dto.getDtoDireccion());
-
-                // 4. Guardamos explícitamente (DIAGRAMA: "GHU -> DD: modificarYPersistirDireccion")
                 direccionRepository.save(direccionExistente);
+
+            } else if (direccionExistente == null && dto.getDtoDireccion() != null) {
+                // Caso 2: No tenía dirección, pero ahora le cargaron una
+                Direccion nuevaDir = crearSinPersistirDireccion(dto.getDtoDireccion());
+                direccionRepository.save(nuevaDir); // Guardamos la nueva
+                huespedExistente.setDireccion(nuevaDir); // Asociamos
             }
 
             // B. Actualizamos datos simples del Huésped

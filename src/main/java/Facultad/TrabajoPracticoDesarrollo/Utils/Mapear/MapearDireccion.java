@@ -9,7 +9,7 @@ public class MapearDireccion  {
     public static Direccion mapearDtoAEntidad(DtoDireccion dto) {
         if (dto == null) return null;
         return new Direccion.Builder()
-                .id(dto.getIdDireccion())
+                //.id(dto.getIdDireccion())  ESTO HAY QUE VERLO, NO SE SI ESTA BIEN SETEAR LA DIRECCION CUANDO CREAMOS EL DTO PORQUE LA SETEARIAMOS COMO 0 O NULL
                 .calle(dto.getCalle())
                 .numero((dto.getNumero()))
                 .departamento(dto.getDepartamento())
