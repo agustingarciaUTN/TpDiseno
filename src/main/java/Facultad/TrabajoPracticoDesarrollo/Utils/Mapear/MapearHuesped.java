@@ -114,7 +114,7 @@ public class MapearHuesped  {
         int idDir = rs.getInt("id_direccion");
         if (!rs.wasNull() && idDir > 0) {
             DtoDireccion dtoDirTemp = new DtoDireccion();
-            dtoDirTemp.setId(idDir);
+            dtoDirTemp.setIdDireccion(idDir);
             dto.setDtoDireccion(dtoDirTemp);
         }
 

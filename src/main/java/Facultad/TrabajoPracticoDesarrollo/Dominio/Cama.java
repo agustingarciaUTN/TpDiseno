@@ -2,9 +2,12 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoCama;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "cama")
+@Getter @Setter
 public class Cama {
 
     @Id
@@ -28,14 +31,6 @@ public class Cama {
         this.tipoCama = builder.tipoCama;
         this.habitacion = builder.habitacion;
     }
-
-    // Getters y Setters...
-    public Integer getIdCama() { return idCama; }
-    public void setIdCama(Integer idCama) { this.idCama = idCama; }
-    public TipoCama getTipoCama() { return tipoCama; }
-    public void setTipoCama(TipoCama tipoCama) { this.tipoCama = tipoCama; }
-    public Habitacion getHabitacion() { return habitacion; }
-    public void setHabitacion(Habitacion habitacion) { this.habitacion = habitacion; }
 
     // Builder...
     public static class Builder {

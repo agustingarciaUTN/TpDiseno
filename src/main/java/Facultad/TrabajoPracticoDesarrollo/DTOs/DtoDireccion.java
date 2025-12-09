@@ -73,26 +73,6 @@ public class DtoDireccion {
     }
 
 
-   // Getters y Setters
-    public int getId() {
-        return idDireccion;
-    }
-    public void setId(int id) {
-        this.idDireccion = id;
-    }
-    public int getNumero() {
-        return numero;
-    }
-    public void setNumero(int numero) {
-        this.numero = numero;
-    }
-    public int getCodPostal() {
-        return codPostal;
-    }
-    public void setCodPostal(int codPostal) {
-        this.codPostal = codPostal;
-    }
-
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
         private int idDireccion = 0;

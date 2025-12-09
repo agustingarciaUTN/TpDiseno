@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "persona_fisica")
+@Getter @Setter
 @PrimaryKeyJoinColumn(name = "id_responsable") // PK y FK al padre
 public class PersonaFisica extends ResponsablePago {
 
@@ -27,13 +30,17 @@ public class PersonaFisica extends ResponsablePago {
     public static class Builder {
         private Direccion direccion;
         private Huesped huesped;
+        private int idResponsablePago;
 
         public Builder(Huesped huesped) {}
         public Builder direccion(Direccion val) { direccion = val; return this; }
         public Builder huesped(Huesped val) { huesped = val; return this; }
 
+        public Builder idResponsablePago (int val) { idResponsablePago = val; return this; }
+
         public PersonaFisica build() {
             PersonaFisica pf = new PersonaFisica();
+       //     pf.setIdResponsable(idResponsablePago);
             pf.setDireccion(direccion);
             pf.setHuesped(huesped);
             return pf;

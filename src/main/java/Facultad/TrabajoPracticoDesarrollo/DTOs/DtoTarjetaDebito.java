@@ -15,7 +15,7 @@ public class DtoTarjetaDebito extends DtoMedioPago{
     private String numeroDeTarjeta;
     private Date fechaVencimiento;
     private int codigoSeguridad;
-    private float monto;
+    private Double monto;
     private Moneda moneda;
     private Date fechaDePago;
 
@@ -40,7 +40,7 @@ public class DtoTarjetaDebito extends DtoMedioPago{
         private String numeroDeTarjeta;
         private Date fechaVencimiento;
         private int codigoSeguridad;
-        private float monto;
+        private Double monto;
         private Moneda moneda;
         private Date fechaDePago;
 
@@ -52,7 +52,7 @@ public class DtoTarjetaDebito extends DtoMedioPago{
         public Builder numero(String val) { numeroDeTarjeta = val; return this; }
         public Builder vencimiento(Date val) { fechaVencimiento = val; return this; }
         public Builder seguridad(int val) { codigoSeguridad = val; return this; }
-        public Builder monto(float val) { monto = val; return this; }
+        public Builder monto(Double val) { monto = val; return this; }
         public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder fechaPago(Date val) { fechaDePago = val; return this; }
 

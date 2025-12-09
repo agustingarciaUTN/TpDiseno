@@ -2,10 +2,14 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "efectivo")
+@Getter @Setter
 public class Efectivo {
 
     @Id
@@ -14,7 +18,7 @@ public class Efectivo {
     private Integer idEfectivo;
 
     @Column(name = "monto")
-    private Double monto;
+    private float monto;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "moneda")
@@ -22,38 +26,34 @@ public class Efectivo {
 
     @Column(name = "fecha_de_pago")
     @Temporal(TemporalType.DATE)
-    private Date fechaPago;
+    private Date fechaDePago;
 
     public Efectivo() {}
 
     // Builder
     public static class Builder {
-        private Double monto;
+        private float monto;
         private Moneda moneda;
-        private Date fechaPago;
+        private Date fechaDePago;
+        private Integer idEfectivo;
 
-        public Builder(Double monto, Moneda moneda) {
+        public Builder(float monto, Moneda moneda) {
             this.monto = monto;
             this.moneda = moneda;
         }
-        public Builder fecha(Date val) { fechaPago = val; return this; }
+
+
+        public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
+
+        public Builder idEfectivo(Integer val) { idEfectivo = val; return this; }
 
         public Efectivo build() {
             Efectivo e = new Efectivo();
             e.setMonto(monto);
             e.setMoneda(moneda);
-            e.setFechaPago(fechaPago);
+            e.setFechaDePago(fechaDePago);
+            e.setIdEfectivo(idEfectivo);
             return e;
         }
     }
-
-    // Getters y Setters
-    public Integer getIdEfectivo() { return idEfectivo; }
-    public void setIdEfectivo(Integer idEfectivo) { this.idEfectivo = idEfectivo; }
-    public Double getMonto() { return monto; }
-    public void setMonto(Double monto) { this.monto = monto; }
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-    public Date getFechaPago() { return fechaPago; }
-    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
 }

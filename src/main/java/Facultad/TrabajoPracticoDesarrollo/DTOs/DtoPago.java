@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import lombok.Data;
 
@@ -14,7 +15,7 @@ public class DtoPago {
     private double montoTotal;
     private double cotizacion;
     private Date fechaPago;
-    private int idFactura;
+    private Factura Factura;
 
     // Lista de IDs de los medios de pago asociados (para no arrastrar objetos complejos aquí)
     private ArrayList<Integer> idsMediosPago;
@@ -26,7 +27,7 @@ public class DtoPago {
         this.montoTotal = builder.montoTotal;
         this.cotizacion = builder.cotizacion;
         this.fechaPago = builder.fechaPago;
-        this.idFactura = builder.idFactura;
+        this.Factura = builder.Factura;
         this.idsMediosPago = builder.idsMediosPago;
     }
 
@@ -37,7 +38,7 @@ public class DtoPago {
         private double montoTotal;
         private double cotizacion;
         private Date fechaPago;
-        private int idFactura;
+        private Factura Factura;
         private ArrayList<Integer> idsMediosPago = new ArrayList<>();
 
         public Builder() {}
@@ -47,7 +48,7 @@ public class DtoPago {
         public Builder montoTotal(double val) { montoTotal = val; return this; }
         public Builder cotizacion(double val) { cotizacion = val; return this; }
         public Builder fechaPago(Date val) { fechaPago = val; return this; }
-        public Builder idFactura(int val) { idFactura = val; return this; }
+        public Builder Factura(Factura val) { Factura = val; return this; }
 
         public Builder idsMediosPago(ArrayList<Integer> val) { idsMediosPago = val; return this; }
         public Builder agregarIdMedioPago(int val) {

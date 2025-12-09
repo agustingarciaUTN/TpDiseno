@@ -10,18 +10,16 @@ import java.util.Date;
 @Data
 public class DtoCheque extends DtoMedioPago {
     // --- GETTERS Y SETTERS ---
-    private int idPago; // ID del MedioPago
     private String numeroCheque;
     private String banco;
     private String plaza;
-    private float monto;
+    private Double monto;
     private Date fechaCobro;
     private Date fechaDePago;
     private Moneda moneda;
 
     // --- CONSTRUCTOR PRIVADO ---
     private DtoCheque(Builder builder) {
-        this.idPago = builder.idPago;
         this.numeroCheque = builder.numeroCheque;
         this.banco = builder.banco;
         this.plaza = builder.plaza;
@@ -33,11 +31,10 @@ public class DtoCheque extends DtoMedioPago {
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
-        private int idPago;
         private String numeroCheque;
         private String banco;
         private String plaza;
-        private float monto;
+        private Double monto;
         private Date fechaCobro;
         private Date fechaDePago;
         private Moneda moneda;
@@ -45,12 +42,11 @@ public class DtoCheque extends DtoMedioPago {
 
         public Builder() {}
 
-        public Builder idPago(int val) { idPago = val; return this; }
         public Builder moneda(Moneda val) {moneda = val; return this;}
         public Builder numeroCheque(String val) { numeroCheque = val; return this; }
         public Builder banco(String val) { banco = val; return this; }
         public Builder plaza(String val) { plaza = val; return this; }
-        public Builder monto(float val) { monto = val; return this; }
+        public Builder monto(Double val) { monto = val; return this; }
         public Builder fechaCobro(Date val) { fechaCobro = val; return this; }
         public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
 

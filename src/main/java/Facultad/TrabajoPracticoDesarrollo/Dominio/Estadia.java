@@ -1,12 +1,16 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "estadia")
+@Getter @Setter
 public class Estadia {
 
     @Id
@@ -70,31 +74,6 @@ public class Estadia {
         // Servicios removidos del constructor
     }
 
-    // --- GETTERS Y SETTERS ---
-    public Integer getIdEstadia() { return idEstadia; }
-    public void setIdEstadia(Integer idEstadia) { this.idEstadia = idEstadia; }
-
-    public Date getFechaCheckIn() { return fechaCheckIn; }
-    public void setFechaCheckIn(Date fechaCheckIn) { this.fechaCheckIn = fechaCheckIn; }
-
-    public Date getFechaCheckOut() { return fechaCheckOut; }
-    public void setFechaCheckOut(Date fechaCheckOut) { this.fechaCheckOut = fechaCheckOut; }
-
-    public Double getValorEstadia() { return valorEstadia; }
-    public void setValorEstadia(Double valorEstadia) { this.valorEstadia = valorEstadia; }
-
-    public Reserva getReserva() { return reserva; }
-    public void setReserva(Reserva reserva) { this.reserva = reserva; }
-
-    public Habitacion getHabitacion() { return habitacion; }
-    public void setHabitacion(Habitacion habitacion) { this.habitacion = habitacion; }
-
-    public List<Huesped> getHuespedes() { return huespedes; }
-    public void setHuespedes(List<Huesped> huespedes) { this.huespedes = huespedes; }
-
-    public List<Factura> getFacturas() { return facturas; }
-    public void setFacturas(List<Factura> facturas) { this.facturas = facturas; }
-
     // --- BUILDER ---
     public static class Builder {
         private Integer idEstadia;
@@ -107,10 +86,15 @@ public class Estadia {
 
         public Builder() {}
 
-        public Builder id(Integer val) { idEstadia = val; return this; }
-        public Builder checkIn(Date val) { fechaCheckIn = val; return this; }
-        public Builder checkOut(Date val) { fechaCheckOut = val; return this; }
-        public Builder valor(Double val) { valorEstadia = val; return this; }
+        public Builder (Date fechaCheckIn) {
+            this.fechaCheckIn = fechaCheckIn;
+        }
+
+
+        public Builder idEstadia(Integer val) { idEstadia = val; return this; }
+        public Builder fechaCheckIn(Date val) { fechaCheckIn = val; return this; }
+        public Builder fechaCheckOut(Date val) { fechaCheckOut = val; return this; }
+        public Builder valorEstadia(Double val) { valorEstadia = val; return this; }
         public Builder reserva(Reserva val) { reserva = val; return this; }
         public Builder habitacion(Habitacion val) { habitacion = val; return this; }
         public Builder agregarHuesped(Huesped val) {

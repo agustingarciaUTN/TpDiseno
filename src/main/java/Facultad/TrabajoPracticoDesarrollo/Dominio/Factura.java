@@ -3,10 +3,14 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 @Entity
 @Table(name = "factura")
+@Getter @Setter
 public class Factura {
 
     @Id
@@ -69,40 +73,6 @@ public class Factura {
         this.responsablePago = builder.responsablePago;
         this.notaDeCredito = builder.notaDeCredito;
     }
-
-    // --- GETTERS Y SETTERS ---
-    public String getNumeroFactura() { return numeroFactura; }
-    public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
-
-    public Date getFechaEmision() { return fechaEmision; }
-    public void setFechaEmision(Date fechaEmision) { this.fechaEmision = fechaEmision; }
-
-    public Date getFechaVencimiento() { return fechaVencimiento; }
-    public void setFechaVencimiento(Date fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
-
-    public EstadoFactura getEstadoFactura() { return estadoFactura; }
-    public void setEstadoFactura(EstadoFactura estadoFactura) { this.estadoFactura = estadoFactura; }
-
-    public TipoFactura getTipoFactura() { return tipoFactura; }
-    public void setTipoFactura(TipoFactura tipoFactura) { this.tipoFactura = tipoFactura; }
-
-    public Double getImporteTotal() { return importeTotal; }
-    public void setImporteTotal(Double importeTotal) { this.importeTotal = importeTotal; }
-
-    public Double getImporteNeto() { return importeNeto; }
-    public void setImporteNeto(Double importeNeto) { this.importeNeto = importeNeto; }
-
-    public Double getIva() { return iva; }
-    public void setIva(Double iva) { this.iva = iva; }
-
-    public Estadia getEstadia() { return estadia; }
-    public void setEstadia(Estadia estadia) { this.estadia = estadia; }
-
-    public ResponsablePago getResponsablePago() { return responsablePago; }
-    public void setResponsablePago(ResponsablePago responsablePago) { this.responsablePago = responsablePago; }
-
-    public NotaDeCredito getNotaDeCredito() { return notaDeCredito; }
-    public void setNotaDeCredito(NotaDeCredito notaDeCredito) { this.notaDeCredito = notaDeCredito; }
 
     // --- BUILDER ---
     public static class Builder {

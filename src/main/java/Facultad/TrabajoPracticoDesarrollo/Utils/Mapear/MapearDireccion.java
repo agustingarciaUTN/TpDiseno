@@ -9,7 +9,7 @@ public class MapearDireccion  {
     public static Direccion mapearDtoAEntidad(DtoDireccion dto) {
         if (dto == null) return null;
         return new Direccion.Builder()
-                .id(dto.getId())
+                .id(dto.getIdDireccion())
                 .calle(dto.getCalle())
                 .numero((dto.getNumero()))
                 .departamento(dto.getDepartamento())

@@ -2,12 +2,16 @@ package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "pago")
+@Getter @Setter
 public class Pago {
 
     @Id
@@ -70,28 +74,6 @@ public class Pago {
         medio.setPago(null);
     }
 
-    // --- GETTERS Y SETTERS ---
-    public Integer getIdPago() { return idPago; }
-    public void setIdPago(Integer idPago) { this.idPago = idPago; }
-
-    public Double getMontoTotal() { return montoTotal; }
-    public void setMontoTotal(Double montoTotal) { this.montoTotal = montoTotal; }
-
-    public Double getCotizacion() { return cotizacion; }
-    public void setCotizacion(Double cotizacion) { this.cotizacion = cotizacion; }
-
-    public Date getFechaPago() { return fechaPago; }
-    public void setFechaPago(Date fechaPago) { this.fechaPago = fechaPago; }
-
-    public Moneda getMoneda() { return moneda; }
-    public void setMoneda(Moneda moneda) { this.moneda = moneda; }
-
-    public Factura getFactura() { return factura; }
-    public void setFactura(Factura factura) { this.factura = factura; }
-
-    public List<MedioPago> getMediosPago() { return mediosPago; }
-    public void setMediosPago(List<MedioPago> mediosPago) { this.mediosPago = mediosPago; }
-
     // --- BUILDER ---
     public static class Builder {
         private Integer idPago;
@@ -103,6 +85,13 @@ public class Pago {
         private List<MedioPago> mediosPago = new ArrayList<>();
 
         public Builder() {}
+
+        public Builder(Moneda moneda, double montoTotal, Date fechaPago, Factura facturaRef) {
+            this.moneda = moneda;
+            this.montoTotal = montoTotal;
+            this.fechaPago = fechaPago;
+            this.factura = facturaRef;
+        }
 
         public Builder id(Integer val) { idPago = val; return this; }
         public Builder monto(Double val) { montoTotal = val; return this; }
@@ -120,23 +109,24 @@ public class Pago {
         public Pago build() {
             return new Pago(this);
         }
-    }
 
-
-    public Pago build() {
-            if (montoTotal < 0) {
-                throw new IllegalArgumentException("El monto total no puede ser negativo.");
-            }
-            if (moneda == null) {
-                throw new IllegalArgumentException("La moneda es obligatoria.");
-            }
-            if (fechaPago == null) {
-                throw new IllegalArgumentException("La fecha de pago es obligatoria.");
-            }
-            if (factura == null) {
-                throw new IllegalArgumentException("Debe existir una factura asociada.");
-            }
-            return new Pago(this);
     }
+    //creería que estas validaciones se hacen en el dto, si llegan hasta acá es porque están bien
+   /* public Pago build() {
+        if (montoTotal < 0) {
+            throw new IllegalArgumentException("El monto total no puede ser negativo.");
+        }
+        if (moneda == null) {
+            throw new IllegalArgumentException("La moneda es obligatoria.");
+        }
+        if (fechaPago == null) {
+            throw new IllegalArgumentException("La fecha de pago es obligatoria.");
+        }
+        if (factura == null) {
+            throw new IllegalArgumentException("Debe existir una factura asociada.");
+        }
+        return new Pago(this);
+    }  */
+
 }
 

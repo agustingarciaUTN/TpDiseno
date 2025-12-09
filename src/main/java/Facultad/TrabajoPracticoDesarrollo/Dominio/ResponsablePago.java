@@ -1,9 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "responsable_pago")
+@Getter @Setter
 @Inheritance(strategy = InheritanceType.JOINED) // Estrategia: Una tabla por clase
 public abstract class ResponsablePago {
 
@@ -31,13 +34,4 @@ public abstract class ResponsablePago {
         this.direccion = direccion;
     }
 
-    // Getters y Setters
-    public Integer getIdResponsablePago() { return idResponsable; }
-    public void setIdResponsablePago(Integer idResponsable) { this.idResponsable = idResponsable; }
-
-    public String getTipoResponsable() { return tipoResponsable; }
-    public void setTipoResponsable(String tipoResponsable) { this.tipoResponsable = tipoResponsable; }
-
-    public Direccion getDireccion() { return direccion; }
-    public void setDireccion(Direccion direccion) { this.direccion = direccion; }
 }

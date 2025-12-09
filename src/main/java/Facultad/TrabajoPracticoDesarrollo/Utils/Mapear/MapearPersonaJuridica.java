@@ -14,7 +14,7 @@ public class MapearPersonaJuridica  {
                 MapearDireccion.mapearDtoAEntidad(dtoPersonaJuridica.getDireccion()) // Mantenemos ID dirección
         )
                 .idResponsablePago(dtoPersonaJuridica.getIdResponsablePago())
-                .telefono(dtoPersonaJuridica.getTelefono());
+                .telefonos(dtoPersonaJuridica.getTelefono());
 
 
         return builder.build();
@@ -23,10 +23,10 @@ public class MapearPersonaJuridica  {
     public static DtoPersonaJuridica mapearEntidadADto(PersonaJuridica personaJuridica) {
         if (personaJuridica == null) return null;
         DtoPersonaJuridica.Builder builder = new DtoPersonaJuridica.Builder()
-                .id(personaJuridica.getIdResponsablePago())
+            //    .id(personaJuridica.getIdResponsablePago())
                 .razonSocial(personaJuridica.getRazonSocial())
                 .cuit(personaJuridica.getCuit())
-                .telefono(personaJuridica.getTelefono());
+                .telefono(personaJuridica.getTelefonos());
                 MapearDireccion.mapearEntidadADto((personaJuridica.getDireccion()));
 
 

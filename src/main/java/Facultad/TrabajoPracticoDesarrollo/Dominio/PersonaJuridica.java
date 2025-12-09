@@ -1,11 +1,15 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "persona_juridica")
+@Getter @Setter
 @PrimaryKeyJoinColumn(name = "id_responsable")
 public class PersonaJuridica extends ResponsablePago {
 
@@ -29,28 +33,30 @@ public class PersonaJuridica extends ResponsablePago {
         this.setTipoResponsable("J");
     }
 
-    // Getters y Setters
-    public String getRazonSocial() { return razonSocial; }
-    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
-
-    public String getCuit() { return cuit; }
-    public void setCuit(String cuit) { this.cuit = cuit; }
-
-    public List<Long> getTelefonos() { return telefonos; }
-    public void setTelefonos(List<Long> telefonos) { this.telefonos = telefonos; }
-
     // Builder
     public static class Builder {
         private Direccion direccion;
         private String razonSocial;
         private String cuit;
         private List<Long> telefonos = new ArrayList<>();
+        private int idResponsablePago;
+
+
 
         public Builder() {}
+
+        public Builder(String razonSocial, String cuit, Direccion direccion) {
+            this.razonSocial =razonSocial;
+            this.cuit = cuit;
+            this.direccion = direccion;
+        }
+
         public Builder direccion(Direccion val) { direccion = val; return this; }
         public Builder razonSocial(String val) { razonSocial = val; return this; }
         public Builder cuit(String val) { cuit = val; return this; }
         public Builder telefonos(List<Long> val) { telefonos = val; return this; }
+
+        public Builder idResponsablePago (int val) { idResponsablePago = val; return this; }
 
         public PersonaJuridica build() {
             PersonaJuridica pj = new PersonaJuridica();
