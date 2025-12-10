@@ -65,3 +65,43 @@ export interface DtoDireccion {
   provincia: string;
   pais: string;
 }
+
+// Enums iguales a Java
+export type Moneda = 'PESOS_ARGENTINOS' | 'DOLARES' | 'EUROS' | 'REALES' | 'PESOS_URUGUAYOS';
+export type TipoMedioPago = 'EFECTIVO' | 'TARJETA_DEBITO' | 'TARJETA_CREDITO' | 'CHEQUE';
+
+// Clases Padre/Hijo para Medios de Pago
+export interface MedioPago {
+    tipoMedio: TipoMedioPago;
+    monto: number;
+    moneda: Moneda;
+    fechaDePago: string;
+}
+
+export interface Efectivo extends MedioPago {
+    tipoMedio: 'EFECTIVO';
+}
+
+export interface TarjetaDebito extends MedioPago {
+    tipoMedio: 'TARJETA_DEBITO';
+    banco: string;
+    numeroDeTarjeta: string;
+}
+
+// DTO Principal de Pago
+export interface DtoPago {
+    idPago: number;
+    montoTotal: number;
+    idFactura: number;
+    mediosPago: MedioPago[];
+}
+
+
+// Interface del Formulario de Búsqueda
+export interface BuscarHuespedForm {
+    apellido: string;
+    nombres: string;
+    tipoDocumento: TipoDocumento | ""; // Puede estar vacío en el form
+    nroDocumento: string;
+}
+
