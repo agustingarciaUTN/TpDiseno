@@ -21,7 +21,7 @@ public class MapearPersonaFisica  {
         if (personaFisica == null) return null;
 
         DtoPersonaFisica.Builder builder = new DtoPersonaFisica.Builder()
-         //       .id(personaFisica.getIdResponsablePago())
+                .id(personaFisica.getIdResponsable())
                 .huesped(MapearHuesped.mapearEntidadADto(personaFisica.getHuesped()));
 
         return builder.build();

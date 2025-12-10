@@ -14,10 +14,16 @@ public class DtoReserva {
     public static final String REGEX_TELEFONO = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
     public static final String REGEX_HABITACION = "^[0-9]{1,3}$";
 
-    // --- GETTERS Y SETTERS ---
     //ATRIBUTOS
+
+    @NotNull
+    @Positive
     private int idReserva;
+
+    @NotNull
     private EstadoReserva estadoReserva;
+
+    @PastOrPresent
     private Date fechaReserva;
 
     @NotNull(message = "La fecha de ingreso es obligatoria")

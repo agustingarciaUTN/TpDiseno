@@ -2,19 +2,36 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.util.ArrayList;
 
 @Data
 public class DtoHabitacion {
+
+    @NotBlank
     private String numero;
+
+    @NotNull
     private TipoHabitacion tipoHabitacion;
+
+    @NotNull
+    @Positive
     private int capacidad;
 
     // Opcionales
     private EstadoHabitacion estadoHabitacion;
+
+    @Positive
     private float costoPorNoche;
+
+    @JsonIgnore //Nose si va
+    @Valid
     private ArrayList<DtoReserva> dtoReservas = new ArrayList<>();
 
     // --- CONSTRUCTOR PRIVADO ---

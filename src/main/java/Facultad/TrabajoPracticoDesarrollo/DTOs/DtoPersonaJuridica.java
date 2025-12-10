@@ -1,6 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -14,11 +16,24 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class DtoPersonaJuridica extends DtoResponsableDePago {
-    // --- GETTERS Y SETTERS ---
+
+    public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
+
+    @NotNull
+    @Positive
     private int idResponsablePago;
+
+    @NotBlank
+    @Size(min = 2, max = 200)
     private String razonSocial;
+
+    @Pattern(regexp = REGEX_CUIT, message = "El CUIT debe tener 11 dígitos (con o sin guiones)")
     private String cuit;
-    private List<Long> telefono;
+
+    @NotEmpty
+    private List<@NotNull Long> telefono;
+
+    @Valid
     private DtoDireccion dtoDireccion;
 
 

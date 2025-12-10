@@ -23,7 +23,7 @@ public class MapearPersonaJuridica  {
     public static DtoPersonaJuridica mapearEntidadADto(PersonaJuridica personaJuridica) {
         if (personaJuridica == null) return null;
         DtoPersonaJuridica.Builder builder = new DtoPersonaJuridica.Builder()
-            //    .id(personaJuridica.getIdResponsablePago())
+                .id(personaJuridica.getIdResponsable())
                 .razonSocial(personaJuridica.getRazonSocial())
                 .cuit(personaJuridica.getCuit())
                 .telefono(personaJuridica.getTelefonos());

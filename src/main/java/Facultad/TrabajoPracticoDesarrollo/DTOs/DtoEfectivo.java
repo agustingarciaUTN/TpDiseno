@@ -2,6 +2,10 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.util.Date;
@@ -9,10 +13,18 @@ import java.util.Date;
 @Data
 public class DtoEfectivo extends DtoMedioPago {
 
-    // --- GETTERS Y SETTERS ---
+    @NotNull
+    @Positive
     private Integer idEfectivo;  // ID específico de la tabla efectivo
+
+    @NotNull
     private Moneda moneda;
+
+    @NotNull
     private float monto;
+
+    @NotNull
+    @PastOrPresent(message = "La fehca de pago no puede ser futura")
     private Date fechaDePago;
 
     // --- CONSTRUCTOR PRIVADO ---

@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -9,13 +10,29 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class DtoCheque extends DtoMedioPago {
-    // --- GETTERS Y SETTERS ---
+
+    @NotBlank
+    @Size(min = 2, max = 50)
     private String numeroCheque;
+
+    @NotBlank
     private String banco;
+
+    @NotBlank
     private String plaza;
+
+    @NotNull
+    @PositiveOrZero
     private Double monto;
+
+    @NotNull
     private Date fechaCobro;
+
+    @NotNull
+    @PastOrPresent(message = "La fehca de pago no puede ser futura")
     private Date fechaDePago;
+
+    @NotNull
     private Moneda moneda;
 
     // --- CONSTRUCTOR PRIVADO ---

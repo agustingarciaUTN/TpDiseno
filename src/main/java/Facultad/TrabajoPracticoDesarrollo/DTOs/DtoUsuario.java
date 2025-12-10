@@ -1,14 +1,26 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class DtoUsuario {
-    // --- GETTERS Y SETTERS ---
+
+    @NotNull
+    @Positive
     private int idUsuario;
+
+    @NotBlank
+    @Size(min = 2, max = 100)
     private String nombre;
 
     // Dato sensible PLANO (Solo vive en el DTO para el transporte)
+    @JsonIgnore //Nose si va
+    @NotBlank
     private String contrasenia;
 
     // --- CONSTRUCTOR PRIVADO ---

@@ -2,6 +2,8 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 
@@ -9,24 +11,52 @@ import java.util.Date;
 
 @Data
 public class DtoFactura {
-    private int idFactura;
+  //  private int idFactura;
+
+    public static final String REGEX_NUMERO = "^\\d{4}-\\d{8}$";
+
+    @NotBlank
+    @Pattern(regexp = REGEX_NUMERO, message = "El formato debe ser XXXX-XXXXXXXX")
+    @Size(min = 2, max = 20)
     private String numeroFactura;
+
+    @NotNull
+    //@PastOrPresent
     private Date fechaEmision;
+
+    @NotNull
+    @FutureOrPresent
     private Date fechaVencimiento;
+
     private EstadoFactura estadoFactura;
+
+    @NotNull
     private TipoFactura tipoFactura;
+
+    @NotNull
+    @PositiveOrZero
     private double importeTotal;
+
+    @PositiveOrZero
     private double importeNeto;
+
+    @PositiveOrZero
     private double iva;
 
-    // Solo IDs para el DTO
+    @NotNull
+    @Valid
     private DtoEstadia dtoEstadia;
+
+    @NotNull
+    @Valid
     private DtoResponsableDePago dtoResponsable;
-    private DtoNotaDeCredito dtoNotaDeCredito; // Integer porque permite null
+
+    @Valid
+    private DtoNotaDeCredito dtoNotaDeCredito;
 
     // --- CONSTRUCTOR PRIVADO ---
     private DtoFactura(Builder builder) {
-        this.idFactura = builder.idFactura;
+    //    this.idFactura = builder.idFactura;
         this.numeroFactura = builder.numeroFactura;
         this.fechaEmision = builder.fechaEmision;
         this.fechaVencimiento = builder.fechaVencimiento;
@@ -51,7 +81,7 @@ public class DtoFactura {
 
     // --- CLASE STATIC BUILDER ---
     public static class Builder {
-        private int idFactura;
+   //     private int idFactura;
         private String numeroFactura;
         private Date fechaEmision;
         private Date fechaVencimiento;
@@ -66,7 +96,7 @@ public class DtoFactura {
 
         public Builder() {}
 
-        public Builder idFactura(int val) { idFactura = val; return this; }
+    //    public Builder idFactura(int val) { idFactura = val; return this; }
         public Builder numeroFactura(String val) { numeroFactura = val; return this; }
         public Builder fechaEmision(Date val) { fechaEmision = val; return this; }
         public Builder fechaVencimiento(Date val) { fechaVencimiento = val; return this; }
@@ -76,9 +106,9 @@ public class DtoFactura {
         public Builder importeNeto(double val) { importeNeto = val; return this; }
         public Builder iva(double val) { iva = val; return this; }
 
-        public Builder idEstadia(DtoEstadia val) { dtoEstadia = val; return this; }
-        public Builder idResponsable(DtoResponsableDePago val) { dtoResponsable = val; return this; }
-        public Builder idNotaDeCredito(DtoNotaDeCredito val) { dtoNotaDeCredito = val; return this; }
+        public Builder dtoEstadia(DtoEstadia val) { dtoEstadia = val; return this; }
+        public Builder dtoResponsable(DtoResponsableDePago val) { dtoResponsable = val; return this; }
+        public Builder dtoNotaDeCredito(DtoNotaDeCredito val) { dtoNotaDeCredito = val; return this; }
 
         public DtoFactura build() {
             return new DtoFactura(this);

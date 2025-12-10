@@ -1,13 +1,25 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoCama;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
 public class DtoCama {
+
+    @NotNull
+    @Positive
     private int idCama;
+
     private TipoCama tipoCama;
+
+    @NotNull
     private String idHabitacion;
+
+    @NotNull
+    @Valid
     private DtoHabitacion habitacion;
 
     // --- CONSTRUCTOR PRIVADO (Builder) ---

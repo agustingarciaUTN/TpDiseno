@@ -1,18 +1,34 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoServicio;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
 public class DtoServiciosAdicionales {
-    // --- GETTERS Y SETTERS ---
+
+    @NotNull
+    @Positive
     private int idServicio;
+
+
     private TipoServicio tipoServicio;
+
+
     private String descripcionServicio;
+
+    @NotNull
+    @Positive
     private double valorServicio;
+
+    @PastOrPresent
     private Date fechaConsumo;
+
+    @NotNull
     private int idEstadia; // Solo ID para el DTO
 
     // --- CONSTRUCTOR PRIVADO ---

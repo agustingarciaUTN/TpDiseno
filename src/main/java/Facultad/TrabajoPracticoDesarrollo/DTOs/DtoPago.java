@@ -2,6 +2,11 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -9,12 +14,27 @@ import java.util.Date;
 
 @Data
 public class DtoPago {
-    // --- GETTERS Y SETTERS ---
+
+    @NotNull
+    @Positive
     private int idPago;
+
+    @NotNull
     private Moneda moneda;
+
+    @NotNull
+    @PositiveOrZero
     private double montoTotal;
+
+    @NotNull
     private double cotizacion;
+
+    @NotNull
+    @PastOrPresent(message = "La fehca de pago no puede ser futura")
     private Date fechaPago;
+
+    @NotNull
+    @Valid
     private Factura Factura;
 
     // Lista de IDs de los medios de pago asociados (para no arrastrar objetos complejos aquí)

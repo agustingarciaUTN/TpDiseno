@@ -1,5 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,9 +16,14 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class DtoPersonaFisica extends DtoResponsableDePago {
-    // --- GETTERS Y SETTERS ---
-    @Getter
+
+    @Getter //Nose porque esta esto aca
+
+    @NotNull
+    @Positive
     private int idResponsablePago;
+
+    @Valid
     private DtoHuesped dtoHuesped;
 
     // --- CONSTRUCTOR PRIVADO ---

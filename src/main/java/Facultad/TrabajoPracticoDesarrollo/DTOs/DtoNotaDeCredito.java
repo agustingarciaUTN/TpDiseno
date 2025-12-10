@@ -1,12 +1,20 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import java.util.ArrayList;
 
 @Data
 public class DtoNotaDeCredito {
-    // --- GETTERS Y SETTERS ---
+
+    @NotNull
+    @Positive
     private Integer numeroNotaCredito; // Este es el ID ahora
+
+    @NotNull
+    @PositiveOrZero
     private double montoDevolucion;
 
     // Lista de IDs de facturas asociadas
