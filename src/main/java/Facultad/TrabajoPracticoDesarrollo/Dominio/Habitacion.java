@@ -61,16 +61,16 @@ public class Habitacion {
         private Integer capacidad;
         private EstadoHabitacion estadoHabitacion;
         private float costoPorNoche;
-        private List<Reserva> reservas = new ArrayList<>();
+        private ArrayList<Reserva> reservas = new ArrayList<>();
 
-        public Builder(String numero, TipoHabitacion tipo, Integer capacidad) {
-            this.numero = numero;
-            this.tipoHabitacion = tipo;
-            this.capacidad = capacidad;
-        }
+        public Builder() {}
 
+        public Builder numero(String val) { numero = val; return this;}
+        public Builder tipoHabitacion(TipoHabitacion val) { tipoHabitacion = val; return this; }
+        public Builder capacidad(Integer val) { capacidad = val; return this;}
         public Builder estado(EstadoHabitacion val) { estadoHabitacion = val; return this; }
         public Builder costo(float val) { costoPorNoche = val; return this; }
+        public Builder reservas(ArrayList<Reserva> val) { reservas = val; return this; }
 
         public Habitacion build() { return new Habitacion(this); }
     }

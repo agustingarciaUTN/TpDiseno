@@ -33,8 +33,6 @@ public class NotaDeCredito {
 
         public Builder() {}
 
-        public Builder (Integer numeroNotaCredito, double montoDevolucion) {}
-
         // El ID puede ser nulo al crear si es autoincremental
         public Builder numero(Integer val) { numeroNotaCredito = val; return this; }
         public Builder monto(Double val) { montoDevolucion = val; return this; }

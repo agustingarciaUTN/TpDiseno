@@ -34,17 +34,10 @@ public class TarjetaCredito extends Tarjeta {
         private Date fechaVencimiento;
         private Integer codigoSeguridad;
 
-        public Builder(String nro, String banco, Double monto) {
-            this.nro = nro; this.banco = banco; this.monto = monto;
-        }
+        public Builder() {}
 
-        public Builder(RedDePago redDePago, String numeroDeTarjeta, Double monto, int cuotasCantidad) {
-            this.red = redDePago;
-            this.nro = numeroDeTarjeta;
-            this.monto = monto;
-            this.cuotas = cuotasCantidad;
-        }
-
+        public Builder nro(String val) { nro = val; return this;}
+        public Builder monto(Double val) { monto = val; return this; }
         public Builder cuotas(Integer val) { cuotas = val; return this; }
         public Builder red(RedDePago val) { red = val; return this; }
         public Builder moneda(Moneda val) { moneda = val; return this; }

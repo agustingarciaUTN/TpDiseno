@@ -18,12 +18,11 @@ public class MapearHuesped  {
     public static Huesped mapearDtoAEntidad(DtoHuesped dto) {
         if (dto == null) return null;
 
-        return new Huesped.Builder(
-                dto.getTipoDocumento(),
-                dto.getApellido(),
-                dto.getNombres(),
-                dto.getNroDocumento()
-        )
+        return new Huesped.Builder()
+                .tipoDocumento(dto.getTipoDocumento())
+                .nroDocumento(dto.getNroDocumento())
+                .nombres(dto.getNombres())
+                .apellido(dto.getApellido())
                 .telefonos(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
                 .cuit(dto.getCuit())
                 // Manejo seguro de Enum y conversión de String
@@ -61,12 +60,11 @@ public class MapearHuesped  {
     public static Huesped mapearDtoAEntidadSinDireccion(DtoHuesped dto, Direccion direccion) {
         if (dto == null) return null;
 
-        return new Huesped.Builder(
-                dto.getTipoDocumento(),
-                dto.getApellido(),
-                dto.getNombres(),
-                dto.getNroDocumento()
-        )
+        return new Huesped.Builder()
+                .tipoDocumento(dto.getTipoDocumento())
+                .nroDocumento(dto.getNroDocumento())
+                .nombres(dto.getNombres())
+                .apellido(dto.getApellido())
                 .telefonos(dto.getTelefono()) // Si es lista en tu dominio, ajusta aquí
                 .cuit(dto.getCuit())
                 // Manejo seguro de Enum y conversión de String

@@ -32,15 +32,14 @@ public class PersonaFisica extends ResponsablePago {
         private Huesped huesped;
         private int idResponsablePago;
 
-        public Builder(Huesped huesped) {}
+        public Builder() {}
         public Builder direccion(Direccion val) { direccion = val; return this; }
         public Builder huesped(Huesped val) { huesped = val; return this; }
-
         public Builder idResponsablePago (int val) { idResponsablePago = val; return this; }
 
         public PersonaFisica build() {
             PersonaFisica pf = new PersonaFisica();
-       //     pf.setIdResponsable(idResponsablePago);
+            pf.setIdResponsable(idResponsablePago);
             pf.setDireccion(direccion);
             pf.setHuesped(huesped);
             return pf;

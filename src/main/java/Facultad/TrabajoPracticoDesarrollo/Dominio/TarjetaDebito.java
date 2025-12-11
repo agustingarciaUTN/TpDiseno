@@ -27,9 +27,10 @@ public class TarjetaDebito extends Tarjeta {
         private Date fechaVencimiento;
         private Integer codigoSeguridad;
 
-        public Builder(RedDePago red, String nro, Double monto) {
-            this.red = red; this.nro = nro; this.monto = monto;
-        }
+        public Builder() {}
+
+        public Builder nro(String val) { nro = val; return this; }
+        public Builder monto(Double val) { monto = val; return this; }
         public Builder red(RedDePago val) { red = val; return this; }
         public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder fecha(Date val) { fechaPago = val; return this; }

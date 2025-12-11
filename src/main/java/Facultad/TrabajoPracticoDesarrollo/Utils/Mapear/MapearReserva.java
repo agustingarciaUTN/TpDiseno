@@ -4,6 +4,9 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoReserva;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MapearReserva {
 
 
@@ -13,16 +16,19 @@ public class MapearReserva {
         // Creamos una Habitación "referencia" solo con el ID para la Entidad
         Habitacion habRef = null;
         if (dto.getIdHabitacion() != null) {
-            habRef = new Habitacion.Builder(dto.getIdHabitacion(), null, 1).build();
+            habRef = new Habitacion.Builder().build();
         }
 
-        return new Reserva.Builder(dto.getFechaDesde(), dto.getFechaHasta(), habRef)
+        return new Reserva.Builder()
                 .id(dto.getIdReserva())
                 .estado(dto.getEstadoReserva())
                 .fechaReserva(dto.getFechaReserva())
+                .fechaDesde(dto.getFechaDesde())
+                .fechaHasta(dto.getFechaHasta())
                 .nombreResponsable(dto.getNombreHuespedResponsable())
                 .apellidoResponsable(dto.getApellidoHuespedResponsable())
                 .telefonoResponsable(dto.getTelefonoHuespedResponsable())
+                .habitacion(habRef)
                 .build();
     }
 
@@ -44,5 +50,17 @@ public class MapearReserva {
                 .telefonoResponsable(entidad.getTelefonoHuespedResponsable())
                 .idHabitacion(idHab)
                 .build();
+    }
+
+    public static ArrayList<DtoReserva> mapearListaReservas (List<Reserva> lista) {
+
+        ArrayList<DtoReserva> listaDto = new ArrayList<>();
+
+        for (Reserva r : lista) {
+            listaDto.add(MapearReserva.mapearEntidadADto(r));
+        }
+
+        return listaDto;
+
     }
 }
