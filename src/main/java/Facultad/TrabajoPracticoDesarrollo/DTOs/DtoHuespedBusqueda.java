@@ -95,7 +95,6 @@ public class DtoHuespedBusqueda {
         }
     }
 
-    // Helper para saber si el usuario dio Enter a todo
     public boolean estanVacios() {
         boolean apVacio = (apellido == null || apellido.trim().isEmpty());
         boolean nomVacio = (nombres == null || nombres.trim().isEmpty());
