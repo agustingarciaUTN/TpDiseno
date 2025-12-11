@@ -7,12 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Hotel, User, Lock, AlertCircle } from "lucide-react"
-
-// Mock credentials
-const VALID_CREDENTIALS = {
-    username: "admin",
-    password: "1234"
-}
+import { autenticarUsuario } from "@/lib/api"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -21,28 +16,31 @@ export default function LoginPage() {
     const [error, setError] = useState("")
     const [isLoading, setIsLoading] = useState(false)
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setError("")
         setIsLoading(true)
 
-        // Simulate login validation
-        setTimeout(() => {
-            if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
-                // Store auth state
-                localStorage.setItem("isAuthenticated", "true")
-                localStorage.setItem("username", username)
-                
-                // Redirect to main menu
-                router.push("/")
-            } else {
-                // Show error and clear fields (Flujo Alternativo 3.A)
-                setError("El usuario o la contraseña no son válidos")
-                setUsername("")
-                setPassword("")
-                setIsLoading(false)
-            }
-        }, 500)
+        try {
+            // CU1: Autenticar Usuario
+            const response = await autenticarUsuario({
+                nombre: username,
+                contrasenia: password
+            })
+            
+            // Login exitoso
+            localStorage.setItem("isAuthenticated", "true")
+            localStorage.setItem("username", username)
+            
+            // Redirect to main menu
+            router.push("/")
+        } catch (err: any) {
+            // Show error and clear fields (Flujo Alternativo 3.A)
+            setError(err.message || "El usuario o la contraseña no son válidos")
+            setUsername("")
+            setPassword("")
+            setIsLoading(false)
+        }
     }
 
     return (

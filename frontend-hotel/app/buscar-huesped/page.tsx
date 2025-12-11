@@ -1,5 +1,5 @@
 "use client"
-
+import { buscarHuespedes } from "@/lib/api"
 import Link from "next/link"
 import { useState, type FormEvent, type ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
@@ -53,6 +53,7 @@ export default function BuscarHuesped() {
     const { setSelectedGuest } = useGuest()
     const [form, setForm] = useState<BuscarHuespedForm>(INITIAL_FORM)
     const [errors, setErrors] = useState<Partial<Record<keyof BuscarHuespedForm, string>>>({})
+    const [error, setError] = useState<string>("")
     const [isSearching, setIsSearching] = useState(false)
     const [searchPerformed, setSearchPerformed] = useState(false)
 
@@ -100,10 +101,11 @@ export default function BuscarHuesped() {
     }
 
     const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault()
-        setResultados(null)
-        setHuespedSeleccionado(null)
-        setSearchPerformed(false)
+            e.preventDefault()
+            setResultados(null)
+            setHuespedSeleccionado(null)
+            setSearchPerformed(false)
+            setError("") // Limpiar errores previos
 
         const newErrors: Partial<Record<keyof BuscarHuespedForm, string>> = {}
         ;(Object.keys(form) as Array<keyof BuscarHuespedForm>).forEach((key) => {
@@ -112,61 +114,52 @@ export default function BuscarHuesped() {
         })
 
         if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors)
-            return
-        }
+                    setErrors(newErrors)
+                    return
+                }
 
-        setIsSearching(true)
+                setIsSearching(true)
 
-        // Simulate API call with mock data
-        setTimeout(() => {
-            const mockResults: Guest[] = [
-                {
-                    id: "1",
-                    tipoDocumento: form.tipoDocumento || "DNI",
-                    numeroDocumento: form.nroDocumento || "12345678",
-                    apellido: "GARCÍA",
-                    nombres: "JUAN CARLOS",
-                    cuit: "20-12345678-9",
-                    posicionIVA: "Consumidor final",
-                    fechaNacimiento: "1985-03-15",
-                    direccion: "Av. Siempre Viva 742, Springfield, IL, 62701, USA",
-                    telefono: "+54 9 11 1234-5678",
-                    email: "juan.garcia@example.com",
-                    ocupacion: "Ingeniero",
-                    nacionalidad: "Argentina",
-                },
-                {
-                    id: "2",
-                    tipoDocumento: form.tipoDocumento || "DNI",
-                    numeroDocumento: "23456789",
-                    apellido: "GONZÁLEZ",
-                    nombres: "MARÍA LAURA",
-                    cuit: "27-23456789-4",
-                    posicionIVA: "Responsable inscripto",
-                    fechaNacimiento: "1990-07-22",
-                    direccion: "Calle Falsa 123, Ciudad, Provincia, CP 1234, País",
-                    telefono: "+54 9 11 9876-5432",
-                    email: "maria.gonzalez@example.com",
-                    ocupacion: "Contadora",
-                    nacionalidad: "Argentina",
-                },
-            ]
+                try {
+                    // LLAMADA REAL AL BACKEND
+                    // Mapeamos los nombres de campos del formulario a lo que espera el DTO de búsqueda
+                    const criterios = {
+                        apellido: form.apellido,
+                        nombres: form.nombres,
+                        tipoDocumento: form.tipoDocumento || null, // Enviar null si está vacío
+                        nroDocumento: form.nroDocumento
+                    }
 
-            // Filter results based on search criteria
-            const filtered = mockResults.filter((h) => {
-                if (form.apellido && !h.apellido.startsWith(form.apellido.toUpperCase())) return false
-                if (form.nombres && !h.nombres.startsWith(form.nombres.toUpperCase())) return false
-                if (form.tipoDocumento && h.tipoDocumento !== form.tipoDocumento) return false
-                if (form.nroDocumento && h.numeroDocumento !== form.nroDocumento) return false
-                return true
-            })
+                    // @ts-ignore - Ignoramos tipos estrictos temporalmente para facilitar la integración
+                    const data = await buscarHuespedes(criterios)
 
-            setResultados(filtered)
-            setSearchPerformed(true)
-            setIsSearching(false)
-        }, 800)
-    }
+                    // Adaptar respuesta del backend al formato que espera el componente (si es necesario)
+                    // Tu DtoHuesped backend devuelve "nroDocumento", tu tipo Guest usa "numeroDocumento"
+                    const invitadosMapeados = data.map((h: any) => ({
+                        id: h.nroDocumento, // Usamos DNI como ID temporal o h.idHuesped si existe
+                        tipoDocumento: h.tipoDocumento,
+                        numeroDocumento: h.nroDocumento,
+                        apellido: h.apellido,
+                        nombres: h.nombres,
+                        cuit: h.cuit,
+                        posicionIVA: h.posicionIva,
+                        fechaNacimiento: h.fechaNacimiento,
+                        direccion: h.dtoDireccion ? `${h.dtoDireccion.calle} ${h.dtoDireccion.numero}` : "",
+                        telefono: h.telefono ? h.telefono[0] : "",
+                        email: h.email ? h.email[0] : "",
+                        ocupacion: h.ocupacion ? h.ocupacion[0] : "",
+                        nacionalidad: h.nacionalidad
+                    }))
+
+                    setResultados(invitadosMapeados)
+                    setSearchPerformed(true)
+                } catch (err: any) {
+                    console.error(err)
+                    setError("Error al conectar con el servidor: " + err.message)
+                } finally {
+                    setIsSearching(false)
+                }
+            }
 
     const handleDarDeAlta = () => {
         setSelectedGuest(null)

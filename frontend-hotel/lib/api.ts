@@ -1,19 +1,29 @@
-import { DtoHuesped } from "./types"
+import { 
+  DtoHuesped, 
+  BuscarHuespedForm, 
+  DtoUsuario,
+  DtoHabitacion,
+  DtoReserva,
+  DtoEstadia,
+  DtoPago
+} from "./types"
 
+// Asegúrate de que esta URL sea correcta. Si usas Docker o red local, ajusta la IP.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
-interface ApiFetchOptions {
-  method?: "GET" | "POST" | "PUT" | "DELETE"
-  body?: any
-  headers?: Record<string, string>
+// Interfaz genérica para manejo de errores
+interface ApiError {
+  message: string;
+  [key: string]: any;
 }
 
-/**
- * Wrapper para hacer peticiones fetch al backend Spring Boot
- * Maneja automáticamente JSON, errores y headers
- */
+// Interfaz personalizada para opciones de fetch
+interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
+  body?: any;
+}
+
 export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", body, headers = {} } = options
+  const { method = "GET", body, headers = {}, ...rest } = options
 
   const config: RequestInit = {
     method,
@@ -21,77 +31,129 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
       "Content-Type": "application/json",
       ...headers,
     },
+    ...rest,
   }
 
   if (body && method !== "GET") {
     config.body = JSON.stringify(body)
   }
 
-  const url = `${API_BASE_URL}${endpoint}`
-
   try {
-    const response = await fetch(url, config)
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Error en la solicitud" }))
-      throw new Error(errorData.message || `Error ${response.status}`)
+      // Intentar leer el error del backend (ej: validaciones de Spring Boot)
+      const errorData = await response.json().catch(() => null)
+      const errorMessage = errorData?.message || errorData ? JSON.stringify(errorData) : `Error HTTP ${response.status}`;
+      throw new Error(errorMessage)
     }
 
-    return await response.json()
+    // Si la respuesta es 204 No Content o vacía
+    if (response.status === 204) return {} as T;
+
+    // Verificar si hay contenido antes de parsear JSON
+    const text = await response.text();
+    return text ? JSON.parse(text) : {} as T;
+
   } catch (error: any) {
     console.error(`API Error [${method} ${endpoint}]:`, error)
     throw error
   }
 }
 
-// ============================================
-// FUNCIONES ESPECÍFICAS PARA HUÉSPEDES
-// ============================================
+// --- CU1: AUTENTICAR USUARIO ---
 
-/**
- * Busca huéspedes según criterios
- */
-export async function buscarHuespedes(criterios: Partial<DtoHuesped>): Promise<DtoHuesped[]> {
+export async function autenticarUsuario(credenciales: DtoUsuario): Promise<string> {
+  return apiFetch<string>("/usuarios/login", {
+    method: "POST",
+    body: credenciales,
+  })
+}
+
+// --- CU2: BUSCAR HUÉSPED ---
+
+export async function buscarHuespedes(criterios: Partial<BuscarHuespedForm>): Promise<DtoHuesped[]> {
   return apiFetch<DtoHuesped[]>("/huespedes/buscar", {
     method: "POST",
     body: criterios,
   })
 }
 
-/**
- * Verifica si existe un huésped con ese tipo y número de documento
- */
+// --- CU9: ALTA HUÉSPED ---
+
 export async function verificarExistenciaHuesped(
-  tipo: string,
-  nro: string
+  tipo: string, 
+  nroDocumento: string
 ): Promise<DtoHuesped | null> {
-  return apiFetch<DtoHuesped | null>(`/huespedes/existe/${tipo}/${nro}`)
+  return apiFetch<DtoHuesped | null>(`/huespedes/existe/${tipo}/${nroDocumento}`)
 }
 
-/**
- * Crea un nuevo huésped
- */
-export async function crearHuesped(huesped: DtoHuesped): Promise<DtoHuesped> {
-  return apiFetch<DtoHuesped>("/huespedes", {
+export async function crearHuesped(huesped: any): Promise<string> {
+  return apiFetch<string>("/huespedes/crear", {
     method: "POST",
     body: huesped,
   })
 }
 
-/**
- * Obtiene un huésped por ID
- */
-export async function obtenerHuespedPorId(id: number): Promise<DtoHuesped> {
-  return apiFetch<DtoHuesped>(`/huespedes/${id}`)
+export async function modificarHuesped(
+  tipo: string, 
+  nroDocumento: string, 
+  huesped: any
+): Promise<string> {
+  return apiFetch<string>(`/huespedes/modificar/${tipo}/${nroDocumento}`, {
+    method: "PUT",
+    body: huesped,
+  })
 }
 
-// ============================================
-// FUNCIONES PARA OTROS RECURSOS
-// ============================================
+// --- CU5: MOSTRAR ESTADO HABITACIONES ---
 
-// Aquí puedes agregar funciones similares para:
-// - Habitaciones (/habitaciones)
-// - Reservas (/reservas)
-// - Estadías (/estadias)
-// - Pagos (/pagos)
-// - Usuarios (/usuarios)
+export async function obtenerHabitaciones(): Promise<DtoHabitacion[]> {
+  return apiFetch<DtoHabitacion[]>("/habitaciones")
+}
+
+export async function obtenerHabitacionPorNumero(numero: string): Promise<DtoHabitacion> {
+  return apiFetch<DtoHabitacion>(`/habitaciones/${numero}`)
+}
+
+// --- CU4: RESERVAR HABITACIÓN ---
+
+export async function verificarDisponibilidadHabitacion(
+  idHabitacion: string,
+  fechaDesde: string,
+  fechaHasta: string
+): Promise<boolean> {
+  const params = new URLSearchParams({
+    idHabitacion,
+    fechaDesde,
+    fechaHasta
+  })
+  return apiFetch<boolean>(`/reservas/disponibilidad?${params}`)
+}
+
+export async function crearReserva(reserva: DtoReserva | DtoReserva[]): Promise<string> {
+  // El backend espera una LISTA de reservas
+  const payload = Array.isArray(reserva) ? reserva : [reserva]
+  return apiFetch<string>("/reservas/crear", {
+    method: "POST",
+    body: payload
+  })
+}
+
+// --- CU15: OCUPAR HABITACIÓN (CHECK-IN) ---
+
+export async function crearEstadia(estadia: DtoEstadia): Promise<string> {
+  return apiFetch<string>("/estadias/crear", {
+    method: "POST",
+    body: estadia,
+  })
+}
+
+// --- PAGOS ---
+
+export async function registrarPago(pago: DtoPago): Promise<string> {
+  return apiFetch<string>("/pagos/registrar", {
+    method: "POST",
+    body: pago,
+  })
+}

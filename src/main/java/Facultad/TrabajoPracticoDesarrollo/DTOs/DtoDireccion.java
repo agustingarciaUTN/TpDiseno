@@ -85,7 +85,7 @@ public class DtoDireccion {
         // Opcionales
         private String departamento;
         private String piso;
-        private int codPostal;
+        private Integer codPostal;
 
         // Constructor vacío (típico en DTOs para ir llenando de a poco)
         public Builder() {}
@@ -104,7 +104,7 @@ public class DtoDireccion {
         public Builder numero(int val) { numero = val; return this; }
         public Builder departamento(String val) { departamento = val; return this; }
         public Builder piso(String val) { piso = val; return this; }
-        public Builder codPostal(int val) { codPostal = val; return this; }
+        public Builder codPostal(Integer val) { codPostal = val; return this; }
         public Builder localidad(String val) { localidad = val; return this; }
         public Builder provincia(String val) { provincia = val; return this; }
         public Builder pais(String val) { pais = val; return this; }
