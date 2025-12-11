@@ -14,10 +14,21 @@ export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
   [TipoDocumento.OTRO]: "Otro",
 }
 
+export enum PosicionIva {
+  CONSUMIDOR_FINAL = "CONSUMIDOR_FINAL",
+  MONOTRIBUTISTA = "MONOTRIBUTISTA",
+  RESPONSABLE_INSCRIPTO = "RESPONSABLE_INSCRIPTO",
+  EXENTO = "EXENTO",
+}
+
 // Validaciones
 export const VALIDATION = {
-  REGEX_NOMBRE: /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$/,
+  REGEX_NOMBRE: /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/,
   REGEX_DOCUMENTO: /^[a-zA-Z0-9]+$/,
+  REGEX_EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  REGEX_TELEFONO: /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/,
+  REGEX_CUIT: /^\d{2}-?\d{8}-?\d{1}$/,
+  REGEX_DIRECCION: /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/,
 }
 
 // Formulario de búsqueda
@@ -28,54 +39,49 @@ export interface BuscarHuespedForm {
   nroDocumento: string
 }
 
-// DTO del huésped (según backend)
 export interface DtoHuesped {
-  id: number
+  idHuesped: number
   apellido: string
   nombres: string
   tipoDocumento: TipoDocumento
   nroDocumento: string
-  domicilio?: string
-  telefono?: string
-  email?: string
+  fechaNacimiento?: string
+  nacionalidad?: string
+  email?: string[]
+  telefono?: string[]
+  cuit?: string
+  posicionIva?: PosicionIva
+  domicilio?: DtoDomicilio
 }
 
-// Enums iguales a Java
-export type Moneda = 'PESOS_ARGENTINOS' | 'DOLARES' | 'EUROS' | 'REALES' | 'PESOS_URUGUAYOS';
-export type TipoMedioPago = 'EFECTIVO' | 'TARJETA_DEBITO' | 'TARJETA_CREDITO' | 'CHEQUE';
-
-// Clases Padre/Hijo para Medios de Pago
-export interface MedioPago {
-    tipoMedio: TipoMedioPago;
-    monto: number;
-    moneda: Moneda;
-    fechaDePago: string;
+export interface DtoDomicilio {
+  calle: string
+  numero: number
+  piso?: string
+  departamento?: string
+  codPostal: number
+  localidad: string
+  provincia: string
+  pais: string
 }
 
-export interface Efectivo extends MedioPago {
-    tipoMedio: 'EFECTIVO';
+export interface HuespedFormData {
+  apellido: string
+  nombres: string
+  tipoDocumento: string
+  nroDocumento: string
+  fechaNacimiento: string
+  nacionalidad: string
+  email: string
+  telefono: string
+  cuit?: string
+  posicionIva: string
+  calle: string
+  numero: string
+  piso?: string
+  departamento?: string
+  codPostal: string
+  localidad: string
+  provincia: string
+  pais: string
 }
-
-export interface TarjetaDebito extends MedioPago {
-    tipoMedio: 'TARJETA_DEBITO';
-    banco: string;
-    numeroDeTarjeta: string;
-}
-
-// DTO Principal de Pago
-export interface DtoPago {
-    idPago: number;
-    montoTotal: number;
-    idFactura: number;
-    mediosPago: MedioPago[];
-}
-
-
-// Interface del Formulario de Búsqueda
-export interface BuscarHuespedForm {
-    apellido: string;
-    nombres: string;
-    tipoDocumento: TipoDocumento | ""; // Puede estar vacío en el form
-    nroDocumento: string;
-}
-

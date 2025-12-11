@@ -25,7 +25,7 @@ export default function Home() {
               Buscar huéspedes existentes por apellido, nombre, tipo o número de documento.
             </p>
             <Button asChild className="w-full">
-              <Link href="/buscar-huesped">Ir a búsqueda</Link>
+              <Link href="/cu/buscar-huesped">Ir a búsqueda</Link>
             </Button>
           </Card>
 
@@ -51,7 +51,7 @@ export default function Home() {
               Registrar un nuevo huésped en el sistema hotelero.
             </p>
             <Button asChild variant="outline" className="w-full bg-transparent">
-              <Link href="/dar-de-alta-huesped">Crear nuevo huésped</Link>
+              <Link href="/cu/alta-huesped">Crear nuevo huésped</Link>
             </Button>
           </Card>
         </div>

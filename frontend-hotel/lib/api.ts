@@ -1,51 +1,43 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
-if (!API_BASE) {
-  // Fail fast during dev if the base URL is missing
-  throw new Error("Missing NEXT_PUBLIC_API_BASE in .env.local");
+interface ApiFetchOptions {
+  method?: "GET" | "POST" | "PUT" | "DELETE"
+  body?: any
+  headers?: Record<string, string>
 }
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-type FetchOptions = {
-  method?: HttpMethod;
-  headers?: Record<string, string>;
-  body?: unknown;
-  cache?: RequestCache;
-};
-
 /**
- * Small wrapper around fetch to centralize base URL and JSON handling.
+ * Wrapper para hacer peticiones fetch al backend Spring Boot
+ * Maneja automáticamente JSON, errores y headers
  */
-export async function apiFetch<TResponse = unknown>(
-  path: string,
-  { method = "GET", headers, body, cache = "no-store" }: FetchOptions = {}
-): Promise<TResponse> {
-  const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { method = "GET", body, headers = {} } = options
 
-  const response = await fetch(url, {
+  const config: RequestInit = {
     method,
     headers: {
       "Content-Type": "application/json",
       ...headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
-    cache,
-  });
-
-  if (!response.ok) {
-    const detail = await safeJson(response);
-    const message = detail?.message || response.statusText;
-    throw new Error(`API ${response.status}: ${message}`);
   }
 
-  return (await safeJson(response)) as TResponse;
-}
+  if (body && method !== "GET") {
+    config.body = JSON.stringify(body)
+  }
 
-async function safeJson(res: Response) {
+  const url = `${API_BASE_URL}${endpoint}`
+
   try {
-    return await res.json();
-  } catch {
-    return undefined;
+    const response = await fetch(url, config)
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: "Error en la solicitud" }))
+      throw new Error(errorData.message || `Error ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error: any) {
+    console.error(`API Error [${method} ${endpoint}]:`, error)
+    throw error
   }
 }
