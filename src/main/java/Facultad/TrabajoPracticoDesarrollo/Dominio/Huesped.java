@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class Huesped {
 
     @Id
-    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_documento")
     private TipoDocumento tipoDocumento;
 
@@ -38,7 +37,7 @@ public class Huesped {
     @Column(name = "nacionalidad")
     private String nacionalidad;
 
-    @Enumerated(EnumType.STRING)
+
     @Column(name = "pos_iva")
     private PosIva posicionIva;
 
