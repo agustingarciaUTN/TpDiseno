@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Search, UserPlus, Edit, Home, CheckCircle } from "lucide-react"
+import { buscarHuespedes } from "@/lib/api"
 
 type Guest = {
     id: string
@@ -118,7 +119,47 @@ export default function BuscarHuesped() {
 
         setIsSearching(true)
 
-        // Simulate API call with mock data
+        try {
+                    // 1. Llamamos al Backend real
+                    const dataBackend = await buscarHuespedes(form)
+
+                    // 2. Convertimos los datos que vienen de Java (DTO) a tu tipo Guest de React
+                    // Esto es necesario porque Java usa "nroDocumento" y tu front "numeroDocumento",
+                    // o "posicionIva" (enum) vs "posicionIVA" (string), etc.
+                    const resultadosMapeados: Guest[] = dataBackend.map((item: any, index: number) => ({
+                        id: item.idHuesped || String(index), // O un ID único si viene del back
+                        tipoDocumento: item.tipoDocumento,
+                        numeroDocumento: item.nroDocumento, // Java: nroDocumento -> Front: numeroDocumento
+                        apellido: item.apellido,
+                        nombres: item.nombres,
+                        cuit: item.cuit || "",
+                        posicionIVA: item.posicionIva || "",
+                        fechaNacimiento: item.fechaNacimiento || "",
+
+                        // Mapeo de objetos anidados (Dirección)
+                        direccion: item.direccion
+                            ? `${item.direccion.calle} ${item.direccion.numero}, ${item.direccion.localidad}`
+                            : "",
+
+                        // Mapeo de listas (Java devuelve List<String>)
+                        telefono: item.telefono && item.telefono.length > 0 ? String(item.telefono[0]) : "",
+                        email: item.email && item.email.length > 0 ? item.email[0] : "",
+                        ocupacion: item.ocupacion && item.ocupacion.length > 0 ? item.ocupacion[0] : "",
+                        nacionalidad: item.nacionalidad || ""
+                    }))
+
+                    setResultados(resultadosMapeados)
+                    setSearchPerformed(true)
+
+                } catch (error) {
+                    console.error("Error buscando:", error)
+                    alert("Hubo un error al buscar los huéspedes. Intente nuevamente.")
+                    setResultados([]) // Limpiamos resultados en error
+                } finally {
+                    setIsSearching(false)
+                }
+
+        /* Simulate API call with mock data
         setTimeout(() => {
             const mockResults: Guest[] = [
                 {
@@ -165,7 +206,7 @@ export default function BuscarHuesped() {
             setResultados(filtered)
             setSearchPerformed(true)
             setIsSearching(false)
-        }, 800)
+        }, 800) */
     }
 
     const handleDarDeAlta = () => {
