@@ -33,7 +33,8 @@ export default function BuscarHuesped() {
       case "apellido":
       case "nombres":
         if (!value.trim()) return ""
-        if (!VALIDATION.REGEX_NOMBRE.test(value)) return "Solo puede contener letras"
+        if (value.length > 1) return "Solo ingrese una letra inicial"
+        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ]$/.test(value)) return "Solo puede contener una letra"
         return ""
 
       case "nroDocumento":
@@ -145,7 +146,8 @@ export default function BuscarHuesped() {
                   name="apellido"
                   value={form.apellido}
                   onChange={handleChange}
-                  placeholder="Ej: Garcia"
+                  placeholder="Ej: G"
+                  maxLength={1}
                 />
                 {errors.apellido && <p className="text-xs text-red-500">{errors.apellido}</p>}
               </div>
@@ -157,7 +159,8 @@ export default function BuscarHuesped() {
                   name="nombres"
                   value={form.nombres}
                   onChange={handleChange}
-                  placeholder="Ej: Agustin"
+                  placeholder="Ej: A"
+                  maxLength={1}
                 />
                 {errors.nombres && <p className="text-xs text-red-500">{errors.nombres}</p>}
               </div>
