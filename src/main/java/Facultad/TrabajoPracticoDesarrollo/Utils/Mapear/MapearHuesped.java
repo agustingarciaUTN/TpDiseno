@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuespedBusqueda;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
@@ -96,6 +97,20 @@ public class MapearHuesped  {
                 .nacionalidad(entidad.getNacionalidad())
                 // AQUÍ USAMOS EL OTRO MAPPER
                 .direccion(MapearDireccion.mapearEntidadADto(entidad.getDireccion()))
+                .build();
+    }
+
+    public static Huesped mapearBusquedaAEntidad(DtoHuespedBusqueda dto) {
+        if (dto == null) return null;
+
+        // Como en la búsqueda los campos son opcionales, pasamos null si no existen.
+        return new Huesped.Builder()
+                .nombres(dto.getNombres())
+                .apellido(dto.getApellido())
+                .tipoDocumento(dto.getTipoDocumento())
+                .nroDocumento(dto.getNroDocumento())
+                // El resto de datos (dirección, email, etc.) no se usan para filtrar en este caso,
+                // así que no hace falta setearlos o se dejan en null/vacío por el builder.
                 .build();
     }
 
