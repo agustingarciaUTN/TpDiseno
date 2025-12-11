@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
@@ -52,5 +53,8 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
             @Param("nuevoTipo") TipoDocumento nuevoTipo,
             @Param("nuevoNro") String nuevoNro
     );
+
+    // Cuenta cuántos huéspedes usan esa dirección, para evitar dejar direcciones zombies
+    long countByDireccion(Direccion direccion);
 
 }

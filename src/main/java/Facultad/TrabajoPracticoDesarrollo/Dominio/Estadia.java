@@ -40,7 +40,7 @@ public class Estadia {
     private Habitacion habitacion;
 
     // Relación Muchos a Muchos con Huésped
-    // Esta SÍ se mantiene porque la estadía necesita saber quiénes se alojaron
+    // La estadía necesita saber quiénes se alojaron
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "estadia_huesped",
@@ -52,11 +52,9 @@ public class Estadia {
     )
     private List<Huesped> huespedes = new ArrayList<>();
 
-    // NOTA: Se eliminó la lista de ServiciosAdicionales.
-    // Ahora la relación es unidireccional: el Servicio conoce a la Estadía, pero la Estadía no guarda la lista.
+    // La relación con ServiciosAdicionales es unidireccional: el Servicio conoce a la Estadía, pero la Estadía no guarda la lista.
 
     // Relación con Facturas (1 a N)
-    // Se mantiene si es necesario navegar desde la estadía a sus facturas.
     @OneToMany(mappedBy = "estadia")
     private List<Factura> facturas = new ArrayList<>();
 

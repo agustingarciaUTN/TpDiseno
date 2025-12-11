@@ -28,4 +28,7 @@ public interface FacturaRepository extends JpaRepository<Factura, String> {
             @Param("huespedDestino") ResponsablePago huespedDestino
     );
 
+    // En FacturaRepository
+    boolean existsByResponsablePago(ResponsablePago responsable);
+
 }

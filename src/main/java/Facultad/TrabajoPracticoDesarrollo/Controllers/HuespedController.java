@@ -140,4 +140,20 @@ public class HuespedController {
             return ResponseEntity.badRequest().body("Error al modificar: " + e.getMessage());
         }
     }
+
+    // Endpoint para CU11
+    @DeleteMapping("/borrar/{tipo}/{nro}")
+    public ResponseEntity<?> borrarHuesped(@PathVariable String tipo, @PathVariable String nro) {
+        try {
+            huespedService.darDeBajaHuesped(tipo, nro);
+            // Mensaje de éxito
+            return ResponseEntity.ok("✅ Los datos del huésped han sido eliminados del sistema.");
+        } catch (RuntimeException e) {
+            // Caso de error lógico (se alojó en algun momento o tiene facturas asociadas)
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            // Errores técnicos (ej: Base de datos caída)
+            return ResponseEntity.internalServerError().body("No se pudo eliminar: " + e.getMessage());
+        }
+    }
 }

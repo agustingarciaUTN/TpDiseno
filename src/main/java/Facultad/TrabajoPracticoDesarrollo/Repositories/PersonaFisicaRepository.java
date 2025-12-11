@@ -15,4 +15,7 @@ public interface PersonaFisicaRepository extends JpaRepository<PersonaFisica, In
 
     //Metodo para el CU10, tenemos que obtener la persona fisica equivalente al Huesped
     Optional<PersonaFisica> findByHuesped(Huesped huesped);
+
+    // Para borrar el rol de pagador asociado (CU11)
+    void deleteByHuesped(Huesped huesped);
 }

@@ -215,15 +215,21 @@ public class HuespedService {
 
                 // A. Pasamos los datos del formulario al huésped destino (el que sobrevive)
                 MapearHuesped.actualizarEntidadDesdeDto(huespedDestino, dtoNuevo);
-                actualizarDireccionExistente(huespedDestino, dtoNuevo.getDtoDireccion());
+                asignarDireccionSegura(huespedDestino, dtoNuevo.getDtoDireccion());
 
                 // B. Guardamos al destino actualizado
                 huespedRepository.save(huespedDestino);
 
                 // --- C. MIGRACIÓN DE HISTORIAL ---
 
-                // 1. Reservas y Estadías (Apuntan directo a Huesped)
-                reservaRepository.migrarReservas(huespedOriginal, huespedDestino);
+                // 1. Reservas y Estadías (Apuntan directa e indirectamente a Huesped)
+                reservaRepository.migrarReservas(
+                        TipoDocumento.valueOf(tipoOrig), nroOrig, // Buscamos las del viejo
+                        huespedDestino.getTipoDocumento(), huespedDestino.getNroDocumento(), // Ponemos ID nuevo
+                        huespedDestino.getNombres(), huespedDestino.getApellido(), // Ponemos Nombre nuevo
+                        huespedDestino.getTelefono().isEmpty() ? null : String.valueOf(huespedDestino.getTelefono().getFirst())
+                );
+
                 estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
 
                 // 2. FACTURAS
@@ -242,7 +248,7 @@ public class HuespedService {
                         PersonaFisica pfDestino = pfDestinoOpt.get();
                         facturaRepository.migrarFacturas(pfOriginal, pfDestino);
 
-                        facturaRepository.flush();
+                        personaFisicaRepository.flush();
 
                         personaFisicaRepository.delete(pfOriginal); // Borramos el rol de pagador viejo
                     } else {
@@ -255,10 +261,15 @@ public class HuespedService {
 
                 reservaRepository.flush();
                 estadiaRepository.flush();
+                facturaRepository.flush();
 
+                // Al final, borramos al original y limpiamos SU dirección vieja
+                Direccion dirOriginal = huespedOriginal.getDireccion();
                 huespedRepository.delete(huespedOriginal);
+                huespedRepository.flush();
+                limpiarDireccionHuerfana(dirOriginal);
 
-                return; // Terminamos acá.
+                return; // Terminamos acá la fusión
 
             } else {
                 // === CASO CAMBIO DE DNI LIMPIO (Migración) ===
@@ -281,21 +292,115 @@ public class HuespedService {
         Huesped huesped = huespedRepository.findById(new HuespedId(TipoDocumento.valueOf(tipoOrig), nroOrig)).get();
 
         MapearHuesped.actualizarEntidadDesdeDto(huesped, dtoNuevo);
-        actualizarDireccionExistente(huesped, dtoNuevo.getDtoDireccion());
+        asignarDireccionSegura(huesped, dtoNuevo.getDtoDireccion());
 
         huespedRepository.save(huesped);
     }
 
-    // Helper para dirección (si no lo tenías ya)
-    private void actualizarDireccionExistente(Huesped huesped, DtoDireccion dtoDir) {
-        if (huesped.getDireccion() != null && dtoDir != null) {
-            MapearDireccion.actualizarEntidadDesdeDto(huesped.getDireccion(), dtoDir);
-            direccionRepository.save(huesped.getDireccion());
-        } else if (huesped.getDireccion() == null && dtoDir != null) {
-            Direccion nueva = crearSinPersistirDireccion(dtoDir);
+    // Helper para dirección
+
+    /**
+     * Actualiza la dirección de un huésped de forma segura.
+     * Si la dirección actual es compartida por otros, crea una nueva para no afectar a terceros.
+     * Si la dirección es exclusiva, la actualiza in-situ.
+     */
+    private void asignarDireccionSegura(Huesped huesped, DtoDireccion dtoNuevosDatos) {
+        if (dtoNuevosDatos == null) return; // O manejar borrado si aplica
+
+        Direccion direccionActual = huesped.getDireccion();
+
+        if (direccionActual == null) {
+            // Caso 1: No tenía dirección. Creamos una nueva.
+            Direccion nueva = crearSinPersistirDireccion(dtoNuevosDatos);
             direccionRepository.save(nueva);
             huesped.setDireccion(nueva);
+        } else {
+            // Caso 2: Ya tiene dirección. Verificamos si es compartida.
+            // Contamos cuántos la usan (incluyéndolo a él mismo, así que mínimo da 1)
+            long cuantosLaUsan = huespedRepository.countByDireccion(direccionActual);
+
+            if (cuantosLaUsan > 1) {
+                // === CASO COMPARTIDO (Copy-on-Write) ===
+                // Viven otros aquí. NO tocamos la original.
+
+                // 1. Creamos una nueva entidad con los datos nuevos
+                Direccion nuevaCasa = crearSinPersistirDireccion(dtoNuevosDatos);
+                direccionRepository.save(nuevaCasa);
+
+                // 2. Mudamos al huésped
+                huesped.setDireccion(nuevaCasa);
+
+                // (La dirección vieja queda intacta para los otros)
+
+            } else {
+                // === CASO EXCLUSIVO (In-Place Update) ===
+                // Solo él vive acá. Podemos reciclar el objeto.
+                MapearDireccion.actualizarEntidadDesdeDto(direccionActual, dtoNuevosDatos);
+                direccionRepository.save(direccionActual);
+            }
         }
     }
 
+    @Transactional
+    public void darDeBajaHuesped(String tipo, String nro) {
+
+        HuespedId id = new HuespedId(TipoDocumento.valueOf(tipo), nro);
+        Huesped huesped = huespedRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("El huésped a eliminar no existe."));
+
+        // FILTRO 1: ¿Se alojó? (Regla del PDF)
+        if (estadiaRepository.existsByHuespedesContaining(huesped)) {
+            throw new RuntimeException("El huésped no puede ser eliminado pues se ha alojado en el Hotel.");
+        }
+
+        // FILTRO 2: ¿Tiene Facturas? (Regla Fiscal Implícita)
+        // Buscamos si actúa como Persona Física
+        Optional<PersonaFisica> pfOpt = personaFisicaRepository.findByHuesped(huesped);
+
+        if (pfOpt.isPresent()) {
+            // Este huésped tiene un rol de Pagador activo en el sistema
+            if (facturaRepository.existsByResponsablePago(pfOpt.get())) {
+                // Si es un pagador asociado a una factura
+                throw new RuntimeException("El huésped no puede ser eliminado porque tiene facturas asociadas.");
+            }
+
+            // Si pasó el filtro, borramos el rol de pagador (persona fisica)
+            personaFisicaRepository.delete(pfOpt.get());
+        }
+
+        // Guardamos la referencia a la dirección antes de borrar al dueño
+        Direccion direccionABorrar = huesped.getDireccion();
+
+        // 2. Limpieza de reservas
+        reservaRepository.deleteByHuesped(huesped.getTipoDocumento(), huesped.getNroDocumento());
+
+        huespedRepository.delete(huesped);
+
+        // 3. FLUSH (Vital)
+        // Necesitamos que el delete del huésped impacte en la BD para que el count baje.
+        huespedRepository.flush();
+
+        // 4. Limpieza de Dirección (Recolector de Basura)
+        limpiarDireccionHuerfana(direccionABorrar);
+
+
+    }
+
+    // En HuespedService.java
+
+    /**
+     * Intenta borrar una dirección SOLO si nadie más la está usando.
+     * Se debe llamar DESPUÉS de haber eliminado/desvinculado al huésped.
+     */
+    private void limpiarDireccionHuerfana(Direccion direccion) {
+        if (direccion != null) {
+            // Verificamos si quedó alguien más usándola
+            long cantidadUsos = huespedRepository.countByDireccion(direccion);
+
+            if (cantidadUsos == 0) {
+                // Nadie la usa, es basura. La borramos.
+                direccionRepository.delete(direccion);
+            }
+        }
+    }
 }

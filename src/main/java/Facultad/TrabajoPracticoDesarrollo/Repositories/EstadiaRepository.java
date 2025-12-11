@@ -63,4 +63,7 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
             @Param("huespedOriginal") Huesped huespedOriginal,
             @Param("huespedDestino") Huesped huespedDestino
     );
+
+    // Para saber si el huésped ya pisó el hotel (CU11)
+    boolean existsByHuespedesContaining(Huesped huesped);
 }

@@ -2,6 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -43,11 +44,26 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             @Param("fin") Date fin
     );
 
-    //Metodo utilizado para el CU10, cuando tenemos que reasignar las reservas de un huesped a otro
-    @Modifying // Indica que vamos a cambiar datos, no solo leer
-    @Query("UPDATE Reserva r SET r.huesped = :huespedDestino WHERE r.huesped = :huespedOriginal")
+    // PARA EL CU11 (BORRAR)
+    // Borramos buscando por los campos de texto
+    @Modifying
+    @Query("DELETE FROM Reserva r WHERE r.tipoDocumentoResponsable = :tipo AND r.nroDocumentoResponsable = :nro")
+    void deleteByHuesped(@Param("tipo") TipoDocumento tipo, @Param("nro") String nro);
+
+    // PARA EL CU10 (FUSIÓN/MIGRACIÓN)
+    // Actualizamos los datos de texto de la reserva para que apunten al nuevo DNI/Nombre
+    @Modifying
+    @Query("UPDATE Reserva r SET " +
+            "r.tipoDocumentoResponsable = :nuevoTipo, " +
+            "r.nroDocumentoResponsable = :nuevoNro, " +
+            "r.nombreHuespedResponsable = :nuevoNombre, " +
+            "r.apellidoHuespedResponsable = :nuevoApellido, " +
+            "r.telefonoHuespedResponsable = :nuevoTel " +
+            "WHERE r.tipoDocumentoResponsable = :viejoTipo AND r.nroDocumentoResponsable = :viejoNro")
     void migrarReservas(
-            @Param("huespedOriginal") Huesped huespedOriginal,
-            @Param("huespedDestino") Huesped huespedDestino
+            @Param("viejoTipo") TipoDocumento viejoTipo, @Param("viejoNro") String viejoNro,
+            @Param("nuevoTipo") TipoDocumento nuevoTipo, @Param("nuevoNro") String nuevoNro,
+            @Param("nuevoNombre") String nuevoNombre, @Param("nuevoApellido") String nuevoApellido,
+            @Param("nuevoTel") String nuevoTel
     );
 }
