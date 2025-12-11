@@ -39,9 +39,12 @@ public class ReservaService {
     }
 
     @Transactional(readOnly = true)
-    public boolean estaReservadaEnFecha(String nroHabitacion, Date fechaInicial, Date fechaFin) {
-        return reservaRepository.existeReservaEnFecha(nroHabitacion, fechaInicial, fechaFin);
+    public boolean validarDisponibilidad(int idHabitacion, LocalDate fechaInicio, LocalDate fechaFin) {
+        // Buscamos si existe alguna reserva para esa habitación que se solape con las fechas
+        // Lógica: (StartA <= EndB) and (EndA >= StartB)
+        return !reservaRepository.existeReservaEnFecha(idHabitacion, fechaInicio, fechaFin);
     }
+
 
     // --- CREACIÓN (Lógica Principal) ---
 

@@ -24,21 +24,16 @@ public class ReservaController {
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<?> crearReserva(@RequestBody List<@Valid DtoReserva> reservas) {
+    public ResponseEntity<?> crearReservas(@RequestBody List<DtoReserva> listaReservas) {
         try {
-            // El Controller solo delega. La validación de fechas y negocio está en el Service.
-            System.out.println("Recibida petición de reserva para " + reservas.size() + " habitaciones.");
-
-            reservaService.crearReservas(reservas);
-
-            return ResponseEntity.ok("✅ Reservas registradas con éxito.");
-
+            // Pasamos la lista completa al Service
+            reservaService.crearReservas(listaReservas);
+            return ResponseEntity.ok("Reservas creadas con éxito");
         } catch (Exception e) {
-            e.printStackTrace();
-            // Retornamos un error 400 con el mensaje que lanza el Service (ej: "Habitación ocupada")
-            return ResponseEntity.badRequest().body("Error al reservar: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
+
 
     @GetMapping("/hola")
     public String saludar() {

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,8 +36,9 @@ public class EstadiaService {
     }
 
     @Transactional(readOnly = true)
-    public boolean estaOcupadaEnFecha(String nroHabitacion, Date fechaInicio, Date fechaFin) {
-        return estadiaRepository.estaHabitacionOcupada(nroHabitacion, fechaInicio, fechaFin);
+    public boolean validarDisponibilidad(int idHabitacion, LocalDate fechaInicio, LocalDate fechaFin) {
+        // Buscamos si hay una estadía ACTIVA (no finalizada) que ocupe la habitación en esas fechas
+        return !estadiaRepository.existeEstadiaEnFechas(idHabitacion, fechaInicio, fechaFin);
     }
 
     @Transactional(readOnly = true)
