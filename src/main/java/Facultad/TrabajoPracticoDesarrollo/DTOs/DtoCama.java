@@ -13,6 +13,7 @@ public class DtoCama {
     @Positive
     private int idCama;
 
+
     private TipoCama tipoCama;
 
     @NotNull

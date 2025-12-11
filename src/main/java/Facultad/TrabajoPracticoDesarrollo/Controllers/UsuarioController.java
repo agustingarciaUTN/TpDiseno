@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoUsuario;
-import Facultad.TrabajoPracticoDesarrollo.Services.Gestores.GestorUsuario;
+import Facultad.TrabajoPracticoDesarrollo.Services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*") // Permitir acceso desde cualquier frontend
 public class UsuarioController {
 
-    private final GestorUsuario gestorUsuario;
+    private final UsuarioService serviceUsuario;
 
     // Inyección de Dependencias del Servicio (Gestor)
     @Autowired
-    public UsuarioController(GestorUsuario gestorUsuario) {
-        this.gestorUsuario = gestorUsuario;
+    public UsuarioController(UsuarioService serviceUsuario) {
+        this.serviceUsuario = serviceUsuario;
     }
 
     /**
@@ -33,7 +33,7 @@ public class UsuarioController {
             }
 
             // Llamamos al servicio para autenticar
-            boolean autenticado = gestorUsuario.autenticarUsuario(
+            boolean autenticado = serviceUsuario.autenticarUsuario(
                     loginRequest.getNombre(),
                     loginRequest.getContrasenia()
             );
