@@ -49,11 +49,11 @@ public class Cheque {
         private String plaza;
         private Date fechaDePago;
 
-        public Builder(String nro, String banco, Double monto) {
-            this.numeroCheque = nro;
-            this.banco = banco;
-            this.monto = monto;
-        }
+        public Builder() {}
+
+        public Builder numeroCheque(String val) { numeroCheque = val; return this; }
+        public Builder banco(String val) { banco = val; return this; }
+        public Builder monto(Double val) { monto = val; return this; }
         public Builder fechaCobro(Date val) { fechaCobro = val; return this; }
         public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder plaza(String val) { plaza = val; return this; }

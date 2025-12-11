@@ -11,15 +11,14 @@ public class MapearServiciosAdicionales  {
         if (dtoServiciosAdicionales == null) return null;
 
         // Referencia a Estadia (Solo ID)
-        Estadia estadiaRef = new Estadia.Builder(null).idEstadia(dtoServiciosAdicionales.getIdEstadia()).build();
+        Estadia estadiaRef = new Estadia.Builder().idEstadia(dtoServiciosAdicionales.getIdEstadia()).build();
 
-        return new ServiciosAdicionales.Builder(
-                dtoServiciosAdicionales.getTipoServicio(),
-                dtoServiciosAdicionales.getValorServicio(),
-                dtoServiciosAdicionales.getFechaConsumo()
-        )
+        return new ServiciosAdicionales.Builder()
                 .id(dtoServiciosAdicionales.getIdServicio())
                 .descripcion(dtoServiciosAdicionales.getDescripcionServicio())
+                .tipo(dtoServiciosAdicionales.getTipoServicio())
+                .valor(dtoServiciosAdicionales.getValorServicio())
+                .fecha(dtoServiciosAdicionales.getFechaConsumo())
                 .estadia(estadiaRef)
                 .build();
     }

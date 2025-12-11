@@ -37,14 +37,11 @@ public class Efectivo {
         private Date fechaDePago;
         private Integer idEfectivo;
 
-        public Builder(float monto, Moneda moneda) {
-            this.monto = monto;
-            this.moneda = moneda;
-        }
+        public Builder() {}
 
-
+        public Builder monto(float val) { monto = val; return this; }
+        public Builder moneda(Moneda val) { moneda = val; return this; }
         public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
-
         public Builder idEfectivo(Integer val) { idEfectivo = val; return this; }
 
         public Efectivo build() {

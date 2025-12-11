@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { BarChart3, Home, Calendar } from "lucide-react";
 
 interface HabitacionEstado {
   id: string;
@@ -173,23 +178,32 @@ export default function EstadoHabitaciones() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-amber-400 hover:text-amber-300 mb-6 inline-block">
-          ← Volver
-        </Link>
-
-        <h1 className="text-4xl font-bold mb-2 text-amber-400">CU05 - Estado de Habitaciones</h1>
-        <p className="text-slate-300 mb-8">Paso {paso === "fechaDesde" ? 1 : paso === "fechaHasta" ? 2 : 3} de 3</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+              <BarChart3 className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU05</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Estado de Habitaciones</h1>
+            </div>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Paso {paso === "fechaDesde" ? 1 : paso === "fechaHasta" ? 2 : 3} de 3
+          </p>
+        </div>
 
         {/* PASO 1: Seleccionar Fecha Desde */}
         {paso === "fechaDesde" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-md">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Seleccione fecha de inicio</h2>
+          <Card className="p-6 max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de inicio</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Fecha Desde</label>
-                <input
+                <Label htmlFor="fechaDesde">Fecha Desde</Label>
+                <Input
+                  id="fechaDesde"
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => {
@@ -197,22 +211,27 @@ export default function EstadoHabitaciones() {
                     setErrorFecha("");
                   }}
                   autoFocus
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:border-amber-400 focus:outline-none"
                 />
               </div>
               {errorFecha && (
-                <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-700">
-                  {errorFecha}
-                </div>
+                <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+                </Card>
               )}
-              <button
-                onClick={handleConfirmarDesde}
-                className="w-full mt-6 bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-4 rounded transition"
-              >
-                Continuar →
-              </button>
+              <div className="flex gap-3">
+                <Button onClick={handleConfirmarDesde} className="flex-1 gap-2">
+                  Continuar
+                  <Calendar className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Inicio
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* PASO 2: Seleccionar Fecha Hasta */}
@@ -371,7 +390,7 @@ export default function EstadoHabitaciones() {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

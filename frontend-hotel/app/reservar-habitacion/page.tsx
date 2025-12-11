@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Hotel, Home, Calendar, UserCheck, CheckCircle } from "lucide-react";
 
 interface HabitacionEstado {
   id: string;
@@ -282,11 +287,11 @@ export default function ReservarHabitacion() {
   const getEstadoColor = (estado: string) => {
     switch (estado) {
       case "DISPONIBLE":
-        return "bg-green-500";
+        return "bg-green-600 dark:bg-green-500";
       case "RESERVADA":
-        return "bg-blue-500";
+        return "bg-orange-500 dark:bg-orange-400";
       case "OCUPADA":
-        return "bg-red-500";
+        return "bg-slate-600 dark:bg-slate-500";
       default:
         return "bg-slate-600";
     }
@@ -299,91 +304,98 @@ export default function ReservarHabitacion() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <Link href="/" className="text-amber-400 hover:text-amber-300 mb-6 inline-block">
-          ← Volver
-        </Link>
-
-        <h1 className="text-4xl font-bold mb-2 text-amber-400">CU04 - Reservar Habitación</h1>
-        <p className="text-slate-300 mb-8">
-          Paso {paso === "fechaDesde" ? 1 : paso === "fechaHasta" ? 2 : paso === "grilla" ? 3 : paso === "datosHuesped" ? 4 : 5} de 5
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+              <Hotel className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU04</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Reservar Habitación</h1>
+            </div>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Paso {paso === "fechaDesde" ? 1 : paso === "fechaHasta" ? 2 : paso === "grilla" ? 3 : paso === "datosHuesped" ? 4 : 5} de 5
+          </p>
+        </div>
 
         {/* PASO 1: Seleccionar Fecha Desde */}
         {paso === "fechaDesde" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-md">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Seleccione fecha de inicio</h2>
+          <Card className="p-6 max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de inicio</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Fecha Desde</label>
-                <input
+                <Label htmlFor="fechaDesde">Fecha Desde</Label>
+                <Input
+                  id="fechaDesde"
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => {
                     setFechaDesde(e.target.value);
                     setErrorFecha("");
                   }}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:border-amber-400 focus:outline-none"
                 />
               </div>
               {errorFecha && (
-                <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-700">
-                  {errorFecha}
-                </div>
+                <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+                </Card>
               )}
-              <button
-                onClick={handleConfirmarDesde}
-                className="w-full mt-6 bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-4 rounded transition"
-              >
-                Continuar →
-              </button>
+              <div className="flex gap-3">
+                <Button onClick={handleConfirmarDesde} className="flex-1 gap-2">
+                  Continuar
+                  <Calendar className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Inicio
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* PASO 2: Seleccionar Fecha Hasta */}
         {paso === "fechaHasta" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-md">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Seleccione fecha de fin</h2>
+          <Card className="p-6 max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de fin</h2>
             <div className="space-y-4">
-              <div className="bg-slate-800 rounded-lg p-4 text-sm">
-                <p className="text-slate-400">Fecha desde:</p>
-                <p className="text-lg font-semibold">{new Date(fechaDesde).toLocaleDateString()}</p>
-              </div>
+              <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Fecha desde:</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">{new Date(fechaDesde).toLocaleDateString()}</p>
+              </Card>
               <div>
-                <label className="block text-sm font-medium mb-2">Fecha Hasta</label>
-                <input
+                <Label htmlFor="fechaHasta">Fecha Hasta</Label>
+                <Input
+                  id="fechaHasta"
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => {
                     setFechaHasta(e.target.value);
                     setErrorFecha("");
                   }}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:border-amber-400 focus:outline-none"
                 />
               </div>
               {errorFecha && (
-                <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-700">
-                  {errorFecha}
-                </div>
+                <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                  <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+                </Card>
               )}
-              <div className="flex gap-4 mt-6">
-                <button
-                  onClick={handleVolverPaso}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition"
-                >
+              <div className="flex gap-3 mt-6">
+                <Button onClick={handleVolverPaso} variant="outline" className="flex-1">
                   ← Atrás
-                </button>
-                <button
-                  onClick={handleConfirmarHasta}
-                  className="flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-4 rounded transition"
-                >
-                  Continuar →
-                </button>
+                </Button>
+                <Button onClick={handleConfirmarHasta} className="flex-1 gap-2">
+                  Continuar
+                  <Calendar className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* PASO 3: Grilla interactiva (CU05 integrado) */}
@@ -391,45 +403,45 @@ export default function ReservarHabitacion() {
           <div className="space-y-6">
             {/* Resumen de estados */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-slate-900 border-l-4 border-green-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Disponibles</p>
-                <p className="text-3xl font-bold text-green-400">{conteo.disponibles}</p>
-              </div>
-              <div className="bg-slate-900 border-l-4 border-blue-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Reservadas</p>
-                <p className="text-3xl font-bold text-blue-400">{conteo.reservadas}</p>
-              </div>
-              <div className="bg-slate-900 border-l-4 border-red-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Ocupadas</p>
-                <p className="text-3xl font-bold text-red-400">{conteo.ocupadas}</p>
-              </div>
+              <Card className="border-l-4 border-green-500 p-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Disponibles</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{conteo.disponibles}</p>
+              </Card>
+              <Card className="border-l-4 border-blue-500 p-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Reservadas</p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{conteo.reservadas}</p>
+              </Card>
+              <Card className="border-l-4 border-red-500 p-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Ocupadas</p>
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{conteo.ocupadas}</p>
+              </Card>
             </div>
 
             {/* Instrucciones */}
-            <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
-              <p className="text-blue-200 text-sm">
+            <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+              <p className="text-sm text-slate-700 dark:text-slate-300">
                 <strong>Instrucciones:</strong> Click en una celda para iniciar selección, luego click en otra celda de la misma habitación para finalizar el rango.
                 Puede seleccionar múltiples habitaciones con diferentes rangos.
               </p>
-            </div>
+            </Card>
 
             {/* Grilla */}
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 overflow-x-auto">
-              <h2 className="text-xl font-semibold mb-4 text-amber-400">
+            <Card className="p-6 overflow-x-auto">
+              <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
                 Del {new Date(fechaDesde).toLocaleDateString()} al {new Date(fechaHasta).toLocaleDateString()}
               </h2>
               
               <div className="min-w-max">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="bg-slate-800">
-                      <th className="border border-slate-700 px-4 py-2 text-left font-semibold text-amber-400 w-32">
+                    <tr className="bg-slate-100 dark:bg-slate-800">
+                      <th className="border px-4 py-2 text-left font-semibold text-slate-900 dark:text-slate-50 w-32">
                         Habitación
                       </th>
                       {diasRango.map((dia, idx) => (
                         <th
                           key={idx}
-                          className="border border-slate-700 px-3 py-2 text-center font-semibold text-amber-400 w-24 text-xs"
+                          className="border px-3 py-2 text-center font-semibold text-slate-900 dark:text-slate-50 w-24 text-xs"
                         >
                           {dia.toLocaleDateString("es-ES", {
                             month: "short",
@@ -448,15 +460,15 @@ export default function ReservarHabitacion() {
                         ? habsComodidad.map((hab, habIdx) => (
                             <tr
                               key={hab.id}
-                              className={habIdx % 2 === 0 ? "bg-slate-800/50" : ""}
+                              className={habIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-slate-900/30"}
                             >
-                              <td className="border border-slate-700 px-4 py-2 font-semibold text-slate-200">
+                              <td className="border px-4 py-2 font-semibold">
                                 {habIdx === 0 && (
-                                  <div className="font-bold text-amber-400 mb-1">
+                                  <div className="font-bold text-blue-600 dark:text-blue-400 mb-1">
                                     {comodidad}
                                   </div>
                                 )}
-                                <div className="text-slate-400 text-sm">
+                                <div className="text-slate-600 dark:text-slate-400 text-sm">
                                   Hab. {hab.numero}
                                 </div>
                               </td>
@@ -468,18 +480,18 @@ export default function ReservarHabitacion() {
                                 return (
                                   <td
                                     key={`${hab.id}-${dayIdx}`}
-                                    className="border border-slate-700 px-2 py-2 text-center"
+                                    className="border px-2 py-2 text-center"
                                   >
                                     <div
                                       onClick={() => handleClickCelda(hab.id, dayIdx)}
                                       className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
                                         seleccionada
-                                          ? "bg-amber-500 hover:bg-amber-600"
+                                          ? "bg-blue-600 hover:bg-blue-700"
                                           : inicioActual
                                           ? "bg-purple-500 animate-pulse"
                                           : disponible
                                           ? getEstadoColor(hab.estado) + " hover:brightness-110"
-                                          : "bg-slate-600 cursor-not-allowed opacity-50"
+                                          : "bg-slate-400 dark:bg-slate-600 cursor-not-allowed opacity-50"
                                       }`}
                                       title={
                                         seleccionada
@@ -510,19 +522,19 @@ export default function ReservarHabitacion() {
                     })}
                   </tbody>
                 </table>
-                <div className="mt-4 text-xs text-slate-400 flex gap-4">
+                <div className="mt-4 flex gap-4 text-xs text-slate-600 dark:text-slate-400">
                   <span>○ = Disponible</span>
                   <span>✓ = Seleccionada</span>
                   <span>R = Reservada</span>
                   <span>X = Ocupada</span>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Resumen de selecciones */}
             {selecciones.length > 0 && (
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-amber-400">Habitaciones seleccionadas</h3>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Habitaciones seleccionadas</h3>
                 <div className="space-y-2">
                   {selecciones.map((sel, idx) => {
                     const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
@@ -550,40 +562,39 @@ export default function ReservarHabitacion() {
                     );
                   })}
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                  <p className="text-lg font-semibold">Total:</p>
-                  <p className="text-2xl font-bold text-amber-400">${calcularTotal()}</p>
+                <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">Total:</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${calcularTotal()}</p>
                 </div>
-              </div>
+              </Card>
             )}
 
-            <div className="flex gap-4">
-              <button
-                onClick={handleVolverPaso}
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition"
-              >
+            <div className="flex gap-3">
+              <Button onClick={handleVolverPaso} variant="outline" className="flex-1">
                 ← Atrás
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleContinuarHuesped}
                 disabled={selecciones.length === 0}
-                className="flex-1 bg-amber-400 hover:bg-amber-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-slate-950 font-semibold py-2 px-4 rounded transition"
+                className="flex-1 gap-2"
               >
-                Continuar →
-              </button>
+                Continuar
+                <UserCheck className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         )}
 
         {/* PASO 4: Datos del Huésped Responsable */}
         {paso === "datosHuesped" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 max-w-2xl">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Datos del huésped responsable</h2>
+          <Card className="p-6 max-w-2xl">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Datos del huésped responsable</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Apellido *</label>
-                <input
+                <Label htmlFor="apellido">Apellido *</Label>
+                <Input
+                  id="apellido"
                   type="text"
                   value={datosHuesped.apellido}
                   onChange={(e) => {
@@ -602,17 +613,16 @@ export default function ReservarHabitacion() {
                     }
                   }}
                   placeholder="Ej: González"
-                  className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:border-amber-400 focus:outline-none ${
-                    erroresHuesped.apellido ? "border-red-500" : "border-slate-600"
-                  }`}
+                  className={erroresHuesped.apellido ? "border-red-500" : ""}
                 />
                 {erroresHuesped.apellido && (
-                  <p className="text-red-400 text-xs mt-1">{erroresHuesped.apellido}</p>
+                  <p className="text-xs text-red-500 mt-1">{erroresHuesped.apellido}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Nombres *</label>
-                <input
+                <Label htmlFor="nombres">Nombres *</Label>
+                <Input
+                  id="nombres"
                   type="text"
                   value={datosHuesped.nombres}
                   onChange={(e) => {
@@ -631,17 +641,16 @@ export default function ReservarHabitacion() {
                     }
                   }}
                   placeholder="Ej: Juan Carlos"
-                  className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:border-amber-400 focus:outline-none ${
-                    erroresHuesped.nombres ? "border-red-500" : "border-slate-600"
-                  }`}
+                  className={erroresHuesped.nombres ? "border-red-500" : ""}
                 />
                 {erroresHuesped.nombres && (
-                  <p className="text-red-400 text-xs mt-1">{erroresHuesped.nombres}</p>
+                  <p className="text-xs text-red-500 mt-1">{erroresHuesped.nombres}</p>
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Teléfono *</label>
-                <input
+                <Label htmlFor="telefono">Teléfono *</Label>
+                <Input
+                  id="telefono"
                   type="tel"
                   value={datosHuesped.telefono}
                   onChange={(e) => {
@@ -668,107 +677,101 @@ export default function ReservarHabitacion() {
                     }
                   }}
                   placeholder="+54 11 1234-5678 o 11 1234-5678"
-                  className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:border-amber-400 focus:outline-none ${
-                    erroresHuesped.telefono ? "border-red-500" : "border-slate-600"
-                  }`}
+                  className={erroresHuesped.telefono ? "border-red-500" : ""}
                 />
                 {erroresHuesped.telefono && (
-                  <p className="text-red-400 text-xs mt-1">{erroresHuesped.telefono}</p>
+                  <p className="text-xs text-red-500 mt-1">{erroresHuesped.telefono}</p>
                 )}
-                <p className="text-xs text-slate-400 mt-1">Mínimo 8 dígitos. Si no incluye +, se asume +54 (Argentina)</p>
+                <p className="text-xs text-slate-500 mt-1">Mínimo 8 dígitos. Si no incluye +, se asume +54 (Argentina)</p>
               </div>
             </div>
 
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleVolverPaso}
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition"
-              >
+            <div className="flex gap-3 mt-6">
+              <Button onClick={handleVolverPaso} variant="outline" className="flex-1">
                 ← Atrás
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleConfirmarHuesped}
-                className="flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-4 rounded transition"
+                className="flex-1 gap-2"
               >
-                Continuar →
-              </button>
+                Continuar
+                <CheckCircle className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* PASO 5: Confirmación */}
         {paso === "confirmacion" && (
-          <div className="space-y-6 max-w-2xl">
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-8">
-              <h2 className="text-2xl font-semibold mb-8 text-amber-400">Confirmar reserva</h2>
+          <Card className="max-w-2xl p-6">
+            <h2 className="text-xl font-semibold mb-6 text-slate-900 dark:text-slate-50">Confirmar reserva</h2>
 
-              {/* Datos del huésped */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-amber-400">Huésped Responsable</h3>
-                <div className="bg-slate-800 rounded-lg p-4 space-y-2">
-                  <p><span className="text-slate-400">Nombre:</span> {datosHuesped.nombres} {datosHuesped.apellido}</p>
-                  <p><span className="text-slate-400">Teléfono:</span> {datosHuesped.telefono}</p>
-                </div>
-              </div>
-
-              {/* Habitaciones reservadas */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-amber-400">Habitaciones y Fechas</h3>
+            {/* Datos del huésped */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-slate-50">Huésped Responsable</h3>
+              <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
                 <div className="space-y-2">
-                  {selecciones.map((sel, idx) => {
-                    const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
-                    if (!hab) return null;
-                    const noches = sel.diaFin - sel.diaInicio + 1;
-                    const subtotal = hab.precioNoche * noches;
-                    return (
-                      <div key={idx} className="bg-slate-800 rounded-lg p-4">
-                        <p className="font-semibold">Habitación {hab.numero} - {hab.tipo}</p>
-                        <p className="text-sm text-slate-400">
-                          {diasRango[sel.diaInicio]?.toLocaleDateString()} - {diasRango[sel.diaFin]?.toLocaleDateString()}
-                        </p>
-                        <p className="text-amber-400 font-semibold">{noches} noche{noches > 1 ? "s" : ""} × ${hab.precioNoche} = ${subtotal}</p>
-                      </div>
-                    );
-                  })}
+                  <p className="text-sm"><span className="font-medium text-slate-600 dark:text-slate-400">Nombre:</span> <span className="text-slate-900 dark:text-slate-50">{datosHuesped.nombres} {datosHuesped.apellido}</span></p>
+                  <p className="text-sm"><span className="font-medium text-slate-600 dark:text-slate-400">Teléfono:</span> <span className="text-slate-900 dark:text-slate-50">{datosHuesped.telefono}</span></p>
                 </div>
-              </div>
+              </Card>
+            </div>
 
-              {/* Total */}
-              <div className="bg-amber-400/10 border-2 border-amber-400 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Importe total</p>
-                <p className="text-2xl font-bold text-amber-400">${calcularTotal()}</p>
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  onClick={handleVolverPaso}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition"
-                >
-                  ← Atrás
-                </button>
-                <button
-                  onClick={() => {
-                    alert(`Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
-                    // Reset form
-                    setPaso("fechaDesde");
-                    setFechaDesde("");
-                    setFechaHasta("");
-                    setSelecciones([]);
-                    setDatosHuesped({
-                      apellido: "",
-                      nombres: "",
-                      telefono: "",
-                    });
-                  }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition"
-                >
-                  ✓ Confirmar reserva
-                </button>
+            {/* Habitaciones reservadas */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-slate-50">Habitaciones y Fechas</h3>
+              <div className="space-y-2">
+                {selecciones.map((sel, idx) => {
+                  const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
+                  if (!hab) return null;
+                  const noches = sel.diaFin - sel.diaInicio + 1;
+                  const subtotal = hab.precioNoche * noches;
+                  return (
+                    <Card key={idx} className="p-4">
+                      <p className="font-semibold text-slate-900 dark:text-slate-50">Habitación {hab.numero} - {hab.tipo}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {diasRango[sel.diaInicio]?.toLocaleDateString()} - {diasRango[sel.diaFin]?.toLocaleDateString()}
+                      </p>
+                      <p className="font-semibold text-blue-600 dark:text-blue-400">{noches} noche{noches > 1 ? "s" : ""} × ${hab.precioNoche} = ${subtotal}</p>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
-          </div>
+
+            {/* Total */}
+            <Card className="border-green-200 bg-green-50/50 p-4 dark:border-green-900 dark:bg-green-950/20">
+              <p className="text-sm text-slate-600 dark:text-slate-400">Importe total</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">${calcularTotal()}</p>
+            </Card>
+
+            <div className="flex gap-3 mt-6">
+              <Button onClick={handleVolverPaso} variant="outline" className="flex-1">
+                ← Atrás
+              </Button>
+              <Button
+                onClick={() => {
+                  alert(`Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
+                  // Reset form
+                  setPaso("fechaDesde");
+                  setFechaDesde("");
+                  setFechaHasta("");
+                  setSelecciones([]);
+                  setDatosHuesped({
+                    apellido: "",
+                    nombres: "",
+                    telefono: "",
+                  });
+                }}
+                className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Confirmar reserva
+              </Button>
+            </div>
+          </Card>
         )}
-      </div>
+      </main>
     </div>
   );
 }

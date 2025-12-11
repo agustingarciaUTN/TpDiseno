@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DoorOpen, Home, Calendar, Users, CheckCircle } from "lucide-react";
 
 interface HabitacionEstado {
   id: string;
@@ -42,12 +47,27 @@ interface Errores {
 }
 
 const HABITACIONES_MOCK: HabitacionEstado[] = [
-  { id: "1", numero: "101", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
+  { id: "1", numero: "101", tipo: "Simple", comodidad: "Simple", capacidad: 1, estado: "DISPONIBLE", precioNoche: 80 },
   { id: "2", numero: "102", tipo: "Simple", comodidad: "Simple", capacidad: 1, estado: "DISPONIBLE", precioNoche: 80 },
-  { id: "3", numero: "103", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "RESERVADA", precioNoche: 200 },
-  { id: "4", numero: "104", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-  { id: "5", numero: "201", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "OCUPADA", precioNoche: 150 },
-  { id: "6", numero: "202", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
+  { id: "3", numero: "103", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
+  { id: "4", numero: "104", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "RESERVADA", precioNoche: 120 },
+  { id: "5", numero: "201", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
+  { id: "6", numero: "202", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "RESERVADA", precioNoche: 120 },
+  { id: "7", numero: "301", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "OCUPADA", precioNoche: 150 },
+  { id: "8", numero: "302", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "DISPONIBLE", precioNoche: 150 },
+  { id: "9", numero: "401", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "RESERVADA", precioNoche: 200 },
+  { id: "10", numero: "402", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "DISPONIBLE", precioNoche: 200 },
+];
+
+const HUESPEDES_MOCK: DatosHuesped[] = [
+  { id: "1", apellido: "García", nombres: "Juan Carlos", tipoDocumento: "DNI", nroDocumento: "12345678" },
+  { id: "2", apellido: "González", nombres: "María Elena", tipoDocumento: "DNI", nroDocumento: "23456789" },
+  { id: "3", apellido: "Rodríguez", nombres: "Pedro Luis", tipoDocumento: "DNI", nroDocumento: "34567890" },
+  { id: "4", apellido: "Martínez", nombres: "Ana Sofía", tipoDocumento: "DNI", nroDocumento: "45678901" },
+  { id: "5", apellido: "López", nombres: "Carlos Alberto", tipoDocumento: "DNI", nroDocumento: "56789012" },
+  { id: "6", apellido: "Fernández", nombres: "Laura Patricia", tipoDocumento: "PASAPORTE", nroDocumento: "ABC123456" },
+  { id: "7", apellido: "Pérez", nombres: "Roberto Daniel", tipoDocumento: "DNI", nroDocumento: "67890123" },
+  { id: "8", apellido: "Sánchez", nombres: "Claudia Marcela", tipoDocumento: "DNI", nroDocumento: "78901234" },
 ];
 
 const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
@@ -330,13 +350,13 @@ export default function OcuparHabitacion() {
   const getEstadoColor = (estado: HabitacionEstado["estado"]) => {
     switch (estado) {
       case "DISPONIBLE":
-        return "bg-green-600";
+        return "bg-green-600 dark:bg-green-700";
       case "RESERVADA":
-        return "bg-yellow-600";
+        return "bg-orange-500 dark:bg-orange-600";
       case "OCUPADA":
-        return "bg-red-600";
+        return "bg-slate-600 dark:bg-slate-700";
       default:
-        return "bg-slate-600";
+        return "bg-slate-600 dark:bg-slate-700";
     }
   };
 
@@ -363,15 +383,30 @@ export default function OcuparHabitacion() {
 
     setBuscando(true);
     try {
-      // TODO: Llamar al backend GET /huespedes/buscar
-      // const response = await fetch(`/api/huespedes/buscar?apellido=${busquedaHuesped.apellido}&...`);
-      // const data = await response.json();
-      // setResultadosBusqueda(data);
+      // Simulación con datos mock
+      await new Promise((resolve) => setTimeout(resolve, 500));
       
-      // Simulación temporal
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      console.log("Buscar con:", busquedaHuesped);
-      setResultadosBusqueda([]); // Por ahora vacío hasta que esté el backend
+      // Filtrar huéspedes mock según criterios
+      let resultados = HUESPEDES_MOCK;
+      
+      if (busquedaHuesped.apellido) {
+        resultados = resultados.filter(h => 
+          h.apellido.toLowerCase().startsWith(busquedaHuesped.apellido.toLowerCase())
+        );
+      }
+      if (busquedaHuesped.nombres) {
+        resultados = resultados.filter(h => 
+          h.nombres.toLowerCase().startsWith(busquedaHuesped.nombres.toLowerCase())
+        );
+      }
+      if (busquedaHuesped.tipoDocumento) {
+        resultados = resultados.filter(h => h.tipoDocumento === busquedaHuesped.tipoDocumento);
+      }
+      if (busquedaHuesped.nroDocumento) {
+        resultados = resultados.filter(h => h.nroDocumento.includes(busquedaHuesped.nroDocumento));
+      }
+      
+      setResultadosBusqueda(resultados);
       setMostrarResultados(true);
     } catch (error) {
       console.error("Error en búsqueda:", error);
@@ -430,93 +465,115 @@ export default function OcuparHabitacion() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="max-w-6xl mx-auto p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <Link href="/" className="text-amber-400 hover:text-amber-300 text-sm flex items-center gap-2">
-            ← Volver al menú
-          </Link>
-          <h1 className="text-4xl font-bold text-amber-400 mt-4">CU15 - Ocupar Habitación (Check-In)</h1>
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+              <DoorOpen className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU15</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Ocupar Habitación (Check-In)</h1>
+            </div>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            Registrar el check-in de huéspedes en una habitación del hotel.
+          </p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 mb-8">
+        <Card className="mb-6 border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
           <div className="flex items-center justify-between text-sm">
-            <div className={`flex-1 text-center ${paso === "fechasGrilla" ? "text-amber-400 font-bold" : "text-slate-500"}`}>
+            <div className={`flex-1 text-center ${paso === "fechasGrilla" ? "font-bold text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-600"}`}>
               1. Fechas Grilla
             </div>
-            <div className="w-8 text-slate-600">→</div>
-            <div className={`flex-1 text-center ${paso === "grilla" ? "text-amber-400 font-bold" : "text-slate-500"}`}>
+            <div className="text-slate-400">→</div>
+            <div className={`flex-1 text-center ${paso === "grilla" ? "font-bold text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-600"}`}>
               2. Habitación
             </div>
-            <div className="w-8 text-slate-600">→</div>
-            <div className={`flex-1 text-center ${paso === "huespedes" ? "text-amber-400 font-bold" : "text-slate-500"}`}>
+            <div className="text-slate-400">→</div>
+            <div className={`flex-1 text-center ${paso === "huespedes" ? "font-bold text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-600"}`}>
               3. Huéspedes
             </div>
-            <div className="w-8 text-slate-600">→</div>
-            <div className={`flex-1 text-center ${paso === "confirmacion" ? "text-amber-400 font-bold" : "text-slate-500"}`}>
+            <div className="text-slate-400">→</div>
+            <div className={`flex-1 text-center ${paso === "confirmacion" ? "font-bold text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-600"}`}>
               4. Confirmar
             </div>
           </div>
-        </div>
+        </Card>
 
         {paso === "fechasGrilla" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Paso 1: Rango de Fechas para la Grilla</h2>
-            <p className="text-slate-400 text-sm mb-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Paso 1: Rango de Fechas para la Grilla</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
               El check-in se realizará HOY. Seleccione hasta qué fecha desea visualizar la disponibilidad.
             </p>
             
-            <div className="bg-amber-900/20 border border-amber-700 rounded-lg p-4 mb-6">
-              <p className="text-amber-200 text-sm font-semibold">
-                📅 Fecha de Check-In (Inicio): <span className="text-white">{new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <Card className="mb-6 border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                <Calendar className="inline h-4 w-4 mr-2" />
+                Fecha de Check-In (Inicio): <span className="text-blue-600 dark:text-blue-400">{new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </p>
-            </div>
+            </Card>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Fecha Hasta *</label>
-                <input
+                <Label htmlFor="fechaHasta">Fecha Hasta *</Label>
+                <Input
+                  id="fechaHasta"
                   type="date"
                   value={fechaHastaGrilla}
                   onChange={(e) => { setFechaHastaGrilla(e.target.value); setErrorFechaGrilla(""); }}
                   min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:border-amber-400 focus:outline-none"
                 />
               </div>
             </div>
-            {errorFechaGrilla && <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded border border-red-700 mt-4">{errorFechaGrilla}</div>}
-            <button onClick={handleConfirmarFechasGrilla} className="mt-6 bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-6 rounded transition">
-              Continuar →
-            </button>
-          </div>
+            {errorFechaGrilla && (
+              <Card className="mt-4 border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                <p className="text-sm text-red-600 dark:text-red-400">{errorFechaGrilla}</p>
+              </Card>
+            )}
+            <div className="mt-6 flex gap-3">
+              <Button onClick={handleConfirmarFechasGrilla} className="gap-2">
+                Continuar
+                <Calendar className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Volver al Inicio
+                </Link>
+              </Button>
+            </div>
+          </Card>
         )}
 
         {paso === "grilla" && (
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Disponibles</p>
-                <p className="text-2xl font-bold text-green-400">{conteo.disponibles}</p>
+              <div className="bg-white border border-slate-200 rounded-lg p-4 dark:bg-slate-900 dark:border-slate-700">
+                <p className="text-slate-600 text-sm dark:text-slate-400">Disponibles</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{conteo.disponibles}</p>
               </div>
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Reservadas</p>
-                <p className="text-2xl font-bold text-blue-400">{conteo.reservadas}</p>
+              <div className="bg-white border border-slate-200 rounded-lg p-4 dark:bg-slate-900 dark:border-slate-700">
+                <p className="text-slate-600 text-sm dark:text-slate-400">Reservadas</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{conteo.reservadas}</p>
               </div>
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Ocupadas</p>
-                <p className="text-2xl font-bold text-red-400">{conteo.ocupadas}</p>
+              <div className="bg-white border border-slate-200 rounded-lg p-4 dark:bg-slate-900 dark:border-slate-700">
+                <p className="text-slate-600 text-sm dark:text-slate-400">Ocupadas</p>
+                <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{conteo.ocupadas}</p>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 text-amber-400">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
                 Grilla de disponibilidad: {new Date(fechaDesdeGrilla).toLocaleDateString()} al {new Date(fechaHastaGrilla).toLocaleDateString()}
               </h2>
-              <p className="text-slate-400 text-sm mb-4">
+              <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
                 Haga click en una celda disponible para iniciar la selección, luego haga click en otra celda de la misma habitación para completar el rango.
               </p>
 
-              <div className="mb-4 flex gap-6 text-xs text-slate-400">
+              <div className="mb-4 flex gap-6 text-xs text-slate-600 dark:text-slate-400">
                 <span>📊 Disponibles: {conteo.disponibles}</span>
                 <span>📅 Reservadas: {conteo.reservadas}</span>
                 <span>🚫 Ocupadas: {conteo.ocupadas}</span>
@@ -525,10 +582,10 @@ export default function OcuparHabitacion() {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr className="bg-slate-800">
-                      <th className="border border-slate-700 px-4 py-2 text-amber-400 font-semibold">Habitación</th>
+                    <tr className="bg-slate-100 dark:bg-slate-800">
+                      <th className="border border-slate-300 dark:border-slate-700 px-4 py-2 text-slate-900 dark:text-slate-50 font-semibold">Habitación</th>
                       {diasRango.map((dia, idx) => (
-                        <th key={idx} className="border border-slate-700 px-2 py-2 text-center text-amber-400 font-semibold min-w-[60px]">
+                        <th key={idx} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[60px]">
                           <div className="text-xs">{dia.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}</div>
                         </th>
                       ))}
@@ -541,15 +598,15 @@ export default function OcuparHabitacion() {
                         ? habitacionesPorComodidad.map((hab, habIdx) => (
                             <tr
                               key={hab.id}
-                              className={habIdx % 2 === 0 ? "bg-slate-800/50" : ""}
+                              className={habIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}
                             >
-                              <td className="border border-slate-700 px-4 py-2 font-semibold text-slate-200">
+                              <td className="border border-slate-300 dark:border-slate-700 px-4 py-2 font-semibold text-slate-900 dark:text-slate-200">
                                 {habIdx === 0 && (
-                                  <div className="font-bold text-amber-400 mb-1">
+                                  <div className="font-bold text-blue-600 dark:text-blue-400 mb-1">
                                     {comodidad}
                                   </div>
                                 )}
-                                <div className="text-slate-400 text-sm">
+                                <div className="text-slate-600 dark:text-slate-400 text-sm">
                                   Hab. {hab.numero}
                                 </div>
                               </td>
@@ -561,18 +618,18 @@ export default function OcuparHabitacion() {
                                 return (
                                   <td
                                     key={`${hab.id}-${dayIdx}`}
-                                    className="border border-slate-700 px-2 py-2 text-center"
+                                    className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center"
                                   >
                                     <div
                                       onClick={() => handleClickCelda(hab.id, dayIdx)}
                                       className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
                                         seleccionada
-                                          ? "bg-amber-500 hover:bg-amber-600"
+                                          ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                                           : inicioActual
-                                          ? "bg-purple-500 animate-pulse"
+                                          ? "bg-purple-500 animate-pulse dark:bg-purple-600"
                                           : disponible
                                           ? getEstadoColor(hab.estado) + " hover:brightness-110"
-                                          : "bg-slate-600 cursor-not-allowed opacity-50"
+                                          : "bg-slate-600 dark:bg-slate-700 cursor-not-allowed opacity-50"
                                       }`}
                                       title={
                                         seleccionada
@@ -603,7 +660,7 @@ export default function OcuparHabitacion() {
                     })}
                   </tbody>
                 </table>
-                <div className="mt-4 text-xs text-slate-400 flex gap-4">
+                <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex gap-4">
                   <span>○ = Disponible</span>
                   <span>✓ = Seleccionada</span>
                   <span>► = Inicio de selección</span>
@@ -611,13 +668,13 @@ export default function OcuparHabitacion() {
                   <span>X = Ocupada</span>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Resumen de selección */}
             {seleccion && (
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-amber-400">Habitación y fechas seleccionadas</h3>
-                <div className="bg-slate-800 p-4 rounded">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Habitación y fechas seleccionadas</h3>
+                <div className="bg-slate-50 p-4 rounded dark:bg-slate-800">
                   {(() => {
                     const hab = HABITACIONES_MOCK.find(h => h.id === seleccion.habitacionId);
                     if (!hab) return null;
@@ -626,16 +683,16 @@ export default function OcuparHabitacion() {
                     return (
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="font-semibold text-white">Habitación {hab.numero} ({hab.tipo})</p>
-                          <p className="text-sm text-slate-400">
+                          <p className="font-semibold text-slate-900 dark:text-white">Habitación {hab.numero} ({hab.tipo})</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             {diasRango[seleccion.diaInicio]?.toLocaleDateString()} - {diasRango[seleccion.diaFin]?.toLocaleDateString()} ({noches} noche{noches > 1 ? "s" : ""})
                           </p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <p className="text-amber-400 font-semibold">${subtotal}</p>
+                          <p className="text-blue-600 font-semibold dark:text-blue-400">${subtotal}</p>
                           <button
                             onClick={handleRemoverSeleccion}
-                            className="text-red-400 hover:text-red-300 text-sm"
+                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
                           >
                             ✕ Quitar
                           </button>
@@ -644,166 +701,158 @@ export default function OcuparHabitacion() {
                     );
                   })()}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Diálogo de confirmación: Habitación totalmente reservada */}
             {confirmacionTipo === "reservada" && seleccion && (
-              <div className="bg-yellow-900/30 border-2 border-yellow-500 rounded-lg p-6">
+              <Card className="border-2 border-orange-500 bg-orange-50/50 p-6 dark:border-orange-600 dark:bg-orange-950/20">
                 <div className="flex items-start gap-4">
-                  <div className="text-yellow-400 text-3xl">⚠️</div>
+                  <div className="text-orange-600 text-3xl dark:text-orange-400">⚠️</div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-yellow-400 mb-2">Habitación Reservada</h3>
-                    <p className="text-slate-200 mb-4">
+                    <h3 className="text-xl font-bold text-orange-600 mb-2 dark:text-orange-400">Habitación Reservada</h3>
+                    <p className="text-slate-700 mb-4 dark:text-slate-200">
                       La habitación seleccionada está completamente reservada en el rango de fechas elegido.
                     </p>
-                    <p className="text-slate-300 text-sm mb-6">
+                    <p className="text-slate-600 text-sm mb-6 dark:text-slate-300">
                       ¿Desea ocuparla igualmente?
                     </p>
                     <div className="flex gap-3">
-                      <button
+                      <Button
                         onClick={handleOcuparIgualmente}
-                        className="bg-yellow-600 hover:bg-yellow-500 text-white font-semibold py-2 px-6 rounded transition"
+                        className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
                       >
                         Ocupar Igualmente
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={handleVolverASeleccion}
-                        className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded transition"
+                        variant="outline"
                       >
                         Volver
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Diálogo de confirmación: ¿Es dueño de la reserva? */}
             {confirmacionTipo === "duenioReserva" && seleccion && (
-              <div className="bg-blue-900/30 border-2 border-blue-500 rounded-lg p-6">
+              <Card className="border-2 border-blue-500 bg-blue-50/50 p-6 dark:border-blue-600 dark:bg-blue-950/20">
                 <div className="flex items-start gap-4">
-                  <div className="text-blue-400 text-3xl">❓</div>
+                  <div className="text-blue-600 text-3xl dark:text-blue-400">❓</div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-blue-400 mb-2">Confirmación de Reserva</h3>
-                    <p className="text-slate-200 mb-4">
+                    <h3 className="text-xl font-bold text-blue-600 mb-2 dark:text-blue-400">Confirmación de Reserva</h3>
+                    <p className="text-slate-700 mb-4 dark:text-slate-200">
                       ¿Es usted el dueño de esta reserva?
                     </p>
                     <div className="flex gap-3">
-                      <button
+                      <Button
                         onClick={() => handleEsDuenioReserva(true)}
-                        className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded transition"
+                        className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
                       >
                         Sí
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleEsDuenioReserva(false)}
-                        className="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-6 rounded transition"
+                        className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
                       >
                         No
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             <div className="flex justify-between">
-              <button onClick={handleVolverPaso} className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded transition">
+              <Button onClick={handleVolverPaso} variant="outline">
                 ← Atrás
-              </button>
-              <button 
+              </Button>
+              <Button 
                 onClick={handleContinuarDesdeGrilla} 
                 disabled={!seleccion || confirmacionTipo !== null}
-                className={`font-semibold py-2 px-6 rounded transition ${
-                  seleccion && confirmacionTipo === null
-                    ? "bg-amber-500 hover:bg-amber-600 text-white"
-                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
-                }`}
               >
                 Continuar →
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {paso === "huespedes" && (
           <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4 text-amber-400">Resumen de la Estadía</h3>
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Resumen de la Estadía</h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
-                <div><p className="text-slate-400">Habitación</p><p className="text-white font-semibold">{habitacionSeleccionada?.numero}</p></div>
-                <div><p className="text-slate-400">Check-In</p><p className="text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
-                <div><p className="text-slate-400">Check-Out</p><p className="text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Habitación</p><p className="text-slate-900 dark:text-white font-semibold">{habitacionSeleccionada?.numero}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
               </div>
-            </div>
+            </Card>
 
             {huespedes.length > 0 && (
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-amber-400">Huéspedes Agregados ({huespedes.length})</h3>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Huéspedes Agregados ({huespedes.length})</h3>
                 <div className="space-y-2">
                   {huespedes.map((h, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-slate-800 p-4 rounded border border-slate-700">
+                    <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700">
                       <div>
-                        <p className="text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-amber-300 ml-2">(Responsable)</span>}</p>
-                        <p className="text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
+                        <p className="text-slate-900 dark:text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
                       </div>
-                      {idx > 0 && <button onClick={() => handleEliminarHuesped(idx)} className="bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">Eliminar</button>}
+                      {idx > 0 && <Button onClick={() => handleEliminarHuesped(idx)} className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600" size="sm">Eliminar</Button>}
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
 
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4 text-amber-400">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">
                 {huespedes.length === 0 ? "Buscar Responsable (Obligatorio)" : "Buscar Acompañante (Opcional)"}
               </h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
                 Todos los campos son opcionales. Si no ingresa ningún dato, se listarán todos los huéspedes.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Apellido</label>
-                  <input
+                  <Label htmlFor="apellido">Apellido</Label>
+                  <Input
+                    id="apellido"
                     type="text"
                     value={busquedaHuesped.apellido}
                     onChange={(e) => handleChangeBusqueda("apellido", e.target.value)}
                     placeholder="Ej: G (primera letra)"
                     maxLength={1}
-                    className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:outline-none ${
-                      erroresBusqueda.apellido ? "border-red-500" : "border-slate-600 focus:border-amber-400"
-                    }`}
                   />
                   {erroresBusqueda.apellido && (
-                    <p className="text-red-400 text-xs mt-1">{erroresBusqueda.apellido}</p>
+                    <p className="text-red-600 text-xs mt-1 dark:text-red-400">{erroresBusqueda.apellido}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Nombre(s)</label>
-                  <input
+                  <Label htmlFor="nombres">Nombre(s)</Label>
+                  <Input
+                    id="nombres"
                     type="text"
                     value={busquedaHuesped.nombres}
                     onChange={(e) => handleChangeBusqueda("nombres", e.target.value)}
                     placeholder="Ej: A (primera letra)"
                     maxLength={1}
-                    className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:outline-none ${
-                      erroresBusqueda.nombres ? "border-red-500" : "border-slate-600 focus:border-amber-400"
-                    }`}
                   />
                   {erroresBusqueda.nombres && (
-                    <p className="text-red-400 text-xs mt-1">{erroresBusqueda.nombres}</p>
+                    <p className="text-red-600 text-xs mt-1 dark:text-red-400">{erroresBusqueda.nombres}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Tipo de Documento</label>
+                  <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
                   <select
+                    id="tipoDocumento"
                     value={busquedaHuesped.tipoDocumento}
                     onChange={(e) => handleChangeBusqueda("tipoDocumento", e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:border-amber-400 focus:outline-none"
+                    className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:focus-visible:ring-slate-300"
                   >
                     <option value="">Seleccionar...</option>
                     <option value="DNI">DNI</option>
@@ -811,126 +860,118 @@ export default function OcuparHabitacion() {
                     <option value="CI">Cédula de Identidad</option>
                   </select>
                   {erroresBusqueda.tipoDocumento && (
-                    <p className="text-red-400 text-xs mt-1">{erroresBusqueda.tipoDocumento}</p>
+                    <p className="text-red-600 text-xs mt-1 dark:text-red-400">{erroresBusqueda.tipoDocumento}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Número de Documento</label>
-                  <input
+                  <Label htmlFor="nroDocumento">Número de Documento</Label>
+                  <Input
+                    id="nroDocumento"
                     type="text"
                     value={busquedaHuesped.nroDocumento}
                     onChange={(e) => handleChangeBusqueda("nroDocumento", e.target.value)}
                     placeholder="Alfanumérico, 6-15 caracteres"
                     maxLength={15}
-                    className={`w-full px-4 py-2 bg-slate-800 border rounded text-white focus:outline-none ${
-                      erroresBusqueda.nroDocumento ? "border-red-500" : "border-slate-600 focus:border-amber-400"
-                    }`}
                   />
                   {erroresBusqueda.nroDocumento && (
-                    <p className="text-red-400 text-xs mt-1">{erroresBusqueda.nroDocumento}</p>
+                    <p className="text-red-600 text-xs mt-1 dark:text-red-400">{erroresBusqueda.nroDocumento}</p>
                   )}
                 </div>
               </div>
 
-              <button
+              <Button
                 onClick={handleBuscarHuespedes}
                 disabled={buscando}
-                className={`w-full font-semibold py-3 px-6 rounded transition ${
-                  buscando
-                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : "bg-amber-500 hover:bg-amber-600 text-white"
-                }`}
+                className="w-full"
               >
                 {buscando ? "Buscando..." : "🔍 Buscar Huésped"}
-              </button>
-            </div>
+              </Button>
+            </Card>
 
-            {/* Resultados de búsqueda (placeholder hasta que esté el backend) */}
+            {/* Resultados de búsqueda */}
             {mostrarResultados && (
-              <div className="bg-slate-900 border border-slate-700 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-amber-400">Resultados de la Búsqueda</h3>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Resultados de la Búsqueda</h3>
                 {resultadosBusqueda.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-400 mb-4">No se encontraron huéspedes con los criterios especificados.</p>
-                    <p className="text-amber-300 text-sm">
-                      (Esta funcionalidad se completará cuando el backend esté implementado)
-                    </p>
+                    <p className="text-slate-600 mb-4 dark:text-slate-400">No se encontraron huéspedes con los criterios especificados.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {resultadosBusqueda.map((huesped, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between bg-slate-800 p-4 rounded border border-slate-700 hover:border-amber-500 transition"
+                        className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 transition"
                       >
                         <div>
-                          <p className="text-white font-semibold">{huesped.apellido}, {huesped.nombres}</p>
-                          <p className="text-slate-400 text-sm">{huesped.tipoDocumento}: {huesped.nroDocumento}</p>
+                          <p className="text-slate-900 dark:text-white font-semibold">{huesped.apellido}, {huesped.nombres}</p>
+                          <p className="text-slate-600 dark:text-slate-400 text-sm">{huesped.tipoDocumento}: {huesped.nroDocumento}</p>
                         </div>
-                        <button
+                        <Button
                           onClick={() => handleSeleccionarHuesped(huesped)}
-                          className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded text-sm transition"
+                          className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                          size="sm"
                         >
                           Seleccionar
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             <div className="flex gap-4">
-              <button onClick={handleVolverPaso} className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded transition">
+              <Button onClick={handleVolverPaso} variant="outline">
                 ← Atrás
-              </button>
-              <button onClick={handleContinuarConfirmacion} className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-semibold py-2 px-6 rounded transition">
+              </Button>
+              <Button onClick={handleContinuarConfirmacion}>
                 Continuar →
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {paso === "confirmacion" && (
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-8">
-            <h2 className="text-2xl font-semibold mb-6 text-amber-400">Paso 5: Confirmación de Check-In</h2>
+          <Card className="p-8">
+            <h2 className="text-2xl font-semibold mb-6 text-slate-900 dark:text-slate-50">Paso 5: Confirmación de Check-In</h2>
             <div className="space-y-6">
-              <div className="bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-white">Detalles de la Estadía</h3>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Detalles de la Estadía</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><p className="text-slate-400 text-sm">Habitación</p><p className="text-white text-xl font-bold">{habitacionSeleccionada?.numero} - {habitacionSeleccionada?.tipo}</p></div>
-                  <div><p className="text-slate-400 text-sm">Capacidad</p><p className="text-white text-xl font-bold">{habitacionSeleccionada?.capacidad} personas</p></div>
-                  <div><p className="text-slate-400 text-sm">Check-In</p><p className="text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
-                  <div><p className="text-slate-400 text-sm">Check-Out</p><p className="text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Habitación</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.numero} - {habitacionSeleccionada?.tipo}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Capacidad</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.capacidad} personas</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
                 </div>
               </div>
-              <div className="bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-white">Huéspedes ({huespedes.length})</h3>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Huéspedes ({huespedes.length})</h3>
                 <div className="space-y-3">
                   {huespedes.map((h, idx) => (
-                    <div key={idx} className="bg-slate-900 p-4 rounded border border-slate-700">
-                      <p className="text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-amber-300 ml-2">(Responsable)</span>}</p>
-                      <p className="text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
+                    <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700">
+                      <p className="text-slate-900 dark:text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="bg-amber-900/20 border border-amber-700 rounded-lg p-4">
-                <p className="text-amber-200 text-sm">⚠️ Por favor, verifique que todos los datos sean correctos antes de confirmar el check-in.</p>
-              </div>
+              <Card className="border-orange-200 bg-orange-50/50 p-4 dark:border-orange-900 dark:bg-orange-950/20">
+                <p className="text-orange-700 dark:text-orange-200 text-sm">⚠️ Por favor, verifique que todos los datos sean correctos antes de confirmar el check-in.</p>
+              </Card>
               <div className="flex gap-4">
-                <button onClick={handleVolverPaso} className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded transition">
+                <Button onClick={handleVolverPaso} variant="outline">
                   ← Modificar Datos
-                </button>
-                <button onClick={handleConfirmarEstadia} className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded transition">
+                </Button>
+                <Button onClick={handleConfirmarEstadia} className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600">
                   ✓ Confirmar Check-In
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
+          </Card>
         )}
-      </div>
+      </main>
     </div>
   );
 }

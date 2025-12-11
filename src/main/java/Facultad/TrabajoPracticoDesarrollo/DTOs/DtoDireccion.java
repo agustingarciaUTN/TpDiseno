@@ -90,14 +90,14 @@ public class DtoDireccion {
         // Constructor vacío (típico en DTOs para ir llenando de a poco)
         public Builder() {}
 
-        // Constructor con obligatorios (opcional, si prefieres forzar datos)
+        /* Constructor con obligatorios (opcional, si prefieres forzar datos)
         public Builder(String calle, int numero, String localidad, String provincia, String pais) {
             this.calle = calle;
             this.numero = numero;
             this.localidad = localidad;
             this.provincia = provincia;
             this.pais = pais;
-        }
+        } */
 
         public Builder idDireccion(int val) { idDireccion = val; return this; }
         public Builder calle(String val) { calle = val; return this; }

@@ -5,7 +5,9 @@ import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEfectivo;
 public class MapearEfectivo  {
     public static Efectivo mapearDtoAEntidad(DtoEfectivo dtoEfectivo) {
         if (dtoEfectivo == null) return null;
-        return new Efectivo.Builder(dtoEfectivo.getMonto(), dtoEfectivo.getMoneda())
+        return new Efectivo.Builder()
+                .monto(dtoEfectivo.getMonto())
+                .moneda(dtoEfectivo.getMoneda())
                 .fechaDePago(dtoEfectivo.getFechaDePago())
                 .idEfectivo(dtoEfectivo.getIdEfectivo())
                 .build();

@@ -6,8 +6,11 @@ public class MapearTarjetaDebito {
 
     public static TarjetaDebito mapearDtoAEntidad(DtoTarjetaDebito dtoTarjetaDebito) {
         if (dtoTarjetaDebito == null) return null;
-        return new TarjetaDebito.Builder(dtoTarjetaDebito.getRedDePago(), dtoTarjetaDebito.getNumeroDeTarjeta(), dtoTarjetaDebito.getMonto())
+        return new TarjetaDebito.Builder()
           //      .idPago(dtoTarjetaDebito.getIdPago())
+                .nro(dtoTarjetaDebito.getNumeroDeTarjeta())
+                .red(dtoTarjetaDebito.getRedDePago())
+                .monto(dtoTarjetaDebito.getMonto())
                 .banco(dtoTarjetaDebito.getBanco())
                 .fechaVencimiento(dtoTarjetaDebito.getFechaVencimiento())
                 .codigoSeguridad(dtoTarjetaDebito.getCodigoSeguridad())

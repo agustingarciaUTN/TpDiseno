@@ -12,7 +12,8 @@ public class MapearEstadia {
     public static Estadia mapearDtoAEntidad(DtoEstadia dto) {
         if (dto == null) return null;
 
-        Estadia.Builder builder = new Estadia.Builder(dto.getFechaCheckIn())
+        Estadia.Builder builder = new Estadia.Builder()
+                .fechaCheckIn(dto.getFechaCheckIn())
                 .idEstadia(dto.getIdEstadia())
                 .fechaCheckOut(dto.getFechaCheckOut())
                 .valorEstadia(dto.getValorEstadia());
@@ -24,7 +25,7 @@ public class MapearEstadia {
 
         // 2. Mapear Habitación (CORRECCIÓN IMPORTANTE: ESTO FALTABA)
         if (dto.getDtoHabitacion() != null) {
-            builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion()));
+            builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion(), null));
         }
 
         // 3. Mapear Lista de Huéspedes

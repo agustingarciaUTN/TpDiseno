@@ -32,7 +32,7 @@ public class PagoService {
         }
 
         // 2. Buscar Factura usando el SERVICE de Facturas
-        String nroFactura = String.valueOf(dtoPago.getIdFactura());
+        String nroFactura = String.valueOf(dtoPago.getFactura().getNumeroFactura());
         Factura factura = facturaService.buscarPorNumero(nroFactura);
 
         if (factura == null) {

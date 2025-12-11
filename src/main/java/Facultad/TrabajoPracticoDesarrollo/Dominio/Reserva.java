@@ -76,12 +76,10 @@ public class Reserva {
         private Habitacion habitacion;
 
         // Constructor con lo mínimo indispensable
-        public Builder(Date fechaDesde, Date fechaHasta, Habitacion habitacion) {
-            this.fechaDesde = fechaDesde;
-            this.fechaHasta = fechaHasta;
-            this.habitacion = habitacion;
-        }
+        public Builder() {}
 
+        public Builder fechaDesde(Date val) { fechaDesde = val; return this; }
+        public Builder fechaHasta(Date val) { fechaHasta = val; return this; }
         public Builder id(Integer val) { idReserva = val; return this; }
         public Builder estado(EstadoReserva val) { estadoReserva = val; return this; }
         public Builder fechaReserva(Date val) { fechaReserva = val; return this; }

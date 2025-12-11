@@ -10,10 +10,9 @@ public class MapearNotaDeCredito  {
     public static NotaDeCredito mapearDtoAEntidad(DtoNotaDeCredito dtoNotaDeCredito) {
         if (dtoNotaDeCredito == null) return null;
 
-        NotaDeCredito.Builder builder = new NotaDeCredito.Builder(
-                dtoNotaDeCredito.getNumeroNotaCredito(),
-                dtoNotaDeCredito.getMontoDevolucion()
-        );
+        NotaDeCredito.Builder builder = new NotaDeCredito.Builder()
+                .numero(dtoNotaDeCredito.getNumeroNotaCredito())
+                .monto(dtoNotaDeCredito.getMontoDevolucion());
 
       /* if (dtoNotaDeCredito.getIdsFacturas() != null) {
             for (Integer idFactura : dtoNotaDeCredito.getIdsFacturas()) {

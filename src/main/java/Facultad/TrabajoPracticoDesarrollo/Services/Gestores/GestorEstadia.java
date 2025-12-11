@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
+/*package Facultad.TrabajoPracticoDesarrollo.Services.Gestores;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
@@ -39,7 +39,7 @@ public class GestorEstadia {
     }
     /**
      * CU15: Crear Estadía (con validación de roles)
-     */
+
     public void crearEstadia(DtoEstadia dtoEstadia) throws Exception {
 
         List<DtoHuesped> huespedes = dtoEstadia.getDtoHuespedes();
@@ -76,4 +76,4 @@ public class GestorEstadia {
             throw new PersistenciaException("Error crítico al guardar la estadía en base de datos.", null);
         }
     }
-}
+}*/

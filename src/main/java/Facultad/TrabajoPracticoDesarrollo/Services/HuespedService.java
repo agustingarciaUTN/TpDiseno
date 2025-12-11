@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Services;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuespedBusqueda;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
@@ -36,7 +37,7 @@ public class HuespedService {
      * Si el DTO está vacío, devuelve todos.
      */
     @Transactional(readOnly = true)
-    public List<Huesped> buscarHuespedes(DtoHuesped criterios) {
+    public List<Huesped> buscarHuespedes(DtoHuespedBusqueda criterios) {
 
         // 1. Decidimos qué metodo del Repository llamar
         if (criterios != null && !criterios.estanVacios()) {

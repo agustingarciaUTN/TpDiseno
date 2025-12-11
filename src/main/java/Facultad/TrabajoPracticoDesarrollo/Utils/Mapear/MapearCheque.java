@@ -6,7 +6,10 @@ public class MapearCheque  {
 
     public static Cheque mapearDtoAEntidad(DtoCheque dtoCheque) {
         if (dtoCheque == null) return null;
-        return new Cheque.Builder(dtoCheque.getNumeroCheque(), dtoCheque.getBanco(), dtoCheque.getMonto())
+        return new Cheque.Builder()
+                .numeroCheque(dtoCheque.getNumeroCheque())
+                .banco(dtoCheque.getBanco())
+                .monto(dtoCheque.getMonto())
                 .plaza(dtoCheque.getPlaza())
                 .fechaCobro(dtoCheque.getFechaCobro())
                 .fechaDePago(dtoCheque.getFechaDePago())

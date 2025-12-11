@@ -58,13 +58,6 @@ public class ServiciosAdicionales {
 
         public Builder() {}
 
-        public Builder(TipoServicio tipoServicio, double valorServicio, Date fechaConsumo) {
-            this.tipoServicio = tipoServicio;
-            this.valor = valorServicio;
-            this.fechaConsumo = fechaConsumo;
-        }
-
-
         public Builder id(Integer val) { id = val; return this; }
         public Builder descripcion(String val) { descripcion = val; return this; }
         public Builder valor(Double val) { valor = val; return this; }

@@ -1,6 +1,8 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -8,7 +10,7 @@ import java.util.Objects;
 
 //Necesaria porque la tabla Huesped usa tipo_documento + numero_documento como PK.
 
-
+@Data
 public class HuespedId implements Serializable {
     private TipoDocumento tipoDocumento;
     private String nroDocumento;

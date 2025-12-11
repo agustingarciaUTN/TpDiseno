@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Controllers;
 
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuespedBusqueda;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Services.HuespedService;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
@@ -26,11 +27,11 @@ public class HuespedController {
 
 
     @PostMapping("/buscar")
-    public ResponseEntity<List<DtoHuesped>> buscarHuespedes(@RequestBody(required = false) DtoHuesped criterios) {
+    public ResponseEntity<List<DtoHuesped>> buscarHuespedes(@RequestBody(required = false) DtoHuespedBusqueda criterios) {
         try {
 
             if (criterios == null) {
-                criterios = new DtoHuesped();
+                criterios = new DtoHuespedBusqueda();
             }
 
             List<Huesped> listaEntidades = huespedService.buscarHuespedes(criterios);
