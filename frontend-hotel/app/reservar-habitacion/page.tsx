@@ -44,6 +44,12 @@ const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
 
 type Paso = "fechaDesde" | "fechaHasta" | "grilla" | "datosHuesped" | "confirmacion";
 
+// Helper function to create date in local timezone
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export default function ReservarHabitacion() {
   const router = useRouter();
   const [paso, setPaso] = useState<Paso>("fechaDesde");
@@ -75,7 +81,7 @@ export default function ReservarHabitacion() {
     // VALIDACIÓN DEL BACKEND: La fecha de ingreso no puede ser anterior al día de hoy
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const fechaSeleccionada = new Date(fechaDesde);
+    const fechaSeleccionada = createLocalDate(fechaDesde);
     if (fechaSeleccionada < hoy) {
       setErrorFecha("La fecha de ingreso no puede ser anterior al día de hoy");
       return false;
@@ -89,8 +95,8 @@ export default function ReservarHabitacion() {
       setErrorFecha("Debe seleccionar una fecha");
       return false;
     }
-    const desde = new Date(fechaDesde);
-    const hasta = new Date(fechaHasta);
+    const desde = createLocalDate(fechaDesde);
+    const hasta = createLocalDate(fechaHasta);
     // VALIDACIÓN DEL BACKEND: fechaHasta > fechaDesde
     if (desde >= hasta) {
       setErrorFecha("La fecha 'Hasta' debe ser posterior a la fecha 'Desde'");
@@ -122,8 +128,8 @@ export default function ReservarHabitacion() {
   // Generar días del rango
   const generarDias = (): Date[] => {
     if (!fechaDesde || !fechaHasta) return [];
-    const desde = new Date(fechaDesde);
-    const hasta = new Date(fechaHasta);
+    const desde = createLocalDate(fechaDesde);
+    const hasta = createLocalDate(fechaHasta);
     const dias: Date[] = [];
     const actual = new Date(desde);
     while (actual < hasta) {
@@ -368,7 +374,7 @@ export default function ReservarHabitacion() {
             <div className="space-y-4">
               <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
                 <p className="text-sm text-slate-600 dark:text-slate-400">Fecha desde:</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">{new Date(fechaDesde).toLocaleDateString()}</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">{createLocalDate(fechaDesde).toLocaleDateString()}</p>
               </Card>
               <div>
                 <Label htmlFor="fechaHasta">Fecha Hasta</Label>
@@ -430,7 +436,7 @@ export default function ReservarHabitacion() {
             {/* Grilla */}
             <Card className="p-6 overflow-x-auto">
               <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
-                Del {new Date(fechaDesde).toLocaleDateString()} al {new Date(fechaHasta).toLocaleDateString()}
+                Del {createLocalDate(fechaDesde).toLocaleDateString()} al {createLocalDate(fechaHasta).toLocaleDateString()}
               </h2>
               
               <div className="min-w-max">

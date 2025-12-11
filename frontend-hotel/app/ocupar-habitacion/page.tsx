@@ -76,6 +76,12 @@ const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
 type Paso = "fechasGrilla" | "grilla" | "huespedes" | "confirmacion";
 type TipoConfirmacion = "reservada" | "duenioReserva" | null;
 
+// Helper function to create date in local timezone
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export default function OcuparHabitacion() {
   const [paso, setPaso] = useState<Paso>("fechasGrilla");
   const [fechaDesdeGrilla, setFechaDesdeGrilla] = useState("");
@@ -115,7 +121,7 @@ export default function OcuparHabitacion() {
       setErrorFechaGrilla("Debe seleccionar la fecha hasta");
       return false;
     }
-    const hasta = new Date(fechaHastaGrilla);
+    const hasta = createLocalDate(fechaHastaGrilla);
     if (hoy >= hasta) {
       setErrorFechaGrilla("La fecha 'Hasta' debe ser posterior a hoy");
       return false;
@@ -167,8 +173,8 @@ export default function OcuparHabitacion() {
   // Generar días del rango de grilla
   const generarDias = (): Date[] => {
     if (!fechaDesdeGrilla || !fechaHastaGrilla) return [];
-    const desde = new Date(fechaDesdeGrilla);
-    const hasta = new Date(fechaHastaGrilla);
+    const desde = createLocalDate(fechaDesdeGrilla);
+    const hasta = createLocalDate(fechaHastaGrilla);
     const dias: Date[] = [];
     const actual = new Date(desde);
     while (actual <= hasta) {
@@ -576,7 +582,7 @@ export default function OcuparHabitacion() {
 
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
-                Grilla de disponibilidad: {new Date(fechaDesdeGrilla).toLocaleDateString()} al {new Date(fechaHastaGrilla).toLocaleDateString()}
+                Grilla de disponibilidad: {createLocalDate(fechaDesdeGrilla).toLocaleDateString()} al {createLocalDate(fechaHastaGrilla).toLocaleDateString()}
               </h2>
               <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
                 Haga click en una celda disponible para iniciar la selección, luego haga click en otra celda de la misma habitación para completar el rango.
@@ -794,8 +800,8 @@ export default function OcuparHabitacion() {
               <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Resumen de la Estadía</h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div><p className="text-slate-600 dark:text-slate-400">Habitación</p><p className="text-slate-900 dark:text-white font-semibold">{habitacionSeleccionada?.numero}</p></div>
-                <div><p className="text-slate-600 dark:text-slate-400">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
-                <div><p className="text-slate-600 dark:text-slate-400">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? createLocalDate(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? createLocalDate(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
               </div>
             </Card>
 
@@ -951,8 +957,8 @@ export default function OcuparHabitacion() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><p className="text-slate-600 dark:text-slate-400 text-sm">Habitación</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.numero} - {habitacionSeleccionada?.tipo}</p></div>
                   <div><p className="text-slate-600 dark:text-slate-400 text-sm">Capacidad</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.capacidad} personas</p></div>
-                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
-                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? createLocalDate(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? createLocalDate(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
                 </div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">

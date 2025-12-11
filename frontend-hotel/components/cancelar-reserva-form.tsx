@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Search, Calendar, User, Bed, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +29,7 @@ type Reserva = {
 }
 
 export function CancelarReservaForm() {
+    const router = useRouter()
     const [apellido, setApellido] = useState("")
     const [nombres, setNombres] = useState("")
     const [reservas, setReservas] = useState<Reserva[]>([])
@@ -143,11 +145,10 @@ export function CancelarReservaForm() {
         setShowConfirmDialog(false)
         setShowSuccessMessage(true)
 
-        // Ocultar mensaje de éxito después de 3 segundos
+        // Redirigir al menú principal después de mostrar el mensaje
         setTimeout(() => {
-            setShowSuccessMessage(false)
-            setSelectedReserva(null)
-        }, 3000)
+            router.push("/")
+        }, 2000)
     }
 
     return (
