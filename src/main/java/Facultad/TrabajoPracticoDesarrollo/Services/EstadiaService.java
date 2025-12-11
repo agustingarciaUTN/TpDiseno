@@ -36,7 +36,7 @@ public class EstadiaService {
     }
 
     @Transactional(readOnly = true)
-    public boolean validarDisponibilidad(int idHabitacion, LocalDate fechaInicio, LocalDate fechaFin) {
+    public boolean validarDisponibilidad(String idHabitacion, Date fechaInicio, Date fechaFin) {
         // Buscamos si hay una estadía ACTIVA (no finalizada) que ocupe la habitación en esas fechas
         return !estadiaRepository.existeEstadiaEnFechas(idHabitacion, fechaInicio, fechaFin);
     }
@@ -63,7 +63,7 @@ public class EstadiaService {
         }
 
         // 2. Validar Disponibilidad Habitación (Doble chequeo)
-        if (estaOcupadaEnFecha(dtoEstadia.getDtoHabitacion().getNumero(),
+        if (estadiaRepository.existeEstadiaEnFechas(dtoEstadia.getDtoHabitacion().getNumero(),
                 dtoEstadia.getFechaCheckIn(),
                 dtoEstadia.getFechaCheckOut())) {
             throw new Exception("La habitación " + dtoEstadia.getDtoHabitacion().getNumero() + " ya está ocupada en esas fechas.");

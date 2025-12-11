@@ -4,6 +4,7 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -40,4 +41,16 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
     // Reemplaza a 'eliminarHuesped': ¡Ya existe! Se llama deleteById(...)
 
     // Reemplaza a 'persistir' y 'modificar': ¡Ya existe! Se llama save(...)
+
+    // Para el CU10: Permitir cambio de DNI manteniendo historial
+    @Modifying
+    @Query("UPDATE Huesped h SET h.tipoDocumento = :nuevoTipo, h.nroDocumento = :nuevoNro " +
+            "WHERE h.tipoDocumento = :viejoTipo AND h.nroDocumento = :viejoNro")
+    void actualizarIdentidad(
+            @Param("viejoTipo") TipoDocumento viejoTipo,
+            @Param("viejoNro") String viejoNro,
+            @Param("nuevoTipo") TipoDocumento nuevoTipo,
+            @Param("nuevoNro") String nuevoNro
+    );
+
 }

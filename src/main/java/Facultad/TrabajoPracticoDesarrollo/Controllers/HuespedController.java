@@ -117,4 +117,27 @@ public class HuespedController {
     public String test() {
         return "Controller de Huéspedes activo";
     }
+
+    // Endpoint para CU10
+    @PutMapping("/modificar/{tipo}/{nro}")
+    public ResponseEntity<?> modificarHuesped(
+            @PathVariable String tipo,
+            @PathVariable String nro,
+            @Valid @RequestBody DtoHuesped dtoNuevo) {
+        try {
+            // 1. Validaciones de Negocio (CUIT, etc)
+            List<String> errores = huespedService.validarDatosHuesped(dtoNuevo);
+            if (!errores.isEmpty()) {
+                return ResponseEntity.badRequest().body("Errores: " + String.join(", ", errores));
+            }
+
+            // 2. Ejecutar modificación
+            huespedService.modificarHuesped(tipo, nro, dtoNuevo);
+
+            return ResponseEntity.ok("✅ Huésped modificado correctamente");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al modificar: " + e.getMessage());
+        }
+    }
 }

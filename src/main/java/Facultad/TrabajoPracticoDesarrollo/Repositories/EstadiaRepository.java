@@ -1,12 +1,15 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -30,11 +33,12 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
     @Query("SELECT COUNT(e) > 0 FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion " +
             "AND e.fechaCheckIn <= :fechaFin " +
             "AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut > :fechaInicio)")
-    boolean estaHabitacionOcupada(
+    boolean existeEstadiaEnFechas(
             @Param("nroHabitacion") String nroHabitacion,
             @Param("fechaInicio") Date fechaInicio,
             @Param("fechaFin") Date fechaFin
     );
+
 
     /**
      * Valida si una persona (Huésped) ya está activa en alguna estadía en ese rango.
@@ -50,5 +54,13 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
             @Param("nroDoc") String nroDoc,
             @Param("fechaInicio") Date fechaInicio,
             @Param("fechaFin") Date fechaFin
+    );
+
+    //Metodo utilizado para el CU10, cuando tenemos que reasignar una estadia de un huesped a otro
+    @Modifying
+    @Query("UPDATE Estadia e SET e.huesped = :huespedDestino WHERE e.huesped = :huespedOriginal")
+    void migrarEstadias(
+            @Param("huespedOriginal") Huesped huespedOriginal,
+            @Param("huespedDestino") Huesped huespedDestino
     );
 }

@@ -1,7 +1,9 @@
 package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -39,5 +41,13 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             @Param("nroHabitacion") String nroHabitacion,
             @Param("inicio") Date inicio,
             @Param("fin") Date fin
+    );
+
+    //Metodo utilizado para el CU10, cuando tenemos que reasignar las reservas de un huesped a otro
+    @Modifying // Indica que vamos a cambiar datos, no solo leer
+    @Query("UPDATE Reserva r SET r.huesped = :huespedDestino WHERE r.huesped = :huespedOriginal")
+    void migrarReservas(
+            @Param("huespedOriginal") Huesped huespedOriginal,
+            @Param("huespedDestino") Huesped huespedDestino
     );
 }

@@ -4,13 +4,14 @@ import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuespedBusqueda;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Direccion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.DireccionRepository;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.HuespedRepository;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaFisica;
+import Facultad.TrabajoPracticoDesarrollo.Repositories.*;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDireccion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearDireccion;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearHuesped;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +26,25 @@ public class HuespedService {
     //Pedimos la interfaz del repositorio y Spring te da una implementación que funciona
     private final HuespedRepository huespedRepository;
     private final DireccionRepository direccionRepository;
+    private final ReservaRepository reservaRepository;
+    private final EstadiaRepository estadiaRepository;
+    private final FacturaRepository facturaRepository;
+    private final PersonaFisicaRepository personaFisicaRepository;
 
     @Autowired
-    public HuespedService(HuespedRepository huespedRepository, DireccionRepository direccionRepository) {
+    public HuespedService(
+            HuespedRepository huespedRepository,
+            DireccionRepository direccionRepository,
+            ReservaRepository reservaRepository,
+            EstadiaRepository estadiaRepository,
+            FacturaRepository facturaRepository,
+            PersonaFisicaRepository personaFisicaRepository) {
         this.huespedRepository = huespedRepository;
         this.direccionRepository = direccionRepository;
+        this.reservaRepository = reservaRepository;
+        this.estadiaRepository = estadiaRepository;
+        this.facturaRepository = facturaRepository;
+        this.personaFisicaRepository = personaFisicaRepository;
     }
 
     /**
@@ -170,7 +185,110 @@ public class HuespedService {
             // DIAGRAMA: "GHU -> DHU: persistirHuesped"
             huespedRepository.save(nuevoHuesped);
         }
+
+
     }
 
+    // CU10
+    @Transactional
+    public void modificarHuesped(String tipoOrig, String nroOrig, DtoHuesped dtoNuevo) {
+
+        // 1. Validar existencia del original (El que estamos editando)
+        HuespedId idOriginal = new HuespedId(TipoDocumento.valueOf(tipoOrig), nroOrig);
+        Huesped huespedOriginal = huespedRepository.findById(idOriginal)
+                .orElseThrow(() -> new RuntimeException("El huésped a modificar no existe."));
+
+        // 2. Detectar si cambió la Identidad (PK)
+        boolean cambioIdentidad = !tipoOrig.equals(dtoNuevo.getTipoDocumento().name()) ||
+                !nroOrig.equals(dtoNuevo.getNroDocumento());
+
+        if (cambioIdentidad) {
+            // Verificar si el NUEVO DNI ya existe
+            HuespedId idNuevo = new HuespedId(dtoNuevo.getTipoDocumento(), dtoNuevo.getNroDocumento());
+            Optional<Huesped> huespedDestinoOpt = huespedRepository.findById(idNuevo);
+
+            if (huespedDestinoOpt.isPresent()) {
+                // === CASO "ACEPTAR IGUALMENTE" (Fusión) ===
+                // El usuario confirmó usar un DNI que ya existía.
+
+                Huesped huespedDestino = huespedDestinoOpt.get();
+
+                // A. Pasamos los datos del formulario al huésped destino (el que sobrevive)
+                MapearHuesped.actualizarEntidadDesdeDto(huespedDestino, dtoNuevo);
+                actualizarDireccionExistente(huespedDestino, dtoNuevo.getDtoDireccion());
+
+                // B. Guardamos al destino actualizado
+                huespedRepository.save(huespedDestino);
+
+                // --- C. MIGRACIÓN DE HISTORIAL ---
+
+                // 1. Reservas y Estadías (Apuntan directo a Huesped)
+                reservaRepository.migrarReservas(huespedOriginal, huespedDestino);
+                estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
+
+                // 2. FACTURAS
+                // Buscamos si el huésped original tenía un rol de Pagador (Persona Fisica)
+                Optional<PersonaFisica> pfOriginalOpt = personaFisicaRepository.findByHuesped(huespedOriginal);
+
+                if (pfOriginalOpt.isPresent()) {
+                    PersonaFisica pfOriginal = pfOriginalOpt.get();
+
+                    // Buscamos si el destino YA es pagador
+                    Optional<PersonaFisica> pfDestinoOpt = personaFisicaRepository.findByHuesped(huespedDestino);
+
+                    if (pfDestinoOpt.isPresent()) {
+                        // CASO A: Ambos eran pagadores.
+                        // Hay que mover las facturas del PF viejo al PF nuevo y borrar el PF viejo.
+                        PersonaFisica pfDestino = pfDestinoOpt.get();
+                        facturaRepository.migrarFacturas(pfOriginal, pfDestino);
+
+                        personaFisicaRepository.delete(pfOriginal); // Borramos el rol de pagador viejo
+                    } else {
+                        // CASO B: El nuevo no era pagador.
+                        // Simplemente le cambiamos el dueño a la Persona Física existente.
+                        pfOriginal.setHuesped(huespedDestino);
+                        personaFisicaRepository.save(pfOriginal);
+                    }
+                }
+
+                return; // Terminamos acá.
+
+            } else {
+                // === CASO CAMBIO DE DNI LIMPIO (Migración) ===
+                // El nuevo DNI está libre. Hacemos el UPDATE de ID mágico.
+
+                huespedRepository.actualizarIdentidad(
+                        TipoDocumento.valueOf(tipoOrig), nroOrig,
+                        dtoNuevo.getTipoDocumento(), dtoNuevo.getNroDocumento()
+                );
+                huespedRepository.flush();
+
+                // Actualizamos las variables para que el paso 3 apunte al nuevo ID
+                tipoOrig = dtoNuevo.getTipoDocumento().name();
+                nroOrig = dtoNuevo.getNroDocumento();
+            }
+        }
+
+        // 3. Actualización normal (Si no hubo fusión)
+        // Buscamos el objeto (sea el mismo ID viejo o el nuevo ID si migramos)
+        Huesped huesped = huespedRepository.findById(new HuespedId(TipoDocumento.valueOf(tipoOrig), nroOrig)).get();
+
+        MapearHuesped.actualizarEntidadDesdeDto(huesped, dtoNuevo);
+        actualizarDireccionExistente(huesped, dtoNuevo.getDtoDireccion());
+
+        huespedRepository.save(huesped);
+    }
+
+    // Helper para dirección (si no lo tenías ya)
+    private void actualizarDireccionExistente(Huesped huesped, DtoDireccion dtoDir) {
+        if (huesped.getDireccion() != null && dtoDir != null) {
+            MapearDireccion.actualizarEntidadDesdeDto(huesped.getDireccion(), dtoDir);
+            direccionRepository.save(huesped.getDireccion());
+        } else if (huesped.getDireccion() == null && dtoDir != null) {
+            Direccion nueva = crearSinPersistirDireccion(dtoDir);
+            direccionRepository.save(nueva);
+            huesped.setDireccion(nueva);
+        }
+    }
 
 }
