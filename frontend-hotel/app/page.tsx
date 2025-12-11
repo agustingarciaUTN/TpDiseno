@@ -1,207 +1,85 @@
-import Link from "next/link";
-
-const useCases = [
-  {
-    code: "CU02",
-    title: "Buscar huésped",
-    objective: "Gestionar datos personales de los huéspedes (búsqueda y edición)",
-    path: "/cu/buscar-huesped",
-    actions: ["Buscar por apellido, nombre o documento", "Seleccionar un huésped y continuar"],
-  },
-  {
-    code: "CU04",
-    title: "Reservar habitación",
-    objective: "Reservar habitaciones a nombre de un eventual huésped en un rango de fechas",
-    path: "/cu/reservar-habitacion",
-    actions: ["Validar disponibilidad", "Seleccionar habitaciones y confirmar"],
-  },
-  {
-    code: "CU09",
-    title: "Alta de huésped",
-    objective: "Cargar datos personales de nuevos huéspedes",
-    path: "/cu/alta-huesped",
-    actions: ["Datos obligatorios", "Confirmar o corregir"] ,
-  },
-  {
-    code: "CU15",
-    title: "Ocupar habitación (check-in)",
-    objective: "Asignar habitaciones a un huésped y acompañantes",
-    path: "/cu/ocupar-habitacion",
-    actions: ["Validar disponibilidad", "Registrar datos y confirmar ingreso"],
-  },
-];
-
-const highlights = [
-  {
-    label: "Check-ins hoy",
-    value: "12",
-    delta: "+3 vs ayer",
-  },
-  {
-    label: "Ocupación",
-    value: "81%",
-    delta: "12 hab. disponibles",
-  },
-  {
-    label: "Reservas pendientes",
-    value: "7",
-    delta: "4 requieren confirmación",
-  },
-];
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Hotel, Search, Edit, UserPlus } from "lucide-react"
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 top-[-6rem] h-64 w-64 rounded-full bg-amber-400/20 blur-3xl" />
-        <div className="absolute right-[-10rem] top-10 h-72 w-72 rounded-full bg-teal-400/10 blur-3xl" />
-        <div className="absolute bottom-[-8rem] left-10 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+            <Hotel className="h-8 w-8" />
+          </div>
+          <h1 className="mb-3 text-4xl font-bold text-slate-900 dark:text-slate-50">Sistema de Hotelería</h1>
+          <p className="text-lg text-slate-600 dark:text-slate-400">Gestión de huéspedes y datos personales</p>
+        </div>
 
-      <main className="relative mx-auto flex max-w-6xl flex-col gap-12 px-6 py-14 md:px-10 md:py-16">
-        <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-amber-200/80">Hotel Ops</p>
-            <p className="text-3xl font-semibold leading-tight md:text-4xl">
-              Menú de casos de uso
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="group p-6 transition-all hover:shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+              <Search className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Buscar Huésped</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              Buscar huéspedes existentes por apellido, nombre, tipo o número de documento.
             </p>
-            <p className="max-w-2xl text-sm text-slate-200/80 md:text-base">
-              Elegí el caso de uso que querés ejecutar. Cada tarjeta te lleva al flujo
-              correspondiente para reservas, estado de habitaciones, alta/búsqueda de
-              huéspedes y check-in.
+            <Button asChild className="w-full">
+              <Link href="/buscar-huesped">Ir a búsqueda</Link>
+            </Button>
+          </Card>
+
+          <Card className="group p-6 transition-all hover:shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-colors group-hover:bg-green-600 group-hover:text-white dark:bg-green-950 dark:text-green-400">
+              <Edit className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Modificar Huésped</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              Actualizar los datos personales de un huésped existente.
             </p>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <Link
-                href="#menu"
-                className="rounded-full bg-amber-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-amber-300"
-              >
-                Ir al menú
-              </Link>
-              <Link
-                href="/cu/estado-habitaciones"
-                className="rounded-full border border-white/10 px-4 py-2 font-semibold text-slate-50 transition hover:border-white/30 hover:bg-white/5"
-              >
-                Ver estado de habitaciones
-              </Link>
-            </div>
-          </div>
+            <Button asChild variant="outline" className="w-full bg-transparent" disabled>
+              <span>Seleccione un huésped primero</span>
+            </Button>
+          </Card>
 
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-lg shadow-amber-500/10">
-            <p className="text-xs uppercase tracking-[0.25em] text-amber-200/70">
-              Turno
+          <Card className="group p-6 transition-all hover:shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-violet-100 text-violet-600 transition-colors group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-950 dark:text-violet-400">
+              <UserPlus className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Dar de Alta Huésped</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              Registrar un nuevo huésped en el sistema hotelero.
             </p>
-            <p className="text-sm font-semibold">Recepción · Hoy</p>
-            <p className="text-xs text-slate-200/70">Checklist: caja inicial, tarjetas, llaves</p>
-          </div>
-        </header>
+            <Button asChild variant="outline" className="w-full bg-transparent">
+              <Link href="/dar-de-alta-huesped">Crear nuevo huésped</Link>
+            </Button>
+          </Card>
+        </div>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          {highlights.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-slate-900/40"
-            >
-              <p className="text-sm text-slate-200/70">{item.label}</p>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-semibold">{item.value}</span>
-                <span className="text-xs text-emerald-200/80">{item.delta}</span>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <section id="menu" className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-slate-900/40">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-200/70">Operaciones</p>
-              <h2 className="text-xl font-semibold">Menú de opciones</h2>
-              <p className="text-sm text-slate-200/70">
-                Seleccioná un caso de uso para continuar. Los flujos están basados en los
-                requerimientos funcionales (CU02, CU04, CU05, CU09, CU15).
-              </p>
-            </div>
-            <span className="rounded-full border border-amber-200/40 px-3 py-1 text-xs font-semibold text-amber-100">
-              Conserje
-            </span>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {useCases.map((item) => (
-              <div
-                key={item.code}
-                className="group flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:-translate-y-1 hover:border-amber-300/40 hover:bg-amber-100/5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-100">
-                    {item.code}
-                  </span>
-                  <span className="text-xs text-slate-200/70">Actor: Conserje</span>
-                </div>
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm font-semibold text-slate-50">{item.title}</p>
-                  <p className="text-xs text-slate-200/80">{item.objective}</p>
-                  <ul className="space-y-1 text-xs text-slate-200/70">
-                    {item.actions.map((action) => (
-                      <li key={action} className="flex items-start gap-2">
-                        <span aria-hidden className="text-amber-200">•</span>
-                        <span>{action}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <Link
-                  href={item.path}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-slate-50 transition hover:border-amber-200/60 hover:bg-amber-100/10"
-                >
-                  Abrir {item.code}
-                  <span aria-hidden>→</span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-slate-900/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-200/70">Contexto</p>
-                <h2 className="text-xl font-semibold">Estado rápido</h2>
-              </div>
-              <span className="text-xs text-slate-200/70">Última actualización: hoy</span>
-            </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {highlights.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-slate-900/40"
-                >
-                  <p className="text-sm text-slate-200/70">{item.label}</p>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-semibold">{item.value}</span>
-                    <span className="text-xs text-emerald-200/80">{item.delta}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-slate-900/40">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-200/70">Ayuda rápida</p>
-                <h2 className="text-xl font-semibold">Tips de operación</h2>
-              </div>
-              <span className="text-xs text-slate-200/70">Atajos útiles</span>
-            </div>
-            <ul className="mt-4 space-y-2 text-xs text-slate-200/80">
-              <li>• Shift + Tab retrocede un campo en los formularios.</li>
-              <li>• Enter confirma acciones o equivale a click en botones.</li>
-              <li>• La búsqueda acepta apellido, nombres o documento.</li>
-              <li>• Mantené datos literales en mayúsculas según reglas del CU.</li>
-            </ul>
-          </div>
-        </section>
+        <Card className="mt-8 border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900 dark:bg-blue-950/20">
+          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-50">Flujo de Trabajo</h2>
+          <ol className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+                1
+              </span>
+              <span>Buscar huésped por criterios (apellido, nombre, documento)</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+                2
+              </span>
+              <span>Si existe, seleccionarlo y modificar sus datos</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+                3
+              </span>
+              <span>Si no existe, dar de alta un nuevo huésped</span>
+            </li>
+          </ol>
+        </Card>
       </main>
     </div>
-  );
+  )
 }

@@ -1,4 +1,3 @@
-// Enums mapeados desde el backend
 export enum TipoDocumento {
   DNI = "DNI",
   LE = "LE",
@@ -7,61 +6,36 @@ export enum TipoDocumento {
   OTRO = "OTRO",
 }
 
-export enum PosIva {
-  RESPONSABLE_INSCRIPTO = "RESPONSABLE_INSCRIPTO",
-  MONOTRIBUTISTA = "MONOTRIBUTISTA",
-  EXENTO = "EXENTO",
-  CONSUMIDOR_FINAL = "CONSUMIDOR_FINAL",
-}
-
-// Validaciones regex del backend DtoHuesped y DtoReserva
-export const VALIDATION = {
-  REGEX_NOMBRE: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
-  REGEX_DOCUMENTO: /^[a-zA-Z0-9]+$/, // Alfanumérico para TODOS los tipos de documento
-  REGEX_CUIT: /^\d{2}-?\d{8}-?\d{1}$/,
-  REGEX_TELEFONO: /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/,
-} as const;
-
-// Labels para UI
 export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
   [TipoDocumento.DNI]: "DNI",
-  [TipoDocumento.LE]: "Libreta de Enrolamiento",
-  [TipoDocumento.LC]: "Libreta Cívica",
+  [TipoDocumento.LE]: "LE (Libreta de Enrolamiento)",
+  [TipoDocumento.LC]: "LC (Libreta Cívica)",
   [TipoDocumento.PASAPORTE]: "Pasaporte",
   [TipoDocumento.OTRO]: "Otro",
-};
+}
 
-// DTO parcial para búsqueda (CU02)
+// Validaciones
+export const VALIDATION = {
+  REGEX_NOMBRE: /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$/,
+  REGEX_DOCUMENTO: /^[a-zA-Z0-9]+$/,
+}
+
+// Formulario de búsqueda
 export interface BuscarHuespedForm {
-  apellido: string;
-  nombres: string;
-  tipoDocumento: TipoDocumento | "";
-  nroDocumento: string;
+  apellido: string
+  nombres: string
+  tipoDocumento: string
+  nroDocumento: string
 }
 
-// DTO completo (espejo del backend)
+// DTO del huésped (según backend)
 export interface DtoHuesped {
-  nombres: string;
-  apellido: string;
-  tipoDocumento: TipoDocumento;
-  nroDocumento: string;
-  cuit?: string;
-  posicionIva: PosIva;
-  fechaNacimiento: string; // ISO 8601 format
-  nacionalidad: string;
-  email: string[];
-  ocupacion?: string[];
-  telefono: number[];
-  dtoDireccion: DtoDireccion;
-}
-
-export interface DtoDireccion {
-  calle: string;
-  numero: string;
-  piso?: string;
-  departamento?: string;
-  codigoPostal: string;
-  localidad: string;
-  provincia: string;
-  pais: string;
+  id: number
+  apellido: string
+  nombres: string
+  tipoDocumento: TipoDocumento
+  nroDocumento: string
+  domicilio?: string
+  telefono?: string
+  email?: string
 }
