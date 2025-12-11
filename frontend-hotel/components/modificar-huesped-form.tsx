@@ -231,6 +231,11 @@ export function ModificarHuespedForm() {
             })
             setOriginalData(guestData)
             setIsSaving(false)
+            
+            // Redirect to home after showing success message
+            setTimeout(() => {
+                router.push("/")
+            }, 2000)
         }, 800)
     }
 

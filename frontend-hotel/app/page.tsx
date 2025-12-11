@@ -17,6 +17,8 @@ import {
     Users,
     Receipt,
     CreditCard,
+    CalendarCheck,
+    DoorOpen,
 } from "lucide-react"
 import { useGuest } from "@/lib/guest-context"
 
@@ -244,15 +246,60 @@ export default function Home() {
                         </div>
                     </section>
 
+                    {/* Gestión de Habitaciones */}
+                    <section>
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                                <Hotel className="h-5 w-5" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900">Gestión de Habitaciones</h2>
+                        </div>
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {/* Ocupar Habitación */}
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-orange-100/50" />
+                                <div className="relative">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white">
+                                        <DoorOpen className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-2 text-xl font-semibold text-slate-900">Ocupar Habitación</h3>
+                                    <p className="mb-4 text-sm leading-relaxed text-slate-600">
+                                        Realizar el check-in de huéspedes en una habitación disponible o reservada.
+                                    </p>
+                                    <Button asChild className="w-full bg-orange-600 text-white hover:bg-orange-700">
+                                        <Link href="/ocupar-habitacion">Check-In</Link>
+                                    </Button>
+                                </div>
+                            </Card>
+                        </div>
+                    </section>
+
                     {/* Gestión de Reservas */}
                     <section>
                         <div className="mb-6 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600">
-                                <XCircle className="h-5 w-5" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                                <CalendarCheck className="h-5 w-5" />
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900">Gestión de Reservas</h2>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {/* Reservar Habitación */}
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-indigo-100/50" />
+                                <div className="relative">
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                                        <CalendarCheck className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="mb-2 text-xl font-semibold text-slate-900">Reservar Habitación</h3>
+                                    <p className="mb-4 text-sm leading-relaxed text-slate-600">
+                                        Registrar una nueva reserva de habitación para un huésped responsable.
+                                    </p>
+                                    <Button asChild className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
+                                        <Link href="/reservar-habitacion">Crear reserva</Link>
+                                    </Button>
+                                </div>
+                            </Card>
+
                             {/* Cancelar Reserva */}
                             <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-red-100/50" />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,6 +45,7 @@ const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
 type Paso = "fechaDesde" | "fechaHasta" | "grilla" | "datosHuesped" | "confirmacion";
 
 export default function ReservarHabitacion() {
+  const router = useRouter();
   const [paso, setPaso] = useState<Paso>("fechaDesde");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
@@ -535,34 +537,36 @@ export default function ReservarHabitacion() {
             {selecciones.length > 0 && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Habitaciones seleccionadas</h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {selecciones.map((sel, idx) => {
                     const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
                     if (!hab) return null;
                     const noches = sel.diaFin - sel.diaInicio + 1;
                     const subtotal = hab.precioNoche * noches;
                     return (
-                      <div key={idx} className="flex justify-between items-center bg-slate-800 p-3 rounded">
+                      <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
                         <div>
-                          <p className="font-semibold">Habitación {hab.numero} ({hab.tipo})</p>
-                          <p className="text-sm text-slate-400">
+                          <p className="font-semibold text-slate-900 dark:text-white">Habitación {hab.numero} ({hab.tipo})</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             {diasRango[sel.diaInicio]?.toLocaleDateString()} - {diasRango[sel.diaFin]?.toLocaleDateString()} ({noches} noche{noches > 1 ? "s" : ""})
                           </p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <p className="text-amber-400 font-semibold">${subtotal}</p>
-                          <button
+                          <p className="text-blue-600 dark:text-blue-400 font-semibold">${subtotal}</p>
+                          <Button
                             onClick={() => handleRemoverSeleccion(idx)}
-                            className="text-red-400 hover:text-red-300 text-sm"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
                           >
                             ✕ Quitar
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                   <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">Total:</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${calcularTotal()}</p>
                 </div>
@@ -751,17 +755,11 @@ export default function ReservarHabitacion() {
               </Button>
               <Button
                 onClick={() => {
-                  alert(`Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
-                  // Reset form
-                  setPaso("fechaDesde");
-                  setFechaDesde("");
-                  setFechaHasta("");
-                  setSelecciones([]);
-                  setDatosHuesped({
-                    apellido: "",
-                    nombres: "",
-                    telefono: "",
-                  });
+                  alert(`La operación ha culminado con éxito. Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
+                  // Redirect to home after brief delay
+                  setTimeout(() => {
+                    router.push("/");
+                  }, 500);
                 }}
                 className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
               >

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -439,6 +440,8 @@ export default function OcuparHabitacion() {
     setHuespedes(huespedes.filter((_, i) => i !== index));
   };
 
+  const router = useRouter();
+
   const handleContinuarConfirmacion = () => {
     if (huespedes.length === 0) {
       alert("Debe agregar al menos un huésped (responsable)");
@@ -448,7 +451,13 @@ export default function OcuparHabitacion() {
   };
 
   const handleConfirmarEstadia = () => {
-    alert("Estadía creada exitosamente (simulado)");
+    // Mostrar mensaje de éxito
+    alert("La operación ha culminado con éxito. Check-in realizado correctamente.");
+    
+    // Redirigir al menú principal después de un breve delay
+    setTimeout(() => {
+      router.push("/");
+    }, 500);
   };
 
   const handleVolverPaso = () => {
