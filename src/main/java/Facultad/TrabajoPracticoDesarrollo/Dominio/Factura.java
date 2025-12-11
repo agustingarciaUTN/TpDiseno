@@ -90,15 +90,11 @@ public class Factura {
         private ResponsablePago responsablePago;
         private NotaDeCredito notaDeCredito;
 
-        public Builder(String numeroFactura, Date fechaEmision, Double importeTotal, ResponsablePago responsablePago, Estadia estadia, TipoFactura tipoFactura) {
-            this.numeroFactura = numeroFactura;
-            this.fechaEmision = fechaEmision;
-            this.importeTotal = importeTotal;
-            this.responsablePago = responsablePago;
-            this.estadia = estadia;
-            this.tipoFactura = tipoFactura;
-        }
+        public Builder(){}
 
+        public Builder numeroFactura(String val) { numeroFactura = val; return this; }
+        public Builder fechaEmision(Date val) { fechaEmision = val; return this; }
+        public Builder importeTotal(Double val) { importeTotal = val; return this; }
         public Builder fechaVencimiento(Date val) { fechaVencimiento = val; return this; }
         public Builder estadoFactura(EstadoFactura val) { estadoFactura = val; return this; }
         public Builder tipo(TipoFactura val) { tipoFactura = val; return this; }

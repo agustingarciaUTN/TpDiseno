@@ -1,5 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoHabitacion;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoHabitacion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -59,12 +60,11 @@ public class DtoHabitacion {
         private ArrayList<DtoReserva> dtoReservas = new ArrayList<>();
 
         // Constructor con los datos OBLIGATORIOS
-        public Builder(String numero, TipoHabitacion tipo, int capacidad) {
-            this.numero = numero;
-            this.tipoHabitacion = tipo;
-            this.capacidad = capacidad;
-        }
+        public Builder() {}
 
+        public Builder numero(String val) { numero = val; return this;}
+        public Builder tipoHabitacion(TipoHabitacion val) { tipoHabitacion = val; return this; }
+        public Builder capacidad(Integer val) { capacidad = val; return this;}
         public Builder estado(EstadoHabitacion val) { estadoHabitacion = val; return this; }
         public Builder costo(float val) { costoPorNoche = val; return this; }
 

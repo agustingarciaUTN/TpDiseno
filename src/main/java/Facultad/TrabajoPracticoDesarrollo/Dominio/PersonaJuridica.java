@@ -42,20 +42,13 @@ public class PersonaJuridica extends ResponsablePago {
         private int idResponsablePago;
 
 
-
         public Builder() {}
 
-        public Builder(String razonSocial, String cuit, Direccion direccion) {
-            this.razonSocial =razonSocial;
-            this.cuit = cuit;
-            this.direccion = direccion;
-        }
 
         public Builder direccion(Direccion val) { direccion = val; return this; }
         public Builder razonSocial(String val) { razonSocial = val; return this; }
         public Builder cuit(String val) { cuit = val; return this; }
         public Builder telefonos(List<Long> val) { telefonos = val; return this; }
-
         public Builder idResponsablePago (int val) { idResponsablePago = val; return this; }
 
         public PersonaJuridica build() {

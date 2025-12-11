@@ -86,11 +86,6 @@ public class Estadia {
 
         public Builder() {}
 
-        public Builder (Date fechaCheckIn) {
-            this.fechaCheckIn = fechaCheckIn;
-        }
-
-
         public Builder idEstadia(Integer val) { idEstadia = val; return this; }
         public Builder fechaCheckIn(Date val) { fechaCheckIn = val; return this; }
         public Builder fechaCheckOut(Date val) { fechaCheckOut = val; return this; }

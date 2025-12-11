@@ -12,7 +12,8 @@ public class MapearEstadia {
     public static Estadia mapearDtoAEntidad(DtoEstadia dto) {
         if (dto == null) return null;
 
-        Estadia.Builder builder = new Estadia.Builder(dto.getFechaCheckIn())
+        Estadia.Builder builder = new Estadia.Builder()
+                .fechaCheckIn(dto.getFechaCheckIn())
                 .idEstadia(dto.getIdEstadia())
                 .fechaCheckOut(dto.getFechaCheckOut())
                 .valorEstadia(dto.getValorEstadia());

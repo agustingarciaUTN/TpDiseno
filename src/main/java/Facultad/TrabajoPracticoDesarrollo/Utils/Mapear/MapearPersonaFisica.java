@@ -8,11 +8,9 @@ public class MapearPersonaFisica  {
     public static PersonaFisica mapearDtoAEntidad(DtoPersonaFisica dtoPersonaFisica) {
         if (dtoPersonaFisica == null) return null;
 
-        PersonaFisica.Builder builder = new PersonaFisica.Builder(
-                MapearHuesped.mapearDtoAEntidad(dtoPersonaFisica.getHuesped())
-        )
+        PersonaFisica.Builder builder = new PersonaFisica.Builder()
+                .huesped(MapearHuesped.mapearDtoAEntidad(dtoPersonaFisica.getHuesped()))
                 .idResponsablePago(dtoPersonaFisica.getIdResponsablePago());
-
 
         return builder.build();
     }

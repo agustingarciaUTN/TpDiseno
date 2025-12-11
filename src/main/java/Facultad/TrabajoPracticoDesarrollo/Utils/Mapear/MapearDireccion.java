@@ -23,13 +23,12 @@ public class MapearDireccion  {
 
     public static DtoDireccion mapearEntidadADto(Direccion entity) {
         if (entity == null) return null;
-        return new DtoDireccion.Builder(
-                entity.getCalle(),
-                entity.getNumero(),
-                entity.getLocalidad(),
-                entity.getProvincia(),
-                entity.getPais()
-        )
+        return new DtoDireccion.Builder()
+                .calle(entity.getCalle())
+                .numero(entity.getNumero())
+                .localidad(entity.getLocalidad())
+                .provincia(entity.getProvincia())
+                .pais(entity.getPais())
                 .idDireccion(entity.getId())
                 .departamento(entity.getDepartamento())
                 .piso(entity.getPiso())

@@ -1,11 +1,9 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPago;
-import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
 
 
 public class MapearPago {
@@ -14,21 +12,19 @@ public class MapearPago {
         if (dtoPago == null) return null;
 
         // Referencia Factura
-        Estadia estadia = new Estadia();
-        Factura facturaRef = new Factura.Builder(null, null, null, null, null, TipoFactura.A ).build();
+        Factura facturaRef = new Factura.Builder().build();
         facturaRef.setNumeroFactura(dtoPago.getFactura().getNumeroFactura());
 
         // Nota: No podemos reconstruir los objetos MedioPago solo desde una lista de IDs genéricos.
         // La lista de medios quedará vacía en la entidad y deberá cargarse por separado si hace falta.
 
-        return new Pago.Builder(
-                dtoPago.getMoneda(),
-                dtoPago.getMontoTotal(),
-                dtoPago.getFechaPago(),
-                facturaRef
-        )
+        return new Pago.Builder()
                 .id(dtoPago.getIdPago())
                 .cotizacion(dtoPago.getCotizacion())
+                .moneda(dtoPago.getMoneda())
+                .monto(dtoPago.getMontoTotal())
+                .fecha(dtoPago.getFechaPago())
+                .factura(facturaRef)
                 .build();
 
     }

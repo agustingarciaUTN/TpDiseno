@@ -121,14 +121,12 @@ public class Huesped {
         private List<String> email = new ArrayList<>();
         private List<String> ocupacion = new ArrayList<>();
 
-        // Constructor con datos obligatorios (sugerido)
-        public Builder(TipoDocumento tipo, String nro, String apellido, String nombres) {
-            this.tipoDocumento = tipo;
-            this.nroDocumento = nro;
-            this.apellido = apellido;
-            this.nombres = nombres;
-        }
+        public Builder() {}
 
+        public Builder tipoDocumento(TipoDocumento val) { tipoDocumento = val; return this; }
+        public Builder nroDocumento(String val) { nroDocumento = val; return this;}
+        public Builder apellido(String val) { apellido = val; return this;}
+        public Builder nombres(String val) { nombres = val; return this; }
         public Builder fechaNacimiento(Date val) { fechaNacimiento = val; return this; }
         public Builder nacionalidad(String val) { nacionalidad = val; return this; }
         public Builder posicionIva(PosIva val) { posicionIva = val; return this; }

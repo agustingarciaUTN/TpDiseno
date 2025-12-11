@@ -18,10 +18,6 @@ public class DtoHuesped {
     // --- CONSTANTES DE VALIDACIÓN ---
     public static final String REGEX_NOMBRE = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
     public static final String REGEX_TELEFONO = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
-    // Alfanumérico para documentos (acepta pasaportes extranjeros)
-    public static final String REGEX_DOCUMENTO = "^[a-zA-Z0-9]+$";
-    // CUIT: 11 dígitos, opcionalmente separados por guiones
-    public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
 
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -38,11 +34,8 @@ public class DtoHuesped {
     private TipoDocumento tipoDocumento;
 
     @NotBlank(message = "El número de documento es obligatorio")
-    @Pattern(regexp = REGEX_DOCUMENTO, message = "El documento no debe contener espacios ni símbolos")
-    @Size(min = 6, max = 15, message = "El documento debe tener entre 6 y 15 caracteres")
     private String nroDocumento;
 
-    @Pattern(regexp = REGEX_CUIT, message = "El CUIT debe tener 11 dígitos (con o sin guiones)")
     private String cuit;
 
     @NotNull(message = "La posición frente al IVA es obligatoria")
@@ -75,6 +68,49 @@ public class DtoHuesped {
     @JsonIgnore
     @Valid // Para validar estadías si vienen en la petición (opcional)
     private List<DtoEstadia> dtoEstadias;
+
+    @AssertTrue(message = "El formato del número de documento no coincide con el tipo seleccionado")
+    public boolean isDocumentoValido() {
+        if (tipoDocumento == null || nroDocumento == null) return true; // Dejar pasar (NotNull lo agarra)
+
+        switch (tipoDocumento) {
+            case DNI:
+            case LE:
+            case LC:
+                // Solo números, 7 u 8 dígitos
+                return nroDocumento.matches("^\\d{7,8}$");
+
+            case PASAPORTE:
+                // Letras y números, 6 a 15 caracteres
+                return nroDocumento.matches("^[A-Z0-9]{6,15}$");
+
+            default: // OTRO
+                // Alfanumérico, 4 a 20 caracteres
+                return nroDocumento.matches("^.{4,20}$");
+        }
+    }
+
+    // --- VALIDACIÓN DE CONSISTENCIA CUIT-DNI ---
+    @AssertTrue(message = "El CUIT no coincide con el número de documento ingresado")
+    public boolean isCuitConsistente() {
+        // 1. Si no hay CUIT o no hay DNI, no validamos consistencia aquí
+        // (Dejamos que @NotNull o @NotBlank se encarguen de la obligatoriedad si corresponde)
+        if (cuit == null || cuit.isEmpty() || nroDocumento == null || nroDocumento.isEmpty()) {
+            return true;
+        }
+        // 2. Construimos la Expresión Regular Dinámica
+        // ^       : Inicio de línea
+        // \d{2}   : Exactamente 2 dígitos (Prefijo: 20, 27, 30, etc.)
+        // -       : Guión literal
+        // %s      : Aquí insertamos el nroDocumento real
+        // -       : Guión literal
+        // \d      : Exactamente 1 dígito (Verificador)
+        // $       : Fin de línea
+        String regexDinamica = String.format("^\\d{2}-%s-\\d$", nroDocumento);
+
+        // 3. Validamos
+        return cuit.matches(regexDinamica);
+    }
 
     // 1. Constructor Privado (Recibe el Builder)
     private DtoHuesped(Builder builder) {
