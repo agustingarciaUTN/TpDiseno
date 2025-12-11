@@ -242,6 +242,8 @@ public class HuespedService {
                         PersonaFisica pfDestino = pfDestinoOpt.get();
                         facturaRepository.migrarFacturas(pfOriginal, pfDestino);
 
+                        facturaRepository.flush();
+
                         personaFisicaRepository.delete(pfOriginal); // Borramos el rol de pagador viejo
                     } else {
                         // CASO B: El nuevo no era pagador.
@@ -250,6 +252,11 @@ public class HuespedService {
                         personaFisicaRepository.save(pfOriginal);
                     }
                 }
+
+                reservaRepository.flush();
+                estadiaRepository.flush();
+
+                huespedRepository.delete(huespedOriginal);
 
                 return; // Terminamos acá.
 
