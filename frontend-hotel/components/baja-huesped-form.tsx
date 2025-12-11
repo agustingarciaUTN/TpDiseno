@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,6 +29,7 @@ type Guest = {
 }
 
 export function BajaHuespedForm() {
+    const router = useRouter()
     const [searchType, setSearchType] = useState<"documento" | "nombre">("documento")
     const [tipoDocumento, setTipoDocumento] = useState("")
     const [nroDocumento, setNroDocumento] = useState("")
@@ -126,6 +128,11 @@ export function BajaHuespedForm() {
                 setNroDocumento("")
                 setNombre("")
                 setApellido("")
+
+                // Redirigir al menú principal después de mostrar el mensaje
+                setTimeout(() => {
+                    router.push("/")
+                }, 2000)
             }, 500)
         }
     }
