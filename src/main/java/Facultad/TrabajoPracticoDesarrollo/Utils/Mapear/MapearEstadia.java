@@ -25,7 +25,7 @@ public class MapearEstadia {
 
         // 2. Mapear Habitación (CORRECCIÓN IMPORTANTE: ESTO FALTABA)
         if (dto.getDtoHabitacion() != null) {
-            builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion()));
+            builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion(), null));
         }
 
         // 3. Mapear Lista de Huéspedes
