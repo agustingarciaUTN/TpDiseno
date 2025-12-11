@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Hotel, Search, Edit, UserPlus } from "lucide-react"
+import { Hotel, Search, Edit, UserPlus, CalendarCheck, DoorOpen } from "lucide-react"
 
 export default function Home() {
   return (
@@ -12,10 +12,11 @@ export default function Home() {
             <Hotel className="h-8 w-8" />
           </div>
           <h1 className="mb-3 text-4xl font-bold text-slate-900 dark:text-slate-50">Sistema de Hotelería</h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400">Gestión de huéspedes y datos personales</p>
+          <p className="text-lg text-slate-600 dark:text-slate-400">Gestión completa de huéspedes, reservas y habitaciones</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-50">Gestión de Huéspedes</h2>
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card className="group p-6 transition-all hover:shadow-xl">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
               <Search className="h-6 w-6" />
@@ -51,12 +52,41 @@ export default function Home() {
               Registrar un nuevo huésped en el sistema hotelero.
             </p>
             <Button asChild variant="outline" className="w-full bg-transparent">
-              <Link href="/dar-de-alta-huesped">Crear nuevo huésped</Link>
+              <Link href="/alta-huesped">Crear nuevo huésped</Link>
             </Button>
           </Card>
         </div>
 
-        <Card className="mt-8 border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900 dark:bg-blue-950/20">
+        <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-50">Gestión de Habitaciones</h2>
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          <Card className="group p-6 transition-all hover:shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white dark:bg-indigo-950 dark:text-indigo-400">
+              <CalendarCheck className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Reservar Habitación</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              Registrar una nueva reserva de habitación para un huésped responsable.
+            </p>
+            <Button asChild variant="outline" className="w-full bg-transparent">
+              <Link href="/reservar-habitacion">Crear reserva</Link>
+            </Button>
+          </Card>
+
+          <Card className="group p-6 transition-all hover:shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white dark:bg-orange-950 dark:text-orange-400">
+              <DoorOpen className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Ocupar Habitación</h3>
+            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+              Realizar el check-in de huéspedes en una habitación disponible o reservada.
+            </p>
+            <Button asChild variant="outline" className="w-full bg-transparent">
+              <Link href="/ocupar-habitacion">Check-In</Link>
+            </Button>
+          </Card>
+        </div>
+
+        <Card className="border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900 dark:bg-blue-950/20">
           <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-50">Flujo de Trabajo</h2>
           <ol className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
             <li className="flex gap-3">

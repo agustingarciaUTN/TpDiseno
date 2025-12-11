@@ -1,11 +1,12 @@
 "use client"
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { UserPlus, AlertCircle, CheckCircle2 } from "lucide-react"
+import { UserPlus, AlertCircle, CheckCircle2, Home } from "lucide-react"
 
 interface DatosHuesped {
   nombres: string
@@ -291,16 +292,24 @@ export default function AltaHuesped() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600 text-white">
-              <UserPlus className="h-5 w-5" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600 text-white">
+                <UserPlus className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                  Caso de Uso
+                </p>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Alta de Huésped</h1>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                Caso de Uso
-              </p>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Alta de Huésped</h1>
-            </div>
+            <Button asChild variant="outline">
+              <Link href="/">
+                <Home className="mr-2 h-4 w-4" />
+                Volver al Inicio
+              </Link>
+            </Button>
           </div>
           <p className="text-slate-600 dark:text-slate-400">Registrar un nuevo huésped en el sistema</p>
         </div>
