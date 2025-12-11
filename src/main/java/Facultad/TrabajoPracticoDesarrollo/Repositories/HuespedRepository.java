@@ -19,7 +19,9 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
      * Busca por coincidencia parcial en nombre/apellido y exacta/parcial en documento.
      * Si un parámetro es NULL, se ignora ese filtro (funciona como tu lógica original).
      */
-    @Query("SELECT h FROM Huesped h WHERE " +
+    @Query("SELECT DISTINCT h FROM Huesped h " +
+            "LEFT JOIN FETCH h.direccion " +
+            "WHERE " +
             "(:apellido IS NULL OR LOWER(h.apellido) LIKE LOWER(CONCAT(:apellido, '%'))) AND " +
             "(:nombres IS NULL OR LOWER(h.nombres) LIKE LOWER(CONCAT(:nombres, '%'))) AND " +
             "(:tipo IS NULL OR h.tipoDocumento = :tipo) AND " +

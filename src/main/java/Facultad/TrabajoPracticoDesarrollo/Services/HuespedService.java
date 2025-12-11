@@ -223,8 +223,10 @@ public class HuespedService {
                 // --- C. MIGRACIÓN DE HISTORIAL ---
 
                 // 1. Reservas y Estadías (Apuntan directo a Huesped)
-                reservaRepository.migrarReservas(huespedOriginal, huespedDestino);
-                estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
+                // COMENTADO TEMPORALMENTE - migrarReservas necesita ser reimplementada (Reserva no tiene relación directa con Huesped)
+                // reservaRepository.migrarReservas(huespedOriginal, huespedDestino);
+                // COMENTADO TEMPORALMENTE - migrarEstadias necesita ser reimplementada
+                // estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
 
                 // 2. FACTURAS
                 // Buscamos si el huésped original tenía un rol de Pagador (Persona Fisica)

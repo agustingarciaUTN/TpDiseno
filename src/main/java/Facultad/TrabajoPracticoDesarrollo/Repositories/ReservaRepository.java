@@ -44,10 +44,11 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
     );
 
     //Metodo utilizado para el CU10, cuando tenemos que reasignar las reservas de un huesped a otro
-    @Modifying // Indica que vamos a cambiar datos, no solo leer
+    // TODO: Revisar - Reserva no tiene relación directa con Huesped
+    /*@Modifying // Indica que vamos a cambiar datos, no solo leer
     @Query("UPDATE Reserva r SET r.huesped = :huespedDestino WHERE r.huesped = :huespedOriginal")
     void migrarReservas(
             @Param("huespedOriginal") Huesped huespedOriginal,
             @Param("huespedDestino") Huesped huespedDestino
-    );
+    );*/
 }

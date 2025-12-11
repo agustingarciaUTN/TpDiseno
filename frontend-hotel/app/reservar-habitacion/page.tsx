@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Hotel, Home, Calendar, UserCheck, CheckCircle } from "lucide-react";
+import { Hotel, Home, Calendar, UserCheck, CheckCircle, Loader2 } from "lucide-react";
+import { obtenerHabitaciones, crearReserva, verificarDisponibilidadHabitacion } from "@/lib/api";
+import { DtoHabitacion, DtoReserva, EstadoReserva } from "@/lib/types";
 
 interface HabitacionEstado {
   id: string;
@@ -31,16 +33,17 @@ interface DatosHuesped {
   telefono: string;
 }
 
-const HABITACIONES_MOCK: HabitacionEstado[] = [
-  { id: "1", numero: "101", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-  { id: "2", numero: "102", tipo: "Simple", comodidad: "Simple", capacidad: 1, estado: "DISPONIBLE", precioNoche: 80 },
-  { id: "3", numero: "103", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "RESERVADA", precioNoche: 200 },
-  { id: "4", numero: "104", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-  { id: "5", numero: "201", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "OCUPADA", precioNoche: 150 },
-  { id: "6", numero: "202", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-];
-
 const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
+
+// Función para mapear tipos de habitación del backend
+const mapearTipoAComodidad = (tipoJava: string): "Simple" | "Doble" | "Triple" | "Suite" => {
+  const tipo = tipoJava.toUpperCase();
+  if (tipo.includes("INDIVIDUAL")) return "Simple";
+  if (tipo.includes("DOBLE")) return "Doble";
+  if (tipo.includes("FAMILY") || tipo.includes("TRIPLE")) return "Triple";
+  if (tipo.includes("SUITE")) return "Suite";
+  return "Simple";
+};
 
 type Paso = "fechaDesde" | "fechaHasta" | "grilla" | "datosHuesped" | "confirmacion";
 
@@ -56,6 +59,9 @@ export default function ReservarHabitacion() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [errorFecha, setErrorFecha] = useState("");
+  const [habitaciones, setHabitaciones] = useState<HabitacionEstado[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
   
   // Estado de selección de habitaciones
   const [selecciones, setSelecciones] = useState<SeleccionHabitacion[]>([]);
@@ -71,6 +77,34 @@ export default function ReservarHabitacion() {
     telefono: "",
   });
   const [erroresHuesped, setErroresHuesped] = useState<Partial<DatosHuesped>>({});
+
+  // Cargar habitaciones del backend al montar el componente
+  useEffect(() => {
+    const cargarHabitaciones = async () => {
+      setLoading(true);
+      setErrorCarga("");
+      try {
+        const data = await obtenerHabitaciones();
+        const habitacionesMapeadas = data.map((h: DtoHabitacion) => ({
+          id: h.numero,
+          numero: h.numero,
+          tipo: h.tipoHabitacion,
+          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
+          capacidad: h.capacidad,
+          estado: h.estadoHabitacion === "DISPONIBLE" ? "DISPONIBLE" as const : 
+                 h.estadoHabitacion === "RESERVADA" ? "RESERVADA" as const : "OCUPADA" as const,
+          precioNoche: h.costoPorNoche
+        }));
+        setHabitaciones(habitacionesMapeadas);
+      } catch (error) {
+        console.error("Error al cargar habitaciones:", error);
+        setErrorCarga("No se pudieron cargar las habitaciones");
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargarHabitaciones();
+  }, []);
 
   // Validaciones de fechas
   const validarFechaDesde = (): boolean => {
@@ -143,7 +177,7 @@ export default function ReservarHabitacion() {
 
   // Verificar si una celda está disponible para selección
   const esCeldaDisponible = (habitacionId: string, diaIdx: number): boolean => {
-    const habitacion = HABITACIONES_MOCK.find(h => h.id === habitacionId);
+    const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
     if (!habitacion || habitacion.estado !== "DISPONIBLE") return false;
 
     // Verificar que no esté ya seleccionada
@@ -285,7 +319,7 @@ export default function ReservarHabitacion() {
   // Calcular precio total
   const calcularTotal = (): number => {
     return selecciones.reduce((total, sel) => {
-      const habitacion = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
+      const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === sel.habitacionId);
       if (!habitacion) return total;
       const noches = sel.diaFin - sel.diaInicio + 1;
       return total + (habitacion.precioNoche * noches);
@@ -306,9 +340,9 @@ export default function ReservarHabitacion() {
   };
 
   const conteo = {
-    disponibles: HABITACIONES_MOCK.filter(h => h.estado === "DISPONIBLE").length,
-    reservadas: HABITACIONES_MOCK.filter(h => h.estado === "RESERVADA").length,
-    ocupadas: HABITACIONES_MOCK.filter(h => h.estado === "OCUPADA").length,
+    disponibles: habitaciones.filter((h: HabitacionEstado) => h.estado === "DISPONIBLE").length,
+    reservadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "RESERVADA").length,
+    ocupadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "OCUPADA").length,
   };
 
   return (
@@ -461,11 +495,11 @@ export default function ReservarHabitacion() {
                   </thead>
                   <tbody>
                     {COMODIDADES_ORDEN.map((comodidad) => {
-                      const habsComodidad = HABITACIONES_MOCK.filter(
-                        (h) => h.comodidad === comodidad
+                      const habsComodidad = habitaciones.filter(
+                        (h: HabitacionEstado) => h.comodidad === comodidad
                       );
                       return habsComodidad.length > 0
-                        ? habsComodidad.map((hab, habIdx) => (
+                        ? habsComodidad.map((hab: HabitacionEstado, habIdx: number) => (
                             <tr
                               key={hab.id}
                               className={habIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-slate-900/30"}
@@ -545,7 +579,7 @@ export default function ReservarHabitacion() {
                 <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Habitaciones seleccionadas</h3>
                 <div className="space-y-3">
                   {selecciones.map((sel, idx) => {
-                    const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
+                    const hab = habitaciones.find((h: HabitacionEstado) => h.id === sel.habitacionId);
                     if (!hab) return null;
                     const noches = sel.diaFin - sel.diaInicio + 1;
                     const subtotal = hab.precioNoche * noches;
@@ -732,7 +766,7 @@ export default function ReservarHabitacion() {
               <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-slate-50">Habitaciones y Fechas</h3>
               <div className="space-y-2">
                 {selecciones.map((sel, idx) => {
-                  const hab = HABITACIONES_MOCK.find(h => h.id === sel.habitacionId);
+                  const hab = habitaciones.find((h: HabitacionEstado) => h.id === sel.habitacionId);
                   if (!hab) return null;
                   const noches = sel.diaFin - sel.diaInicio + 1;
                   const subtotal = hab.precioNoche * noches;
@@ -760,17 +794,41 @@ export default function ReservarHabitacion() {
                 ← Atrás
               </Button>
               <Button
-                onClick={() => {
-                  alert(`La operación ha culminado con éxito. Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
-                  // Redirect to home after brief delay
-                  setTimeout(() => {
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    // Crear las reservas para cada habitación seleccionada
+                    const reservas: DtoReserva[] = selecciones.map((sel) => {
+                      const fechaDesdeStr = diasRango[sel.diaInicio]?.toISOString().split('T')[0] || fechaDesde;
+                      const fechaHastaStr = diasRango[sel.diaFin]?.toISOString().split('T')[0] || fechaHasta;
+                      
+                      return {
+                        idReserva: 0, // Se genera en el backend
+                        estadoReserva: EstadoReserva.ACTIVA,
+                        fechaDesde: fechaDesdeStr,
+                        fechaHasta: fechaHastaStr,
+                        nombreHuespedResponsable: datosHuesped.nombres,
+                        apellidoHuespedResponsable: datosHuesped.apellido,
+                        telefonoHuespedResponsable: datosHuesped.telefono,
+                        idHabitacion: sel.habitacionId
+                      };
+                    });
+
+                    await crearReserva(reservas);
+                    alert(`La operación ha culminado con éxito. Reserva confirmada para ${datosHuesped.nombres} ${datosHuesped.apellido}. Total: $${calcularTotal()}`);
                     router.push("/");
-                  }, 500);
+                  } catch (error: any) {
+                    console.error("Error al crear reserva:", error);
+                    alert("Error al confirmar la reserva: " + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
+                disabled={loading}
                 className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
               >
-                <CheckCircle className="h-4 w-4" />
-                Confirmar reserva
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                {loading ? "Confirmando..." : "Confirmar reserva"}
               </Button>
             </div>
           </Card>

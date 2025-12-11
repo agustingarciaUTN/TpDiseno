@@ -17,6 +17,7 @@ import java.util.ArrayList;
 public class Huesped {
 
     @Id
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_documento")
     private TipoDocumento tipoDocumento;
 

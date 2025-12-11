@@ -57,10 +57,11 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
     );
 
     //Metodo utilizado para el CU10, cuando tenemos que reasignar una estadia de un huesped a otro
-    @Modifying
-    @Query("UPDATE Estadia e SET e.huesped = :huespedDestino WHERE e.huesped = :huespedOriginal")
-    void migrarEstadias(
-            @Param("huespedOriginal") Huesped huespedOriginal,
-            @Param("huespedDestino") Huesped huespedDestino
-    );
+    // COMENTADO TEMPORALMENTE - Estadia tiene una lista de huéspedes, no un solo huésped
+    // @Modifying
+    // @Query("UPDATE Estadia e SET e.huesped = :huespedDestino WHERE e.huesped = :huespedOriginal")
+    // void migrarEstadias(
+    //         @Param("huespedOriginal") Huesped huespedOriginal,
+    //         @Param("huespedDestino") Huesped huespedDestino
+    // );
 }

@@ -85,3 +85,73 @@ export interface HuespedFormData {
   provincia: string
   pais: string
 }
+
+// --- USUARIO (CU1) ---
+export interface DtoUsuario {
+  nombre: string
+  contrasenia: string
+}
+
+// --- HABITACIÓN (CU5) ---
+export enum EstadoHabitacion {
+  DISPONIBLE = "DISPONIBLE",
+  OCUPADA = "OCUPADA",
+  RESERVADA = "RESERVADA",
+  EN_MANTENIMIENTO = "EN_MANTENIMIENTO",
+  FUERA_DE_SERVICIO = "FUERA_DE_SERVICIO"
+}
+
+export interface DtoHabitacion {
+  numero: string
+  tipoHabitacion: string
+  capacidad: number
+  estadoHabitacion: EstadoHabitacion
+  costoPorNoche: number
+}
+
+// --- RESERVA (CU4) ---
+export enum EstadoReserva {
+  ACTIVA = "ACTIVA",
+  CANCELADA = "CANCELADA",
+  COMPLETADA = "COMPLETADA"
+}
+
+export interface DtoReserva {
+  idReserva: number
+  estadoReserva: EstadoReserva
+  fechaReserva?: string
+  fechaDesde: string
+  fechaHasta: string
+  nombreHuespedResponsable: string
+  apellidoHuespedResponsable: string
+  telefonoHuespedResponsable: string
+  idHabitacion: string
+}
+
+// --- ESTADÍA (CU15) ---
+export interface DtoEstadia {
+  idEstadia?: number
+  fechaCheckIn: string
+  fechaCheckOut?: string
+  valorEstadia: number
+  dtoReserva?: DtoReserva
+  dtoHuespedes?: DtoHuesped[]
+  dtoHabitacion: DtoHabitacion
+}
+
+// --- PAGO ---
+export enum Moneda {
+  ARS = "ARS",
+  USD = "USD",
+  EUR = "EUR"
+}
+
+export interface DtoPago {
+  idPago: number
+  moneda: Moneda
+  montoTotal: number
+  cotizacion: number
+  fechaPago: string
+  Factura: any // Simplificado por ahora
+  idsMediosPago?: number[]
+}
