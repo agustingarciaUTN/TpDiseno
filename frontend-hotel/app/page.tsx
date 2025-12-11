@@ -1,7 +1,18 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Hotel, Search, Edit, UserPlus, CalendarCheck, DoorOpen } from "lucide-react"
+import {
+    Hotel,
+    Search,
+    Edit,
+    UserPlus,
+    CalendarCheck,
+    DoorOpen,
+    XCircle,
+    FileText,
+    UserCog,
+    UserCheck, UserMinus
+} from "lucide-react"
 
 export default function Home() {
   return (
@@ -55,6 +66,18 @@ export default function Home() {
               <Link href="/alta-huesped">Crear nuevo huésped</Link>
             </Button>
           </Card>
+            <Card className="group p-6 transition-all hover:shadow-xl">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-rose-100 text-rose-600 transition-colors group-hover:bg-rose-600 group-hover:text-white dark:bg-rose-950 dark:text-rose-400">
+                    <UserMinus className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Dar de Baja Huésped</h3>
+                <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                    Eliminar un huésped del sistema permanentemente.
+                </p>
+                <Button asChild className="w-full">
+                    <Link href="/baja-huesped">Eliminar huésped</Link>
+                </Button>
+            </Card>
         </div>
 
         <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-50">Gestión de Habitaciones</h2>
@@ -85,30 +108,78 @@ export default function Home() {
             </Button>
           </Card>
         </div>
+          <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-50">Gestión de Pago</h2>
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
 
-        <Card className="border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900 dark:bg-blue-950/20">
-          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-50">Flujo de Trabajo</h2>
-          <ol className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
-                1
-              </span>
-              <span>Buscar huésped por criterios (apellido, nombre, documento)</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
-                2
-              </span>
-              <span>Si existe, seleccionarlo y modificar sus datos</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
-                3
-              </span>
-              <span>Si no existe, dar de alta un nuevo huésped</span>
-            </li>
-          </ol>
-        </Card>
+              <Card className="group p-6 transition-all hover:shadow-xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 transition-colors group-hover:bg-amber-600 group-hover:text-white dark:bg-amber-950 dark:text-amber-400">
+                      <FileText className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Facturar</h3>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                      Generar facturas para una habitación en el momento del check out.
+                  </p>
+                  <Button asChild className="w-full">
+                      <Link href="/facturar">Generar factura</Link>
+                  </Button>
+              </Card>
+              <Card className="group p-6 transition-all hover:shadow-xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-950 dark:text-emerald-400">
+                      <UserCheck className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Alta Responsable de Pago</h3>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                      Cargar datos personales de nuevos responsables de pago.
+                  </p>
+                  <Button asChild className="w-full">
+                      <Link href="/alta-responsable-pago">Registrar responsable</Link>
+                  </Button>
+              </Card>
+
+              <Card className="group p-6 transition-all hover:shadow-xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-950 dark:text-purple-400">
+                      <UserCog className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">
+                      Modificar Responsable de Pago
+                  </h3>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                      Modificar datos personales de los responsables de pago.
+                  </p>
+                  <Button asChild className="w-full">
+                      <Link href="/modificar-responsable-pago">Modificar responsable</Link>
+                  </Button>
+              </Card>
+              <Card className="group p-6 transition-all hover:shadow-xl">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-950 dark:text-purple-400">
+                      <UserCog className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">
+                      Modificar Responsable de Pago
+                  </h3>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                      Modificar datos personales de los responsables de pago.
+                  </p>
+                  <Button asChild className="w-full">
+                      <Link href="/modificar-responsable-pago">Modificar responsable</Link>
+                  </Button>
+              </Card>
+          </div>
+              <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-slate-50">Gestión de Pago</h2>
+              <div className="grid gap-6 md:grid-cols-2 mb-8">
+                  <Card className="group p-6 transition-all hover:shadow-xl">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-red-100 text-red-600 transition-colors group-hover:bg-red-600 group-hover:text-white dark:bg-red-950 dark:text-red-400">
+                          <XCircle className="h-6 w-6" />
+                      </div>
+                      <h3 className="mb-2 text-xl font-semibold text-slate-900 dark:text-slate-50">Cancelar Reserva</h3>
+                      <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                          Cancelar reservas a nombre de un eventual huésped.
+                      </p>
+                      <Button asChild className="w-full">
+                          <Link href="/cancelar-reserva">Cancelar reserva</Link>
+                      </Button>
+                  </Card>
+              </div>
       </main>
     </div>
   )
