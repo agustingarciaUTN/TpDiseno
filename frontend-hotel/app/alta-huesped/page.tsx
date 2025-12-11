@@ -1,4 +1,5 @@
 "use client"
+import { crearHuesped as crearHuespedAPI, verificarExistenciaHuesped } from "@/lib/api"
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -224,34 +225,85 @@ export default function AltaHuesped() {
     setPopup(null)
   }
 
-  const handleAceptar = () => {
+  const handleAceptar = async () => {
+    // 1. Validaciones del frontend
     if (!validarFormulario()) {
       return
     }
-    const dniExistente = false
-    if (dniExistente) {
-      setPopup("duplicado_dni")
-    } else {
-      crearHuesped()
+
+    // 2. Verificar duplicados en el backend
+    try {
+      const existente = await verificarExistenciaHuesped(datos.tipoDocumento, datos.nroDocumento)
+      if (existente) {
+        // Mostrar popup de duplicado
+        setPopup("duplicado_dni")
+        return
+      }
+    } catch (error) {
+      console.error("Error al verificar duplicado:", error)
     }
+
+    // 3. Si no hay duplicado, guardar
+    guardarEnBackend()
   }
 
   const handleContinuarConDuplicado = () => {
     setPopup(null)
-    crearHuesped()
+    guardarEnBackend()
   }
 
   const handleCorregirDatos = () => {
     setPopup(null)
   }
 
-  const crearHuesped = () => {
-    setHuespedCreado({
-      nombres: datos.nombres,
-      apellido: datos.apellido,
-    })
-    setPopup("exito")
-  }
+  const guardarEnBackend = async () => {
+      try {
+        // 1. Convertir datos del formulario al formato DtoHuesped del backend
+        // El backend espera números como números (no strings) y listas para email/teléfono
+        const nuevoHuesped = {
+          nombres: datos.nombres,
+          apellido: datos.apellido,
+          tipoDocumento: datos.tipoDocumento,
+          nroDocumento: datos.nroDocumento,
+          cuit: datos.cuit,
+          posicionIva: datos.posicionIva,
+          fechaNacimiento: datos.fechaNacimiento,
+          nacionalidad: datos.nacionalidad,
+          // El backend espera listas, así que metemos el string en un array
+          email: [datos.email],
+          // Limpiamos el teléfono de caracteres no numéricos para enviarlo como Long
+          telefono: [parseInt(datos.telefono.replace(/\D/g, '')) || 0],
+          ocupacion: ["Ocupacion"], // Campo opcional
+
+          // Objeto anidado DtoDomicilio
+          domicilio: {
+            calle: datos.calle,
+            numero: parseInt(datos.numero) || 0,
+            departamento: datos.departamento,
+            piso: datos.piso,
+            codPostal: parseInt(datos.codPostal) || 0,
+            localidad: datos.localidad,
+            provincia: datos.provincia,
+            pais: datos.pais
+          }
+        }
+
+        // 2. Llamada real al Backend
+        await crearHuespedAPI(nuevoHuesped)
+
+        // 3. Si no hubo error, actualizamos estado de éxito
+        setHuespedCreado({
+          nombres: datos.nombres,
+          apellido: datos.apellido,
+        })
+        setPopup("exito")
+
+      } catch (error: any) {
+        console.error("Error al crear:", error)
+        // Mostramos el error del backend en un alert o en la UI
+        alert("Error al guardar en el sistema: " + error.message)
+      }
+    }
 
   const handleAceptarExito = () => {
     setPopup(null)

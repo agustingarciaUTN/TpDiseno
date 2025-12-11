@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
@@ -19,24 +21,69 @@ import {
     CreditCard,
     CalendarCheck,
     DoorOpen,
+    LogOut,
 } from "lucide-react"
 import { useGuest } from "@/lib/guest-context"
 
 export default function Home() {
+    const router = useRouter()
     const { selectedGuest } = useGuest()
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [username, setUsername] = useState("")
+
+    useEffect(() => {
+        // Check authentication on mount
+        const authStatus = localStorage.getItem("isAuthenticated")
+        const storedUsername = localStorage.getItem("username")
+        
+        if (authStatus === "true" && storedUsername) {
+            setIsAuthenticated(true)
+            setUsername(storedUsername)
+        } else {
+            router.push("/login")
+        }
+    }, [router])
+
+    const handleLogout = () => {
+        localStorage.removeItem("isAuthenticated")
+        localStorage.removeItem("username")
+        router.push("/login")
+    }
+
+    if (!isAuthenticated) {
+        return null // or loading spinner
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
             <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="mb-16 text-center">
-                    <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white shadow-xl">
-                        <Hotel className="h-10 w-10" />
+                <div className="mb-16">
+                    <div className="flex justify-end mb-4">
+                        <Card className="px-4 py-2 flex items-center gap-3">
+                            <span className="text-sm text-slate-600">
+                                Usuario: <span className="font-semibold text-slate-900">{username}</span>
+                            </span>
+                            <Button
+                                onClick={handleLogout}
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Cerrar Sesión
+                            </Button>
+                        </Card>
                     </div>
-                    <h1 className="mb-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-5xl font-bold text-transparent">
-                        Sistema de Hotelería
-                    </h1>
-                    <p className="text-xl text-slate-600">Gestión integral de huéspedes, pagos y reservas</p>
+                    <div className="text-center">
+                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white shadow-xl">
+                            <Hotel className="h-10 w-10" />
+                        </div>
+                        <h1 className="mb-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-5xl font-bold text-transparent">
+                            Sistema de Hotelería
+                        </h1>
+                        <p className="text-xl text-slate-600">Gestión integral de huéspedes, pagos y reservas</p>
+                    </div>
                 </div>
 
                 <div className="space-y-12">

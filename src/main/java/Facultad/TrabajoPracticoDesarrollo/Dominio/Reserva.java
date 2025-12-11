@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,9 +41,16 @@ public class Reserva {
     @Column(name = "\"ApellidoHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String apellidoHuespedResponsable;
 
-    // CORRECCIÓN SOLICITADA: Mapeo exacto de la columna de teléfono
     @Column(name = "\"TelefonoHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String telefonoHuespedResponsable;
+
+    // --- AGREGAMOS ESTO PARA PODER BORRAR/MIGRAR ---
+    @Enumerated(EnumType.STRING)
+    @Column(name = "\"TipoDocumentoResponsable\"")
+    private TipoDocumento tipoDocumentoResponsable;
+
+    @Column(name = "\"NroDocumentoResponsable\"")
+    private String nroDocumentoResponsable;
 
     // Relación con Habitación
     @ManyToOne

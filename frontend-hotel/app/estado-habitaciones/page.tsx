@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BarChart3, Home, Calendar } from "lucide-react";
+import { BarChart3, Home, Calendar, Loader2 } from "lucide-react";
+import { obtenerHabitaciones } from "@/lib/api"; // Asegúrate de tener esta función en api.ts
 
 interface HabitacionEstado {
   id: string;
@@ -14,71 +15,11 @@ interface HabitacionEstado {
   tipo: string;
   comodidad: "Simple" | "Doble" | "Triple" | "Suite";
   capacidad: number;
-  estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA";
+  estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO";
   huesped?: string;
   checkin?: string;
   checkout?: string;
 }
-
-const HABITACIONES_ESTADO_MOCK: HabitacionEstado[] = [
-  {
-    id: "1",
-    numero: "101",
-    tipo: "Doble",
-    comodidad: "Doble",
-    capacidad: 2,
-    estado: "DISPONIBLE",
-  },
-  {
-    id: "2",
-    numero: "102",
-    tipo: "Simple",
-    comodidad: "Simple",
-    capacidad: 1,
-    estado: "OCUPADA",
-    huesped: "García, Juan",
-    checkin: "2025-12-08",
-    checkout: "2025-12-10",
-  },
-  {
-    id: "3",
-    numero: "103",
-    tipo: "Suite",
-    comodidad: "Suite",
-    capacidad: 4,
-    estado: "RESERVADA",
-    huesped: "López, María",
-    checkin: "2025-12-12",
-    checkout: "2025-12-15",
-  },
-  {
-    id: "4",
-    numero: "104",
-    tipo: "Doble",
-    comodidad: "Doble",
-    capacidad: 2,
-    estado: "DISPONIBLE",
-  },
-  {
-    id: "5",
-    numero: "201",
-    tipo: "Triple",
-    comodidad: "Triple",
-    capacidad: 3,
-    estado: "OCUPADA",
-    huesped: "Martínez, Carlos",
-    checkin: "2025-12-07",
-    checkout: "2025-12-09",
-  },
-  {
-    id: "6",
-    numero: "202",
-    tipo: "Doble",
-    comodidad: "Doble",
-    capacidad: 2,
-    estado: "DISPONIBLE",
-  },
-];
 
 const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
 
@@ -89,6 +30,50 @@ export default function EstadoHabitaciones() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [errorFecha, setErrorFecha] = useState("");
+
+  // Estado para datos reales
+  const [habitaciones, setHabitaciones] = useState<HabitacionEstado[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Función para convertir tipos de Java a UI
+  const mapearTipoAComodidad = (tipoJava: string) => {
+    const tipo = tipoJava.toUpperCase();
+    if (tipo.includes("INDIVIDUAL")) return "Simple";
+    if (tipo.includes("DOBLE")) return "Doble";
+    if (tipo.includes("FAMILY") || tipo.includes("TRIPLE")) return "Triple";
+    if (tipo.includes("SUITE")) return "Suite";
+    return "Simple";
+  };
+
+  // Cargar habitaciones al montar el componente
+  useEffect(() => {
+    const fetchHabitaciones = async () => {
+      setLoading(true);
+      try {
+        // @ts-ignore - Ignoramos tipado estricto temporalmente
+        const data = await obtenerHabitaciones();
+
+        const mapeadas = data.map((h: any) => ({
+          id: h.numero,
+          numero: h.numero,
+          tipo: h.tipoHabitacion,
+          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
+          capacidad: h.capacidad,
+          // Nota: Aquí usamos el estado físico de la habitación.
+          // Para ver ocupación real por fechas, necesitaríamos un endpoint nuevo en el backend.
+          estado: h.estadoHabitacion === "FUERA_DE_SERVICIO" ? "MANTENIMIENTO" : "DISPONIBLE"
+        }));
+
+        setHabitaciones(mapeadas);
+      } catch (error) {
+        console.error("Error al cargar habitaciones:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHabitaciones();
+  }, []);
 
   const validarFechaDesde = (): boolean => {
     if (!fechaDesde) {
@@ -143,9 +128,12 @@ export default function EstadoHabitaciones() {
     const hasta = new Date(fechaHasta);
     const dias: Date[] = [];
     const actual = new Date(desde);
-    while (actual < hasta) {
+    // Limitamos a 14 días para que entre en pantalla
+    let count = 0;
+    while (actual < hasta && count < 14) {
       dias.push(new Date(actual));
       actual.setDate(actual.getDate() + 1);
+      count++;
     }
     return dias;
   };
@@ -153,27 +141,18 @@ export default function EstadoHabitaciones() {
   const diasRango = generarDias();
 
   const conteo = {
-    disponibles: HABITACIONES_ESTADO_MOCK.filter(
-      (h) => h.estado === "DISPONIBLE"
-    ).length,
-    reservadas: HABITACIONES_ESTADO_MOCK.filter(
-      (h) => h.estado === "RESERVADA"
-    ).length,
-    ocupadas: HABITACIONES_ESTADO_MOCK.filter(
-      (h) => h.estado === "OCUPADA"
-    ).length,
+    disponibles: habitaciones.filter((h) => h.estado === "DISPONIBLE").length,
+    reservadas: habitaciones.filter((h) => h.estado === "RESERVADA").length,
+    ocupadas: habitaciones.filter((h) => h.estado === "OCUPADA").length,
   };
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case "DISPONIBLE":
-        return "bg-green-500 hover:bg-green-600";
-      case "RESERVADA":
-        return "bg-blue-500 hover:bg-blue-600";
-      case "OCUPADA":
-        return "bg-red-500 hover:bg-red-600";
-      default:
-        return "bg-slate-600";
+      case "DISPONIBLE": return "bg-green-500 hover:bg-green-600";
+      case "RESERVADA": return "bg-blue-500 hover:bg-blue-600";
+      case "OCUPADA": return "bg-red-500 hover:bg-red-600";
+      case "MANTENIMIENTO": return "bg-gray-500 hover:bg-gray-600";
+      default: return "bg-slate-600";
     }
   };
 
@@ -244,7 +223,7 @@ export default function EstadoHabitaciones() {
                 <p className="text-lg font-semibold">{new Date(fechaDesde).toLocaleDateString()}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Fecha Hasta</label>
+                <label className="block text-sm font-medium mb-2 text-white">Fecha Hasta</label>
                 <input
                   type="date"
                   value={fechaHasta}
@@ -282,115 +261,6 @@ export default function EstadoHabitaciones() {
         {/* PASO 3: Mostrar Grilla */}
         {paso === "grilla" && (
           <div className="space-y-6">
-            {/* Resumen de estados */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-slate-900 border-l-4 border-green-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Disponibles</p>
-                <p className="text-3xl font-bold text-green-400">{conteo.disponibles}</p>
-              </div>
-              <div className="bg-slate-900 border-l-4 border-blue-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Reservadas</p>
-                <p className="text-3xl font-bold text-blue-400">{conteo.reservadas}</p>
-              </div>
-              <div className="bg-slate-900 border-l-4 border-red-500 rounded-lg p-4">
-                <p className="text-slate-400 text-sm">Ocupadas</p>
-                <p className="text-3xl font-bold text-red-400">{conteo.ocupadas}</p>
-              </div>
-            </div>
-
-            {/* Grilla por comodidades y fechas */}
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-6 overflow-x-auto">
-              <h2 className="text-xl font-semibold mb-4 text-amber-400">
-                Estado de habitaciones del {new Date(fechaDesde).toLocaleDateString()} al {new Date(fechaHasta).toLocaleDateString()}
-              </h2>
-              
-              <div className="min-w-max">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="bg-slate-800">
-                      <th className="border border-slate-700 px-4 py-2 text-left font-semibold text-amber-400 w-32">
-                        Comodidad / Habitación
-                      </th>
-                      {diasRango.map((dia, idx) => (
-                        <th
-                          key={idx}
-                          className="border border-slate-700 px-3 py-2 text-center font-semibold text-amber-400 w-24 text-xs"
-                        >
-                          {dia.toLocaleDateString("es-ES", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMODIDADES_ORDEN.map((comodidad) => {
-                      const habsComodidad = HABITACIONES_ESTADO_MOCK.filter(
-                        (h) => h.comodidad === comodidad
-                      );
-                      return habsComodidad.length > 0
-                        ? habsComodidad.map((hab, habIdx) => (
-                            <tr
-                              key={hab.id}
-                              className={habIdx % 2 === 0 ? "bg-slate-800/50" : ""}
-                            >
-                              <td className="border border-slate-700 px-4 py-2 font-semibold text-slate-200">
-                                {habIdx === 0 && (
-                                  <div className="font-bold text-amber-400 mb-1">
-                                    {comodidad}
-                                  </div>
-                                )}
-                                <div className="text-slate-400 text-sm">
-                                  Hab. {hab.numero}
-                                </div>
-                              </td>
-                              {diasRango.map((dia, dayIdx) => (
-                                <td
-                                  key={`${hab.id}-${dayIdx}`}
-                                  className="border border-slate-700 px-2 py-2 text-center"
-                                >
-                                  <div
-                                    className={`rounded px-2 py-1 text-xs font-semibold text-white ${getEstadoColor(
-                                      hab.estado
-                                    )}`}
-                                    title={
-                                      hab.huesped
-                                        ? `${hab.huesped} (${hab.checkin} a ${hab.checkout})`
-                                        : hab.estado
-                                    }
-                                  >
-                                    {hab.estado === "DISPONIBLE"
-                                      ? "✓"
-                                      : hab.estado === "RESERVADA"
-                                      ? "R"
-                                      : "X"}
-                                  </div>
-                                </td>
-                              ))}
-                            </tr>
-                          ))
-                        : null;
-                    })}
-                  </tbody>
-                </table>
-                <div className="mt-4 text-xs text-slate-400 flex gap-4">
-                  <span>✓ = Disponible</span>
-                  <span>R = Reservada</span>
-                  <span>X = Ocupada</span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleVolver}
-                className="mt-6 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded transition"
-              >
-                ← Modificar fechas
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
+            {loading ? (
+                <div className="flex justify-center p-12">
+                    <Loader2 className="h-10 w-10 animate-spin text-

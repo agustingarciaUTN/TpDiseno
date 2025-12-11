@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DoorOpen, Home, Calendar, Users, CheckCircle } from "lucide-react";
+import { DoorOpen, Home, Calendar, Users, CheckCircle, Loader2 } from "lucide-react";
+import { obtenerHabitaciones, buscarHuespedes, crearEstadia } from "@/lib/api";
+import { DtoHabitacion, DtoHuesped, DtoEstadia, EstadoHabitacion } from "@/lib/types";
 
 interface HabitacionEstado {
   id: string;
@@ -47,40 +49,34 @@ interface Errores {
   nroDocumento?: string;
 }
 
-const HABITACIONES_MOCK: HabitacionEstado[] = [
-  { id: "1", numero: "101", tipo: "Simple", comodidad: "Simple", capacidad: 1, estado: "DISPONIBLE", precioNoche: 80 },
-  { id: "2", numero: "102", tipo: "Simple", comodidad: "Simple", capacidad: 1, estado: "DISPONIBLE", precioNoche: 80 },
-  { id: "3", numero: "103", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-  { id: "4", numero: "104", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "RESERVADA", precioNoche: 120 },
-  { id: "5", numero: "201", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "DISPONIBLE", precioNoche: 120 },
-  { id: "6", numero: "202", tipo: "Doble", comodidad: "Doble", capacidad: 2, estado: "RESERVADA", precioNoche: 120 },
-  { id: "7", numero: "301", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "OCUPADA", precioNoche: 150 },
-  { id: "8", numero: "302", tipo: "Triple", comodidad: "Triple", capacidad: 3, estado: "DISPONIBLE", precioNoche: 150 },
-  { id: "9", numero: "401", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "RESERVADA", precioNoche: 200 },
-  { id: "10", numero: "402", tipo: "Suite", comodidad: "Suite", capacidad: 4, estado: "DISPONIBLE", precioNoche: 200 },
-];
-
-const HUESPEDES_MOCK: DatosHuesped[] = [
-  { id: "1", apellido: "García", nombres: "Juan Carlos", tipoDocumento: "DNI", nroDocumento: "12345678" },
-  { id: "2", apellido: "González", nombres: "María Elena", tipoDocumento: "DNI", nroDocumento: "23456789" },
-  { id: "3", apellido: "Rodríguez", nombres: "Pedro Luis", tipoDocumento: "DNI", nroDocumento: "34567890" },
-  { id: "4", apellido: "Martínez", nombres: "Ana Sofía", tipoDocumento: "DNI", nroDocumento: "45678901" },
-  { id: "5", apellido: "López", nombres: "Carlos Alberto", tipoDocumento: "DNI", nroDocumento: "56789012" },
-  { id: "6", apellido: "Fernández", nombres: "Laura Patricia", tipoDocumento: "PASAPORTE", nroDocumento: "ABC123456" },
-  { id: "7", apellido: "Pérez", nombres: "Roberto Daniel", tipoDocumento: "DNI", nroDocumento: "67890123" },
-  { id: "8", apellido: "Sánchez", nombres: "Claudia Marcela", tipoDocumento: "DNI", nroDocumento: "78901234" },
-];
-
 const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
+
+// Función para mapear tipos de habitación del backend
+const mapearTipoAComodidad = (tipoJava: string): "Simple" | "Doble" | "Triple" | "Suite" => {
+  const tipo = tipoJava.toUpperCase();
+  if (tipo.includes("INDIVIDUAL")) return "Simple";
+  if (tipo.includes("DOBLE")) return "Doble";
+  if (tipo.includes("FAMILY") || tipo.includes("TRIPLE")) return "Triple";
+  if (tipo.includes("SUITE")) return "Suite";
+  return "Simple";
+};
 
 type Paso = "fechasGrilla" | "grilla" | "huespedes" | "confirmacion";
 type TipoConfirmacion = "reservada" | "duenioReserva" | null;
 
+// Helper function to create date in local timezone
+const createLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export default function OcuparHabitacion() {
+  const router = useRouter();
   const [paso, setPaso] = useState<Paso>("fechasGrilla");
   const [fechaDesdeGrilla, setFechaDesdeGrilla] = useState("");
   const [fechaHastaGrilla, setFechaHastaGrilla] = useState("");
   const [errorFechaGrilla, setErrorFechaGrilla] = useState("");
+  const [habitaciones, setHabitaciones] = useState<HabitacionEstado[]>([]);
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState<HabitacionEstado | null>(null);
   const [fechaCheckIn, setFechaCheckIn] = useState("");
   const [fechaCheckOut, setFechaCheckOut] = useState("");
@@ -96,6 +92,8 @@ export default function OcuparHabitacion() {
   const [resultadosBusqueda, setResultadosBusqueda] = useState<DatosHuesped[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [mostrarResultados, setMostrarResultados] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
 
   // Estados para la grilla interactiva (estilo CU4)
   const [seleccion, setSeleccion] = useState<SeleccionHabitacion | null>(null);
@@ -103,6 +101,33 @@ export default function OcuparHabitacion() {
     habitacionId: string;
     diaInicio: number | null;
   } | null>(null);
+
+  // Cargar habitaciones al montar el componente
+  useEffect(() => {
+    const cargarHabitaciones = async () => {
+      setLoading(true);
+      try {
+        const data = await obtenerHabitaciones();
+        const habitacionesMapeadas = data.map((h: DtoHabitacion) => ({
+          id: h.numero,
+          numero: h.numero,
+          tipo: h.tipoHabitacion,
+          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
+          capacidad: h.capacidad,
+          estado: h.estadoHabitacion === "DISPONIBLE" ? "DISPONIBLE" as const : 
+                 h.estadoHabitacion === "RESERVADA" ? "RESERVADA" as const : "OCUPADA" as const,
+          precioNoche: h.costoPorNoche
+        }));
+        setHabitaciones(habitacionesMapeadas);
+      } catch (error) {
+        console.error("Error al cargar habitaciones:", error);
+        setErrorCarga("No se pudieron cargar las habitaciones");
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargarHabitaciones();
+  }, []);
 
   const validarFechasGrilla = (): boolean => {
     // Establecer fecha desde como hoy automáticamente
@@ -115,7 +140,7 @@ export default function OcuparHabitacion() {
       setErrorFechaGrilla("Debe seleccionar la fecha hasta");
       return false;
     }
-    const hasta = new Date(fechaHastaGrilla);
+    const hasta = createLocalDate(fechaHastaGrilla);
     if (hoy >= hasta) {
       setErrorFechaGrilla("La fecha 'Hasta' debe ser posterior a hoy");
       return false;
@@ -167,8 +192,8 @@ export default function OcuparHabitacion() {
   // Generar días del rango de grilla
   const generarDias = (): Date[] => {
     if (!fechaDesdeGrilla || !fechaHastaGrilla) return [];
-    const desde = new Date(fechaDesdeGrilla);
-    const hasta = new Date(fechaHastaGrilla);
+    const desde = createLocalDate(fechaDesdeGrilla);
+    const hasta = createLocalDate(fechaHastaGrilla);
     const dias: Date[] = [];
     const actual = new Date(desde);
     while (actual <= hasta) {
@@ -180,7 +205,7 @@ export default function OcuparHabitacion() {
 
   // Funciones para la grilla interactiva (estilo CU4)
   const esCeldaDisponible = (habitacionId: string, diaIdx: number): boolean => {
-    const habitacion = HABITACIONES_MOCK.find(h => h.id === habitacionId);
+    const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
     // Permitir clicks en habitaciones disponibles y reservadas, solo bloquear ocupadas
     if (!habitacion || habitacion.estado === "OCUPADA") return false;
     // Si hay una selección existente y estamos en esa habitación, no permitir solapamiento
@@ -207,7 +232,7 @@ export default function OcuparHabitacion() {
   };
 
   const handleClickCelda = (habitacionId: string, diaIdx: number) => {
-    const hab = HABITACIONES_MOCK.find(h => h.id === habitacionId);
+    const hab = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
     
     // No permitir clicks en habitaciones ocupadas
     if (!hab || hab.estado === "OCUPADA") return;
@@ -221,7 +246,7 @@ export default function OcuparHabitacion() {
       const diaInicio = seleccionActual.diaInicio!;
       const diaFin = diaIdx;
       const dias = generarDias();
-      const hab = HABITACIONES_MOCK.find(h => h.id === habitacionId);
+      const hab = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
 
       if (!hab) return;
 
@@ -384,25 +409,24 @@ export default function OcuparHabitacion() {
 
     setBuscando(true);
     try {
-      // Simulación con datos mock
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Llamada real al backend
+      const criterios = {
+        apellido: busquedaHuesped.apellido,
+        nombres: busquedaHuesped.nombres,
+        tipoDocumento: busquedaHuesped.tipoDocumento,
+        nroDocumento: busquedaHuesped.nroDocumento
+      };
       
-      // Filtrar huéspedes mock según criterios
-      let resultados = HUESPEDES_MOCK;
+      const data = await buscarHuespedes(criterios);
       
-      if (busquedaHuesped.apellido) {
-        resultados = resultados.filter(h => 
-          h.apellido.toLowerCase().startsWith(busquedaHuesped.apellido.toLowerCase())
-        );
-      }
-      if (busquedaHuesped.nombres) {
-        resultados = resultados.filter(h => 
-          h.nombres.toLowerCase().startsWith(busquedaHuesped.nombres.toLowerCase())
-        );
-      }
-      if (busquedaHuesped.tipoDocumento) {
-        resultados = resultados.filter(h => h.tipoDocumento === busquedaHuesped.tipoDocumento);
-      }
+      // Mapear respuesta del backend al formato del componente
+      const resultados = data.map((h: DtoHuesped) => ({
+        id: h.nroDocumento,
+        apellido: h.apellido,
+        nombres: h.nombres,
+        tipoDocumento: String(h.tipoDocumento),
+        nroDocumento: h.nroDocumento
+      }));
       if (busquedaHuesped.nroDocumento) {
         resultados = resultados.filter(h => h.nroDocumento.includes(busquedaHuesped.nroDocumento));
       }
@@ -450,14 +474,51 @@ export default function OcuparHabitacion() {
     setPaso("confirmacion");
   };
 
-  const handleConfirmarEstadia = () => {
-    // Mostrar mensaje de éxito
-    alert("La operación ha culminado con éxito. Check-in realizado correctamente.");
-    
-    // Redirigir al menú principal después de un breve delay
-    setTimeout(() => {
+  const handleConfirmarEstadia = async () => {
+    try {
+      setLoading(true);
+      
+      if (!habitacionSeleccionada || huespedes.length === 0) {
+        alert("Faltan datos para confirmar el check-in");
+        return;
+      }
+
+      // Calcular valor de la estadía
+      const dias = seleccion ? seleccion.diaFin - seleccion.diaInicio + 1 : 1;
+      const valorEstadia = habitacionSeleccionada.precioNoche * dias;
+
+      // Crear el objeto DtoEstadia
+      const estadia: DtoEstadia = {
+        fechaCheckIn: fechaCheckIn,
+        fechaCheckOut: fechaCheckOut || undefined,
+        valorEstadia: valorEstadia,
+        dtoHabitacion: {
+          numero: habitacionSeleccionada.numero,
+          tipoHabitacion: habitacionSeleccionada.tipo,
+          capacidad: habitacionSeleccionada.capacidad,
+          estadoHabitacion: EstadoHabitacion.DISPONIBLE,
+          costoPorNoche: habitacionSeleccionada.precioNoche
+        },
+        dtoHuespedes: huespedes.map(h => ({
+          idHuesped: 0,
+          apellido: h.apellido,
+          nombres: h.nombres,
+          tipoDocumento: h.tipoDocumento as any,
+          nroDocumento: h.nroDocumento,
+        }))
+      };
+
+      // Llamar al backend
+      await crearEstadia(estadia);
+      
+      alert("La operación ha culminado con éxito. Check-in realizado correctamente.");
       router.push("/");
-    }, 500);
+    } catch (error: any) {
+      console.error("Error al confirmar estadía:", error);
+      alert("Error al confirmar el check-in: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleVolverPaso = () => {
@@ -468,9 +529,9 @@ export default function OcuparHabitacion() {
 
   const diasRango = generarDias();
   const conteo = {
-    disponibles: HABITACIONES_MOCK.filter(h => h.estado === "DISPONIBLE").length,
-    reservadas: HABITACIONES_MOCK.filter(h => h.estado === "RESERVADA").length,
-    ocupadas: HABITACIONES_MOCK.filter(h => h.estado === "OCUPADA").length,
+    disponibles: habitaciones.filter((h: HabitacionEstado) => h.estado === "DISPONIBLE").length,
+    reservadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "RESERVADA").length,
+    ocupadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "OCUPADA").length,
   };
 
   return (
@@ -576,7 +637,7 @@ export default function OcuparHabitacion() {
 
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
-                Grilla de disponibilidad: {new Date(fechaDesdeGrilla).toLocaleDateString()} al {new Date(fechaHastaGrilla).toLocaleDateString()}
+                Grilla de disponibilidad: {createLocalDate(fechaDesdeGrilla).toLocaleDateString()} al {createLocalDate(fechaHastaGrilla).toLocaleDateString()}
               </h2>
               <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
                 Haga click en una celda disponible para iniciar la selección, luego haga click en otra celda de la misma habitación para completar el rango.
@@ -602,7 +663,7 @@ export default function OcuparHabitacion() {
                   </thead>
                   <tbody>
                     {COMODIDADES_ORDEN.map((comodidad) => {
-                      const habitacionesPorComodidad = HABITACIONES_MOCK.filter(h => h.comodidad === comodidad);
+                      const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad);
                       return habitacionesPorComodidad.length > 0
                         ? habitacionesPorComodidad.map((hab, habIdx) => (
                             <tr
@@ -685,7 +746,7 @@ export default function OcuparHabitacion() {
                 <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Habitación y fechas seleccionadas</h3>
                 <div className="bg-slate-50 p-4 rounded dark:bg-slate-800">
                   {(() => {
-                    const hab = HABITACIONES_MOCK.find(h => h.id === seleccion.habitacionId);
+                    const hab = habitaciones.find((h: HabitacionEstado) => h.id === seleccion.habitacionId);
                     if (!hab) return null;
                     const noches = seleccion.diaFin - seleccion.diaInicio + 1;
                     const subtotal = hab.precioNoche * noches;
@@ -794,8 +855,8 @@ export default function OcuparHabitacion() {
               <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Resumen de la Estadía</h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div><p className="text-slate-600 dark:text-slate-400">Habitación</p><p className="text-slate-900 dark:text-white font-semibold">{habitacionSeleccionada?.numero}</p></div>
-                <div><p className="text-slate-600 dark:text-slate-400">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
-                <div><p className="text-slate-600 dark:text-slate-400">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? createLocalDate(fechaCheckIn).toLocaleDateString() : "-"}</p></div>
+                <div><p className="text-slate-600 dark:text-slate-400">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? createLocalDate(fechaCheckOut).toLocaleDateString() : "-"}</p></div>
               </div>
             </Card>
 
@@ -951,8 +1012,8 @@ export default function OcuparHabitacion() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><p className="text-slate-600 dark:text-slate-400 text-sm">Habitación</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.numero} - {habitacionSeleccionada?.tipo}</p></div>
                   <div><p className="text-slate-600 dark:text-slate-400 text-sm">Capacidad</p><p className="text-slate-900 dark:text-white text-xl font-bold">{habitacionSeleccionada?.capacidad} personas</p></div>
-                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? new Date(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
-                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? new Date(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-In</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckIn ? createLocalDate(fechaCheckIn).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
+                  <div><p className="text-slate-600 dark:text-slate-400 text-sm">Check-Out</p><p className="text-slate-900 dark:text-white font-semibold">{fechaCheckOut ? createLocalDate(fechaCheckOut).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "-"}</p></div>
                 </div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
@@ -973,8 +1034,13 @@ export default function OcuparHabitacion() {
                 <Button onClick={handleVolverPaso} variant="outline">
                   ← Modificar Datos
                 </Button>
-                <Button onClick={handleConfirmarEstadia} className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600">
-                  ✓ Confirmar Check-In
+                <Button 
+                  onClick={handleConfirmarEstadia} 
+                  disabled={loading}
+                  className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "✓ "}
+                  {loading ? "Confirmando..." : "Confirmar Check-In"}
                 </Button>
               </div>
             </div>

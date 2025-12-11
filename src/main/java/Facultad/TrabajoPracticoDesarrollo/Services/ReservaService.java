@@ -39,7 +39,7 @@ public class ReservaService {
     }
 
     @Transactional(readOnly = true)
-    public boolean validarDisponibilidad(int idHabitacion, LocalDate fechaInicio, LocalDate fechaFin) {
+    public boolean validarDisponibilidad(String idHabitacion, Date fechaInicio, Date fechaFin) {
         // Buscamos si existe alguna reserva para esa habitación que se solape con las fechas
         // Lógica: (StartA <= EndB) and (EndA >= StartB)
         return !reservaRepository.existeReservaEnFecha(idHabitacion, fechaInicio, fechaFin);
@@ -61,7 +61,7 @@ public class ReservaService {
             validarFechaIngreso(dto.getFechaDesde());
 
             // b. Validar disponibilidad en BD (concurrencia)
-            if (estaReservadaEnFecha(dto.getIdHabitacion(), dto.getFechaDesde(), dto.getFechaHasta())) {
+            if (reservaRepository.existeReservaEnFecha(dto.getIdHabitacion(), dto.getFechaDesde(), dto.getFechaHasta())) {
                 throw new Exception("La habitación " + dto.getIdHabitacion() + " ya está reservada en las fechas seleccionadas.");
             }
 
