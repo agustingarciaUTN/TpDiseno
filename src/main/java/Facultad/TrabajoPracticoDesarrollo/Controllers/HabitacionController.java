@@ -38,4 +38,17 @@ public class HabitacionController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    // Endpoint para obtener habitaciones con estado según fechas
+    // GET /api/habitaciones/estado?fechaDesde=YYYY-MM-DD&fechaHasta=YYYY-MM-DD
+    @GetMapping("/estado")
+    public ResponseEntity<?> obtenerEstadoPorFechas(
+            @RequestParam String fechaDesde,
+            @RequestParam String fechaHasta) {
+        try {
+            return ResponseEntity.ok(habitacionService.obtenerEstadoPorFechas(fechaDesde, fechaHasta));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener estado: " + e.getMessage());
+        }
+    }
 }

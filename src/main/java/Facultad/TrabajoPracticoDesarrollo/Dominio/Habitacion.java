@@ -18,28 +18,28 @@ public class Habitacion {
     @Column(name = "numero") // Clave primaria String
     private String numero;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_habitacion")
     private TipoHabitacion tipoHabitacion;
 
     @Column(name = "capacidad")
     private Integer capacidad;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "estado_habitacion")
     private EstadoHabitacion estadoHabitacion;
 
-    @Column(name = "\"Costo_por_noche\"") // Ojo con las mayúsculas en tu BD
+    @Column(name = "costo_por_noche")
     private Float costoPorNoche;
 
     // --- RELACIÓN CON CAMAS (1 a N) ---
     // mappedBy = "habitacion" significa que la clase Cama es la dueña de la relación (tiene la FK)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "habitacion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Cama> camas = new ArrayList<>();
 
     // --- RELACIÓN CON RESERVAS (1 a N) ---
     // Para ver todas las reservas de esta habitación.
-    // Usamos JsonIgnore o similar en el Controller después para no hacer bucle infinito
+    // Usamos JsonIgnore para no hacer bucle infinito
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "habitacion")
     private List<Reserva> reservas = new ArrayList<>();
 

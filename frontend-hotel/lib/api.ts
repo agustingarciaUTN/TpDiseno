@@ -38,22 +38,68 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
     config.body = JSON.stringify(body)
   }
 
+  const fullUrl = `${API_BASE_URL}${endpoint}`
+  console.log(`[API] ${method} ${fullUrl}`)
+  if (body) console.log("[API] Body:", body)
+
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
+    const response = await fetch(fullUrl, config)
+    console.log(`[API] Response status: ${response.status}`)
 
     if (!response.ok) {
-      // Intentar leer el error del backend (ej: validaciones de Spring Boot)
-      const errorData = await response.json().catch(() => null)
-      const errorMessage = errorData?.message || errorData ? JSON.stringify(errorData) : `Error HTTP ${response.status}`;
-      throw new Error(errorMessage)
+      // Intentar leer el error del backend
+      try {
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "";
+        
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || JSON.stringify(errorData);
+        } else {
+          // Si es texto plano, leerlo directamente
+          errorMessage = await response.text();
+        }
+        
+        throw new Error(errorMessage || `Error HTTP ${response.status}`);
+      } catch (parseError: any) {
+        // Si falla al parsear, usar mensaje genérico
+        throw new Error(parseError.message || `Error HTTP ${response.status}`);
+      }
     }
 
     // Si la respuesta es 204 No Content o vacía
     if (response.status === 204) return {} as T;
 
     // Verificar si hay contenido antes de parsear JSON
+    const contentType = response.headers.get("content-type");
+    console.log("[API] Content-Type:", contentType);
+    
+    if (!contentType || !contentType.includes("application/json")) {
+      console.log("[API] No JSON content, returning null");
+      return null as T;
+    }
+    
     const text = await response.text();
-    return text ? JSON.parse(text) : {} as T;
+    console.log("[API] Response text length:", text.length);
+    
+    if (!text || text === "null") {
+      console.log("[API] Empty or null response");
+      return null as T;
+    }
+    
+    // Limpiar el texto antes de parsear (remover caracteres inválidos)
+    const cleanText = text.trim();
+    
+    try {
+      const parsed = JSON.parse(cleanText);
+      console.log("[API] Parsed response");
+      return parsed;
+    } catch (parseError: any) {
+      console.error("[API] JSON Parse Error:", parseError.message);
+      console.error("[API] Problematic text (first 500 chars):", cleanText.substring(0, 500));
+      console.error("[API] Problematic text (last 500 chars):", cleanText.substring(cleanText.length - 500));
+      throw new Error("Error al parsear respuesta del servidor");
+    }
 
   } catch (error: any) {
     console.error(`API Error [${method} ${endpoint}]:`, error)

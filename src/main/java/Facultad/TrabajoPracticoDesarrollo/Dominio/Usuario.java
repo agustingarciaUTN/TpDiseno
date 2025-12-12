@@ -18,7 +18,7 @@ public class Usuario {
     private String nombre;
 
     // CORRECCIÓN: Atributo para guardar el Hash
-    @Column(name = "hashContrasenia")
+    @Column(name = "\"hashContrasenia\"")
     private String hashContrasenia;
 
     public Usuario() {}

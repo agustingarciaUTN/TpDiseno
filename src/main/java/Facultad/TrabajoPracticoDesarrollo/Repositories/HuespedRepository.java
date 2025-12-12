@@ -23,10 +23,10 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
     @Query("SELECT DISTINCT h FROM Huesped h " +
             "LEFT JOIN FETCH h.direccion " +
             "WHERE " +
-            "(:apellido IS NULL OR LOWER(h.apellido) LIKE LOWER(CONCAT(:apellido, '%'))) AND " +
-            "(:nombres IS NULL OR LOWER(h.nombres) LIKE LOWER(CONCAT(:nombres, '%'))) AND " +
-            "(:tipo IS NULL OR h.tipoDocumento = :tipo) AND " +
-            "(:nroDoc IS NULL OR h.nroDocumento LIKE CONCAT(:nroDoc, '%'))")
+            "(CAST(:apellido AS string) IS NULL OR LOWER(h.apellido) LIKE LOWER(CONCAT(CAST(:apellido AS string), '%'))) AND " +
+            "(CAST(:nombres AS string) IS NULL OR LOWER(h.nombres) LIKE LOWER(CONCAT(CAST(:nombres AS string), '%'))) AND " +
+            "(CAST(:tipo AS string) IS NULL OR h.tipoDocumento = :tipo) AND " +
+            "(CAST(:nroDoc AS string) IS NULL OR h.nroDocumento LIKE CONCAT(CAST(:nroDoc AS string), '%'))")
     List<Huesped> buscarPorCriterios(
             @Param("apellido") String apellido,
             @Param("nombres") String nombres,

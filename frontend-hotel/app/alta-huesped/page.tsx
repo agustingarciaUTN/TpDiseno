@@ -1,5 +1,5 @@
 "use client"
-import { crearHuesped as crearHuespedAPI, verificarExistenciaHuesped } from "@/lib/api"
+import { crearHuesped as crearHuespedAPI, modificarHuesped as modificarHuespedAPI, verificarExistenciaHuesped } from "@/lib/api"
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -64,6 +64,7 @@ export default function AltaHuesped() {
   const [errores, setErrores] = useState<Errores>({})
   const [popup, setPopup] = useState<TipoPopup>(null)
   const [huespedCreado, setHuespedCreado] = useState<{ nombres: string; apellido: string } | null>(null)
+  const [huespedExistente, setHuespedExistente] = useState<any>(null)
 
   const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
   const regexDocumento = /^[a-zA-Z0-9]+$/
@@ -142,11 +143,7 @@ export default function AltaHuesped() {
     if (!datos.telefono.trim()) {
       nuevosErrores.telefono = "El teléfono es obligatorio"
     } else {
-      let telefonoNormalizado = datos.telefono.trim()
-      if (!telefonoNormalizado.startsWith("+")) {
-        telefonoNormalizado = "+54 " + telefonoNormalizado
-        setDatos((prev) => ({ ...prev, telefono: telefonoNormalizado }))
-      }
+      const telefonoNormalizado = datos.telefono.trim()
       if (!regexTelefono.test(telefonoNormalizado)) {
         nuevosErrores.telefono = "Formato de teléfono inválido"
       }
@@ -227,37 +224,51 @@ export default function AltaHuesped() {
 
   const handleAceptar = async () => {
     // 1. Validaciones del frontend
-    if (!validarFormulario()) {
+    const esValido = validarFormulario()
+    console.log("Validación resultado:", esValido)
+    console.log("Errores encontrados:", errores)
+    
+    if (!esValido) {
+      console.log("Formulario inválido, mostrando errores")
       return
     }
 
     // 2. Verificar duplicados en el backend
+    console.log("Verificando duplicados para:", datos.tipoDocumento, datos.nroDocumento)
     try {
       const existente = await verificarExistenciaHuesped(datos.tipoDocumento, datos.nroDocumento)
+      console.log("Resultado verificación:", existente)
       if (existente) {
-        // Mostrar popup de duplicado
+        // Guardar el huésped existente y mostrar popup de duplicado
+        setHuespedExistente(existente)
         setPopup("duplicado_dni")
         return
       }
     } catch (error) {
       console.error("Error al verificar duplicado:", error)
+      // Continuar con el guardado aunque falle la verificación
     }
 
+    console.log("Llamando a guardarEnBackend")
     // 3. Si no hay duplicado, guardar
-    guardarEnBackend()
+    guardarEnBackend(false)
   }
 
   const handleContinuarConDuplicado = () => {
     setPopup(null)
-    guardarEnBackend()
+    // Si hay duplicado, modificar en lugar de crear
+    guardarEnBackend(true)
   }
 
   const handleCorregirDatos = () => {
     setPopup(null)
+    setHuespedExistente(null)
+    // No hacer nada más, solo permitir al usuario corregir los datos
   }
 
-  const guardarEnBackend = async () => {
+  const guardarEnBackend = async (esModificacion: boolean = false) => {
       try {
+        console.log("Iniciando guardado en backend...", esModificacion ? "(MODIFICACIÓN)" : "(CREACIÓN)")
         // 1. Convertir datos del formulario al formato DtoHuesped del backend
         // El backend espera números como números (no strings) y listas para email/teléfono
         const nuevoHuesped = {
@@ -265,7 +276,7 @@ export default function AltaHuesped() {
           apellido: datos.apellido,
           tipoDocumento: datos.tipoDocumento,
           nroDocumento: datos.nroDocumento,
-          cuit: datos.cuit,
+          cuit: datos.cuit || null,
           posicionIva: datos.posicionIva,
           fechaNacimiento: datos.fechaNacimiento,
           nacionalidad: datos.nacionalidad,
@@ -275,12 +286,12 @@ export default function AltaHuesped() {
           telefono: [parseInt(datos.telefono.replace(/\D/g, '')) || 0],
           ocupacion: ["Ocupacion"], // Campo opcional
 
-          // Objeto anidado DtoDomicilio
-          domicilio: {
+          // Objeto anidado DtoDireccion (no "domicilio")
+          dtoDireccion: {
             calle: datos.calle,
             numero: parseInt(datos.numero) || 0,
-            departamento: datos.departamento,
-            piso: datos.piso,
+            departamento: datos.departamento || null,
+            piso: datos.piso || null,
             codPostal: parseInt(datos.codPostal) || 0,
             localidad: datos.localidad,
             provincia: datos.provincia,
@@ -288,20 +299,33 @@ export default function AltaHuesped() {
           }
         }
 
+        console.log("Datos a enviar:", nuevoHuesped)
+        
         // 2. Llamada real al Backend
-        await crearHuespedAPI(nuevoHuesped)
-
+        if (esModificacion && huespedExistente) {
+          // Modificar el huésped existente
+          console.log("Modificando huésped existente...")
+          await modificarHuespedAPI(datos.tipoDocumento, datos.nroDocumento, nuevoHuesped)
+          console.log("Huésped modificado exitosamente")
+        } else {
+          // Crear nuevo huésped
+          console.log("Creando nuevo huésped...")
+          await crearHuespedAPI(nuevoHuesped)
+          console.log("Huésped creado exitosamente")
+        }
+        
         // 3. Si no hubo error, actualizamos estado de éxito
         setHuespedCreado({
           nombres: datos.nombres,
           apellido: datos.apellido,
         })
+        setHuespedExistente(null) // Limpiar el estado del existente
         setPopup("exito")
 
       } catch (error: any) {
-        console.error("Error al crear:", error)
+        console.error("Error al guardar huésped:", error)
         // Mostramos el error del backend en un alert o en la UI
-        alert("Error al guardar en el sistema: " + error.message)
+        alert("Error al guardar en el sistema: " + (error.message || "Error desconocido"))
       }
     }
 
@@ -703,6 +727,28 @@ export default function AltaHuesped() {
                 </Button>
                 <Button onClick={handleRechazarCancelacion} variant="outline">
                   No, Volver
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {popup === "duplicado_dni" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+                <h3 className="text-lg font-semibold">¡CUIDADO!</h3>
+              </div>
+              <p className="mb-6 text-sm">
+                El tipo y número de documento ya existen en el sistema
+              </p>
+              <div className="flex gap-3">
+                <Button onClick={handleContinuarConDuplicado}>
+                  ACEPTAR IGUALMENTE
+                </Button>
+                <Button onClick={handleCorregirDatos} variant="outline">
+                  CORREGIR
                 </Button>
               </div>
             </Card>
