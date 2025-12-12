@@ -1,6 +1,5 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,11 +18,13 @@ public class DtoUsuario {
     private String nombre;
 
     // Dato sensible PLANO (Solo vive en el DTO para el transporte)
-    @JsonIgnore //Nose si va
     @NotBlank
     private String contrasenia;
 
-    // --- CONSTRUCTOR PRIVADO ---
+    // --- CONSTRUCTOR PÚBLICO (requerido por Jackson/Spring) ---
+    public DtoUsuario() {}
+
+    // --- CONSTRUCTOR PRIVADO PARA BUILDER ---
     private DtoUsuario(Builder builder) {
         this.idUsuario = builder.idUsuario;
         this.nombre = builder.nombre;

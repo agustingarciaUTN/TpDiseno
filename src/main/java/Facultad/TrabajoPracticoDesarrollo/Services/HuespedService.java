@@ -227,10 +227,11 @@ public class HuespedService {
                         TipoDocumento.valueOf(tipoOrig), nroOrig, // Buscamos las del viejo
                         huespedDestino.getTipoDocumento(), huespedDestino.getNroDocumento(), // Ponemos ID nuevo
                         huespedDestino.getNombres(), huespedDestino.getApellido(), // Ponemos Nombre nuevo
-                        huespedDestino.getTelefono().isEmpty() ? null : String.valueOf(huespedDestino.getTelefono().getFirst())
+                        huespedDestino.getTelefono().isEmpty() ? null : String.valueOf(huespedDestino.getTelefono().get(0))
                 );
 
-                estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
+                // TODO: migrarEstadias necesita ser reimplementada (Estadia tiene List<Huesped>)
+                // estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
 
                 // 2. FACTURAS
                 // Buscamos si el huésped original tenía un rol de Pagador (Persona Fisica)

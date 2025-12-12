@@ -21,6 +21,26 @@ public class UsuarioController {
     }
 
     /**
+     * Endpoint temporal para crear usuarios (SOLO PARA TESTING)
+     * Recibe un JSON con: { "nombre": "...", "contrasenia": "..." }
+     */
+    @PostMapping("/crear")
+    public ResponseEntity<?> crearUsuario(@RequestBody DtoUsuario usuarioRequest) {
+        try {
+            if (usuarioRequest.getNombre() == null || usuarioRequest.getContrasenia() == null) {
+                return ResponseEntity.badRequest().body("Faltan datos: nombre y contraseña son obligatorios.");
+            }
+
+            serviceUsuario.crearUsuario(usuarioRequest.getNombre(), usuarioRequest.getContrasenia());
+            return ResponseEntity.ok("✅ Usuario creado exitosamente: " + usuarioRequest.getNombre());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error en el servidor: " + e.getMessage());
+        }
+    }
+
+    /**
      * Endpoint para validar credenciales (Login)
      * Recibe un JSON con: { "nombre": "...", "contrasenia": "..." }
      */
