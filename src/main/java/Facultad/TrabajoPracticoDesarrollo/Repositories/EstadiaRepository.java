@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
@@ -55,6 +56,10 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
             @Param("fechaInicio") Date fechaInicio,
             @Param("fechaFin") Date fechaFin
     );
+
+    // Busca una estadía activa (sin fecha de salida o fecha salida futura/hoy) para una habitación
+    @Query("SELECT e FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion AND e.fechaCheckOut IS NULL")
+    Optional<Estadia> findEstadiaActivaPorHabitacion(@Param("nroHabitacion") String nroHabitacion);
 
     //Metodo utilizado para el CU10, cuando tenemos que reasignar una estadia de un huesped a otro
     // TODO: Revisar - Estadia tiene List<Huesped>, no un solo huesped

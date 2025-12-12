@@ -22,5 +22,5 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = DtoPersonaJuridica.class, name = "juridica")
 })
 public abstract class DtoResponsableDePago {
-    private Long idResponsable;
+    private Integer idResponsable;
 }

@@ -2,6 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaFisica;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +17,10 @@ public interface PersonaFisicaRepository extends JpaRepository<PersonaFisica, In
     //Metodo para el CU10, tenemos que obtener la persona fisica equivalente al Huesped
     Optional<PersonaFisica> findByHuesped(Huesped huesped);
 
+    Optional<PersonaFisica> findByHuesped_TipoDocumentoAndHuesped_NroDocumento(
+            TipoDocumento tipo,
+            String nro
+    );
     // Para borrar el rol de pagador asociado (CU11)
     void deleteByHuesped(Huesped huesped);
 }

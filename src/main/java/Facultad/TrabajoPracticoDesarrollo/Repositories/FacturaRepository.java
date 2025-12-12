@@ -31,4 +31,6 @@ public interface FacturaRepository extends JpaRepository<Factura, String> {
     // En FacturaRepository
     boolean existsByResponsablePago(ResponsablePago responsable);
 
+    boolean existsByNumeroFactura(String numeroFactura);
+
 }
