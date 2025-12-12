@@ -18,6 +18,7 @@ interface HabitacionEstado {
   comodidad: "Simple" | "Doble" | "Triple" | "Suite";
   capacidad: number;
   estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA";
+  estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO">;
   precioNoche: number;
 }
 
@@ -104,18 +105,28 @@ export default function OcuparHabitacion() {
 
   // Cargar habitaciones al montar el componente
   useEffect(() => {
-    const cargarHabitaciones = async () => {
+    const cargarHabitacionesConEstado = async () => {
       setLoading(true);
       try {
-        const data = await obtenerHabitaciones();
-        const habitacionesMapeadas = data.map((h: DtoHabitacion) => ({
-          id: h.numero,
-          numero: h.numero,
+        // Obtener rango de fechas (hoy + 6 días para tener una semana)
+        const hoy = new Date();
+        const fechaDesde = hoy.toISOString().split('T')[0];
+        const fechaFin = new Date(hoy);
+        fechaFin.setDate(fechaFin.getDate() + 6);
+        const fechaHasta = fechaFin.toISOString().split('T')[0];
+
+        const response = await fetch(`http://localhost:8080/api/habitaciones/estado?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+        const data = await response.json();
+        
+        const habitacionesMapeadas = data.map((h: any) => ({
+          id: h.numero.toString(),
+          numero: h.numero.toString(),
           tipo: h.tipoHabitacion,
           comodidad: mapearTipoAComodidad(h.tipoHabitacion),
           capacidad: h.capacidad,
-          estado: h.estadoHabitacion === "DISPONIBLE" ? "DISPONIBLE" as const : 
-                 h.estadoHabitacion === "RESERVADA" ? "RESERVADA" as const : "OCUPADA" as const,
+          // Usar el estado del día actual (primer día en estadosPorDia)
+          estado: (h.estadosPorDia && h.estadosPorDia[fechaDesde]) || "DISPONIBLE" as const,
+          estadosPorDia: h.estadosPorDia || {},
           precioNoche: h.costoPorNoche
         }));
         setHabitaciones(habitacionesMapeadas);
@@ -126,7 +137,7 @@ export default function OcuparHabitacion() {
         setLoading(false);
       }
     };
-    cargarHabitaciones();
+    cargarHabitacionesConEstado();
   }, []);
 
   const validarFechasGrilla = (): boolean => {
@@ -206,8 +217,14 @@ export default function OcuparHabitacion() {
   // Funciones para la grilla interactiva (estilo CU4)
   const esCeldaDisponible = (habitacionId: string, diaIdx: number): boolean => {
     const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
-    // Permitir clicks en habitaciones disponibles y reservadas, solo bloquear ocupadas
-    if (!habitacion || habitacion.estado === "OCUPADA") return false;
+    if (!habitacion) return false;
+
+    // Verificar el estado específico de este día
+    const estadoDia = obtenerEstadoCelda(habitacionId, diaIdx);
+    
+    // Permitir clicks en habitaciones disponibles y reservadas, solo bloquear ocupadas y en mantenimiento
+    if (estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO") return false;
+    
     // Si hay una selección existente y estamos en esa habitación, no permitir solapamiento
     if (seleccion && seleccion.habitacionId === habitacionId) {
       return !(diaIdx >= seleccion.diaInicio && diaIdx <= seleccion.diaFin);
@@ -373,14 +390,28 @@ export default function OcuparHabitacion() {
     }
   };
 
-  const getEstadoColor = (estado: HabitacionEstado["estado"]) => {
+  // Obtener el estado de una celda específica por día
+  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO" => {
+    const habitacion = habitaciones.find(h => h.id === habitacionId);
+    if (!habitacion || !habitacion.estadosPorDia) return "DISPONIBLE";
+
+    const dia = new Date(fechaInicio);
+    dia.setDate(dia.getDate() + diaIdx);
+    const fechaDia = dia.toISOString().split('T')[0];
+
+    return habitacion.estadosPorDia[fechaDia] || "DISPONIBLE";
+  };
+
+  const getEstadoColor = (estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO") => {
     switch (estado) {
       case "DISPONIBLE":
         return "bg-green-600 dark:bg-green-700";
       case "RESERVADA":
-        return "bg-orange-500 dark:bg-orange-600";
+        return "bg-blue-600 dark:bg-blue-700";
       case "OCUPADA":
-        return "bg-slate-600 dark:bg-slate-700";
+        return "bg-red-600 dark:bg-red-700";
+      case "MANTENIMIENTO":
+        return "bg-yellow-600 dark:bg-yellow-700";
       default:
         return "bg-slate-600 dark:bg-slate-700";
     }
@@ -420,7 +451,7 @@ export default function OcuparHabitacion() {
       const data = await buscarHuespedes(criterios);
       
       // Mapear respuesta del backend al formato del componente
-      const resultados = data.map((h: DtoHuesped) => ({
+      let resultados = data.map((h: DtoHuesped) => ({
         id: h.nroDocumento,
         apellido: h.apellido,
         nombres: h.nombres,
@@ -464,8 +495,6 @@ export default function OcuparHabitacion() {
     setHuespedes(huespedes.filter((_, i) => i !== index));
   };
 
-  const router = useRouter();
-
   const handleContinuarConfirmacion = () => {
     if (huespedes.length === 0) {
       alert("Debe agregar al menos un huésped (responsable)");
@@ -487,7 +516,7 @@ export default function OcuparHabitacion() {
       const dias = seleccion ? seleccion.diaFin - seleccion.diaInicio + 1 : 1;
       const valorEstadia = habitacionSeleccionada.precioNoche * dias;
 
-      // Crear el objeto DtoEstadia
+      // Crear el objeto DtoEstadia - Solo enviar el primer huésped (responsable)
       const estadia: DtoEstadia = {
         fechaCheckIn: fechaCheckIn,
         fechaCheckOut: fechaCheckOut || undefined,
@@ -499,13 +528,14 @@ export default function OcuparHabitacion() {
           estadoHabitacion: EstadoHabitacion.DISPONIBLE,
           costoPorNoche: habitacionSeleccionada.precioNoche
         },
-        dtoHuespedes: huespedes.map(h => ({
+        // Solo enviar el primer huésped (responsable/a cargo) para la tabla estadia-huesped
+        dtoHuespedes: [{
           idHuesped: 0,
-          apellido: h.apellido,
-          nombres: h.nombres,
-          tipoDocumento: h.tipoDocumento as any,
-          nroDocumento: h.nroDocumento,
-        }))
+          apellido: huespedes[0].apellido,
+          nombres: huespedes[0].nombres,
+          tipoDocumento: huespedes[0].tipoDocumento as any,
+          nroDocumento: huespedes[0].nroDocumento,
+        }]
       };
 
       // Llamar al backend
@@ -684,6 +714,7 @@ export default function OcuparHabitacion() {
                                 const disponible = esCeldaDisponible(hab.id, dayIdx);
                                 const seleccionada = esCeldaSeleccionada(hab.id, dayIdx);
                                 const inicioActual = esInicioSeleccionActual(hab.id, dayIdx);
+                                const estadoDia = obtenerEstadoCelda(hab.id, dayIdx);
 
                                 return (
                                   <td
@@ -698,7 +729,7 @@ export default function OcuparHabitacion() {
                                           : inicioActual
                                           ? "bg-purple-500 animate-pulse dark:bg-purple-600"
                                           : disponible
-                                          ? getEstadoColor(hab.estado) + " hover:brightness-110"
+                                          ? getEstadoColor(estadoDia) + " hover:brightness-110"
                                           : "bg-slate-600 dark:bg-slate-700 cursor-not-allowed opacity-50"
                                       }`}
                                       title={
@@ -708,7 +739,7 @@ export default function OcuparHabitacion() {
                                           ? "Click en otra celda para finalizar"
                                           : disponible
                                           ? "Click para seleccionar"
-                                          : hab.estado
+                                          : estadoDia
                                       }
                                     >
                                       {seleccionada
