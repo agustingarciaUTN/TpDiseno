@@ -185,7 +185,6 @@ public class FacturaService {
 
     @Transactional
     public DtoFactura generarFactura(DtoFactura dto) throws Exception {
-        // Validamos duplicados usando el método auxiliar
         if (existeFactura(dto.getNumeroFactura())) {
             throw new IllegalArgumentException("El número de factura ya existe: " + dto.getNumeroFactura());
         }

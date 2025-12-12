@@ -49,7 +49,6 @@ public class FacturaController {
                 facturaService.validarResponsable(tipoDoc, nroDoc);
 
                 // 2. Buscamos el ID de ResponsablePago asociado a ese huésped (PersonaFisica)
-                // (Debes implementar este método en tu service o repo)
                 idResponsableFinal = facturaService.buscarIdResponsablePorHuesped(tipoDoc, nroDoc);
 
             } else {
