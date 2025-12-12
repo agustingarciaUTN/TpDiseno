@@ -12,6 +12,14 @@ export interface Guest {
     posicionIVA?: string
     fechaNacimiento?: string
     direccion?: string
+    direccionCalle?: string
+    direccionNumero?: string
+    direccionDepartamento?: string
+    direccionPiso?: string
+    direccionCodigoPostal?: string
+    direccionLocalidad?: string
+    direccionProvincia?: string
+    direccionPais?: string
     telefono?: string
     email?: string
     ocupacion?: string

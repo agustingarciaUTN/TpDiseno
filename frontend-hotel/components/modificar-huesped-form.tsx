@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Edit, AlertCircle, CheckCircle2, UserMinus, ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useGuest } from "@/lib/guest-context"
+import { modificarHuesped } from "@/lib/api"
 
 type Guest = {
     id: string
@@ -43,30 +45,9 @@ type Guest = {
 
 export function ModificarHuespedForm() {
     const router = useRouter()
-    const [guestData, setGuestData] = useState<Guest>({
-        id: "123",
-        apellido: "PÉREZ",
-        nombre: "JUAN CARLOS",
-        tipoDocumento: "DNI",
-        nroDocumento: "12345678",
-        cuit: "20-12345678-9",
-        posicionIVA: "Consumidor Final",
-        fechaNacimiento: "1985-03-15",
-        direccionCalle: "AV. CORRIENTES",
-        direccionNumero: "1234",
-        direccionDepartamento: "A",
-        direccionPiso: "5",
-        direccionCodigoPostal: "1043",
-        direccionLocalidad: "CAPITAL FEDERAL",
-        direccionProvincia: "BUENOS AIRES",
-        direccionPais: "ARGENTINA",
-        telefono: "+54 9 11 1234-5678",
-        email: "juan.perez@example.com",
-        ocupacion: "INGENIERO",
-        nacionalidad: "ARGENTINA",
-    })
-
-    const [originalData, setOriginalData] = useState<Guest>(guestData)
+    const { selectedGuest } = useGuest()
+    const [guestData, setGuestData] = useState<Guest | null>(null)
+    const [originalData, setOriginalData] = useState<Guest | null>(null)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const [showCancelDialog, setShowCancelDialog] = useState(false)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -74,9 +55,50 @@ export function ModificarHuespedForm() {
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [isSaving, setIsSaving] = useState(false)
 
+    useEffect(() => {
+        if (!selectedGuest) {
+            router.push('/buscar-huesped')
+            return
+        }
+        
+        console.log('selectedGuest en modificar:', selectedGuest)
+        console.log('direccionCodigoPostal:', selectedGuest.direccionCodigoPostal)
+        
+        // Map selectedGuest to Guest interface - use all fields from context
+        const mappedGuest: Guest = {
+            id: selectedGuest.id?.toString() || '',
+            apellido: selectedGuest.apellido || '',
+            nombre: selectedGuest.nombres || '',
+            tipoDocumento: selectedGuest.tipoDocumento || 'DNI',
+            nroDocumento: selectedGuest.numeroDocumento || '',
+            cuit: selectedGuest.cuit || '',
+            posicionIVA: selectedGuest.posicionIVA || '',
+            fechaNacimiento: selectedGuest.fechaNacimiento || '',
+            direccionCalle: selectedGuest.direccionCalle || '',
+            direccionNumero: selectedGuest.direccionNumero || '',
+            direccionDepartamento: selectedGuest.direccionDepartamento || '',
+            direccionPiso: selectedGuest.direccionPiso || '',
+            direccionCodigoPostal: selectedGuest.direccionCodigoPostal || '',
+            direccionLocalidad: selectedGuest.direccionLocalidad || '',
+            direccionProvincia: selectedGuest.direccionProvincia || '',
+            direccionPais: selectedGuest.direccionPais || '',
+            telefono: selectedGuest.telefono || '',
+            email: selectedGuest.email || '',
+            ocupacion: selectedGuest.ocupacion || '',
+            nacionalidad: selectedGuest.nacionalidad || '',
+        }
+        
+        console.log('mappedGuest:', mappedGuest)
+        console.log('mappedGuest.direccionCodigoPostal:', mappedGuest.direccionCodigoPostal)
+        
+        setGuestData(mappedGuest)
+        setOriginalData(mappedGuest)
+    }, [selectedGuest, router])
+
     const handleUppercaseInput = (field: keyof Guest, value: string) => {
+        if (!guestData) return
         setGuestData((prev) => ({
-            ...prev,
+            ...prev!,
             [field]: value.toUpperCase(),
         }))
         // Clear error when user starts typing
@@ -90,8 +112,9 @@ export function ModificarHuespedForm() {
     }
 
     const handleInputChange = (field: keyof Guest, value: string) => {
+        if (!guestData) return
         setGuestData((prev) => ({
-            ...prev,
+            ...prev!,
             [field]: value,
         }))
         // Clear error when user starts typing
@@ -130,24 +153,26 @@ export function ModificarHuespedForm() {
     }
 
     const validateForm = (): boolean => {
+        if (!guestData) return false
+        
         const newErrors: Record<string, string> = {}
 
         // Validate required fields
-        if (!guestData.apellido.trim()) newErrors.apellido = "El apellido es requerido"
-        if (!guestData.nombre.trim()) newErrors.nombre = "El nombre es requerido"
+        if (!guestData.apellido?.trim()) newErrors.apellido = "El apellido es requerido"
+        if (!guestData.nombre?.trim()) newErrors.nombre = "El nombre es requerido"
         if (!guestData.tipoDocumento) newErrors.tipoDocumento = "El tipo de documento es requerido"
-        if (!guestData.nroDocumento.trim()) newErrors.nroDocumento = "El número de documento es requerido"
+        if (!guestData.nroDocumento?.trim()) newErrors.nroDocumento = "El número de documento es requerido"
         if (!guestData.posicionIVA) newErrors.posicionIVA = "La posición frente al IVA es requerida"
         if (!guestData.fechaNacimiento) newErrors.fechaNacimiento = "La fecha de nacimiento es requerida"
-        if (!guestData.direccionCalle.trim()) newErrors.direccionCalle = "La calle es requerida"
-        if (!guestData.direccionNumero.trim()) newErrors.direccionNumero = "El número es requerido"
-        if (!guestData.direccionCodigoPostal.trim()) newErrors.direccionCodigoPostal = "El código postal es requerido"
-        if (!guestData.direccionLocalidad.trim()) newErrors.direccionLocalidad = "La localidad es requerida"
-        if (!guestData.direccionProvincia.trim()) newErrors.direccionProvincia = "La provincia es requerida"
-        if (!guestData.direccionPais.trim()) newErrors.direccionPais = "El país es requerido"
-        if (!guestData.telefono.trim()) newErrors.telefono = "El teléfono es requerido"
-        if (!guestData.ocupacion.trim()) newErrors.ocupacion = "La ocupación es requerida"
-        if (!guestData.nacionalidad.trim()) newErrors.nacionalidad = "La nacionalidad es requerida"
+        if (!guestData.direccionCalle?.trim()) newErrors.direccionCalle = "La calle es requerida"
+        if (!guestData.direccionNumero?.trim()) newErrors.direccionNumero = "El número es requerido"
+        if (!guestData.direccionCodigoPostal?.trim()) newErrors.direccionCodigoPostal = "El código postal es requerido"
+        if (!guestData.direccionLocalidad?.trim()) newErrors.direccionLocalidad = "La localidad es requerida"
+        if (!guestData.direccionProvincia?.trim()) newErrors.direccionProvincia = "La provincia es requerida"
+        if (!guestData.direccionPais?.trim()) newErrors.direccionPais = "El país es requerido"
+        if (!guestData.telefono?.trim()) newErrors.telefono = "El teléfono es requerido"
+        if (!guestData.ocupacion?.trim()) newErrors.ocupacion = "La ocupación es requerida"
+        if (!guestData.nacionalidad?.trim()) newErrors.nacionalidad = "La nacionalidad es requerida"
 
         // Validate document number format
         if (guestData.tipoDocumento && guestData.nroDocumento) {
@@ -220,11 +245,50 @@ export function ModificarHuespedForm() {
     }
 
     const confirmSave = async () => {
+        if (!guestData) return
+        
         setIsSaving(true)
         setShowConfirmDialog(false)
 
-        // Simulate API call to update guest
-        setTimeout(() => {
+        try {
+            // Mapear posición IVA del formato del formulario al enum del backend
+            const mapPosicionIVAToBackend = (posIva: string) => {
+                const mapping: Record<string, string> = {
+                    'Consumidor Final': 'CONSUMIDOR_FINAL',
+                    'Responsable Inscripto': 'RESPONSABLE_INSCRIPTO',
+                    'Exento': 'EXENTO',
+                    'Monotributo': 'MONOTRIBUTISTA'
+                }
+                return mapping[posIva] || posIva
+            }
+
+            // Construir el DTO para el backend
+            const dtoHuesped = {
+                nombres: guestData.nombre,
+                apellido: guestData.apellido,
+                tipoDocumento: guestData.tipoDocumento,
+                nroDocumento: guestData.nroDocumento,
+                cuit: guestData.cuit,
+                posicionIva: mapPosicionIVAToBackend(guestData.posicionIVA),
+                fechaNacimiento: guestData.fechaNacimiento,
+                nacionalidad: guestData.nacionalidad,
+                email: [guestData.email],
+                ocupacion: [guestData.ocupacion],
+                telefono: [parseInt(guestData.telefono)],
+                dtoDireccion: {
+                    calle: guestData.direccionCalle,
+                    numero: parseInt(guestData.direccionNumero),
+                    departamento: guestData.direccionDepartamento || null,
+                    piso: guestData.direccionPiso || null,
+                    codPostal: parseInt(guestData.direccionCodigoPostal),
+                    localidad: guestData.direccionLocalidad,
+                    provincia: guestData.direccionProvincia,
+                    pais: guestData.direccionPais
+                }
+            }
+
+            await modificarHuesped(guestData.tipoDocumento, guestData.nroDocumento, dtoHuesped)
+            
             setAlert({
                 type: "success",
                 message: "La operación ha culminado con éxito",
@@ -236,10 +300,18 @@ export function ModificarHuespedForm() {
             setTimeout(() => {
                 router.push("/")
             }, 2000)
-        }, 800)
+        } catch (error: any) {
+            setIsSaving(false)
+            setAlert({
+                type: "error",
+                message: `Error al modificar el huésped: ${error.message || 'Error desconocido'}`,
+            })
+        }
     }
 
     const confirmCancel = () => {
+        if (!originalData) return
+        
         setGuestData(originalData)
         setShowCancelDialog(false)
         setErrors({})
@@ -253,6 +325,10 @@ export function ModificarHuespedForm() {
         setShowDeleteDialog(false)
         // Navigate to delete guest page
         router.push("/baja-huesped")
+    }
+
+    if (!guestData) {
+        return <div>Cargando...</div>
     }
 
     return (

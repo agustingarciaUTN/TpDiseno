@@ -19,6 +19,7 @@ interface HabitacionEstado {
   capacidad: number;
   estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA";
   precioNoche: number;
+  estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO">;
 }
 
 interface SeleccionHabitacion {
@@ -78,33 +79,7 @@ export default function ReservarHabitacion() {
   });
   const [erroresHuesped, setErroresHuesped] = useState<Partial<DatosHuesped>>({});
 
-  // Cargar habitaciones del backend al montar el componente
-  useEffect(() => {
-    const cargarHabitaciones = async () => {
-      setLoading(true);
-      setErrorCarga("");
-      try {
-        const data = await obtenerHabitaciones();
-        const habitacionesMapeadas = data.map((h: DtoHabitacion) => ({
-          id: h.numero,
-          numero: h.numero,
-          tipo: h.tipoHabitacion,
-          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
-          capacidad: h.capacidad,
-          estado: h.estadoHabitacion === "DISPONIBLE" ? "DISPONIBLE" as const : 
-                 h.estadoHabitacion === "RESERVADA" ? "RESERVADA" as const : "OCUPADA" as const,
-          precioNoche: h.costoPorNoche
-        }));
-        setHabitaciones(habitacionesMapeadas);
-      } catch (error) {
-        console.error("Error al cargar habitaciones:", error);
-        setErrorCarga("No se pudieron cargar las habitaciones");
-      } finally {
-        setLoading(false);
-      }
-    };
-    cargarHabitaciones();
-  }, []);
+  // Las habitaciones se cargarán después de seleccionar las fechas
 
   // Validaciones de fechas
   const validarFechaDesde = (): boolean => {
@@ -153,9 +128,73 @@ export default function ReservarHabitacion() {
     }
   };
 
-  const handleConfirmarHasta = () => {
+  const handleConfirmarHasta = async () => {
     if (validarFechaHasta()) {
+      // Cargar habitaciones con estado real para el rango de fechas
+      await cargarHabitacionesConEstado();
       setPaso("grilla");
+    }
+  };
+
+  // Cargar habitaciones con estado real basado en fechas
+  const cargarHabitacionesConEstado = async () => {
+    if (!fechaDesde || !fechaHasta) return;
+    
+    setLoading(true);
+    setErrorCarga("");
+    try {
+      const url = `http://localhost:8080/api/habitaciones/estado?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Error al cargar habitaciones');
+      
+      const data = await response.json();
+      console.log("Habitaciones con estado para reserva:", data);
+
+      const habitacionesMapeadas = data.map((h: any) => {
+        let estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" = "DISPONIBLE";
+        
+        const estadoCalculado = h.estadoHabitacion || "DISPONIBLE";
+        if (estadoCalculado === "OCUPADA") {
+          estado = "OCUPADA";
+        } else if (estadoCalculado === "RESERVADA") {
+          estado = "RESERVADA";
+        } else if (estadoCalculado === "MANTENIMIENTO") {
+          estado = "OCUPADA"; // Tratamos mantenimiento como no disponible
+        } else {
+          estado = "DISPONIBLE";
+        }
+        
+        // Mapear estadosPorDia si existe
+        const estadosPorDia: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO"> = {};
+        if (h.estadosPorDia) {
+          Object.keys(h.estadosPorDia).forEach((fecha) => {
+            const estadoDia = h.estadosPorDia[fecha];
+            if (estadoDia === "MANTENIMIENTO") {
+              estadosPorDia[fecha] = "OCUPADA"; // Tratamos mantenimiento como no disponible
+            } else {
+              estadosPorDia[fecha] = estadoDia as "DISPONIBLE" | "RESERVADA" | "OCUPADA";
+            }
+          });
+        }
+        
+        return {
+          id: h.numero,
+          numero: h.numero,
+          tipo: h.tipoHabitacion,
+          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
+          capacidad: h.capacidad,
+          estado: estado,
+          precioNoche: h.costoPorNoche,
+          estadosPorDia: estadosPorDia
+        };
+      });
+
+      setHabitaciones(habitacionesMapeadas);
+    } catch (error) {
+      console.error("Error al cargar habitaciones:", error);
+      setErrorCarga("No se pudieron cargar las habitaciones para las fechas seleccionadas");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -178,7 +217,17 @@ export default function ReservarHabitacion() {
   // Verificar si una celda está disponible para selección
   const esCeldaDisponible = (habitacionId: string, diaIdx: number): boolean => {
     const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
-    if (!habitacion || habitacion.estado !== "DISPONIBLE") return false;
+    if (!habitacion) return false;
+
+    // Si tenemos estadosPorDia, usar el estado específico del día
+    if (habitacion.estadosPorDia && diasRango[diaIdx]) {
+      const fechaDia = diasRango[diaIdx].toISOString().split('T')[0];
+      const estadoDia = habitacion.estadosPorDia[fechaDia];
+      if (estadoDia && estadoDia !== "DISPONIBLE") return false;
+    } else {
+      // Fallback al estado general
+      if (habitacion.estado !== "DISPONIBLE") return false;
+    }
 
     // Verificar que no esté ya seleccionada
     return !selecciones.some(sel => 
@@ -186,6 +235,22 @@ export default function ReservarHabitacion() {
       diaIdx >= sel.diaInicio && 
       diaIdx <= sel.diaFin
     );
+  };
+
+  // Obtener el estado de una celda específica
+  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" => {
+    const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
+    if (!habitacion) return "OCUPADA";
+
+    // Si tenemos estadosPorDia, usar el estado específico del día
+    if (habitacion.estadosPorDia && diasRango[diaIdx]) {
+      const fechaDia = diasRango[diaIdx].toISOString().split('T')[0];
+      const estadoDia = habitacion.estadosPorDia[fechaDia];
+      return (estadoDia as "DISPONIBLE" | "RESERVADA" | "OCUPADA") || "DISPONIBLE";
+    }
+
+    // Fallback al estado general
+    return habitacion.estado;
   };
 
   // Manejar click en celda de la grilla
@@ -315,6 +380,8 @@ export default function ReservarHabitacion() {
       setPaso("datosHuesped");
     }
   };
+  
+  const handleVolver = handleVolverPaso;
 
   // Calcular precio total
   const calcularTotal = (): number => {
@@ -331,9 +398,9 @@ export default function ReservarHabitacion() {
       case "DISPONIBLE":
         return "bg-green-600 dark:bg-green-500";
       case "RESERVADA":
-        return "bg-orange-500 dark:bg-orange-400";
+        return "bg-blue-600 dark:bg-blue-500";
       case "OCUPADA":
-        return "bg-slate-600 dark:bg-slate-500";
+        return "bg-red-600 dark:bg-red-500";
       default:
         return "bg-slate-600";
     }
@@ -443,6 +510,20 @@ export default function ReservarHabitacion() {
         {/* PASO 3: Grilla interactiva (CU05 integrado) */}
         {paso === "grilla" && (
           <div className="space-y-6">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center p-12">
+                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+                <p className="text-slate-600 dark:text-slate-400">Cargando habitaciones disponibles...</p>
+              </div>
+            ) : errorCarga ? (
+              <Card className="p-6 text-center border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
+                <p className="text-red-600 dark:text-red-400 mb-4">{errorCarga}</p>
+                <Button onClick={handleVolver} variant="outline">
+                  ← Volver a fechas
+                </Button>
+              </Card>
+            ) : (
+              <>
             {/* Resumen de estados */}
             <div className="grid grid-cols-3 gap-4">
               <Card className="border-l-4 border-green-500 p-4">
@@ -518,6 +599,7 @@ export default function ReservarHabitacion() {
                                 const disponible = esCeldaDisponible(hab.id, dayIdx);
                                 const seleccionada = esCeldaSeleccionada(hab.id, dayIdx);
                                 const inicioActual = esInicioSeleccionActual(hab.id, dayIdx);
+                                const estadoCelda = obtenerEstadoCelda(hab.id, dayIdx);
 
                                 return (
                                   <td
@@ -532,8 +614,8 @@ export default function ReservarHabitacion() {
                                           : inicioActual
                                           ? "bg-purple-500 animate-pulse"
                                           : disponible
-                                          ? getEstadoColor(hab.estado) + " hover:brightness-110"
-                                          : "bg-slate-400 dark:bg-slate-600 cursor-not-allowed opacity-50"
+                                          ? getEstadoColor(estadoCelda) + " hover:brightness-110"
+                                          : getEstadoColor(estadoCelda) + " cursor-not-allowed opacity-70"
                                       }`}
                                       title={
                                         seleccionada
@@ -542,16 +624,16 @@ export default function ReservarHabitacion() {
                                           ? "Click en otra celda para finalizar"
                                           : disponible
                                           ? "Click para seleccionar"
-                                          : hab.estado
+                                          : estadoCelda
                                       }
                                     >
                                       {seleccionada
                                         ? "✓"
                                         : inicioActual
                                         ? "►"
-                                        : hab.estado === "DISPONIBLE"
+                                        : estadoCelda === "DISPONIBLE"
                                         ? "○"
-                                        : hab.estado === "RESERVADA"
+                                        : estadoCelda === "RESERVADA"
                                         ? "R"
                                         : "X"}
                                     </div>
@@ -626,6 +708,8 @@ export default function ReservarHabitacion() {
                 <UserCheck className="h-4 w-4" />
               </Button>
             </div>
+            </>
+            )}
           </div>
         )}
 

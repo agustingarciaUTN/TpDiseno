@@ -52,7 +52,10 @@ public class DtoReserva {
     @Pattern(regexp = REGEX_HABITACION, message = "El número de habitación debe ser numérico y estar entre 1 y 999.")
     private String idHabitacion;
 
-    // --- CONSTRUCTOR PRIVADO ---
+    // --- CONSTRUCTOR VACÍO PARA JACKSON ---
+    public DtoReserva() {}
+
+    // --- CONSTRUCTOR PRIVADO PARA BUILDER ---
     private DtoReserva(Builder builder) {
         this.idReserva = builder.idReserva;
         this.estadoReserva = builder.estadoReserva;

@@ -81,35 +81,61 @@ public class HabitacionService {
      */
     @Transactional(readOnly = true)
     public List<java.util.Map<String, Object>> obtenerEstadoPorFechas(String fechaDesdeStr, String fechaHastaStr) {
-        java.time.LocalDate fechaDesde = java.time.LocalDate.parse(fechaDesdeStr);
-        java.time.LocalDate fechaHasta = java.time.LocalDate.parse(fechaHastaStr);
-        
-        // Convertir a Date para las consultas
-        Date inicio = convertToDate(fechaDesde);
-        Date fin = convertToDate(fechaHasta);
-        
-        // Obtener todas las reservas y estadías del rango
-        List<Reserva> reservasActivas = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
-        List<Estadia> estadiasActivas = estadiaRepository.buscarEstadiasEnRango(inicio, fin);
-        
-        List<Habitacion> todasHabitaciones = obtenerTodas();
-        List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
-        
-        for (Habitacion hab : todasHabitaciones) {
-            java.util.Map<String, Object> habInfo = new java.util.HashMap<>();
-            habInfo.put("numero", hab.getNumero());
-            habInfo.put("tipoHabitacion", hab.getTipoHabitacion());
-            habInfo.put("capacidad", hab.getCapacidad());
-            habInfo.put("costoPorNoche", hab.getCostoPorNoche());
+        try {
+            System.out.println("Obteniendo estado para fechas: " + fechaDesdeStr + " a " + fechaHastaStr);
             
-            // Determinar estado calculado
-            String estado = determinarEstadoHabitacion(hab, fechaDesde, reservasActivas, estadiasActivas);
-            habInfo.put("estadoHabitacion", estado);
+            java.time.LocalDate fechaDesde = java.time.LocalDate.parse(fechaDesdeStr);
+            java.time.LocalDate fechaHasta = java.time.LocalDate.parse(fechaHastaStr);
             
-            resultado.add(habInfo);
+            // Convertir a Date para las consultas
+            Date inicio = convertToDate(fechaDesde);
+            Date fin = convertToDate(fechaHasta);
+            
+            System.out.println("Buscando reservas activas en el rango...");
+            // Obtener todas las reservas y estadías del rango
+            List<Reserva> reservasActivas = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
+            System.out.println("Reservas encontradas: " + (reservasActivas != null ? reservasActivas.size() : 0));
+            
+            System.out.println("Buscando estadías activas en el rango...");
+            List<Estadia> estadiasActivas = estadiaRepository.buscarEstadiasEnRango(inicio, fin);
+            System.out.println("Estadías encontradas: " + (estadiasActivas != null ? estadiasActivas.size() : 0));
+            
+            List<Habitacion> todasHabitaciones = obtenerTodas();
+            System.out.println("Total habitaciones: " + todasHabitaciones.size());
+            
+            List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
+            
+            for (Habitacion hab : todasHabitaciones) {
+                java.util.Map<String, Object> habInfo = new java.util.HashMap<>();
+                habInfo.put("numero", hab.getNumero());
+                habInfo.put("tipoHabitacion", hab.getTipoHabitacion() != null ? hab.getTipoHabitacion().toString() : "DESCONOCIDO");
+                habInfo.put("capacidad", hab.getCapacidad());
+                habInfo.put("costoPorNoche", hab.getCostoPorNoche());
+                
+                // Calcular estado para cada día del rango
+                java.util.Map<String, String> estadosPorDia = new java.util.HashMap<>();
+                java.time.LocalDate diaActual = fechaDesde;
+                
+                while (!diaActual.isAfter(fechaHasta)) {
+                    String estado = determinarEstadoHabitacion(hab, diaActual, reservasActivas, estadiasActivas);
+                    estadosPorDia.put(diaActual.toString(), estado);
+                    diaActual = diaActual.plusDays(1);
+                }
+                
+                habInfo.put("estadosPorDia", estadosPorDia);
+                // Estado general (del primer día para compatibilidad)
+                habInfo.put("estadoHabitacion", estadosPorDia.get(fechaDesde.toString()));
+                
+                resultado.add(habInfo);
+            }
+            
+            System.out.println("Resultado final: " + resultado.size() + " habitaciones procesadas con estados por día");
+            return resultado;
+        } catch (Exception e) {
+            System.err.println("Error en obtenerEstadoPorFechas: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error al calcular estados: " + e.getMessage(), e);
         }
-        
-        return resultado;
     }
     
     private String determinarEstadoHabitacion(
@@ -162,6 +188,10 @@ public class HabitacionService {
     }
     
     private java.time.LocalDate convertToLocalDate(Date date) {
+        // Manejar tanto java.util.Date como java.sql.Date
+        if (date instanceof java.sql.Date) {
+            return ((java.sql.Date) date).toLocalDate();
+        }
         return date.toInstant()
             .atZone(java.time.ZoneId.systemDefault())
             .toLocalDate();

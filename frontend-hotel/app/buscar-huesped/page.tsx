@@ -45,8 +45,8 @@ const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
     DNI: "DNI",
     LE: "LE (Libreta de Enrolamiento)",
     LC: "LC (Libreta Cívica)",
-    Pasaporte: "Pasaporte",
-    OTROS: "OTROS",
+    PASAPORTE: "Pasaporte",
+    OTRO: "Otro",
 }
 
 export default function BuscarHuesped() {
@@ -81,7 +81,7 @@ export default function BuscarHuesped() {
                     case "LC":
                         if (!/^\d{7,8}$/.test(value)) return "Debe contener 7 u 8 dígitos"
                         break
-                    case "Pasaporte":
+                    case "PASAPORTE":
                         if (!/^[A-Za-z0-9]+$/.test(value)) return "Puede contener letras y números"
                         break
                 }
@@ -134,6 +134,17 @@ export default function BuscarHuesped() {
                     // @ts-ignore - Ignoramos tipos estrictos temporalmente para facilitar la integración
                     const data = await buscarHuespedes(criterios)
 
+                    // Mapear posición IVA del enum backend al formato del formulario
+                    const mapPosicionIVA = (posIva: string) => {
+                        const mapping: Record<string, string> = {
+                            'CONSUMIDOR_FINAL': 'Consumidor Final',
+                            'RESPONSABLE_INSCRIPTO': 'Responsable Inscripto',
+                            'EXENTO': 'Exento',
+                            'MONOTRIBUTISTA': 'Monotributo'
+                        }
+                        return mapping[posIva] || posIva
+                    }
+
                     // Adaptar respuesta del backend al formato que espera el componente (si es necesario)
                     // Tu DtoHuesped backend devuelve "nroDocumento", tu tipo Guest usa "numeroDocumento"
                     const invitadosMapeados = data.map((h: any) => ({
@@ -143,12 +154,20 @@ export default function BuscarHuesped() {
                         apellido: h.apellido,
                         nombres: h.nombres,
                         cuit: h.cuit,
-                        posicionIVA: h.posicionIva,
+                        posicionIVA: h.posicionIva ? mapPosicionIVA(h.posicionIva) : '',
                         fechaNacimiento: h.fechaNacimiento,
                         direccion: h.dtoDireccion ? `${h.dtoDireccion.calle} ${h.dtoDireccion.numero}` : "",
-                        telefono: h.telefono ? h.telefono[0] : "",
-                        email: h.email ? h.email[0] : "",
-                        ocupacion: h.ocupacion ? h.ocupacion[0] : "",
+                        direccionCalle: h.dtoDireccion?.calle || "",
+                        direccionNumero: h.dtoDireccion?.numero?.toString() || "",
+                        direccionDepartamento: h.dtoDireccion?.departamento || "",
+                        direccionPiso: h.dtoDireccion?.piso || "",
+                        direccionCodigoPostal: h.dtoDireccion?.codPostal?.toString() || "",
+                        direccionLocalidad: h.dtoDireccion?.localidad || "",
+                        direccionProvincia: h.dtoDireccion?.provincia || "",
+                        direccionPais: h.dtoDireccion?.pais || "",
+                        telefono: h.telefono && h.telefono.length > 0 ? h.telefono[0].toString() : "",
+                        email: h.email && h.email.length > 0 ? h.email[0] : "",
+                        ocupacion: h.ocupacion && h.ocupacion.length > 0 ? h.ocupacion[0] : "",
                         nacionalidad: h.nacionalidad
                     }))
 
