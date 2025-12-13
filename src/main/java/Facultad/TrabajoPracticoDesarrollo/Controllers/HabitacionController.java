@@ -41,7 +41,7 @@ public class HabitacionController {
 
     // Endpoint para obtener habitaciones con estado según fechas
     // GET /api/habitaciones/estado?fechaDesde=YYYY-MM-DD&fechaHasta=YYYY-MM-DD
-    @GetMapping("/estado")
+    @GetMapping("/estados")
     public ResponseEntity<?> obtenerEstadoPorFechas(
             @RequestParam String fechaDesde,
             @RequestParam String fechaHasta) {
