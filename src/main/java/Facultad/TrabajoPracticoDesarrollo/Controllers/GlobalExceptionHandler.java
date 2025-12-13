@@ -13,7 +13,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Este método se dispara automáticamente cuando falla un @Valid en cualquier Controller
+    //Esta excepcion se dispara automaticamente cuando falta un @Valid en cualquier controller
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errores = new HashMap<>();

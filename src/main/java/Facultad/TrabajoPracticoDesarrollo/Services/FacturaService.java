@@ -9,6 +9,8 @@ import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDatosOcupantes;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoServiciosAdicionales;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,15 +33,17 @@ public class FacturaService {
     private final HuespedRepository huespedRepository;
     private final NotaDeCreditoRepository notaDeCreditoRepository;
     private final PersonaFisicaRepository personaFisicaRepository;
+    private final ServiciosAdicionalesRepository serviciosAdicionalesRepository;
 
     @Autowired
-    public FacturaService(PersonaFisicaRepository personaFisicaRepository, ResponsablePagoRepository responsablePagoRepository, HuespedRepository huespedRepository, EstadiaRepository estadiaRepository, FacturaRepository facturaRepository, NotaDeCreditoRepository notaDeCreditoRepository) {
+    public FacturaService(ServiciosAdicionalesRepository serviciosAdicionalesRepository, PersonaFisicaRepository personaFisicaRepository, ResponsablePagoRepository responsablePagoRepository, HuespedRepository huespedRepository, EstadiaRepository estadiaRepository, FacturaRepository facturaRepository, NotaDeCreditoRepository notaDeCreditoRepository) {
         this.estadiaRepository = estadiaRepository;
         this.facturaRepository = facturaRepository;
         this.responsablePagoRepository = responsablePagoRepository;
         this.huespedRepository = huespedRepository;
         this.notaDeCreditoRepository = notaDeCreditoRepository;
         this.personaFisicaRepository = personaFisicaRepository;
+        this.serviciosAdicionalesRepository = serviciosAdicionalesRepository;
     }
 
     // --- MÉTODOS DE BÚSQUEDA ---
@@ -95,20 +99,22 @@ public class FacturaService {
         Estadia estadia = estadiaRepository.findEstadiaActivaPorHabitacion(nroHabitacion)
                 .orElseThrow(() -> new IllegalArgumentException("No hay estadía activa en la habitación " + nroHabitacion));
 
-        DtoOcupantesHabitacion respuesta = new DtoOcupantesHabitacion();
-        respuesta.setNumeroHabitacion(nroHabitacion);
-        respuesta.setIdEstadia(estadia.getIdEstadia());
+        //Mapeamos la lista usando el Builder de DtoDatosOcupantes
+        List<DtoDatosOcupantes> listaOcupantes = estadia.getHuespedes().stream()
+                .map(h -> new DtoDatosOcupantes.Builder()
+                        .tipoDocumento(h.getTipoDocumento())
+                        .nroDocumento(h.getNroDocumento())
+                        .nombres(h.getNombres())
+                        .apellido(h.getApellido())
+                        .build()
+                ).collect(Collectors.toList());
 
-        List<DtoOcupantesHabitacion.DtoHuespedResumen> lista = estadia.getHuespedes().stream()
-                .map(h -> new DtoOcupantesHabitacion.DtoHuespedResumen(
-                        h.getTipoDocumento(),
-                        h.getNroDocumento(),
-                        h.getNombres(),
-                        h.getApellido()
-                )).collect(Collectors.toList());
-
-        respuesta.setOcupantes(lista);
-        return respuesta;
+        // Construimos la respuesta mayor con su Builder
+        return new DtoOcupantesHabitacion.Builder()
+                .numeroHabitacion(nroHabitacion)
+                .idEstadia(estadia.getIdEstadia())
+                .ocupantes(listaOcupantes)
+                .build();
     }
 
     public void validarResponsable(TipoDocumento tipo, String nro) {
@@ -156,31 +162,53 @@ public class FacturaService {
             }
         }
 
-        // 3. Totales
-        double subtotal = estadia.getValorEstadia() + recargo;
-        double totalBruto = subtotal; // + sumar otros consumos si hubiera
-        double iva = totalBruto * 0.21;
-        double totalFinal = totalBruto + iva;
+        List<ServiciosAdicionales> serviciosEntidad = serviciosAdicionalesRepository.findByEstadia_IdEstadia(idEstadia);
 
-        // 4. Armar DTO
-        DtoDetalleFacturacion dto = new DtoDetalleFacturacion();
-        dto.setMontoEstadiaBase(estadia.getValorEstadia());
-        dto.setRecargoHorario(recargo);
-        dto.setDetalleRecargo(detalleRecargo);
-        dto.setSubtotal(totalBruto);
-        dto.setMontoIva(iva);
-        dto.setMontoTotal(totalFinal);
-        dto.setTipoFactura(tipo);
+        double totalServicios = 0.0;
+        List<DtoServiciosAdicionales> listaServiciosDto = new ArrayList<>();
 
-        if(responsable instanceof PersonaJuridica pj) dto.setNombreResponsable(pj.getRazonSocial());
-        else if (responsable instanceof PersonaFisica pf) dto.setNombreResponsable(pf.getHuesped().getApellido() + " " + pf.getHuesped().getNombres());
+        // Iteramos la lista que nos devolvió el repositorio
+        for (ServiciosAdicionales s : serviciosEntidad) {
 
-        List<DtoDetalleFacturacion.DtoItemFactura> items = new ArrayList<>();
-        items.add(new DtoDetalleFacturacion.DtoItemFactura("Alojamiento", estadia.getValorEstadia()));
-        if(recargo > 0) items.add(new DtoDetalleFacturacion.DtoItemFactura(detalleRecargo, recargo));
-        dto.setItems(items);
+            totalServicios += s.getValor(); // Asumiendo que tiene getPrecio() o getValor()
 
-        return dto;
+            DtoServiciosAdicionales dtoItem = new DtoServiciosAdicionales.Builder()
+                    .descripcion(s.getDescripcion())
+                    .valor(s.getValor())
+                    .build(); // <--- Importante: construye el objeto al final
+
+            listaServiciosDto.add(dtoItem);
+        }
+        // 4. Totales
+        double subtotal = estadia.getValorEstadia() + recargo + totalServicios;
+        double iva = subtotal * 0.21;
+        double totalFinal = subtotal + iva;
+
+        // 5. Resolver Datos Responsable
+        String nombreResp;
+        String cuitResp = null;
+        if(responsable instanceof PersonaJuridica pj) {
+            nombreResp = pj.getRazonSocial();
+            cuitResp = pj.getCuit();
+        } else {
+            PersonaFisica pf = (PersonaFisica) responsable;
+            nombreResp = pf.getHuesped().getApellido() + " " + pf.getHuesped().getNombres();
+            cuitResp = pf.getHuesped().getCuit(); // Si tiene
+        }
+
+        // 6. Construir DTO Final con Builder
+        return new DtoDetalleFacturacion.Builder()
+                .nombreResponsable(nombreResp)
+                .cuitResponsable(cuitResp)
+                .montoEstadiaBase(estadia.getValorEstadia())
+                .recargoHorario(recargo)
+                .detalleRecargo(detalleRecargo)
+                .serviciosAdicionales(listaServiciosDto)
+                .subtotal(subtotal)
+                .montoIva(iva)
+                .montoTotal(totalFinal)
+                .tipoFactura(tipo)
+                .build();
     }
 
     @Transactional
