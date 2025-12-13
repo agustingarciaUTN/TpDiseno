@@ -111,12 +111,33 @@ export default function AltaHuesped() {
                 break
 
             case "cuit":
-                // El CUIT es obligatorio para Responsables Inscripto
-                if (datos.posicionIva === "RESPONSABLE_INSCRIPTO") {
-                    if (!valor.trim()) error = `El CUIT es obligatorio para "Responsables Inscriptos"}`
-                    else if (!regexCuit.test(valor)) error = "El CUIT debe tener 11 dígitos"
-                } else if (valor.trim() && !regexCuit.test(valor)) {
-                    error = "El CUIT debe tener 11 dígitos"
+                const esObligatorio = datos.posicionIva === "RESPONSABLE_INSCRIPTO"
+                const cuitLimpio = limpiarCuit(valor)
+
+                if (esObligatorio && !valor.trim()) {
+                    error = "El CUIT es obligatorio para Responsables Inscriptos"
+                } else if (valor.trim()) {
+                    // 1. Validación de Formato Básico (Regex)
+                    if (!regexCuit.test(valor)) {
+                        error = "Formato inválido (Ej: 20-12345678-9)"
+                    } else {
+                        // 2. Validación de Prefijo Habitual
+                        const prefijo = cuitLimpio.substring(0, 2)
+                        if (!PREFIJOS_CUIT.includes(prefijo)) {
+                            error = "El CUIT no comienza con un prefijo válido (20, 23, 27, 30...)"
+                        }
+                        // 3. Validación de Coincidencia con Documento (Solo si ya ingresó el documento)
+                        else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
+                            // Extraemos la parte central del CUIT (dígitos 2 al 10)
+                            const dniEnCuit = cuitLimpio.substring(2, 10)
+                            // Normalizamos el DNI del formulario (rellenando con ceros a la izquierda si hace falta para llegar a 8)
+                            const dniFormulario = datos.nroDocumento.padStart(8, "0")
+
+                            if (dniEnCuit !== dniFormulario) {
+                                error = "El CUIT no coincide con el número de documento ingresado"
+                            }
+                        }
+                    }
                 }
                 break
 
@@ -237,11 +258,31 @@ export default function AltaHuesped() {
             }
         }
 
-        if (datos.posicionIva === "RESPONSABLE_INSCRIPTO") {
-            if (!datos.cuit.trim()) nuevosErrores.cuit = "El CUIT es obligatorio para Responsables Inscriptos"
-            else if (!regexCuit.test(datos.cuit)) nuevosErrores.cuit = "El CUIT debe tener 11 dígitos"
-        } else if (datos.cuit.trim() && !regexCuit.test(datos.cuit)) {
-            nuevosErrores.cuit = "El CUIT debe tener 11 dígitos"
+        // Validación CUIT
+        const esCuitObligatorio = datos.posicionIva === "RESPONSABLE_INSCRIPTO"
+        const cuitValor = datos.cuit.trim() // Usamos variable auxiliar para legibilidad
+
+        if (esCuitObligatorio && !cuitValor) {
+            nuevosErrores.cuit = "El CUIT es obligatorio para Responsables Inscriptos"
+        } else if (cuitValor) {
+            const cuitLimpio = limpiarCuit(cuitValor)
+
+            if (!regexCuit.test(cuitValor)) {
+                nuevosErrores.cuit = "Formato inválido (Ej: 20-12345678-9)"
+            } else {
+                const prefijo = cuitLimpio.substring(0, 2)
+                if (!PREFIJOS_CUIT.includes(prefijo)) {
+                    nuevosErrores.cuit = "Prefijo de CUIT inválido"
+                }
+                else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
+                    const dniEnCuit = cuitLimpio.substring(2, 10)
+                    const dniFormulario = datos.nroDocumento.padStart(8, "0")
+
+                    if (dniEnCuit !== dniFormulario) {
+                        nuevosErrores.cuit = "El CUIT no coincide con el DNI ingresado"
+                    }
+                }
+            }
         }
 
         if (!datos.posicionIva) nuevosErrores.posicionIva = "La posición frente al IVA es obligatoria"
@@ -419,6 +460,11 @@ export default function AltaHuesped() {
         setHuespedCreado(null)
     }
 
+    const PREFIJOS_CUIT = ["20", "23", "24", "27", "30", "33", "34"]
+
+    // Helper para limpiar el CUIT y dejar solo números
+    const limpiarCuit = (cuit: string) => cuit.replace(/\D/g, "")
+
     // Configuración de validaciones y placeholders por tipo de documento
     const CONFIG_DOCUMENTOS: Record<string, { regex: RegExp; error: string; placeholder: string }> = {
         DNI: {
@@ -560,7 +606,15 @@ export default function AltaHuesped() {
                                     onChange={(e) => {
                                         setDatos({ ...datos, nroDocumento: e.target.value })
                                     }}
-                                    onBlur={handleBlur}
+                                    // En el Input de nroDocumento
+                                    onBlur={(e) => {
+                                        handleBlur(e)
+                                        // Si ya hay un CUIT escrito, lo revalidamos para ver si sigue coincidiendo con el nuevo DNI
+                                        if (datos.cuit) {
+                                            // Pequeño timeout para dar tiempo a que el estado 'datos' se actualice con el nuevo DNI
+                                            setTimeout(() => validarCampo("cuit", datos.cuit), 0)
+                                        }
+                                    }}
                                     // Lógica dinámica para el placeholder
                                     placeholder={
                                         datos.tipoDocumento && CONFIG_DOCUMENTOS[datos.tipoDocumento]

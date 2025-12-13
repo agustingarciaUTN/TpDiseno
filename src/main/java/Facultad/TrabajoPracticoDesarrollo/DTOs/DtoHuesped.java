@@ -49,9 +49,6 @@ public class DtoHuesped {
     @NotBlank(message = "La nacionalidad es obligatoria")
     private String nacionalidad;
 
-    // traemos todos porque si necesitamos solo uno, después lo filtramos y el acceso a la tabla intermedia es solo 1
-    // Valida que la lista no sea null y que CADA elemento sea un email válido
-    @NotEmpty(message = "Debe ingresar al menos un email")
     private List<@Email(message = "Formato de email inválido") String> email;
 
     //No tiene formato

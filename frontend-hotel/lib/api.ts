@@ -46,26 +46,52 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
     const response = await fetch(fullUrl, config)
     console.log(`[API] Response status: ${response.status}`)
 
-    if (!response.ok) {
-      // Intentar leer el error del backend
-      try {
-        const contentType = response.headers.get("content-type");
-        let errorMessage = "";
-        
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          errorMessage = errorData?.message || JSON.stringify(errorData);
-        } else {
-          // Si es texto plano, leerlo directamente
-          errorMessage = await response.text();
-        }
-        
-        throw new Error(errorMessage || `Error HTTP ${response.status}`);
-      } catch (parseError: any) {
-        // Si falla al parsear, usar mensaje genérico
-        throw new Error(parseError.message || `Error HTTP ${response.status}`);
+      if (!response.ok) {
+          // Intentar leer el error del backend
+          try {
+              const contentType = response.headers.get("content-type");
+              let errorMessage = "";
+
+              if (contentType && contentType.includes("application/json")) {
+                  const errorData = await response.json();
+
+                  // Detectar si es un mapa de errores de validación
+                  if (errorData && typeof errorData === 'object') {
+                      // Caso 1: Tiene propiedad message estándar
+                      if (errorData.message) {
+                          errorMessage = errorData.message;
+                      }
+                      // Caso 2: Es un objeto tipo {"campo": "Error"}
+                      else {
+                          const valores = Object.values(errorData);
+                          // Si hay valores y son strings, los unimos
+                          if (valores.length > 0 && valores.every(v => typeof v === 'string')) {
+                              errorMessage = valores.join('. ');
+                          } else {
+                              // Fallback: Si la estructura es rara, mostramos el JSON
+                              errorMessage = JSON.stringify(errorData);
+                          }
+                      }
+                  } else {
+                      // Si el JSON es un string directo
+                      errorMessage = String(errorData);
+                  }
+
+              } else {
+                  // Si es texto plano, leerlo directamente
+                  errorMessage = await response.text();
+              }
+
+              throw new Error(errorMessage || `Error HTTP ${response.status}`);
+          } catch (parseError: any) {
+              // Si lo que atrapamos ya es el Error que lanzamos arriba, lo relanzamos tal cual
+              if (parseError instanceof Error && !parseError.message.startsWith("Unexpected token")) {
+                  throw parseError;
+              }
+              // Si fue un error real de parseo o de red
+              throw new Error(`Error HTTP ${response.status}`);
+          }
       }
-    }
 
     // Si la respuesta es 204 No Content o vacía
     if (response.status === 204) return {} as T;
