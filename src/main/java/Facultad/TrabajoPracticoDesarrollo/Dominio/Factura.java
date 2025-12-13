@@ -40,7 +40,7 @@ public class Factura {
     @Column(name = "importe_neto") // Hibernate creará esta columna si falta
     private Double importeNeto;
 
-    @Column(name = "iva") // Hibernate creará esta columna si falta
+    @Column(name = "\"IVA\"") // Hibernate creará esta columna si falta
     private Double iva;
 
     // --- RELACIONES ---
