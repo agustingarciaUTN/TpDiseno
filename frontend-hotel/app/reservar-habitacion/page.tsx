@@ -374,6 +374,50 @@ export default function ReservarHabitacion() {
 
     const handleVolver = handleVolverPaso
 
+    const handleFinalizarReserva = async () => {
+        setLoading(true)
+        try {
+            // Crear array de reservas para enviar al backend
+            const reservas = selecciones.map(sel => {
+                const habitacion = habitaciones.find(h => h.id === sel.habitacionId)
+                const diaInicioDate = diasRango[sel.diaInicio]
+                const diaFinDate = diasRango[sel.diaFin]
+
+                return {
+                    idReserva: 0,
+                    estadoReserva: "ACTIVA" as const,
+                    fechaDesde: diaInicioDate.toISOString().split('T')[0],
+                    fechaHasta: diaFinDate.toISOString().split('T')[0],
+                    nombreHuespedResponsable: datosHuesped.nombres,
+                    apellidoHuespedResponsable: datosHuesped.apellido,
+                    telefonoHuespedResponsable: datosHuesped.telefono,
+                    idHabitacion: habitacion?.numero || sel.habitacionId
+                }
+            })
+
+            // Llamar al backend
+            const response = await fetch('http://localhost:8080/api/reservas/crear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reservas)
+            })
+
+            if (!response.ok) {
+                throw new Error('Error al crear las reservas')
+            }
+
+            alert('✅ Reservas creadas con éxito')
+            router.push("/")
+        } catch (error) {
+            console.error('Error:', error)
+            alert('Error al crear las reservas. Por favor intente nuevamente.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     // Calcular precio total
     const calcularTotal = (): number => {
         return selecciones.reduce((total, sel) => {
@@ -845,12 +889,21 @@ export default function ReservarHabitacion() {
                                 </div>
                             </Card>
                             <div className="flex gap-3 mt-6">
-                                <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent">
+                                <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent" disabled={loading}>
                                     ← Atrás
                                 </Button>
-                                <Button onClick={() => router.push("/")} className="flex-1 gap-2">
-                                    Finalizar
-                                    <CheckCircle className="h-4 w-4" />
+                                <Button onClick={handleFinalizarReserva} className="flex-1 gap-2" disabled={loading}>
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Procesando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Finalizar
+                                            <CheckCircle className="h-4 w-4" />
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>
