@@ -3,7 +3,6 @@ package Facultad.TrabajoPracticoDesarrollo.enums;
 import java.text.Normalizer;
 
 public enum PosIva {
-    // AHORA SÍ: Constantes con guion bajo (Estándar Java)
     CONSUMIDOR_FINAL("CONSUMIDOR FINAL"),
     MONOTRIBUTISTA("MONOTRIBUTISTA"),
     RESPONSABLE_INSCRIPTO("RESPONSABLE INSCRIPTO"),
