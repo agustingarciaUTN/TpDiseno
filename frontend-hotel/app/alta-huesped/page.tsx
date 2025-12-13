@@ -67,7 +67,6 @@ export default function AltaHuesped() {
     const [huespedExistente, setHuespedExistente] = useState<any>(null)
 
     const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
-    const regexDocumento = /^[a-zA-Z0-9]+$/
     const regexCuit = /^\d{2}-?\d{8}-?\d{1}$/
     const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -75,34 +74,46 @@ export default function AltaHuesped() {
     const regexTexto = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
     const regexAlfanumerico = /^[a-zA-Z0-9]+$/
 
-    // --- Validación individual por campo ---
+    // --- CONSTANTES DE MENSAJES (ESTANDARIZACIÓN) ---
+    const MSJ_OBLIGATORIO = "Este campo es obligatorio"
+    const MSJ_TEXTO = "Solo se permiten letras y espacios"
+    const MSJ_ALFANUMERICO = "Solo se permiten letras y números"
+    const MSJ_NUMERICO = "Solo se permiten números válidos"
+    const MSJ_FORMATO_EMAIL = "Formato inválido (ej: usuario@dominio.com)"
+    const MSJ_FORMATO_TEL = "Formato inválido (ej: +54 342 1234567)"
+    const MSJ_LARGO_CORTO = "El texto ingresado es demasiado corto"
+    const MSJ_LARGO_EXCESIVO = "El texto supera el límite permitido"
+
+    // --- Validación individual por campo (ESTANDARIZADA) ---
+    // --- Validación individual por campo (CORREGIDA) ---
     const validarCampo = (nombre: keyof DatosFormulario, valor: any) => {
         let error: string | undefined = undefined
 
         switch (nombre) {
             case "apellido":
-                if (!valor.trim()) error = "El apellido es obligatorio"
-                else if (valor.length < 2 || valor.length > 50) error = "El apellido debe tener entre 2 y 50 caracteres"
-                else if (!regexNombre.test(valor)) error = "El apellido solo puede contener letras y espacios"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (valor.length < 2) error = MSJ_LARGO_CORTO
+                else if (valor.length > 50) error = MSJ_LARGO_EXCESIVO
+                else if (!regexNombre.test(valor)) error = MSJ_TEXTO
                 break
 
             case "nombres":
-                if (!valor.trim()) error = "El nombre es obligatorio"
-                else if (valor.length < 2 || valor.length > 50) error = "El nombre debe tener entre 2 y 50 caracteres"
-                else if (!regexNombre.test(valor)) error = "El nombre solo puede contener letras y espacios"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (valor.length < 2) error = MSJ_LARGO_CORTO
+                else if (valor.length > 50) error = MSJ_LARGO_EXCESIVO
+                else if (!regexNombre.test(valor)) error = MSJ_TEXTO
                 break
 
             case "tipoDocumento":
-                if (!valor) error = "Debe seleccionar un tipo de documento"
+                if (!valor) error = MSJ_OBLIGATORIO
                 break
 
             case "nroDocumento":
                 if (!valor.trim()) {
-                    error = "El número de documento es obligatorio"
+                    error = MSJ_OBLIGATORIO
                 } else if (!datos.tipoDocumento) {
                     error = "Seleccione primero el tipo de documento"
                 } else {
-                    // Buscamos la config según lo que haya seleccionado
                     const config = CONFIG_DOCUMENTOS[datos.tipoDocumento]
                     if (config && !config.regex.test(valor)) {
                         error = config.error
@@ -115,26 +126,24 @@ export default function AltaHuesped() {
                 const cuitLimpio = limpiarCuit(valor)
 
                 if (esObligatorio && !valor.trim()) {
-                    error = "El CUIT es obligatorio para Responsables Inscriptos"
+                    error = "Requerido para Resp. Inscripto"
                 } else if (valor.trim()) {
-                    // 1. Validación de Formato Básico (Regex)
                     if (!regexCuit.test(valor)) {
                         error = "Formato inválido (Ej: 20-12345678-9)"
                     } else {
-                        // 2. Validación de Prefijo Habitual
                         const prefijo = cuitLimpio.substring(0, 2)
-                        if (!PREFIJOS_CUIT.includes(prefijo)) {
-                            error = "El CUIT no comienza con un prefijo válido (20, 23, 27, 30...)"
-                        }
-                        // 3. Validación de Coincidencia con Documento (Solo si ya ingresó el documento)
-                        else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
-                            // Extraemos la parte central del CUIT (dígitos 2 al 10)
-                            const dniEnCuit = cuitLimpio.substring(2, 10)
-                            // Normalizamos el DNI del formulario (rellenando con ceros a la izquierda si hace falta para llegar a 8)
-                            const dniFormulario = datos.nroDocumento.padStart(8, "0")
 
-                            if (dniEnCuit !== dniFormulario) {
-                                error = "El CUIT no coincide con el número de documento ingresado"
+                        if (!PREFIJOS_CUIT.includes(prefijo)) {
+                            error = "Prefijo inválido (se espera 20, 23, 27...)"
+                        }
+                        else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
+                            // LOGICA CORREGIDA: Extrae el centro y compara como NUMERO
+                            const dniEnCuitString = cuitLimpio.substring(2, cuitLimpio.length - 1)
+                            const dniEnCuitNum = parseInt(dniEnCuitString, 10)
+                            const dniIngresadoNum = parseInt(datos.nroDocumento, 10)
+
+                            if (dniEnCuitNum !== dniIngresadoNum) {
+                                error = "El CUIT no coincide con el Documento ingresado"
                             }
                         }
                     }
@@ -143,80 +152,79 @@ export default function AltaHuesped() {
 
             case "fechaNacimiento":
                 if (!valor) {
-                    error = "La fecha de nacimiento es obligatoria"
+                    error = MSJ_OBLIGATORIO
                 } else {
                     const fechaNac = new Date(valor)
                     const hoy = new Date()
                     const fechaMinima = new Date("1900-01-01")
-
-                    if (fechaNac >= hoy) error = "La fecha de nacimiento debe ser anterior a hoy"
-                    else if (fechaNac < fechaMinima) error = "La fecha debe ser posterior al 31-12-1899"
+                    if (fechaNac >= hoy) error = "La fecha debe ser anterior a hoy"
+                    else if (fechaNac < fechaMinima) error = "Fecha inválida (muy antigua)"
                 }
                 break
 
             case "nacionalidad":
-                if (!valor.trim()) error = "La nacionalidad es obligatoria"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                // AGREGADO: Validación de solo letras
+                else if (!regexTexto.test(valor)) error = MSJ_TEXTO
                 break
 
             case "email":
-                // Es opcional. Solo validamos formato si no está vacío.
-                if (valor.trim() && !regexEmail.test(valor)) error = "Formato de email inválido"
+                if (valor.trim() && !regexEmail.test(valor)) error = MSJ_FORMATO_EMAIL
                 break
 
             case "telefono":
-                if (!valor.trim()) {
-                    error = "El teléfono es obligatorio"
-                } else {
-                    const telefonoNormalizado = valor.trim()
-                    if (!regexTelefono.test(telefonoNormalizado)) error = "Formato de teléfono inválido"
-                }
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (!regexTelefono.test(valor.trim())) error = MSJ_FORMATO_TEL
                 break
 
             case "calle":
-                if (!valor.trim()) error = "La calle es obligatoria"
-                else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
-                else if (valor.length > 100) error = "La calle no puede superar los 100 caracteres"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (!regexCalle.test(valor)) error = "Contiene caracteres inválidos"
+                else if (valor.length > 100) error = MSJ_LARGO_EXCESIVO
                 break
 
             case "numero":
-                if (!valor.trim()) error = "El número es obligatorio"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
                 else {
                     const numVal = Number.parseInt(valor)
-                    if (isNaN(numVal) || numVal < 1 || numVal > 99999) error = "Número inválido (1-99999)"
+                    // Validamos que sea número y el rango lógico (hasta 99999)
+                    if (isNaN(numVal) || numVal < 1 || numVal > 99999) error = "Número inválido (máx. 5 dígitos)"
                 }
                 break
 
             case "departamento":
-                if (valor.trim() && !regexAlfanumerico.test(valor)) error = "Solo letras y números"
-                else if (valor.length > 5) error = "Muy largo"
+                // MODIFICADO: Ahora permite espacios/puntos (regexCalle) y hasta 20 chars
+                if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                else if (valor.length > 20) error = MSJ_LARGO_EXCESIVO
                 break
 
             case "piso":
-                if (valor.trim() && !regexAlfanumerico.test(valor)) error = "Solo letras y números"
-                else if (valor.length > 5) error = "Muy largo"
+                // MODIFICADO: Ahora permite espacios/puntos (regexCalle) y hasta 20 chars
+                if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                else if (valor.length > 20) error = MSJ_LARGO_EXCESIVO
                 break
 
             case "codPostal":
-                if (!valor.trim()) error = "El CP es obligatorio"
-                else {
-                    const codVal = Number.parseInt(valor)
-                    if (isNaN(codVal) || codVal < 1000 || codVal > 9999) error = "CP inválido (1000-9999)"
-                }
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+
+                else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
+                else if (valor.length > 8) error = "Código postal demasiado largo"
                 break
 
             case "localidad":
-                if (!valor.trim()) error = "La localidad es obligatoria"
-                else if (!regexTexto.test(valor)) error = "Solo letras y espacios"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                // MODIFICADO: Ahora usa regexCalle para permitir números (ej: 9 de Julio)
+                else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
                 break
 
             case "provincia":
-                if (!valor.trim()) error = "La provincia es obligatoria"
-                else if (!regexTexto.test(valor)) error = "Solo letras y espacios"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (!regexTexto.test(valor)) error = MSJ_TEXTO
                 break
 
             case "pais":
-                if (!valor.trim()) error = "El país es obligatorio"
-                else if (!regexTexto.test(valor)) error = "Solo letras y espacios"
+                if (!valor.trim()) error = MSJ_OBLIGATORIO
+                else if (!regexTexto.test(valor)) error = MSJ_TEXTO
                 break
         }
 
@@ -232,25 +240,25 @@ export default function AltaHuesped() {
         validarCampo(id as keyof DatosFormulario, value)
     }
 
-    // Mantenemos validarFormulario para el botón Aceptar (validación final masiva)
     const validarFormulario = (): boolean => {
         const nuevosErrores: Errores = {}
 
-        // Aquí mantenemos la original para asegurar que se validan TODOS los campos al hacer click en Aceptar
-        // independientemente de si el usuario pasó por ellos o no.
+        // Apellido
+        if (!datos.apellido.trim()) nuevosErrores.apellido = MSJ_OBLIGATORIO
+        else if (datos.apellido.length < 2) nuevosErrores.apellido = MSJ_LARGO_CORTO
+        else if (datos.apellido.length > 50) nuevosErrores.apellido = MSJ_LARGO_EXCESIVO
+        else if (!regexNombre.test(datos.apellido)) nuevosErrores.apellido = MSJ_TEXTO
 
-        if (!datos.apellido.trim()) nuevosErrores.apellido = "El apellido es obligatorio"
-        else if (datos.apellido.length < 2 || datos.apellido.length > 50) nuevosErrores.apellido = "El apellido debe tener entre 2 y 50 caracteres"
-        else if (!regexNombre.test(datos.apellido)) nuevosErrores.apellido = "El apellido solo puede contener letras y espacios"
+        // Nombres
+        if (!datos.nombres.trim()) nuevosErrores.nombres = MSJ_OBLIGATORIO
+        else if (datos.nombres.length < 2) nuevosErrores.nombres = MSJ_LARGO_CORTO
+        else if (datos.nombres.length > 50) nuevosErrores.nombres = MSJ_LARGO_EXCESIVO
+        else if (!regexNombre.test(datos.nombres)) nuevosErrores.nombres = MSJ_TEXTO
 
-        if (!datos.nombres.trim()) nuevosErrores.nombres = "El nombre es obligatorio"
-        else if (datos.nombres.length < 2 || datos.nombres.length > 50) nuevosErrores.nombres = "El nombre debe tener entre 2 y 50 caracteres"
-        else if (!regexNombre.test(datos.nombres)) nuevosErrores.nombres = "El nombre solo puede contener letras y espacios"
-
-        if (!datos.tipoDocumento) nuevosErrores.tipoDocumento = "El tipo de documento es obligatorio"
-
+        // Documentos
+        if (!datos.tipoDocumento) nuevosErrores.tipoDocumento = MSJ_OBLIGATORIO
         if (!datos.nroDocumento.trim()) {
-            nuevosErrores.nroDocumento = "El número de documento es obligatorio"
+            nuevosErrores.nroDocumento = MSJ_OBLIGATORIO
         } else if (datos.tipoDocumento) {
             const config = CONFIG_DOCUMENTOS[datos.tipoDocumento]
             if (config && !config.regex.test(datos.nroDocumento)) {
@@ -258,12 +266,12 @@ export default function AltaHuesped() {
             }
         }
 
-        // Validación CUIT
+        // CUIT
         const esCuitObligatorio = datos.posicionIva === "RESPONSABLE_INSCRIPTO"
-        const cuitValor = datos.cuit.trim() // Usamos variable auxiliar para legibilidad
+        const cuitValor = datos.cuit.trim()
 
         if (esCuitObligatorio && !cuitValor) {
-            nuevosErrores.cuit = "El CUIT es obligatorio para Responsables Inscriptos"
+            nuevosErrores.cuit = "Requerido para Resp. Inscripto"
         } else if (cuitValor) {
             const cuitLimpio = limpiarCuit(cuitValor)
 
@@ -271,69 +279,73 @@ export default function AltaHuesped() {
                 nuevosErrores.cuit = "Formato inválido (Ej: 20-12345678-9)"
             } else {
                 const prefijo = cuitLimpio.substring(0, 2)
+
                 if (!PREFIJOS_CUIT.includes(prefijo)) {
-                    nuevosErrores.cuit = "Prefijo de CUIT inválido"
+                    nuevosErrores.cuit = "Prefijo inválido (se espera 20, 23, 27...)"
                 }
                 else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
-                    const dniEnCuit = cuitLimpio.substring(2, 10)
-                    const dniFormulario = datos.nroDocumento.padStart(8, "0")
+                    // LOGICA CORREGIDA: Extrae el centro y compara como NUMERO
+                    const dniEnCuitString = cuitLimpio.substring(2, cuitLimpio.length - 1)
+                    const dniEnCuitNum = parseInt(dniEnCuitString, 10)
+                    const dniIngresadoNum = parseInt(datos.nroDocumento, 10)
 
-                    if (dniEnCuit !== dniFormulario) {
-                        nuevosErrores.cuit = "El CUIT no coincide con el DNI ingresado"
+                    if (dniEnCuitNum !== dniIngresadoNum) {
+                        nuevosErrores.cuit = "El CUIT no coincide con el Documento ingresado"
                     }
                 }
             }
         }
 
-        if (!datos.posicionIva) nuevosErrores.posicionIva = "La posición frente al IVA es obligatoria"
-
-        if (!datos.fechaNacimiento) nuevosErrores.fechaNacimiento = "La fecha de nacimiento es obligatoria"
+        // Otros datos personales
+        if (!datos.posicionIva) nuevosErrores.posicionIva = MSJ_OBLIGATORIO
+        if (!datos.fechaNacimiento) nuevosErrores.fechaNacimiento = MSJ_OBLIGATORIO
         else {
             const fechaNac = new Date(datos.fechaNacimiento)
             const hoy = new Date()
             const fechaMinima = new Date("1900-01-01")
-
-            if (fechaNac >= hoy) nuevosErrores.fechaNacimiento = "La fecha de nacimiento debe ser anterior a hoy"
-            else if (fechaNac < fechaMinima) nuevosErrores.fechaNacimiento = "La fecha debe ser posterior a 1900"
+            if (fechaNac >= hoy) nuevosErrores.fechaNacimiento = "La fecha debe ser anterior a hoy"
+            else if (fechaNac < fechaMinima) nuevosErrores.fechaNacimiento = "Fecha inválida"
         }
 
-        if (!datos.nacionalidad.trim()) nuevosErrores.nacionalidad = "La nacionalidad es obligatoria"
+        if (!datos.nacionalidad.trim()) nuevosErrores.nacionalidad = MSJ_OBLIGATORIO
+        else if (!regexTexto.test(datos.nacionalidad)) nuevosErrores.nacionalidad = MSJ_TEXTO
 
-        if (datos.email.trim() && !regexEmail.test(datos.email)) nuevosErrores.email = "Formato de email inválido"
+        if (datos.email.trim() && !regexEmail.test(datos.email)) nuevosErrores.email = MSJ_FORMATO_EMAIL
 
-        if (!datos.telefono.trim()) nuevosErrores.telefono = "El teléfono es obligatorio"
-        else if (!regexTelefono.test(datos.telefono.trim())) nuevosErrores.telefono = "Formato de teléfono inválido"
+        if (!datos.telefono.trim()) nuevosErrores.telefono = MSJ_OBLIGATORIO
+        else if (!regexTelefono.test(datos.telefono.trim())) nuevosErrores.telefono = MSJ_FORMATO_TEL
 
-        if (!datos.calle.trim()) nuevosErrores.calle = "La calle es obligatoria"
-        else if (!regexCalle.test(datos.calle)) nuevosErrores.calle = "La calle contiene caracteres inválidos"
-        else if (datos.calle.length > 100) nuevosErrores.calle = "La calle no puede superar los 100 caracteres"
+        // Dirección
+        if (!datos.calle.trim()) nuevosErrores.calle = MSJ_OBLIGATORIO
+        else if (!regexCalle.test(datos.calle)) nuevosErrores.calle = "Contiene caracteres inválidos"
+        else if (datos.calle.length > 100) nuevosErrores.calle = MSJ_LARGO_EXCESIVO
 
-        if (!datos.numero.trim()) nuevosErrores.numero = "El número de calle es obligatorio"
+        if (!datos.numero.trim()) nuevosErrores.numero = MSJ_OBLIGATORIO
         else {
             const numVal = Number.parseInt(datos.numero)
-            if (isNaN(numVal) || numVal < 1 || numVal > 99999) nuevosErrores.numero = "El número debe ser entre 1 y 99999"
+            if (isNaN(numVal) || numVal < 1 || numVal > 99999) nuevosErrores.numero = "Ingrese un número entre 1 y 99999"
         }
 
-        if (datos.departamento.trim() && !regexAlfanumerico.test(datos.departamento)) nuevosErrores.departamento = "Solo letras y números"
-        else if (datos.departamento.length > 5) nuevosErrores.departamento = "Muy largo"
+        // Departamento y Piso (Más flexibles)
+        if (datos.departamento.trim() && !regexCalle.test(datos.departamento)) nuevosErrores.departamento = "Caracteres inválidos"
+        else if (datos.departamento.length > 20) nuevosErrores.departamento = MSJ_LARGO_EXCESIVO
 
-        if (datos.piso.trim() && !regexAlfanumerico.test(datos.piso)) nuevosErrores.piso = "Solo letras y números"
-        else if (datos.piso.length > 5) nuevosErrores.piso = "Muy largo"
+        if (datos.piso.trim() && !regexCalle.test(datos.piso)) nuevosErrores.piso = "Caracteres inválidos"
+        else if (datos.piso.length > 20) nuevosErrores.piso = MSJ_LARGO_EXCESIVO
 
-        if (!datos.codPostal.trim()) nuevosErrores.codPostal = "El código postal es obligatorio"
-        else {
-            const codVal = Number.parseInt(datos.codPostal)
-            if (isNaN(codVal) || codVal < 1000 || codVal > 9999) nuevosErrores.codPostal = "Debe ser entre 1000 y 9999"
-        }
+        // Código Postal (Más flexible)
+        if (!datos.codPostal.trim()) nuevosErrores.codPostal = MSJ_OBLIGATORIO
+        else if (datos.codPostal.length > 10) nuevosErrores.codPostal = "Código postal demasiado largo"
 
-        if (!datos.localidad.trim()) nuevosErrores.localidad = "La localidad es obligatoria"
-        else if (!regexTexto.test(datos.localidad)) nuevosErrores.localidad = "Solo letras y espacios"
+        // Localidad (Permite números)
+        if (!datos.localidad.trim()) nuevosErrores.localidad = MSJ_OBLIGATORIO
+        else if (!regexCalle.test(datos.localidad)) nuevosErrores.localidad = "Caracteres inválidos"
 
-        if (!datos.provincia.trim()) nuevosErrores.provincia = "La provincia es obligatoria"
-        else if (!regexTexto.test(datos.provincia)) nuevosErrores.provincia = "Solo letras y espacios"
+        if (!datos.provincia.trim()) nuevosErrores.provincia = MSJ_OBLIGATORIO
+        else if (!regexTexto.test(datos.provincia)) nuevosErrores.provincia = MSJ_TEXTO
 
-        if (!datos.pais.trim()) nuevosErrores.pais = "El país es obligatorio"
-        else if (!regexTexto.test(datos.pais)) nuevosErrores.pais = "Solo letras y espacios"
+        if (!datos.pais.trim()) nuevosErrores.pais = MSJ_OBLIGATORIO
+        else if (!regexTexto.test(datos.pais)) nuevosErrores.pais = MSJ_TEXTO
 
         setErrores(nuevosErrores)
         return Object.keys(nuevosErrores).length === 0
@@ -378,6 +390,15 @@ export default function AltaHuesped() {
     const handleCorregirDatos = () => {
         setPopup(null)
         setHuespedExistente(null)
+
+        // Esperamos 100ms a que se cierre el popup para mover el foco
+        setTimeout(() => {
+            const inputDocumento = document.getElementById("nroDocumento") as HTMLInputElement
+            if (inputDocumento) {
+                inputDocumento.focus()
+                inputDocumento.select()
+            }
+        }, 100)
     }
 
     const guardarEnBackend = async (esModificacion: boolean = false) => {
@@ -711,7 +732,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, email: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="ejemplo@email.com (Opcional)"
+                                    placeholder="ejemplo@email.com"
                                     className={errores.email ? "border-destructive" : ""}
                                 />
                                 {errores.email && <p className="text-xs text-destructive">{errores.email}</p>}
@@ -727,7 +748,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, telefono: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="+54 11 1234-5678"
+                                    placeholder="Ej: +54 11 1234-5678"
                                     className={errores.telefono ? "border-destructive" : ""}
                                 />
                                 {errores.telefono && <p className="text-xs text-destructive">{errores.telefono}</p>}
@@ -748,7 +769,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, calle: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="Av. Corrientes"
+                                    placeholder="Ej: Av. Corrientes"
                                     className={errores.calle ? "border-destructive" : ""}
                                 />
                                 {errores.calle && <p className="text-xs text-destructive">{errores.calle}</p>}
@@ -764,7 +785,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, numero: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="1234"
+                                    placeholder="Ej: 1234"
                                     className={errores.numero ? "border-destructive" : ""}
                                 />
                                 {errores.numero && <p className="text-xs text-destructive">{errores.numero}</p>}
@@ -812,7 +833,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, codPostal: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="1000"
+                                    placeholder="Ej: 1000"
                                     className={errores.codPostal ? "border-destructive" : ""}
                                 />
                                 {errores.codPostal && <p className="text-xs text-destructive">{errores.codPostal}</p>}
@@ -828,7 +849,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, localidad: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="CABA"
+                                    placeholder="Ej: CABA"
                                     className={errores.localidad ? "border-destructive" : ""}
                                 />
                                 {errores.localidad && <p className="text-xs text-destructive">{errores.localidad}</p>}
@@ -844,7 +865,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, provincia: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="Buenos Aires"
+                                    placeholder="Ej: Buenos Aires"
                                     className={errores.provincia ? "border-destructive" : ""}
                                 />
                                 {errores.provincia && <p className="text-xs text-destructive">{errores.provincia}</p>}
@@ -860,7 +881,7 @@ export default function AltaHuesped() {
                                         setDatos({ ...datos, pais: e.target.value })
                                     }}
                                     onBlur={handleBlur}
-                                    placeholder="Argentina"
+                                    placeholder="Ej: Argentina"
                                     className={errores.pais ? "border-destructive" : ""}
                                 />
                                 {errores.pais && <p className="text-xs text-destructive">{errores.pais}</p>}
@@ -871,7 +892,7 @@ export default function AltaHuesped() {
                     <div className="flex flex-wrap gap-3">
                         <Button onClick={handleAceptar} size="lg">
                             <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Aceptar
+                            Siguiente
                         </Button>
                         <Button onClick={handleCancelar} variant="outline" size="lg">
                             Cancelar
