@@ -1,16 +1,12 @@
 package Facultad.TrabajoPracticoDesarrollo.Services;
 
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDetalleFacturacion;
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoFactura;
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoOcupantesHabitacion;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.*;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.*;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoDatosOcupantes;
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoServiciosAdicionales;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -239,16 +235,73 @@ public class FacturaService {
         return dto;
     }
 
-    @Transactional(readOnly = true)
-    public int buscarIdResponsablePorHuesped(TipoDocumento tipo, String nro) {
+    @Transactional
+    public int obtenerOAltaPersonaFisica(TipoDocumento tipo, String nro) {
+        // 1. Buscamos si ya existe como Responsable (PersonaFisica)
+        Optional<PersonaFisica> pfExistente = personaFisicaRepository
+                .findByHuesped_TipoDocumentoAndHuesped_NroDocumento(tipo, nro);
 
-        // 1. Buscamos si este huésped ya figura como Persona Física (Responsable)
-        return personaFisicaRepository.findByHuesped_TipoDocumentoAndHuesped_NroDocumento(tipo, nro)
-                .map(PersonaFisica::getIdResponsable) // Si existe, devolvemos su ID
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "El huésped no está registrado como Responsable de Pago. " +
-                                "Debe darlo de alta primero (CU12)." // O podrías crearlo aquí si el negocio lo permite
-                ));
+        if (pfExistente.isPresent()) {
+            return pfExistente.get().getIdResponsable();
+        }
+
+        // 2. Si NO existe, lo creamos automáticamente (Promoción de Huésped a Responsable)
+        // Buscamos al Huésped (Debe existir sí o sí por el paso anterior del Controller)
+        HuespedId idHuesped = new HuespedId(tipo, nro);
+        Huesped huesped = huespedRepository.findById(idHuesped)
+                .orElseThrow(() -> new IllegalArgumentException("El huésped seleccionado no existe en la BD."));
+
+        // 3. Creamos la entidad PersonaFisica
+        PersonaFisica nuevaPf = new PersonaFisica();
+        nuevaPf.setHuesped(huesped);
+
+        // Heredamos datos de contacto del huésped para la facturación
+        nuevaPf.setDireccion(huesped.getDireccion());
+
+        personaFisicaRepository.save(nuevaPf);
+
+        return nuevaPf.getIdResponsable();
+    }
+
+    @Transactional
+    public int guardarResponsableJuridico(DtoPersonaJuridica dto) {
+
+        // 1. Validaciones de negocio (ej. si el CUIT ya existe)
+        // ...
+
+        // 2. Mapeo DTO -> Entidad (Dirección)
+        // Como el DTO viene del front, extraemos sus datos para llenar la entidad
+        Direccion direccionEntidad = new Direccion();
+
+        // Usamos los getters de tu DtoDireccion
+        if (dto.getDtoDireccion() != null) {
+            DtoDireccion dirDto = dto.getDtoDireccion();
+            direccionEntidad.setCalle(dirDto.getCalle());
+            direccionEntidad.setNumero(dirDto.getNumero());
+            direccionEntidad.setPiso(dirDto.getPiso());
+            direccionEntidad.setDepartamento(dirDto.getDepartamento());
+            direccionEntidad.setCodPostal(dirDto.getCodPostal());
+            direccionEntidad.setLocalidad(dirDto.getLocalidad());
+            direccionEntidad.setProvincia(dirDto.getProvincia());
+            direccionEntidad.setPais(dirDto.getPais());
+        }
+
+        // 3. Mapeo DTO -> Entidad (Persona Jurídica)
+        PersonaJuridica nuevaEmpresa = new PersonaJuridica();
+        nuevaEmpresa.setRazonSocial(dto.getRazonSocial());
+        nuevaEmpresa.setCuit(dto.getCuit());
+
+        // Asumiendo que guardas el primer teléfono
+        if (dto.getTelefono() != null && !dto.getTelefono().isEmpty()) {
+            nuevaEmpresa.setTelefonos(dto.getTelefono());
+        }
+
+        nuevaEmpresa.setDireccion(direccionEntidad);
+
+        // 4. Guardar
+        responsablePagoRepository.save(nuevaEmpresa);
+
+        return nuevaEmpresa.getIdResponsable();
     }
 
 }
