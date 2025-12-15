@@ -115,7 +115,10 @@ export default function OcuparHabitacion() {
         fechaFin.setDate(fechaFin.getDate() + 6);
         const fechaHasta = fechaFin.toISOString().split('T')[0];
 
-        const response = await fetch(`http://localhost:8080/api/habitaciones/estado?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+        const response = await fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
         const data = await response.json();
         
         const habitacionesMapeadas = data.map((h: any) => ({
@@ -170,7 +173,8 @@ export default function OcuparHabitacion() {
       case "apellido":
       case "nombres":
         if (!valor.trim()) return ""; // Opcional
-        if (valor.length !== 1) return "Debe ingresar solo la primera letra";
+        if (valor.length < 1 || valor.length > 50)
+          return "Debe tener entre 1 y 50 caracteres";
         if (!regexNombre.test(valor)) return "Solo puede contener letras";
         return "";
 
@@ -254,96 +258,55 @@ export default function OcuparHabitacion() {
     // No permitir clicks en habitaciones ocupadas
     if (!hab || hab.estado === "OCUPADA") return;
 
-    if (!seleccionActual || seleccionActual.habitacionId !== habitacionId) {
-      // Primer click: establecer punto de inicio (y limpiar cualquier selección previa)
-      setSeleccion(null);
-      setSeleccionActual({ habitacionId, diaInicio: diaIdx });
-    } else {
-      // Segundo click: establecer punto de fin y confirmar selección
-      const diaInicio = seleccionActual.diaInicio!;
-      const diaFin = diaIdx;
-      const dias = generarDias();
-      const hab = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId);
-
-      if (!hab) return;
-
-      // Crear rango de índices seleccionados
-      const rangoDias = Array.from(
-        { length: Math.abs(diaFin - diaInicio) + 1 },
-        (_, i) => Math.min(diaInicio, diaFin) + i
-      );
-
-      // Verificar estado de cada día en el rango
-      let diasDisponibles = 0;
-      let diasReservados = 0;
-      let diasOcupados = 0;
-
-      rangoDias.forEach(diaIdx => {
-        // Aquí deberíamos consultar el backend para saber el estado real de cada día
-        // Por ahora usamos el estado general de la habitación como aproximación
-        if (hab.estado === "DISPONIBLE") diasDisponibles++;
-        else if (hab.estado === "RESERVADA") diasReservados++;
-        else if (hab.estado === "OCUPADA") diasOcupados++;
-      });
-
-      // CASO 1: Habitación parcialmente reservada (algunos días disponibles, otros reservados)
-      if (diasDisponibles > 0 && diasReservados > 0) {
-        alert("❌ No se puede ocupar esta habitación.\n\nLa habitación está parcialmente reservada en el rango seleccionado.\nPor favor, seleccione otro rango de fechas o una habitación diferente.");
-        setSeleccionActual(null);
-        setSeleccion(null);
-        return;
-      }
-
-      // CASO 2: Habitación totalmente reservada
-      if (diasReservados === rangoDias.length && diasDisponibles === 0) {
-        const seleccionFinal = {
-          habitacionId,
-          diaInicio: Math.min(diaInicio, diaFin),
-          diaFin: Math.max(diaInicio, diaFin),
-        };
-        setSeleccion(seleccionFinal);
-        setSeleccionActual(null);
-
-        // Auto-poblar fechas
-        if (dias.length > 0) {
-          const fechaInicio = dias[seleccionFinal.diaInicio];
-          const fechaFin = dias[seleccionFinal.diaFin];
-          setFechaCheckIn(fechaInicio.toISOString().split("T")[0]);
-          setFechaCheckOut(fechaFin.toISOString().split("T")[0]);
-        }
-
-        setHabitacionSeleccionada(hab);
-        setConfirmacionTipo("reservada");
-        return;
-      }
-
-      // CASO 3: Habitación totalmente disponible (flujo normal)
-      if (diasDisponibles === rangoDias.length) {
-        const seleccionFinal = {
-          habitacionId,
-          diaInicio: Math.min(diaInicio, diaFin),
-          diaFin: Math.max(diaInicio, diaFin),
-        };
-        setSeleccion(seleccionFinal);
-        setSeleccionActual(null);
-
-        // Auto-poblar fechas
-        if (dias.length > 0) {
-          const fechaInicio = dias[seleccionFinal.diaInicio];
-          const fechaFin = dias[seleccionFinal.diaFin];
-          setFechaCheckIn(fechaInicio.toISOString().split("T")[0]);
-          setFechaCheckOut(fechaFin.toISOString().split("T")[0]);
-        }
-
-        setHabitacionSeleccionada(hab);
-        setConfirmacionTipo(null);
-        return;
-      }
-
-      // Otros casos (ocupada, etc.)
-      alert("No se puede seleccionar este rango");
-      setSeleccionActual(null);
+    // No permitir seleccionar HOY (diaIdx 0)
+    if (diaIdx === 0) {
+      alert("El check-in es HOY. Seleccione la fecha de check-out (desde mañana en adelante).");
+      return;
     }
+
+    // fechaDesde siempre es HOY (diaIdx 0), diaIdx es el check-out
+    const diaInicio = 0; // Siempre HOY
+    const diaFin = diaIdx;
+    const dias = generarDias();
+
+    // Crear rango de índices seleccionados
+    const rangoDias = Array.from(
+      { length: Math.abs(diaFin - diaInicio) + 1 },
+      (_, i) => Math.min(diaInicio, diaFin) + i
+    );
+
+    // Verificar que todos los días estén disponibles
+    let todosDisponibles = true;
+    rangoDias.forEach(idx => {
+      if (!esCeldaDisponible(habitacionId, idx)) {
+        todosDisponibles = false;
+      }
+    });
+
+    if (!todosDisponibles) {
+      alert("No se puede seleccionar ese rango. Hay días no disponibles.");
+      return;
+    }
+
+    // Crear selección final desde HOY hasta el día seleccionado
+    const seleccionFinal = {
+      habitacionId,
+      diaInicio: 0, // Siempre HOY
+      diaFin: diaIdx,
+    };
+    setSeleccion(seleccionFinal);
+    setSeleccionActual(null);
+
+    // Auto-poblar fechas
+    if (dias.length > 0) {
+      const fechaInicio = dias[seleccionFinal.diaInicio];
+      const fechaFin = dias[seleccionFinal.diaFin];
+      setFechaCheckIn(fechaInicio.toISOString().split("T")[0]);
+      setFechaCheckOut(fechaFin.toISOString().split("T")[0]);
+    }
+
+    setHabitacionSeleccionada(hab);
+    setConfirmacionTipo(null);
   };
 
   const handleRemoverSeleccion = () => {
@@ -395,7 +358,7 @@ export default function OcuparHabitacion() {
     const habitacion = habitaciones.find(h => h.id === habitacionId);
     if (!habitacion || !habitacion.estadosPorDia) return "DISPONIBLE";
 
-    const dia = new Date(fechaInicio);
+    const dia = createLocalDate(fechaDesdeGrilla);
     dia.setDate(dia.getDate() + diaIdx);
     const fechaDia = dia.toISOString().split('T')[0];
 
@@ -441,12 +404,16 @@ export default function OcuparHabitacion() {
     setBuscando(true);
     try {
       // Llamada real al backend
-      const criterios = {
+      const criterios: any = {
         apellido: busquedaHuesped.apellido,
         nombres: busquedaHuesped.nombres,
-        tipoDocumento: busquedaHuesped.tipoDocumento,
         nroDocumento: busquedaHuesped.nroDocumento
       };
+      
+      // Solo incluir tipoDocumento si tiene un valor
+      if (busquedaHuesped.tipoDocumento) {
+        criterios.tipoDocumento = busquedaHuesped.tipoDocumento;
+      }
       
       const data = await buscarHuespedes(criterios);
       
@@ -525,17 +492,17 @@ export default function OcuparHabitacion() {
           numero: habitacionSeleccionada.numero,
           tipoHabitacion: habitacionSeleccionada.tipo,
           capacidad: habitacionSeleccionada.capacidad,
-          estadoHabitacion: EstadoHabitacion.DISPONIBLE,
+          estadoHabitacion: EstadoHabitacion.HABILITADA,
           costoPorNoche: habitacionSeleccionada.precioNoche
         },
-        // Solo enviar el primer huésped (responsable/a cargo) para la tabla estadia-huesped
-        dtoHuespedes: [{
+        // Enviar TODOS los huéspedes - el backend marca al primero como responsable=SI
+        dtoHuespedes: huespedes.map(h => ({
           idHuesped: 0,
-          apellido: huespedes[0].apellido,
-          nombres: huespedes[0].nombres,
-          tipoDocumento: huespedes[0].tipoDocumento as any,
-          nroDocumento: huespedes[0].nroDocumento,
-        }]
+          apellido: h.apellido,
+          nombres: h.nombres,
+          tipoDocumento: h.tipoDocumento as any,
+          nroDocumento: h.nroDocumento,
+        }))
       };
 
       // Llamar al backend
@@ -683,88 +650,81 @@ export default function OcuparHabitacion() {
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-100 dark:bg-slate-800">
-                      <th className="border border-slate-300 dark:border-slate-700 px-4 py-2 text-slate-900 dark:text-slate-50 font-semibold">Habitación</th>
-                      {diasRango.map((dia, idx) => (
-                        <th key={idx} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[60px]">
-                          <div className="text-xs">{dia.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}</div>
-                        </th>
-                      ))}
+                      <th className="border border-slate-300 dark:border-slate-700 px-4 py-2 text-slate-900 dark:text-slate-50 font-semibold">Fecha</th>
+                      {COMODIDADES_ORDEN.map((comodidad) => {
+                        const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+                        return habitacionesPorComodidad.map((hab) => (
+                          <th key={hab.id} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[80px]">
+                            <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{comodidad}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">Hab. {hab.numero}</div>
+                          </th>
+                        ));
+                      })}
                     </tr>
                   </thead>
                   <tbody>
-                    {COMODIDADES_ORDEN.map((comodidad) => {
-                      const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad);
-                      return habitacionesPorComodidad.length > 0
-                        ? habitacionesPorComodidad.map((hab, habIdx) => (
-                            <tr
-                              key={hab.id}
-                              className={habIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}
-                            >
-                              <td className="border border-slate-300 dark:border-slate-700 px-4 py-2 font-semibold text-slate-900 dark:text-slate-200">
-                                {habIdx === 0 && (
-                                  <div className="font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                    {comodidad}
-                                  </div>
-                                )}
-                                <div className="text-slate-600 dark:text-slate-400 text-sm">
-                                  Hab. {hab.numero}
+                    {diasRango.map((dia, diaIdx) => (
+                      <tr
+                        key={diaIdx}
+                        className={diaIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}
+                      >
+                        <td className="border border-slate-300 dark:border-slate-700 px-4 py-2 font-semibold text-slate-900 dark:text-slate-200">
+                          <div className="text-sm">{dia.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })}</div>
+                          {diaIdx === 0 && <div className="text-xs text-blue-600 dark:text-blue-400 font-bold">HOY (Check-in)</div>}
+                        </td>
+                        {COMODIDADES_ORDEN.map((comodidad) => {
+                          const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+                          return habitacionesPorComodidad.map((hab) => {
+                            const disponible = esCeldaDisponible(hab.id, diaIdx);
+                            const seleccionada = esCeldaSeleccionada(hab.id, diaIdx);
+                            const inicioActual = esInicioSeleccionActual(hab.id, diaIdx);
+                            const estadoDia = obtenerEstadoCelda(hab.id, diaIdx);
+
+                            return (
+                              <td
+                                key={`${hab.id}-${diaIdx}`}
+                                className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center"
+                              >
+                                <div
+                                  onClick={() => handleClickCelda(hab.id, diaIdx)}
+                                  className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
+                                    seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
+                                      ? "bg-blue-600 hover:bg-blue-700"
+                                      : diaIdx === 0
+                                      ? getEstadoColor(estadoDia) + " opacity-80"
+                                      : disponible
+                                      ? getEstadoColor(estadoDia) + " hover:brightness-110"
+                                      : "bg-slate-600 dark:bg-slate-700 cursor-not-allowed opacity-50"
+                                  }`}
+                                  title={
+                                    seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
+                                      ? "Seleccionada"
+                                      : diaIdx === 0
+                                      ? "Check-in HOY"
+                                      : disponible
+                                      ? "Click para seleccionar Check-out"
+                                      : estadoDia
+                                  }
+                                >
+                                  {seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
+                                    ? "✓"
+                                    : disponible
+                                    ? "○"
+                                    : estadoDia === "RESERVADA"
+                                    ? "R"
+                                    : "X"}
                                 </div>
                               </td>
-                              {diasRango.map((dia, dayIdx) => {
-                                const disponible = esCeldaDisponible(hab.id, dayIdx);
-                                const seleccionada = esCeldaSeleccionada(hab.id, dayIdx);
-                                const inicioActual = esInicioSeleccionActual(hab.id, dayIdx);
-                                const estadoDia = obtenerEstadoCelda(hab.id, dayIdx);
-
-                                return (
-                                  <td
-                                    key={`${hab.id}-${dayIdx}`}
-                                    className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center"
-                                  >
-                                    <div
-                                      onClick={() => handleClickCelda(hab.id, dayIdx)}
-                                      className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
-                                        seleccionada
-                                          ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                                          : inicioActual
-                                          ? "bg-purple-500 animate-pulse dark:bg-purple-600"
-                                          : disponible
-                                          ? getEstadoColor(estadoDia) + " hover:brightness-110"
-                                          : "bg-slate-600 dark:bg-slate-700 cursor-not-allowed opacity-50"
-                                      }`}
-                                      title={
-                                        seleccionada
-                                          ? "Seleccionada"
-                                          : inicioActual
-                                          ? "Click en otra celda para finalizar"
-                                          : disponible
-                                          ? "Click para seleccionar"
-                                          : estadoDia
-                                      }
-                                    >
-                                      {seleccionada
-                                        ? "✓"
-                                        : inicioActual
-                                        ? "►"
-                                        : hab.estado === "DISPONIBLE"
-                                        ? "○"
-                                        : hab.estado === "RESERVADA"
-                                        ? "R"
-                                        : "X"}
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          ))
-                        : null;
-                    })}
+                            );
+                          });
+                        })}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
                 <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex gap-4">
-                  <span>○ = Disponible</span>
                   <span>✓ = Seleccionada</span>
-                  <span>► = Inicio de selección</span>
+                  <span>○ = Disponible</span>
                   <span>R = Reservada</span>
                   <span>X = Ocupada</span>
                 </div>
@@ -957,8 +917,10 @@ export default function OcuparHabitacion() {
                   >
                     <option value="">Seleccionar...</option>
                     <option value="DNI">DNI</option>
+                    <option value="LE">LE</option>
+                    <option value="LC">LC</option>
                     <option value="PASAPORTE">Pasaporte</option>
-                    <option value="CI">Cédula de Identidad</option>
+                    <option value="OTRO">Otro</option>
                   </select>
                   {erroresBusqueda.tipoDocumento && (
                     <p className="text-red-600 text-xs mt-1 dark:text-red-400">{erroresBusqueda.tipoDocumento}</p>

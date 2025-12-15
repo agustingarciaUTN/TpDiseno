@@ -39,18 +39,9 @@ public class Estadia {
     @JoinColumn(name = "numero_habitacion")
     private Habitacion habitacion;
 
-    // Relación Muchos a Muchos con Huésped
-    // La estadía necesita saber quiénes se alojaron
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "estadia_huesped",
-            joinColumns = @JoinColumn(name = "id_estadia"),
-            inverseJoinColumns = {
-                    @JoinColumn(name = "tipo_documento", referencedColumnName = "tipo_documento"),
-                    @JoinColumn(name = "nro_documento", referencedColumnName = "numero_documento")
-            }
-    )
-    private List<Huesped> huespedes = new ArrayList<>();
+    // Relación con EstadiaHuesped (incluye campo responsable)
+    @OneToMany(mappedBy = "estadia", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EstadiaHuesped> estadiaHuespedes = new ArrayList<>();
 
     // La relación con ServiciosAdicionales es unidireccional: el Servicio conoce a la Estadía, pero la Estadía no guarda la lista.
 
@@ -68,7 +59,7 @@ public class Estadia {
         this.valorEstadia = builder.valorEstadia;
         this.reserva = builder.reserva;
         this.habitacion = builder.habitacion;
-        this.huespedes = builder.huespedes;
+        this.estadiaHuespedes = builder.estadiaHuespedes;
         // Servicios removidos del constructor
     }
 
@@ -80,7 +71,7 @@ public class Estadia {
         private Double valorEstadia;
         private Reserva reserva;
         private Habitacion habitacion;
-        private List<Huesped> huespedes = new ArrayList<>();
+        private List<EstadiaHuesped> estadiaHuespedes = new ArrayList<>();
 
         public Builder() {}
 
@@ -90,9 +81,9 @@ public class Estadia {
         public Builder valorEstadia(Double val) { valorEstadia = val; return this; }
         public Builder reserva(Reserva val) { reserva = val; return this; }
         public Builder habitacion(Habitacion val) { habitacion = val; return this; }
-        public Builder agregarHuesped(Huesped val) {
-            if (huespedes == null) huespedes = new ArrayList<>();
-            huespedes.add(val);
+        public Builder agregarEstadiaHuesped(EstadiaHuesped val) {
+            if (estadiaHuespedes == null) estadiaHuespedes = new ArrayList<>();
+            estadiaHuespedes.add(val);
             return this;
         }
 
