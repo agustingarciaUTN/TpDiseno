@@ -34,4 +34,7 @@ public abstract class ResponsablePago {
         this.direccion = direccion;
     }
 
+    public Integer getIdPersonaFisica() {
+        return this.idResponsable;
+    }
 }

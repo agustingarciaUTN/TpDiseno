@@ -4,6 +4,9 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.PersonaFisica;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -22,5 +25,9 @@ public interface PersonaFisicaRepository extends JpaRepository<PersonaFisica, In
             String nro
     );
     // Para borrar el rol de pagador asociado (CU11)
-    void deleteByHuesped(Huesped huesped);
+    //void deleteByHuesped(Huesped huesped);
+
+    @Modifying
+    @Query(value = "DELETE FROM persona_fisica WHERE id_responsable = :id", nativeQuery = true)
+    void borrarNativo(@Param("id") Integer id);
 }

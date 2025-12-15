@@ -1,4 +1,4 @@
-import { BajaHuespedForm } from "@/components/baja-huesped-form"
+/*import { BajaHuespedForm } from "@/components/baja-huesped-form"
 
 export default function BajaHuespedPage() {
     return (
@@ -15,3 +15,4 @@ export default function BajaHuespedPage() {
         </div>
     )
 }
+*/

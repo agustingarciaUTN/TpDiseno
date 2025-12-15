@@ -46,9 +46,7 @@ public class Huesped {
     private String cuit;
 
     // --- RELACIÓN CON DIRECCIÓN ---
-    // CascadeType.MERGE permite guardar el huesped y actualizar la FK,
-    // pero NO borra la dirección si borrás el huesped (respetando independencia).
-    @OneToOne(cascade = CascadeType.MERGE)
+    @ManyToOne(cascade = CascadeType.MERGE) // Muchos huéspedes, una dirección
     @JoinColumn(name = "id_direccion")
     private Direccion direccion;
 

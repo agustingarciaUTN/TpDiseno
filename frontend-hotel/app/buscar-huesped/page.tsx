@@ -260,7 +260,7 @@ export default function BuscarHuesped() {
                         </CardTitle>
                         <Button variant="outline" onClick={handleVolverMenu} className="gap-2">
                             <Home className="h-4 w-4" />
-                            Menú Principal
+                            Volver al Menú Principal
                         </Button>
                     </CardHeader>
 

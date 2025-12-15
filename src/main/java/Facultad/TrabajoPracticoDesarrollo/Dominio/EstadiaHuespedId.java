@@ -1,33 +1,27 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
+
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
-import java.util.Objects;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+// 1. La Clave Compuesta
+@Embeddable
+@Getter
+@Setter
+@EqualsAndHashCode
 public class EstadiaHuespedId implements Serializable {
+    @Column(name = "id_estadia")
     private Integer idEstadia;
+
+    @Column(name = "tipo_documento")
+    @Enumerated(EnumType.STRING)
     private TipoDocumento tipoDocumento;
+
+    @Column(name = "nro_documento")
     private String nroDocumento;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        EstadiaHuespedId that = (EstadiaHuespedId) o;
-        return Objects.equals(idEstadia, that.idEstadia) &&
-                tipoDocumento == that.tipoDocumento &&
-                Objects.equals(nroDocumento, that.nroDocumento);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idEstadia, tipoDocumento, nroDocumento);
-    }
 }

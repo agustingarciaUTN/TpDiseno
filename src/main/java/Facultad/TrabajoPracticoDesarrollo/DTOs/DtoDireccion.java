@@ -39,8 +39,7 @@ public class DtoDireccion {
     private String piso;
 
     @NotNull(message = "El código postal es obligatorio")
-    @Min(value = 1000, message = "El código postal debe ser válido (min 1000)")
-    @Max(value = 9999, message = "El código postal debe ser válido (max 9999)")
+    @Positive(message = "El código postal debe ser un número positivo")
     private Integer codPostal;
 
     @NotBlank(message = "La localidad es obligatoria")
