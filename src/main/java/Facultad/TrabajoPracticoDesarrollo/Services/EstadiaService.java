@@ -1,10 +1,6 @@
 package Facultad.TrabajoPracticoDesarrollo.Services;
 
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.EstadiaHuesped;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.EstadiaRepository;
@@ -64,16 +60,16 @@ public class EstadiaService {
             throw new IllegalArgumentException("Falta indicar la habitación.");
         }
 
-        // 2. Validar Disponibilidad Habitación (Doble chequeo)
+        // 2. Validar Disponibilidad
         if (estadiaRepository.existeEstadiaEnFechas(dtoEstadia.getDtoHabitacion().getNumero(),
                 dtoEstadia.getFechaCheckIn(),
                 dtoEstadia.getFechaCheckOut())) {
             throw new Exception("La habitación " + dtoEstadia.getDtoHabitacion().getNumero() + " ya está ocupada en esas fechas.");
         }
 
-        // 3. Validar Acompañantes (Regla de Negocio: No pueden estar en dos lados a la vez)
-        // El índice 0 es el responsable, él SÍ puede figurar en varias (pagador). Los acompañantes no.
+        // 3. Validar Acompañantes
         List<DtoHuesped> listaHuespedes = dtoEstadia.getDtoHuespedes();
+
         for (int i = 1; i < listaHuespedes.size(); i++) {
             DtoHuesped acomp = listaHuespedes.get(i);
             boolean ocupado = estadiaRepository.esHuespedActivo(
@@ -87,48 +83,52 @@ public class EstadiaService {
             }
         }
 
-        // 4. Mapeo y Preparación de Entidades MANAGED
-        // Esto es crucial: no podemos usar los objetos "nuevos" del DTO,
-        // tenemos que buscar las referencias vivas en la BD para que JPA haga los vínculos.
-
+        // 4. Mapeo Inicial (Sin relaciones todavía)
         Estadia estadiaNueva = MapearEstadia.mapearDtoAEntidad(dtoEstadia);
 
-        // a. Vincular Habitación Real
+        // a. Vincular Habitación
         Habitacion habReal = habitacionRepository.findById(dtoEstadia.getDtoHabitacion().getNumero())
                 .orElseThrow(() -> new Exception("La habitación no existe."));
         estadiaNueva.setHabitacion(habReal);
 
-        // b. Vincular Huéspedes Reales y crear registros EstadiaHuesped
-        // El primer huésped es el responsable (responsable=SI)
+        // 5. GUARDADO PARCIAL: Guardamos la estadía SOLO con la habitación para generar el ID (idEstadia)
+        // Necesitamos el ID generado para poder armar la clave compuesta de EstadiaHuesped
+        estadiaNueva = estadiaRepository.save(estadiaNueva);
+
+
+        // 6. Crear y Vincular los EstadiaHuesped usando la clave compuesta
         List<EstadiaHuesped> estadiaHuespedList = new ArrayList<>();
         boolean esPrimero = true;
-        
+
         for (DtoHuesped dtoH : listaHuespedes) {
             HuespedId hid = new HuespedId(dtoH.getTipoDocumento(), dtoH.getNroDocumento());
             Huesped hReal = huespedRepository.findById(hid)
-                    .orElseThrow(() -> new Exception("El huésped " + dtoH.getNroDocumento() + " no está registrado. Debe darlo de alta antes."));
-            
-            // Crear el registro EstadiaHuesped con responsable
+                    .orElseThrow(() -> new Exception("El huésped " + dtoH.getNroDocumento() + " no está registrado."));
+
+            // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+
+            // A. Instanciamos la Clave Compuesta
+            EstadiaHuespedId idIntermedio = new EstadiaHuespedId();
+            idIntermedio.setIdEstadia(estadiaNueva.getIdEstadia()); // Usamos el ID generado arriba
+            idIntermedio.setTipoDocumento(hReal.getTipoDocumento());
+            idIntermedio.setNroDocumento(hReal.getNroDocumento());
+
+            // B. Instanciamos la Entidad Intermedia
             EstadiaHuesped eh = new EstadiaHuesped();
-            eh.setTipoDocumento(hReal.getTipoDocumento());
-            eh.setNroDocumento(hReal.getNroDocumento());
-            eh.setResponsable(esPrimero ? Responsable.SI : Responsable.NO);
+            eh.setId(idIntermedio); // Seteamos el ID compuesto
+
+            // C. Seteamos las Relaciones y Atributos extra
+            eh.setEstadia(estadiaNueva);
             eh.setHuesped(hReal);
-            
+            eh.setEsResponsable(esPrimero);
+
             estadiaHuespedList.add(eh);
             esPrimero = false;
         }
-        
-        // 5. Guardar la estadía primero para obtener el ID (sin la lista de EstadiaHuesped todavía)
-        Estadia estadiaGuardada = estadiaRepository.save(estadiaNueva);
-        
-        // 6. Ahora actualizar el idEstadia en cada EstadiaHuesped y establecer la relación bidireccional
-        for (EstadiaHuesped eh : estadiaHuespedList) {
-            eh.setIdEstadia(estadiaGuardada.getIdEstadia());
-            eh.setEstadia(estadiaGuardada);
-        }
-        
-        // 7. Establecer la relación bidireccional y dejar que JPA persista los EstadiaHuesped en el siguiente flush
-        estadiaGuardada.setEstadiaHuespedes(estadiaHuespedList);
+
+        // 7. Asignar la lista completa y volver a guardar (Update)
+        // Al tener CascadeType.ALL en Estadia -> EstadiaHuespedes, esto persistirá la tabla intermedia
+        estadiaNueva.setEstadiaHuespedes(estadiaHuespedList);
+        estadiaRepository.save(estadiaNueva);
     }
 }

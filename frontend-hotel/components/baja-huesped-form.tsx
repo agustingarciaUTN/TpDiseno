@@ -1,4 +1,4 @@
-"use client"
+/*"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Search, UserMinus, AlertCircle, CheckCircle2 } from "lucide-react"
-// IMPORTANTE: Importamos las funciones reales de la API
 import { buscarHuespedes, darDeBajaHuesped } from "@/lib/api"
 
 type Guest = {
@@ -341,4 +340,4 @@ export function BajaHuespedForm() {
             </Dialog>
         </div>
     )
-}
+}*/

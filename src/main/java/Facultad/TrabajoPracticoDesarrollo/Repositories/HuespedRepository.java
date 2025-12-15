@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
@@ -36,15 +37,8 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
     );
 
     // Reemplaza a 'existeHuesped'
-    boolean existsByTipoDocumentoAndNroDocumento(TipoDocumento tipo, String nro);
+    //boolean existsByTipoDocumentoAndNroDocumento(TipoDocumento tipo, String nro);
 
-    // Reemplaza a 'obtenerTodosLosHuespedes': ¡Ya existe! Se llama findAll()
-
-    // Reemplaza a 'obtenerHuesped': ¡Ya existe! Se llama findById(new HuespedId(tipo, nro))
-
-    // Reemplaza a 'eliminarHuesped': ¡Ya existe! Se llama deleteById(...)
-
-    // Reemplaza a 'persistir' y 'modificar': ¡Ya existe! Se llama save(...)
 
     // Para el CU10: Permitir cambio de DNI manteniendo historial
     @Modifying
@@ -60,4 +54,25 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
     // Cuenta cuántos huéspedes usan esa dirección, para evitar dejar direcciones zombies
     long countByDireccion(Direccion direccion);
 
+
+    // --- LIMPIEZA DE TABLAS SATÉLITE (NECESARIO PARA BORRADO NATIVO) ---
+
+    @Modifying
+    @Query(value = "DELETE FROM telefono_huesped WHERE CAST(tipo_documento AS TEXT) = :tipo AND nro_documento = :nro", nativeQuery = true)
+    void borrarTelefonos(@Param("tipo") String tipo, @Param("nro") String nro);
+
+    @Modifying
+    @Query(value = "DELETE FROM email_huesped WHERE CAST(tipo_documento AS TEXT) = :tipo AND nro_documento = :nro", nativeQuery = true)
+    void borrarEmails(@Param("tipo") String tipo, @Param("nro") String nro);
+
+    @Modifying
+    @Query(value = "DELETE FROM ocupacion_huesped WHERE CAST(tipo_documento AS TEXT) = :tipo AND nro_documento = :nro", nativeQuery = true)
+    void borrarOcupaciones(@Param("tipo") String tipo, @Param("nro") String nro);
+
+    @Modifying
+    @Query(value = "DELETE FROM huesped WHERE CAST(tipo_documento AS TEXT) = :tipo AND numero_documento = :nro", nativeQuery = true)
+    void borrarObligatorio(
+            @Param("tipo") String tipo,
+            @Param("nro") String nro
+    );
 }

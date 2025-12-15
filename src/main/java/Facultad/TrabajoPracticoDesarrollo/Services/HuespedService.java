@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.EntityManager;
 
 @Service //Le avisa a Spring que esta clase contiene Lógica de Negocio y que debe estar disponible para ser inyectada en los Controllers
 public class HuespedService {
@@ -30,6 +31,8 @@ public class HuespedService {
     private final EstadiaRepository estadiaRepository;
     private final FacturaRepository facturaRepository;
     private final PersonaFisicaRepository personaFisicaRepository;
+    private final EstadiaHuespedRepository estadiaHuespedRepository;
+    private final EntityManager entityManager;
 
     @Autowired
     public HuespedService(
@@ -38,13 +41,15 @@ public class HuespedService {
             ReservaRepository reservaRepository,
             EstadiaRepository estadiaRepository,
             FacturaRepository facturaRepository,
-            PersonaFisicaRepository personaFisicaRepository) {
+            PersonaFisicaRepository personaFisicaRepository, EstadiaHuespedRepository estadiaHuespedRepository, EntityManager entityManager) {
         this.huespedRepository = huespedRepository;
         this.direccionRepository = direccionRepository;
         this.reservaRepository = reservaRepository;
         this.estadiaRepository = estadiaRepository;
         this.facturaRepository = facturaRepository;
         this.personaFisicaRepository = personaFisicaRepository;
+        this.estadiaHuespedRepository = estadiaHuespedRepository;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -234,8 +239,11 @@ public class HuespedService {
                         huespedDestino.getTelefono().isEmpty() ? null : String.valueOf(huespedDestino.getTelefono().get(0))
                 );
 
-                // TODO: migrarEstadias necesita ser reimplementada (Estadia tiene List<Huesped>)
-                // estadiaRepository.migrarEstadias(huespedOriginal, huespedDestino);
+
+                estadiaHuespedRepository.migrarHistorialEstadias(
+                        tipoOrig, nroOrig, // Viejo
+                        huespedDestino.getTipoDocumento().name(), huespedDestino.getNroDocumento()
+                );
 
                 // 2. FACTURAS
                 // Buscamos si el huésped original tenía un rol de Pagador (Persona Fisica)
@@ -248,33 +256,43 @@ public class HuespedService {
                     Optional<PersonaFisica> pfDestinoOpt = personaFisicaRepository.findByHuesped(huespedDestino);
 
                     if (pfDestinoOpt.isPresent()) {
-                        // CASO A: Ambos eran pagadores.
-                        // Hay que mover las facturas del PF viejo al PF nuevo y borrar el PF viejo.
+                        // CASO A: Fusión de pagadores
                         PersonaFisica pfDestino = pfDestinoOpt.get();
                         facturaRepository.migrarFacturas(pfOriginal, pfDestino);
-
                         personaFisicaRepository.flush();
 
-                        personaFisicaRepository.delete(pfOriginal); // Borramos el rol de pagador viejo
+                        // --- BORRADO NATIVO DE PF ---
+                        // Usamos nativo para evitar que Hibernate borre en cascada al Huésped y a la Dirección
+                        personaFisicaRepository.borrarNativo(pfOriginal.getIdPersonaFisica());
+
+
                     } else {
-                        // CASO B: El nuevo no era pagador.
-                        // Simplemente le cambiamos el dueño a la Persona Física existente.
+                        //Transferencia
                         pfOriginal.setHuesped(huespedDestino);
                         personaFisicaRepository.save(pfOriginal);
                     }
                 }
 
+                // 1. Guardamos cambios pendientes
                 reservaRepository.flush();
                 estadiaRepository.flush();
                 facturaRepository.flush();
+                estadiaHuespedRepository.flush();
 
-                // Al final, borramos al original y limpiamos SU dirección vieja
-                Direccion dirOriginal = huespedOriginal.getDireccion();
-                huespedRepository.delete(huespedOriginal);
-                huespedRepository.flush();
-                limpiarDireccionHuerfana(dirOriginal);
+                // 2. LIMPIEZA SATÉLITE
+                // Borramos los datos hijos manualmente porque el delete nativo no lo hace solo
+                huespedRepository.borrarTelefonos(tipoOrig, nroOrig);
+                huespedRepository.borrarEmails(tipoOrig, nroOrig);
+                huespedRepository.borrarOcupaciones(tipoOrig, nroOrig);
 
-                return; // Terminamos acá la fusión
+                // 3. Limpieza de memoria (Hibernate olvida todo)
+                entityManager.clear();
+
+                // 4. Borrado Nativo del Huésped
+                huespedRepository.borrarObligatorio(tipoOrig, nroOrig);
+
+                return; // FIN
+
 
             } else {
                 // === CASO CAMBIO DE DNI LIMPIO (Migración) ===
@@ -353,8 +371,8 @@ public class HuespedService {
         Huesped huesped = huespedRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("El huésped a eliminar no existe."));
 
-        // FILTRO 1: ¿Se alojó? (Regla del PDF)
-        if (estadiaRepository.existsByHuespedesContaining(huesped)) {
+        // FILTRO 1: ¿Se alojó?
+        if (estadiaHuespedRepository.existsByHuesped(huesped)) {
             throw new RuntimeException("El huésped no puede ser eliminado pues se ha alojado en el Hotel.");
         }
 
@@ -386,18 +404,17 @@ public class HuespedService {
         huespedRepository.flush();
 
         // 4. Limpieza de Dirección (Recolector de Basura)
-        limpiarDireccionHuerfana(direccionABorrar);
+        //limpiarDireccionHuerfana(direccionABorrar);
 
 
     }
 
-    // En HuespedService.java
 
     /**
      * Intenta borrar una dirección SOLO si nadie más la está usando.
      * Se debe llamar DESPUÉS de haber eliminado/desvinculado al huésped.
      */
-    private void limpiarDireccionHuerfana(Direccion direccion) {
+    /*private void limpiarDireccionHuerfana(Direccion direccion) {
         if (direccion != null) {
             // Verificamos si quedó alguien más usándola
             long cantidadUsos = huespedRepository.countByDireccion(direccion);
@@ -407,5 +424,5 @@ public class HuespedService {
                 direccionRepository.delete(direccion);
             }
         }
-    }
+    }*/
 }
