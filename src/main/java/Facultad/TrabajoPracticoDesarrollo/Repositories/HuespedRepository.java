@@ -20,17 +20,18 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
      * Busca por coincidencia parcial en nombre/apellido y exacta/parcial en documento.
      * Si un parámetro es NULL, se ignora ese filtro (funciona como tu lógica original).
      */
-    @Query("SELECT DISTINCT h FROM Huesped h " +
-            "LEFT JOIN FETCH h.direccion " +
+    @Query(value = "SELECT DISTINCT h.* FROM huesped h " +
+            "LEFT JOIN direccion d ON d.id_direccion = h.id_direccion " +
             "WHERE " +
-            "(CAST(:apellido AS string) IS NULL OR LOWER(h.apellido) LIKE LOWER(CONCAT(CAST(:apellido AS string), '%'))) AND " +
-            "(CAST(:nombres AS string) IS NULL OR LOWER(h.nombres) LIKE LOWER(CONCAT(CAST(:nombres AS string), '%'))) AND " +
-            "(CAST(:tipo AS string) IS NULL OR h.tipoDocumento = :tipo) AND " +
-            "(CAST(:nroDoc AS string) IS NULL OR h.nroDocumento LIKE CONCAT(CAST(:nroDoc AS string), '%'))")
+            "(CAST(:apellido AS TEXT) IS NULL OR :apellido = '' OR LOWER(h.apellido) LIKE LOWER(CONCAT(CAST(:apellido AS TEXT), '%'))) AND " +
+            "(CAST(:nombres AS TEXT) IS NULL OR :nombres = '' OR LOWER(h.nombres) LIKE LOWER(CONCAT(CAST(:nombres AS TEXT), '%'))) AND " +
+            "(CAST(:tipo AS TEXT) IS NULL OR CAST(h.tipo_documento AS TEXT) = CAST(:tipo AS TEXT)) AND " +
+            "(CAST(:nroDoc AS TEXT) IS NULL OR :nroDoc = '' OR h.numero_documento LIKE CONCAT(CAST(:nroDoc AS TEXT), '%'))",
+            nativeQuery = true)
     List<Huesped> buscarPorCriterios(
             @Param("apellido") String apellido,
             @Param("nombres") String nombres,
-            @Param("tipo") TipoDocumento tipo,
+            @Param("tipo") String tipo,
             @Param("nroDoc") String nroDoc
     );
 

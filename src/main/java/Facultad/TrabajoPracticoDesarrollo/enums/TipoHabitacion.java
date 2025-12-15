@@ -1,10 +1,13 @@
 package Facultad.TrabajoPracticoDesarrollo.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.text.Normalizer;
 
 public enum TipoHabitacion {
-    INDIVIDUAL_ESTANADAR("INDIVIDUAL ESTANDAR"),
-    DOBLE_ESTANADAR("DOBLE ESTANDAR"),
+    INDIVIDUAL_ESTANDAR("INDIVIDUAL ESTANDAR"),
+    DOBLE_ESTANDAR("DOBLE ESTANDAR"),
     DOBLE_SUPERIOR("DOBLE SUPERIOR"),
     SUPERIOR_FAMILY_PLAN("SUPERIOR FAMILY PLAN"),
     SUITE_DOBLE("SUITE DOBLE");
@@ -23,11 +26,14 @@ public enum TipoHabitacion {
     public String getDescripcion() {
         return descripicion;
     }
+    
+    @JsonValue
     @Override
     public String toString() {
-        return descripicion;
+        return name(); // Retorna el nombre del enum: INDIVIDUAL_ESTANDAR (con guión bajo)
     }
 
+    @JsonCreator
     public static TipoHabitacion fromString(String s) {
         if (s == null) return null;
         String norm = normalize(s);

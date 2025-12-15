@@ -58,11 +58,15 @@ public class HuespedService {
         if (criterios != null && !criterios.estanVacios()) {
             System.out.println("Buscando coincidencias...");
 
+            // Convertir el enum a String para la query nativa
+            String tipoStr = criterios.getTipoDocumento() != null ? 
+                           criterios.getTipoDocumento().name() : null;
+
             // Usamos la query personalizada del Repository
             return huespedRepository.buscarPorCriterios(
                     criterios.getApellido(),
                     criterios.getNombres(),
-                    criterios.getTipoDocumento(),
+                    tipoStr,
                     criterios.getNroDocumento()
             );
         } else {

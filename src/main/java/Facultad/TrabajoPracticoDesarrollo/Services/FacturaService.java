@@ -96,12 +96,12 @@ public class FacturaService {
                 .orElseThrow(() -> new IllegalArgumentException("No hay estadía activa en la habitación " + nroHabitacion));
 
         //Mapeamos la lista usando el Builder de DtoDatosOcupantes
-        List<DtoDatosOcupantes> listaOcupantes = estadia.getHuespedes().stream()
-                .map(h -> new DtoDatosOcupantes.Builder()
-                        .tipoDocumento(h.getTipoDocumento())
-                        .nroDocumento(h.getNroDocumento())
-                        .nombres(h.getNombres())
-                        .apellido(h.getApellido())
+        List<DtoDatosOcupantes> listaOcupantes = estadia.getEstadiaHuespedes().stream()
+                .map(eh -> new DtoDatosOcupantes.Builder()
+                        .tipoDocumento(eh.getHuesped().getTipoDocumento())
+                        .nroDocumento(eh.getHuesped().getNroDocumento())
+                        .nombres(eh.getHuesped().getNombres())
+                        .apellido(eh.getHuesped().getApellido())
                         .build()
                 ).collect(Collectors.toList());
 

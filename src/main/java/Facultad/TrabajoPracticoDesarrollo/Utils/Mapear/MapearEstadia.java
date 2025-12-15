@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.EstadiaHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadia;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
@@ -23,17 +24,13 @@ public class MapearEstadia {
             builder.reserva(MapearReserva.mapearDtoAEntidad(dto.getDtoReserva()));
         }
 
-        // 2. Mapear Habitación (CORRECCIÓN IMPORTANTE: ESTO FALTABA)
+        // 2. Mapear Habitación
         if (dto.getDtoHabitacion() != null) {
             builder.habitacion(MapearHabitacion.mapearDtoAEntidad(dto.getDtoHabitacion(), null));
         }
 
-        // 3. Mapear Lista de Huéspedes
-        if (dto.getDtoHuespedes() != null) {
-            for (DtoHuesped dtoH : dto.getDtoHuespedes()) {
-                builder.agregarHuesped(MapearHuesped.mapearDtoAEntidad(dtoH));
-            }
-        }
+        // 3. Los huéspedes se manejan directamente en el Service con EstadiaHuesped
+        // No se usa el builder.agregarEstadiaHuesped aquí
 
         return builder.build();
     }
@@ -57,11 +54,13 @@ public class MapearEstadia {
             builder.dtoHabitacion(MapearHabitacion.mapearEntidadADto(entidad.getHabitacion()));
         }
 
-        // 3. Mapear Lista de Huéspedes
-        if (entidad.getHuespedes() != null) {
+        // 3. Mapear Lista de Huéspedes desde EstadiaHuesped
+        if (entidad.getEstadiaHuespedes() != null) {
             ArrayList<DtoHuesped> listaDtos = new ArrayList<>();
-            for (Huesped h : entidad.getHuespedes()) {
-                listaDtos.add(MapearHuesped.mapearEntidadADto(h));
+            for (EstadiaHuesped eh : entidad.getEstadiaHuespedes()) {
+                if (eh.getHuesped() != null) {
+                    listaDtos.add(MapearHuesped.mapearEntidadADto(eh.getHuesped()));
+                }
             }
             builder.dtoHuespedes(listaDtos);
         }
