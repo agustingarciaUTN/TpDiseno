@@ -18,7 +18,7 @@ interface HabitacionEstado {
   capacidad: number;
   estadoHabitacion?: "HABILITADA" | "FUERA_DE_SERVICIO";
   estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA";
-  estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO">;
+  estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA">;
   precioNoche: number;
 }
 
@@ -178,12 +178,18 @@ export default function OcuparHabitacion() {
       const fechaDesde = hoy.toISOString().split("T")[0];
       const fechaHasta = fechaHastaGrilla;
       
-      // PRIMERO cargar las habitaciones
+      // Cambiar a grilla primero para mostrar el loader
+      setPaso("grilla");
+      
+      // Esperar un tick para que se renderice el loader
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // LUEGO cargar las habitaciones
       const success = await recargarHabitacionesConNuevasFechas(fechaDesde, fechaHasta);
       
-      // Si cargó OK, cambiar a grilla
-      if (success) {
-        setPaso("grilla");
+      // Si falló, volver al paso anterior
+      if (!success) {
+        setPaso("fechasGrilla");
       }
       
       setLoading(false);
@@ -219,16 +225,24 @@ export default function OcuparHabitacion() {
       }
       
       const habitacionesMapeadas = data.map((h: any) => {
-        console.log(`[CU15] Mapeando habitación ${h.numero}:`, h.tipoHabitacion, "estadosPorDia keys:", Object.keys(h.estadosPorDia || {}));
-        const estadoReservaBase = (h.estadosPorDia && h.estadosPorDia[fechaDesde]) || "DISPONIBLE";
+        const estadosPorDia = h.estadosPorDia || {};
+        
+        // Detectar si la habitación está fuera de servicio
+        // (el backend envía "MANTENIMIENTO" en estadosPorDia cuando está fuera de servicio)
+        const todosLosEstados = Object.values(estadosPorDia);
+        const esFueraDeServicio = todosLosEstados.length > 0 && 
+          todosLosEstados.every((estado: any) => estado === "MANTENIMIENTO");
+        
+        const estadoReservaBase = (estadosPorDia[fechaDesde]) || "DISPONIBLE";
+        
         const mapeada = {
           id: h.numero.toString(),
           numero: h.numero.toString(),
           tipo: h.tipoHabitacion,
           capacidad: h.capacidad,
-          estadoHabitacion: h.estadoHabitacion || "HABILITADA",
+          estadoHabitacion: esFueraDeServicio ? "FUERA_DE_SERVICIO" : "HABILITADA",
           estado: estadoReservaBase as "DISPONIBLE" | "RESERVADA" | "OCUPADA",
-          estadosPorDia: h.estadosPorDia || {},
+          estadosPorDia: estadosPorDia,
           precioNoche: h.costoPorNoche
         };
         return mapeada;
@@ -272,7 +286,7 @@ export default function OcuparHabitacion() {
     const estadoDia = obtenerEstadoCelda(habitacionId, diaIdx, fechaDesdeGrilla);
     
     // Permitir click también en reservadas (para ofrecer ocupar igual)
-    if (estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO") return false;
+    if (estadoDia === "OCUPADA" || estadoDia === "FUERA_DE_SERVICIO") return false;
     
     // Si hay una selección existente y estamos en esa habitación, no permitir solapamiento
     if (seleccion && seleccion.habitacionId === habitacionId) {
@@ -325,7 +339,7 @@ export default function OcuparHabitacion() {
     let hayReservada = false;
     rangoDias.forEach(idx => {
       const estado = obtenerEstadoCelda(habitacionId, idx, fechaDesdeGrilla);
-      if (estado === "OCUPADA" || estado === "MANTENIMIENTO") hayOcupadaOMant = true;
+      if (estado === "OCUPADA" || estado === "FUERA_DE_SERVICIO") hayOcupadaOMant = true;
       if (estado === "RESERVADA") hayReservada = true;
     });
 
@@ -412,15 +426,15 @@ export default function OcuparHabitacion() {
   };
 
   // Obtener el estado de una celda específica por día
-  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number, fechaDesde: string): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO" => {
+  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number, fechaDesde: string): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "FUERA_DE_SERVICIO" => {
     const habitacion = habitaciones.find(h => h.id === habitacionId);
     if (!habitacion) {
-      return "MANTENIMIENTO";
+      return "OCUPADA";
     }
 
-    // Si la habitación no está habilitada, mostrar MANTENIMIENTO
+    // Si la habitación no está habilitada, mostrar FUERA_DE_SERVICIO
     if (habitacion.estadoHabitacion === "FUERA_DE_SERVICIO") {
-      return "MANTENIMIENTO";
+      return "FUERA_DE_SERVICIO";
     }
 
     // Si está habilitada, buscar el estado del día específico
@@ -435,7 +449,7 @@ export default function OcuparHabitacion() {
     return habitacion.estado || "DISPONIBLE";
   };
 
-  const getEstadoColor = (estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO") => {
+  const getEstadoColor = (estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "FUERA_DE_SERVICIO") => {
     switch (estado) {
       case "DISPONIBLE":
         return "bg-green-600 dark:bg-green-700";
@@ -443,8 +457,8 @@ export default function OcuparHabitacion() {
         return "bg-orange-600 dark:bg-orange-700";
       case "OCUPADA":
         return "bg-red-600 dark:bg-red-700";
-      case "MANTENIMIENTO":
-        return "bg-yellow-600 dark:bg-yellow-700";
+      case "FUERA_DE_SERVICIO":
+        return "bg-slate-500 dark:bg-slate-600";
       default:
         return "bg-slate-600 dark:bg-slate-700";
     }
@@ -837,7 +851,7 @@ export default function OcuparHabitacion() {
                                   className={`rounded px-2 py-1 text-xs font-semibold text-white transition ${
                                     seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
                                       ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                                      : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO"
+                                      : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "FUERA_DE_SERVICIO"
                                       ? `${baseColor} cursor-not-allowed opacity-90`
                                       : `${baseColor} ${diaIdx === 0 ? "opacity-80" : "hover:brightness-110"} cursor-pointer`
                                   }`}
@@ -852,7 +866,7 @@ export default function OcuparHabitacion() {
                                       ? "Reservada"
                                       : estadoDia === "OCUPADA"
                                       ? "Ocupada"
-                                      : "Mantenimiento"
+                                      : "Fuera de servicio"
                                   }
                                 >
                                   {seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
@@ -861,8 +875,8 @@ export default function OcuparHabitacion() {
                                     ? "R"
                                     : estadoDia === "OCUPADA"
                                     ? "X"
-                                    : estadoDia === "MANTENIMIENTO"
-                                    ? "M"
+                                    : estadoDia === "FUERA_DE_SERVICIO"
+                                    ? "FS"
                                     : "○"}
                                 </div>
                               </td>
@@ -878,7 +892,7 @@ export default function OcuparHabitacion() {
                   <span>○ = Disponible</span>
                   <span>R = Reservada</span>
                   <span>X = Ocupada</span>
-                  <span>M = Mantenimiento</span>
+                  <span>FS = Fuera de servicio</span>
                 </div>
               </div>
             </Card>

@@ -15,9 +15,10 @@ interface HabitacionEstado {
     numero: string
     tipo: string
     capacidad: number
+    estadoHabitacion?: "HABILITADA" | "FUERA_DE_SERVICIO"
     estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA"
     precioNoche: number
-    estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO">
+    estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA">
 }
 
 interface SeleccionHabitacion {
@@ -33,12 +34,16 @@ interface DatosHuesped {
 }
 
 const TIPOS_HABITACION_ORDEN = [
-    "INDIVIDUAL ESTANDAR",
-    "DOBLE ESTANDAR",
-    "DOBLE SUPERIOR",
-    "SUPERIOR FAMILY PLAN",
-    "SUITE DOBLE",
+    "INDIVIDUAL_ESTANDAR",
+    "DOBLE_ESTANDAR",
+    "DOBLE_SUPERIOR",
+    "SUPERIOR_FAMILY_PLAN",
+    "SUITE_DOBLE",
 ]
+
+const formatearTipo = (tipo: string): string => {
+    return tipo.replace(/_/g, " ")
+}
 
 type Paso = "fechaDesde" | "fechaHasta" | "grilla" | "datosHuesped" | "confirmacion"
 
@@ -151,37 +156,28 @@ export default function ReservarHabitacion() {
             console.log("[v0] Habitaciones con estado para reserva:", data)
 
             const habitacionesMapeadas = data.map((h: any) => {
+                const estadosPorDia = h.estadosPorDia || {}
+                
+                // Detectar si la habitación está fuera de servicio
+                // (el backend envía "MANTENIMIENTO" en estadosPorDia cuando está fuera de servicio)
+                const todosLosEstados = Object.values(estadosPorDia)
+                const esFueraDeServicio = todosLosEstados.length > 0 && 
+                    todosLosEstados.every((estado: any) => estado === "MANTENIMIENTO")
+                
+                // El estado base viene de estadosPorDia para el primer día
+                const primerDia = Object.keys(estadosPorDia)[0]
                 let estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" = "DISPONIBLE"
-
-                const estadoCalculado = h.estadoHabitacion || "DISPONIBLE"
-                if (estadoCalculado === "OCUPADA") {
-                    estado = "OCUPADA"
-                } else if (estadoCalculado === "RESERVADA") {
-                    estado = "RESERVADA"
-                } else if (estadoCalculado === "MANTENIMIENTO") {
-                    estado = "OCUPADA" // Tratamos mantenimiento como no disponible
-                } else {
-                    estado = "DISPONIBLE"
-                }
-
-                // Mapear estadosPorDia si existe
-                const estadosPorDia: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO"> = {}
-                if (h.estadosPorDia) {
-                    Object.keys(h.estadosPorDia).forEach((fecha) => {
-                        const estadoDia = h.estadosPorDia[fecha]
-                        if (estadoDia === "MANTENIMIENTO") {
-                            estadosPorDia[fecha] = "OCUPADA" // Tratamos mantenimiento como no disponible
-                        } else {
-                            estadosPorDia[fecha] = estadoDia as "DISPONIBLE" | "RESERVADA" | "OCUPADA"
-                        }
-                    })
+                
+                if (primerDia && estadosPorDia[primerDia]) {
+                    estado = estadosPorDia[primerDia] as "DISPONIBLE" | "RESERVADA" | "OCUPADA"
                 }
 
                 return {
                     id: h.numero,
                     numero: h.numero,
-                    tipo: h.tipoHabitacion, // Keep the backend tipo value directly
+                    tipo: h.tipoHabitacion,
                     capacidad: h.capacidad,
+                    estadoHabitacion: esFueraDeServicio ? "FUERA_DE_SERVICIO" : "HABILITADA",
                     estado: estado,
                     precioNoche: h.costoPorNoche,
                     estadosPorDia: estadosPorDia,
@@ -221,6 +217,9 @@ export default function ReservarHabitacion() {
         const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId)
         if (!habitacion) return false
 
+        // Si la habitación está fuera de servicio, no está disponible
+        if (habitacion.estadoHabitacion === "FUERA_DE_SERVICIO") return false
+
         // Si tenemos estadosPorDia, usar el estado específico del día
         if (habitacion.estadosPorDia && diasRango[diaIdx]) {
             const fechaDia = diasRango[diaIdx].toISOString().split("T")[0]
@@ -238,9 +237,12 @@ export default function ReservarHabitacion() {
     }
 
     // Obtener el estado de una celda específica
-    const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" => {
+    const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "FUERA_DE_SERVICIO" => {
         const habitacion = habitaciones.find((h: HabitacionEstado) => h.id === habitacionId)
         if (!habitacion) return "OCUPADA"
+
+        // Si la habitación está fuera de servicio, retornar ese estado
+        if (habitacion.estadoHabitacion === "FUERA_DE_SERVICIO") return "FUERA_DE_SERVICIO"
 
         // Si tenemos estadosPorDia, usar el estado específico del día
         if (habitacion.estadosPorDia && diasRango[diaIdx]) {
@@ -445,8 +447,8 @@ export default function ReservarHabitacion() {
                 return "bg-orange-600 dark:bg-orange-700"
             case "OCUPADA":
                 return "bg-red-600 dark:bg-red-700"
-            case "MANTENIMIENTO":
-                return "bg-yellow-600 dark:bg-yellow-700"
+            case "FUERA_DE_SERVICIO":
+                return "bg-slate-500 dark:bg-slate-600"
             default:
                 return "bg-slate-600 dark:bg-slate-700"
         }
@@ -627,7 +629,7 @@ export default function ReservarHabitacion() {
                                                         if (habsTipo.length === 0) return null
                                                         return (
                                                             <th key={tipo} colSpan={habsTipo.length} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-bold bg-blue-50 dark:bg-blue-900/30">
-                                                                {tipo}
+                                                                {formatearTipo(tipo)}
                                                             </th>
                                                         )
                                                     })}
@@ -672,32 +674,40 @@ export default function ReservarHabitacion() {
                                                                         <div
                                                                             onClick={() => handleClickCelda(hab.id, diaIdx)}
                                                                             className={`rounded px-2 py-1 text-xs font-semibold text-white transition ${
-                                                                                seleccionada || (diaIdx === 0 && seleccionActual?.habitacionId === hab.id)
+                                                                                seleccionada
                                                                                     ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                                                                                    : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO"
+                                                                                    : inicioActual
+                                                                                    ? "bg-blue-400 hover:bg-blue-500 cursor-pointer animate-pulse"
+                                                                                    : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "FUERA_DE_SERVICIO"
                                                                                     ? `${baseColor} cursor-not-allowed opacity-75`
                                                                                     : `${baseColor} hover:brightness-110 cursor-pointer`
                                                                             }`}
                                                                             title={
                                                                                 seleccionada
                                                                                     ? "Seleccionada"
+                                                                                    : inicioActual
+                                                                                    ? "Inicio de selección - Click otro día para completar"
                                                                                     : disponible
-                                                                                    ? "Click para seleccionar"
+                                                                                    ? "Click para seleccionar inicio"
                                                                                     : estadoDia === "RESERVADA"
                                                                                     ? "Reservada - No se puede pisar"
                                                                                     : estadoDia === "OCUPADA"
                                                                                     ? "Ocupada"
-                                                                                    : "Mantenimiento"
+                                                                                    : estadoDia === "FUERA_DE_SERVICIO"
+                                                                                    ? "Fuera de servicio"
+                                                                                    : "No disponible"
                                                                             }
                                                                         >
                                                                             {seleccionada
                                                                                 ? "✓"
+                                                                                : inicioActual
+                                                                                ? "●"
                                                                                 : estadoDia === "RESERVADA"
                                                                                 ? "R"
                                                                                 : estadoDia === "OCUPADA"
                                                                                 ? "X"
-                                                                                : estadoDia === "MANTENIMIENTO"
-                                                                                ? "M"
+                                                                                : estadoDia === "FUERA_DE_SERVICIO"
+                                                                                ? "FS"
                                                                                 : "○"}
                                                                         </div>
                                                                     </td>
@@ -710,10 +720,11 @@ export default function ReservarHabitacion() {
                                         </table>
                                         <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex gap-4 flex-wrap">
                                             <span>✓ = Seleccionada</span>
+                                            <span>● = Inicio de selección (click otro día para completar)</span>
                                             <span>○ = Disponible</span>
                                             <span>R = Reservada (no se puede pisar)</span>
                                             <span>X = Ocupada</span>
-                                            <span>M = Mantenimiento</span>
+                                            <span>FS = Fuera de servicio</span>
                                         </div>
                                     </div>
                                 </Card>
