@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Edit, AlertCircle, CheckCircle2, UserMinus, ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useGuest } from "@/lib/guest-context"
-import { modificarHuesped } from "@/lib/api"
+import { modificarHuesped, verificarExistenciaHuesped, darDeBajaHuesped } from "@/lib/api"
 
 type Guest = {
     id: string
@@ -55,16 +55,14 @@ export function ModificarHuespedForm() {
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [isSaving, setIsSaving] = useState(false)
 
+    // --- CARGA DE DATOS ---
     useEffect(() => {
         if (!selectedGuest) {
             router.push('/buscar-huesped')
             return
         }
-        
-        console.log('selectedGuest en modificar:', selectedGuest)
-        console.log('direccionCodigoPostal:', selectedGuest.direccionCodigoPostal)
-        
-        // Map selectedGuest to Guest interface - use all fields from context
+
+
         const mappedGuest: Guest = {
             id: selectedGuest.id?.toString() || '',
             apellido: selectedGuest.apellido || '',
@@ -74,23 +72,24 @@ export function ModificarHuespedForm() {
             cuit: selectedGuest.cuit || '',
             posicionIVA: selectedGuest.posicionIVA || '',
             fechaNacimiento: selectedGuest.fechaNacimiento || '',
+
+
             direccionCalle: selectedGuest.direccionCalle || '',
-            direccionNumero: selectedGuest.direccionNumero || '',
+            direccionNumero: selectedGuest.direccionNumero?.toString() || '',
             direccionDepartamento: selectedGuest.direccionDepartamento || '',
             direccionPiso: selectedGuest.direccionPiso || '',
-            direccionCodigoPostal: selectedGuest.direccionCodigoPostal || '',
+            direccionCodigoPostal: selectedGuest.direccionCodigoPostal?.toString() || '',
             direccionLocalidad: selectedGuest.direccionLocalidad || '',
             direccionProvincia: selectedGuest.direccionProvincia || '',
             direccionPais: selectedGuest.direccionPais || '',
-            telefono: selectedGuest.telefono || '',
-            email: selectedGuest.email || '',
-            ocupacion: selectedGuest.ocupacion || '',
+
+            // Listas (tomamos el primer elemento si existe)
+            telefono: selectedGuest.telefono && selectedGuest.telefono.length > 0 ? selectedGuest.telefono[0] : '',
+            email: selectedGuest.email && selectedGuest.email.length > 0 ? selectedGuest.email[0] : '',
+            ocupacion: '', // Ajustar si el backend empieza a enviar ocupación
             nacionalidad: selectedGuest.nacionalidad || '',
         }
-        
-        console.log('mappedGuest:', mappedGuest)
-        console.log('mappedGuest.direccionCodigoPostal:', mappedGuest.direccionCodigoPostal)
-        
+
         setGuestData(mappedGuest)
         setOriginalData(mappedGuest)
     }, [selectedGuest, router])
@@ -101,7 +100,6 @@ export function ModificarHuespedForm() {
             ...prev!,
             [field]: value.toUpperCase(),
         }))
-        // Clear error when user starts typing
         if (errors[field]) {
             setErrors((prev) => {
                 const newErrors = { ...prev }
@@ -117,7 +115,6 @@ export function ModificarHuespedForm() {
             ...prev!,
             [field]: value,
         }))
-        // Clear error when user starts typing
         if (errors[field]) {
             setErrors((prev) => {
                 const newErrors = { ...prev }
@@ -127,6 +124,7 @@ export function ModificarHuespedForm() {
         }
     }
 
+    // --- VALIDACIONES ORIGINALES (RESTAURADAS) ---
     const validateDocumentNumber = (tipo: string, numero: string): boolean => {
         if (!numero.trim()) {
             setErrors((prev) => ({ ...prev, nroDocumento: "El número de documento es requerido" }))
@@ -154,10 +152,9 @@ export function ModificarHuespedForm() {
 
     const validateForm = (): boolean => {
         if (!guestData) return false
-        
+
         const newErrors: Record<string, string> = {}
 
-        // Validate required fields
         if (!guestData.apellido?.trim()) newErrors.apellido = "El apellido es requerido"
         if (!guestData.nombre?.trim()) newErrors.nombre = "El nombre es requerido"
         if (!guestData.tipoDocumento) newErrors.tipoDocumento = "El tipo de documento es requerido"
@@ -174,10 +171,9 @@ export function ModificarHuespedForm() {
         if (!guestData.ocupacion?.trim()) newErrors.ocupacion = "La ocupación es requerida"
         if (!guestData.nacionalidad?.trim()) newErrors.nacionalidad = "La nacionalidad es requerida"
 
-        // Validate document number format
         if (guestData.tipoDocumento && guestData.nroDocumento) {
             if (!validateDocumentNumber(guestData.tipoDocumento, guestData.nroDocumento)) {
-                // Error already set in validateDocumentNumber
+                // Error set in validateDocumentNumber
             }
         }
 
@@ -186,8 +182,7 @@ export function ModificarHuespedForm() {
         if (Object.keys(newErrors).length > 0) {
             setAlert({
                 type: "error",
-                message:
-                    "¿Desea cancelar la modificación del huésped? Hay omisiones en las que Ud. ha incurrido, sin tapar campos ni botón.",
+                message: "¿Desea cancelar la modificación del huésped? Hay omisiones en las que Ud. ha incurrido.",
             })
             return false
         }
@@ -195,44 +190,56 @@ export function ModificarHuespedForm() {
         return true
     }
 
+    // --- LÓGICA NUEVA (Fusión y Chequeo) ---
     const checkDocumentExists = async (): Promise<boolean> => {
-        // Simulate API call to check if document combination exists for a different guest
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Simulate: if document changed, check if it exists
-                const documentChanged =
-                    guestData.tipoDocumento !== originalData.tipoDocumento || guestData.nroDocumento !== originalData.nroDocumento
-
-                if (documentChanged) {
-                    // Simulate 30% chance that document exists
-                    const exists = Math.random() > 0.7
-                    resolve(exists)
-                } else {
-                    resolve(false)
-                }
-            }, 300)
-        })
+        if (!guestData) return false;
+        try {
+            const huespedExistente = await verificarExistenciaHuesped(
+                guestData.tipoDocumento,
+                guestData.nroDocumento
+            );
+            return !!huespedExistente;
+        } catch (error) {
+            console.error("Error verificando existencia:", error);
+            return false;
+        }
     }
 
     const handleNext = async () => {
         setAlert(null)
 
-        // Validate all fields (Flujo Alternativo 2.A)
+        if (!guestData) return; // Parche TS
+
+        // 1. Validar
         if (!validateForm()) {
             return
         }
 
-        // Check if document already exists (Flujo Alternativo 2.B)
-        const documentExists = await checkDocumentExists()
-        if (documentExists) {
-            setAlert({
-                type: "error",
-                message: "¡CUIDADO! El tipo y número de documento ya existen en el sistema.",
-            })
-            return
+        // 2. Lógica de Cambio de Identidad y Fusión
+        const cambioIdentidad =
+            guestData.tipoDocumento !== originalData?.tipoDocumento ||
+            guestData.nroDocumento !== originalData?.nroDocumento;
+
+        if (cambioIdentidad) {
+            const existe = await checkDocumentExists();
+
+            if (existe) {
+                // Confirmación de Fusión (Merge)
+                const confirmarFusion = window.confirm(
+                    `ATENCIÓN: El huésped con ${guestData.tipoDocumento} ${guestData.nroDocumento} YA EXISTE en el sistema.\n\n` +
+                    `Si continúa, se realizará una FUSIÓN:\n` +
+                    `- Se actualizarán los datos del huésped existente con los de este formulario.\n` +
+                    `- El historial (Reservas, Estadías, Facturas) del huésped actual se moverá al nuevo.\n` +
+                    `- El registro actual será eliminado.\n\n` +
+                    `¿Desea proceder con la FUSIÓN de historiales?`
+                );
+
+                if (!confirmarFusion) {
+                    return;
+                }
+            }
         }
 
-        // Show confirmation dialog (Flujo Principal, paso 2)
         setShowConfirmDialog(true)
     }
 
@@ -244,14 +251,15 @@ export function ModificarHuespedForm() {
         setShowDeleteDialog(true)
     }
 
+    // --- GUARDAR (Llamada Real) ---
     const confirmSave = async () => {
         if (!guestData) return
-        
+
         setIsSaving(true)
         setShowConfirmDialog(false)
 
         try {
-            // Mapear posición IVA del formato del formulario al enum del backend
+            // Mapeo Posición IVA
             const mapPosicionIVAToBackend = (posIva: string) => {
                 const mapping: Record<string, string> = {
                     'Consumidor Final': 'CONSUMIDOR_FINAL',
@@ -262,7 +270,7 @@ export function ModificarHuespedForm() {
                 return mapping[posIva] || posIva
             }
 
-            // Construir el DTO para el backend
+            // DTO para el backend
             const dtoHuesped = {
                 nombres: guestData.nombre,
                 apellido: guestData.apellido,
@@ -274,29 +282,33 @@ export function ModificarHuespedForm() {
                 nacionalidad: guestData.nacionalidad,
                 email: [guestData.email],
                 ocupacion: [guestData.ocupacion],
-                telefono: [parseInt(guestData.telefono)],
+                telefono: [parseInt(guestData.telefono) || 0],
                 dtoDireccion: {
                     calle: guestData.direccionCalle,
-                    numero: parseInt(guestData.direccionNumero),
+                    numero: parseInt(guestData.direccionNumero) || 0,
                     departamento: guestData.direccionDepartamento || null,
                     piso: guestData.direccionPiso || null,
-                    codPostal: parseInt(guestData.direccionCodigoPostal),
+                    codPostal: parseInt(guestData.direccionCodigoPostal) || 0,
                     localidad: guestData.direccionLocalidad,
                     provincia: guestData.direccionProvincia,
                     pais: guestData.direccionPais
                 }
             }
 
-            await modificarHuesped(guestData.tipoDocumento, guestData.nroDocumento, dtoHuesped)
-            
+            // Usamos los datos originales para saber a quién apuntar el PUT
+            await modificarHuesped(
+                originalData?.tipoDocumento || guestData.tipoDocumento,
+                originalData?.nroDocumento || guestData.nroDocumento,
+                dtoHuesped
+            )
+
             setAlert({
                 type: "success",
                 message: "La operación ha culminado con éxito",
             })
             setOriginalData(guestData)
             setIsSaving(false)
-            
-            // Redirect to home after showing success message
+
             setTimeout(() => {
                 router.push("/")
             }, 2000)
@@ -311,7 +323,6 @@ export function ModificarHuespedForm() {
 
     const confirmCancel = () => {
         if (!originalData) return
-        
         setGuestData(originalData)
         setShowCancelDialog(false)
         setErrors({})
@@ -321,10 +332,39 @@ export function ModificarHuespedForm() {
         })
     }
 
-    const confirmDelete = () => {
-        setShowDeleteDialog(false)
-        // Navigate to delete guest page
-        router.push("/baja-huesped")
+    // --- BORRAR (Lógica Real) ---
+    const confirmDelete = async () => {
+        // Aseguramos tener un objetivo para borrar
+        const target = originalData || guestData;
+        if (!target) return;
+
+        try {
+            // Llamada real al Backend
+            const mensajeExito = await darDeBajaHuesped(
+                target.tipoDocumento,
+                target.nroDocumento
+            );
+
+            // Éxito
+            setAlert({
+                type: "success",
+                message: mensajeExito || `El huésped ha sido eliminado correctamente.`
+            });
+            setShowDeleteDialog(false);
+
+            // Redirigir
+            setTimeout(() => {
+                router.push("/");
+            }, 2000);
+
+        } catch (error: any) {
+            // Error de negocio (tiene facturas, estadías, etc.)
+            setAlert({
+                type: "error",
+                message: `⛔ ${error.message}`
+            });
+            setShowDeleteDialog(false);
+        }
     }
 
     if (!guestData) {
@@ -788,13 +828,12 @@ export function ModificarHuespedForm() {
                     <DialogHeader>
                         <DialogTitle>Dar de baja huésped</DialogTitle>
                         <DialogDescription>
-                            Será redirigido al caso de uso "Dar de baja huésped" para eliminar permanentemente este huésped del
-                            sistema.
+                            ¿Está seguro que desea eliminar a este huésped permanentemente?
                         </DialogDescription>
                     </DialogHeader>
                     <div className="rounded-lg bg-rose-50 p-4 dark:bg-rose-950/20">
                         <p className="text-sm font-medium text-rose-800 dark:text-rose-300">
-                            ⚠️ Esta acción lo llevará a otra pantalla
+                            ⚠️ Esta acción no se puede deshacer.
                         </p>
                     </div>
                     <DialogFooter className="gap-2 sm:gap-0">
@@ -803,7 +842,7 @@ export function ModificarHuespedForm() {
                         </Button>
                         <Button variant="destructive" onClick={confirmDelete}>
                             <UserMinus className="mr-2 h-4 w-4" />
-                            Ir a Dar de Baja
+                            Confirmar Eliminación
                         </Button>
                     </DialogFooter>
                 </DialogContent>

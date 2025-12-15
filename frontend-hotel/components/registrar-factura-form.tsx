@@ -518,7 +518,7 @@ export function RegistrarFacturaForm() {
                                 Generar Nueva Factura
                             </Button>
                             <Button variant="outline" asChild>
-                                <Link href="/">Volver al Inicio</Link>
+                                <Link href="/">Volver al Menú Principal</Link>
                             </Button>
                         </div>
                     </CardContent>

@@ -229,3 +229,12 @@ export async function registrarPago(pago: DtoPago): Promise<string> {
     body: pago,
   })
 }
+
+
+// CU11: Dar de Baja Huésped
+export async function darDeBajaHuesped(tipo: string, nro: string): Promise<string> {
+    // Nota: fetch lanzará error si el status no es 2xx, capturando el mensaje del backend
+    return apiFetch<string>(`/huespedes/borrar/${tipo}/${nro}`, {
+        method: "DELETE",
+    })
+}

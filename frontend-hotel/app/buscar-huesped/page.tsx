@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, type FormEvent, type ChangeEvent } from "react"
+import {useState, type FormEvent, type ChangeEvent, useEffect} from "react"
 import { useRouter } from "next/navigation"
 import { useGuest } from "@/lib/guest-context"
 import { Button } from "@/components/ui/button"
@@ -223,6 +223,18 @@ export default function BuscarHuesped() {
         }
     }
 
+    useEffect(() => {
+        // Esto se ejecuta cuando entras a la pantalla
+        console.log("Entrando al buscador...");
+
+        // ESTA ES LA CLAVE: El "return" dentro de useEffect
+        // se ejecuta AUTOMÁTICAMENTE cuando sales de la pantalla.
+        return () => {
+            console.log("Saliendo del buscador. Limpiando selección...");
+            setSelectedGuest(null); // <--- Limpia el huesped aquí
+        };
+    }, []); // Los corchetes vacíos son importantes
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -311,7 +323,7 @@ export default function BuscarHuesped() {
                             <Button type="button" variant="outline" asChild>
                                 <Link href="/">
                                     <Home className="mr-2 h-4 w-4" />
-                                    Volver al Inicio
+                                    Volver al Menú Principal
                                 </Link>
                             </Button>
                         </div>

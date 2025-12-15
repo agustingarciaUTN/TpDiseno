@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Search, UserMinus, AlertCircle, CheckCircle2 } from "lucide-react"
+// IMPORTANTE: Importamos las funciones reales de la API
+import { buscarHuespedes, darDeBajaHuesped } from "@/lib/api"
 
 type Guest = {
     id: string
@@ -43,97 +45,124 @@ export function BajaHuespedForm() {
 
     const validateDocumentNumber = (tipo: string, numero: string): boolean => {
         setDocumentError("")
-
         if (!numero.trim()) {
-            setDocumentError("El número de documento es requerido")
+            setDocumentError("Requerido")
             return false
         }
-
-        if (tipo === "LE" || tipo === "LC" || tipo === "DNI") {
-            const numberPattern = /^\d{7,8}$/
-            if (!numberPattern.test(numero)) {
+        if (["LE", "LC", "DNI"].includes(tipo)) {
+            if (!/^\d{7,8}$/.test(numero)) {
                 setDocumentError("Debe contener solo números (7-8 dígitos)")
                 return false
             }
         }
-
-        if (tipo === "Pasaporte") {
-            const passportPattern = /^[A-Za-z0-9]+$/
-            if (!passportPattern.test(numero)) {
-                setDocumentError("Debe contener solo letras y números")
-                return false
-            }
-        }
-
         return true
     }
 
+    // --- BÚSQUEDA REAL (Conectada al Backend) ---
     const handleSearch = async () => {
+        setAlert(null)
+        setSelectedGuest(null)
+
+        // Validaciones previas
         if (searchType === "documento") {
             if (!tipoDocumento) {
                 setAlert({ type: "error", message: "Debe seleccionar un tipo de documento" })
                 return
             }
-            if (!validateDocumentNumber(tipoDocumento, nroDocumento)) {
-                return
-            }
+            if (!validateDocumentNumber(tipoDocumento, nroDocumento)) return
         } else {
-            if (!nombre.trim() || !apellido.trim()) {
-                setAlert({ type: "error", message: "Debe ingresar nombre y apellido" })
+            if (!nombre.trim() && !apellido.trim()) {
+                setAlert({ type: "error", message: "Ingrese al menos un nombre o apellido" })
                 return
             }
         }
 
         setIsSearching(true)
-        setAlert(null)
 
-        setTimeout(() => {
-            const mockGuest: Guest = {
-                id: "123",
-                tipoDocumento: tipoDocumento || "DNI",
-                nroDocumento: nroDocumento || "12345678",
-                nombre: nombre || "Juan",
-                apellido: apellido || "Pérez",
-                email: "juan.perez@example.com",
-                telefono: "+54 9 11 1234-5678",
+        try {
+            // Construimos el criterio de búsqueda
+            const criterios = searchType === "documento"
+                ? { tipoDocumento, nroDocumento }
+                : { nombres: nombre, apellido };
+
+            const resultados = await buscarHuespedes(criterios);
+
+            if (resultados && resultados.length > 0) {
+                // Tomamos el primero que coincida (para simplificar la UI de baja)
+                const encontrado = resultados[0];
+
+                console.log("Objeto encontrado completo:", encontrado);
+                console.log("Tiene idHuesped?", encontrado.idHuesped);
+
+                // Mapeamos DtoHuesped -> Guest
+
+                setSelectedGuest({
+
+                    id: encontrado.nroDocumento.toString(),
+
+                    tipoDocumento: encontrado.tipoDocumento,
+
+
+                    nroDocumento: encontrado.nroDocumento,
+
+                    nombre: encontrado.nombres,
+                    apellido: encontrado.apellido,
+                    email: encontrado.email && encontrado.email.length > 0 ? encontrado.email[0] : "-",
+                    telefono: encontrado.telefono && encontrado.telefono.length > 0 ? encontrado.telefono[0] : "-",
+                });
+            } else {
+                setAlert({ type: "info", message: "No se encontró ningún huésped con esos datos." });
             }
-            setSelectedGuest(mockGuest)
+        } catch (error: any) {
+            setAlert({ type: "error", message: "Error al buscar: " + error.message });
+        } finally {
             setIsSearching(false)
-        }, 500)
+        }
     }
 
     const handleDelete = () => {
         setShowConfirmDialog(true)
     }
 
+    // --- BORRADO REAL (Conectado al Backend) ---
     const confirmDelete = async () => {
-        const isOccupied = Math.random() > 0.7
+        if (!selectedGuest) return;
 
-        if (isOccupied) {
+        try {
+            // Llamada al endpoint DELETE real
+            const mensajeExito = await darDeBajaHuesped(
+                selectedGuest.tipoDocumento,
+                selectedGuest.nroDocumento
+            );
+
+            // Mensaje de éxito del PDF (paso 3)
+            setAlert({
+                type: "success",
+                message: mensajeExito || `Los datos del huésped ${selectedGuest.nombre} ${selectedGuest.apellido} han sido eliminados del sistema.`
+            });
+
+            setShowConfirmDialog(false);
+            setSelectedGuest(null);
+
+            // Limpiar inputs
+            setTipoDocumento("");
+            setNroDocumento("");
+            setNombre("");
+            setApellido("");
+
+            // Redirección
+            setTimeout(() => {
+                router.push("/")
+            }, 3000)
+
+        } catch (error: any) {
+            // Aquí capturamos los errores de negocio (Estadías, Facturas)
+            // El mensaje vendrá directo del backend (ej: "El huésped no puede ser eliminado...")
             setAlert({
                 type: "error",
-                message:
-                    "No se puede eliminar el huésped. El huésped está alojado en el hotel en alguna oportunidad. PRESIONE CUALQUIER TECLA PARA CONTINUAR.",
+                message: error.message
             })
             setShowConfirmDialog(false)
-        } else {
-            setTimeout(() => {
-                setAlert({
-                    type: "success",
-                    message: `Los datos del huésped ${selectedGuest?.nombre} ${selectedGuest?.apellido} y sus tipoDeDocumento y nroDeDocumento han sido eliminados del sistema exitosamente.`,
-                })
-                setShowConfirmDialog(false)
-                setSelectedGuest(null)
-                setTipoDocumento("")
-                setNroDocumento("")
-                setNombre("")
-                setApellido("")
-
-                // Redirigir al menú principal después de mostrar el mensaje
-                setTimeout(() => {
-                    router.push("/")
-                }, 2000)
-            }, 500)
         }
     }
 
@@ -185,10 +214,10 @@ export function BajaHuespedForm() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="DNI">DNI</SelectItem>
-                                        <SelectItem value="LE">LE (Libreta de Enrolamiento)</SelectItem>
-                                        <SelectItem value="LC">LC (Libreta Cívica)</SelectItem>
+                                        <SelectItem value="LE">LE</SelectItem>
+                                        <SelectItem value="LC">LC</SelectItem>
                                         <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                                        <SelectItem value="OTROS">Otros</SelectItem>
+                                        <SelectItem value="Otro">Otro</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -201,13 +230,7 @@ export function BajaHuespedForm() {
                                         setNroDocumento(e.target.value)
                                         setDocumentError("")
                                     }}
-                                    placeholder={
-                                        tipoDocumento === "LE" || tipoDocumento === "LC" || tipoDocumento === "DNI"
-                                            ? "Ej: 12345678 (7-8 dígitos)"
-                                            : tipoDocumento === "Pasaporte"
-                                                ? "Ej: ABC123456"
-                                                : "Ingrese el número"
-                                    }
+                                    placeholder="Ej: 12345678"
                                     className={documentError ? "border-red-500" : ""}
                                 />
                                 {documentError && (
@@ -299,7 +322,7 @@ export function BajaHuespedForm() {
                             <strong>
                                 {selectedGuest?.nombre} {selectedGuest?.apellido}
                             </strong>{" "}
-                            y sus <strong>tipoDeDocumento</strong> y <strong>nroDeDocumento</strong> serán eliminados del sistema.
+                            serán eliminados del sistema.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="rounded-lg bg-rose-50 p-4 dark:bg-rose-950/20">

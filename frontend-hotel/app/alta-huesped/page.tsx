@@ -534,7 +534,7 @@ export default function AltaHuesped() {
                         <Button asChild variant="outline">
                             <Link href="/">
                                 <Home className="mr-2 h-4 w-4" />
-                                Volver al Inicio
+                                Volver al Menú Principal
                             </Link>
                         </Button>
                     </div>
@@ -975,7 +975,7 @@ export default function AltaHuesped() {
                             <div className="flex gap-3">
                                 <Button onClick={handleAceptarExito}>Crear Otro</Button>
                                 <Button onClick={handleVolver} variant="outline">
-                                    Volver al Menú
+                                    Volver al Menú Principal
                                 </Button>
                             </div>
                         </Card>
