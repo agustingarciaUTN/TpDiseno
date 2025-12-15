@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class DtoEstadia {
 
