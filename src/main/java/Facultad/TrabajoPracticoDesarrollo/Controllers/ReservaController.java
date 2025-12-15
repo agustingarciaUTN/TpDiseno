@@ -27,6 +27,31 @@ public class ReservaController {
         this.estadiaService = estadiaService;
     }
 
+    // Buscar reservas en un rango (opcionalmente por habitación)
+    @GetMapping("/buscar")
+    public ResponseEntity<?> buscarReservas(
+            @RequestParam String fechaDesde,
+            @RequestParam String fechaHasta,
+            @RequestParam(required = false) String idHabitacion
+    ) {
+        try {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            sdf.setLenient(false);
+            Date desde = sdf.parse(fechaDesde);
+            Date hasta = sdf.parse(fechaHasta);
+
+            List<DtoReserva> reservas = reservaService.buscarReservasEnFecha(desde, hasta);
+        if (idHabitacion != null && !idHabitacion.isEmpty()) {
+            reservas = reservas.stream()
+                    .filter(r -> idHabitacion.equals(r.getIdHabitacion()))
+                    .toList();
+        }
+            return ResponseEntity.ok(reservas);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al parsear fechas: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/crear")
     public ResponseEntity<?> crearReservas(@RequestBody List<DtoReserva> listaReservas) {
         try {

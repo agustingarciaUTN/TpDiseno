@@ -221,6 +221,17 @@ export async function crearEstadia(estadia: DtoEstadia): Promise<string> {
   })
 }
 
+// --- RESERVAS: Buscar por rango (opcionalmente por habitación) ---
+export async function buscarReservas(
+  fechaDesde: string,
+  fechaHasta: string,
+  idHabitacion?: string
+): Promise<DtoReserva[]> {
+  const params = new URLSearchParams({ fechaDesde, fechaHasta })
+  if (idHabitacion) params.append("idHabitacion", idHabitacion)
+  return apiFetch<DtoReserva[]>(`/reservas/buscar?${params.toString()}`)
+}
+
 // --- PAGOS ---
 
 export async function registrarPago(pago: DtoPago): Promise<string> {

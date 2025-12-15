@@ -2,21 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DoorOpen, Home, Calendar, Users, CheckCircle, Loader2 } from "lucide-react";
-import { obtenerHabitaciones, buscarHuespedes, crearEstadia } from "@/lib/api";
+import { obtenerHabitaciones, buscarHuespedes, crearEstadia, buscarReservas } from "@/lib/api";
 import { DtoHabitacion, DtoHuesped, DtoEstadia, EstadoHabitacion } from "@/lib/types";
 
 interface HabitacionEstado {
   id: string;
   numero: string;
   tipo: string;
-  comodidad: "Simple" | "Doble" | "Triple" | "Suite";
   capacidad: number;
+  estadoHabitacion?: "HABILITADA" | "FUERA_DE_SERVICIO";
   estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA";
   estadosPorDia?: Record<string, "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO">;
   precioNoche: number;
@@ -50,16 +50,17 @@ interface Errores {
   nroDocumento?: string;
 }
 
-const COMODIDADES_ORDEN = ["Simple", "Doble", "Triple", "Suite"];
+// Orden de tipos de habitación según el enum del backend
+const TIPOS_HABITACION_ORDEN = [
+  "INDIVIDUAL_ESTANDAR",
+  "DOBLE_ESTANDAR",
+  "DOBLE_SUPERIOR",
+  "SUPERIOR_FAMILY_PLAN",
+  "SUITE_DOBLE",
+];
 
-// Función para mapear tipos de habitación del backend
-const mapearTipoAComodidad = (tipoJava: string): "Simple" | "Doble" | "Triple" | "Suite" => {
-  const tipo = tipoJava.toUpperCase();
-  if (tipo.includes("INDIVIDUAL")) return "Simple";
-  if (tipo.includes("DOBLE")) return "Doble";
-  if (tipo.includes("FAMILY") || tipo.includes("TRIPLE")) return "Triple";
-  if (tipo.includes("SUITE")) return "Suite";
-  return "Simple";
+const formatearTipo = (tipo: string): string => {
+  return tipo.replace(/_/g, " ");
 };
 
 type Paso = "fechasGrilla" | "grilla" | "huespedes" | "confirmacion";
@@ -93,6 +94,7 @@ export default function OcuparHabitacion() {
   const [resultadosBusqueda, setResultadosBusqueda] = useState<DatosHuesped[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [mostrarResultados, setMostrarResultados] = useState(false);
+  const [responsableIdx, setResponsableIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorCarga, setErrorCarga] = useState("");
 
@@ -102,46 +104,12 @@ export default function OcuparHabitacion() {
     habitacionId: string;
     diaInicio: number | null;
   } | null>(null);
-
-  // Cargar habitaciones al montar el componente
-  useEffect(() => {
-    const cargarHabitacionesConEstado = async () => {
-      setLoading(true);
-      try {
-        // Obtener rango de fechas (hoy + 6 días para tener una semana)
-        const hoy = new Date();
-        const fechaDesde = hoy.toISOString().split('T')[0];
-        const fechaFin = new Date(hoy);
-        fechaFin.setDate(fechaFin.getDate() + 6);
-        const fechaHasta = fechaFin.toISOString().split('T')[0];
-
-        const response = await fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        
-        const habitacionesMapeadas = data.map((h: any) => ({
-          id: h.numero.toString(),
-          numero: h.numero.toString(),
-          tipo: h.tipoHabitacion,
-          comodidad: mapearTipoAComodidad(h.tipoHabitacion),
-          capacidad: h.capacidad,
-          // Usar el estado del día actual (primer día en estadosPorDia)
-          estado: (h.estadosPorDia && h.estadosPorDia[fechaDesde]) || "DISPONIBLE" as const,
-          estadosPorDia: h.estadosPorDia || {},
-          precioNoche: h.costoPorNoche
-        }));
-        setHabitaciones(habitacionesMapeadas);
-      } catch (error) {
-        console.error("Error al cargar habitaciones:", error);
-        setErrorCarga("No se pudieron cargar las habitaciones");
-      } finally {
-        setLoading(false);
-      }
-    };
-    cargarHabitacionesConEstado();
-  }, []);
+  const [seleccionTieneReserva, setSeleccionTieneReserva] = useState(false);
+  const [ocupandoReserva, setOcupandoReserva] = useState(false);
+  const [esDuenoReserva, setEsDuenoReserva] = useState<boolean>(false);
+  const [postCheckin, setPostCheckin] = useState(false);
+  const [estadiaPendiente, setEstadiaPendiente] = useState<DtoEstadia | null>(null);
+  const [errorCreacion, setErrorCreacion] = useState<string | null>(null);
 
   const validarFechasGrilla = (): boolean => {
     // Establecer fecha desde como hoy automáticamente
@@ -195,12 +163,77 @@ export default function OcuparHabitacion() {
     }
   };
 
-  const handleConfirmarFechasGrilla = () => {
+  const handleConfirmarFechasGrilla = async () => {
     if (validarFechasGrilla()) {
       // Resetear selección al cambiar fechas de grilla
       setSeleccion(null);
       setSeleccionActual(null);
+
+      // Mostrar loader antes de cambiar de paso
+      setLoading(true);
+      
+      // Cambiar a grilla ANTES de cargar para mostrar "Procesando datos..."
       setPaso("grilla");
+      
+      // Calcular fechas ahora para pasarlas directamente
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaDesde = hoy.toISOString().split("T")[0];
+      const fechaHasta = fechaHastaGrilla;
+      
+      // Recargar habitaciones con el nuevo rango de fechas
+      await recargarHabitacionesConNuevasFechas(fechaDesde, fechaHasta);
+    }
+  };
+
+  const recargarHabitacionesConNuevasFechas = async (fechaDesde: string, fechaHasta: string) => {
+    if (!fechaDesde || !fechaHasta) {
+      console.error("[CU15] No se pueden recargar: fechas no definidas", { fechaDesde, fechaHasta });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log(`[CU15] Solicitando datos: fechaDesde=${fechaDesde}, fechaHasta=${fechaHasta}`);
+      // Delay mínimo para asegurar que el mensaje de carga se vea
+      const [response] = await Promise.all([
+        fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`),
+        new Promise(resolve => setTimeout(resolve, 300))
+      ]);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CU15] Error del backend (${response.status}):`, errorText);
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+      const data = await response.json();
+      console.log("[CU15] Datos recargados del backend:", data);
+      console.log("[CU15] Primera habitación estadosPorDia recargada:", data[0]?.estadosPorDia);
+      
+      const habitacionesMapeadas = data.map((h: any) => {
+        const estadoReservaBase = (h.estadosPorDia && h.estadosPorDia[fechaDesde]) || "DISPONIBLE";
+        const mapeada = {
+          id: h.numero.toString(),
+          numero: h.numero.toString(),
+          tipo: h.tipoHabitacion,
+          capacidad: h.capacidad,
+          estadoHabitacion: h.estadoHabitacion || "HABILITADA",
+          estado: estadoReservaBase as "DISPONIBLE" | "RESERVADA" | "OCUPADA",
+          estadosPorDia: h.estadosPorDia || {},
+          precioNoche: h.costoPorNoche
+        };
+        return mapeada;
+      });
+      setHabitaciones(habitacionesMapeadas);
+      
+      // Actualizar los estados de fecha
+      setFechaDesdeGrilla(fechaDesde);
+      setFechaHastaGrilla(fechaHasta);
+    } catch (error) {
+      console.error("[CU15] Error al recargar habitaciones:", error);
+      setErrorCarga("No se pudieron cargar las habitaciones");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -226,7 +259,7 @@ export default function OcuparHabitacion() {
     // Verificar el estado específico de este día
     const estadoDia = obtenerEstadoCelda(habitacionId, diaIdx);
     
-    // Permitir clicks en habitaciones disponibles y reservadas, solo bloquear ocupadas y en mantenimiento
+    // Permitir click también en reservadas (para ofrecer ocupar igual)
     if (estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO") return false;
     
     // Si hay una selección existente y estamos en esa habitación, no permitir solapamiento
@@ -275,20 +308,23 @@ export default function OcuparHabitacion() {
       (_, i) => Math.min(diaInicio, diaFin) + i
     );
 
-    // Verificar que todos los días estén disponibles
-    let todosDisponibles = true;
+    // Revisar estados del rango
+    let hayOcupadaOMant = false;
+    let hayReservada = false;
     rangoDias.forEach(idx => {
-      if (!esCeldaDisponible(habitacionId, idx)) {
-        todosDisponibles = false;
-      }
+      const estado = obtenerEstadoCelda(habitacionId, idx);
+      if (estado === "OCUPADA" || estado === "MANTENIMIENTO") hayOcupadaOMant = true;
+      if (estado === "RESERVADA") hayReservada = true;
     });
 
-    if (!todosDisponibles) {
+    if (hayOcupadaOMant) {
       alert("No se puede seleccionar ese rango. Hay días no disponibles.");
       return;
     }
 
     // Crear selección final desde HOY hasta el día seleccionado
+    setOcupandoReserva(false);
+
     const seleccionFinal = {
       habitacionId,
       diaInicio: 0, // Siempre HOY
@@ -296,6 +332,7 @@ export default function OcuparHabitacion() {
     };
     setSeleccion(seleccionFinal);
     setSeleccionActual(null);
+    setSeleccionTieneReserva(hayReservada);
 
     // Auto-poblar fechas
     if (dias.length > 0) {
@@ -306,12 +343,14 @@ export default function OcuparHabitacion() {
     }
 
     setHabitacionSeleccionada(hab);
-    setConfirmacionTipo(null);
+    setConfirmacionTipo(hayReservada ? "reservada" : null);
   };
 
   const handleRemoverSeleccion = () => {
     setSeleccion(null);
     setSeleccionActual(null);
+    setSeleccionTieneReserva(false);
+    setOcupandoReserva(false);
     setHabitacionSeleccionada(null);
     setFechaCheckIn("");
     setFechaCheckOut("");
@@ -335,6 +374,9 @@ export default function OcuparHabitacion() {
   const handleVolverASeleccion = () => {
     setSeleccion(null);
     setSeleccionActual(null);
+    setSeleccionTieneReserva(false);
+    setOcupandoReserva(false);
+    setEsDuenoReserva(false);
     setHabitacionSeleccionada(null);
     setConfirmacionTipo(null);
     setFechaCheckIn("");
@@ -343,12 +385,16 @@ export default function OcuparHabitacion() {
 
   const handleEsDuenioReserva = (esDuenio: boolean) => {
     if (esDuenio) {
-      // Continuar con el flujo normal
+      // Continuar con el flujo normal; marcar que se ocupa una reserva
+      setOcupandoReserva(true);
+      setEsDuenoReserva(true);
       setConfirmacionTipo(null);
       setPaso("huespedes");
     } else {
-      // Volver a la selección de habitación
-      alert("No puede ocupar una reserva que no le pertenece.");
+      // Volver a la grilla si no es dueño
+      setOcupandoReserva(false);
+      setEsDuenoReserva(false);
+      setConfirmacionTipo(null);
       handleVolverASeleccion();
     }
   };
@@ -356,13 +402,28 @@ export default function OcuparHabitacion() {
   // Obtener el estado de una celda específica por día
   const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO" => {
     const habitacion = habitaciones.find(h => h.id === habitacionId);
-    if (!habitacion || !habitacion.estadosPorDia) return "DISPONIBLE";
+    if (!habitacion) {
+      console.log(`[CU15] Habitación ${habitacionId} no encontrada`);
+      return "MANTENIMIENTO";
+    }
 
-    const dia = createLocalDate(fechaDesdeGrilla);
-    dia.setDate(dia.getDate() + diaIdx);
-    const fechaDia = dia.toISOString().split('T')[0];
+    // Si la habitación no está habilitada, mostrar MANTENIMIENTO
+    if (habitacion.estadoHabitacion === "FUERA_DE_SERVICIO") {
+      return "MANTENIMIENTO";
+    }
 
-    return habitacion.estadosPorDia[fechaDia] || "DISPONIBLE";
+    // Si está habilitada, buscar el estado del día específico
+    if (habitacion.estadosPorDia) {
+      const dia = createLocalDate(fechaDesdeGrilla);
+      dia.setDate(dia.getDate() + diaIdx);
+      const fechaDia = dia.toISOString().split('T')[0];
+      const estadoDia = habitacion.estadosPorDia[fechaDia];
+      console.log(`[CU15] Hab ${habitacionId}, día ${fechaDia}, estado: ${estadoDia}, estadosPorDia:`, habitacion.estadosPorDia);
+      return estadoDia || "DISPONIBLE";
+    }
+
+    console.log(`[CU15] Hab ${habitacionId} no tiene estadosPorDia, usando estado general: ${habitacion.estado}`);
+    return habitacion.estado || "DISPONIBLE";
   };
 
   const getEstadoColor = (estado: "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO") => {
@@ -370,7 +431,7 @@ export default function OcuparHabitacion() {
       case "DISPONIBLE":
         return "bg-green-600 dark:bg-green-700";
       case "RESERVADA":
-        return "bg-blue-600 dark:bg-blue-700";
+        return "bg-orange-600 dark:bg-orange-700";
       case "OCUPADA":
         return "bg-red-600 dark:bg-red-700";
       case "MANTENIMIENTO":
@@ -440,31 +501,39 @@ export default function OcuparHabitacion() {
   };
 
   const handleSeleccionarHuesped = (huesped: DatosHuesped) => {
-    // Verificar duplicados
-    const duplicado = huespedes.some(
-      h => h.tipoDocumento === huesped.tipoDocumento && h.nroDocumento === huesped.nroDocumento
+    // Si ya existe, lo movemos al frente como responsable
+    const sinDuplicado = huespedes.filter(
+      h => !(h.tipoDocumento === huesped.tipoDocumento && h.nroDocumento === huesped.nroDocumento)
     );
-    if (duplicado) {
-      alert("Este huésped ya fue agregado a la estadía");
-      return;
-    }
-    setHuespedes([...huespedes, huesped]);
+    // Nuevo responsable primero, el resto queda como acompañante
+    setHuespedes([huesped, ...sinDuplicado]);
+    setResponsableIdx(0);
     setMostrarResultados(false);
     setBusquedaHuesped({ apellido: "", nombres: "", tipoDocumento: "", nroDocumento: "" });
     setErroresBusqueda({});
   };
 
   const handleEliminarHuesped = (index: number) => {
-    if (index === 0) {
-      alert("No se puede eliminar al huésped responsable");
-      return;
-    }
-    setHuespedes(huespedes.filter((_, i) => i !== index));
+    const nuevaLista = huespedes.filter((_, i) => i !== index);
+    setHuespedes(nuevaLista);
+    setResponsableIdx(prev => {
+      if (prev === null) return null;
+      if (prev === index) return null; // responsable eliminado, hay que elegir otro
+      if (prev > index) return prev - 1; // ajustar índice si se eliminó alguien antes
+      return prev;
+    });
+  };
+
+  const handleSetResponsable = (index: number) => {
+    const elegido = huespedes[index];
+    const resto = huespedes.filter((_, i) => i !== index);
+    setHuespedes([elegido, ...resto]);
+    setResponsableIdx(0);
   };
 
   const handleContinuarConfirmacion = () => {
-    if (huespedes.length === 0) {
-      alert("Debe agregar al menos un huésped (responsable)");
+    if (huespedes.length === 0 || responsableIdx === null) {
+      alert("Debe seleccionar un huésped responsable");
       return;
     }
     setPaso("confirmacion");
@@ -475,7 +544,7 @@ export default function OcuparHabitacion() {
       setLoading(true);
       
       if (!habitacionSeleccionada || huespedes.length === 0) {
-        alert("Faltan datos para confirmar el check-in");
+        alert("Faltan datos para preparar el check-in");
         return;
       }
 
@@ -505,14 +574,52 @@ export default function OcuparHabitacion() {
         }))
       };
 
-      // Llamar al backend
-      await crearEstadia(estadia);
-      
-      alert("La operación ha culminado con éxito. Check-in realizado correctamente.");
-      router.push("/");
+      // Si estamos ocupando una reserva, buscar y vincular la reserva
+      if (ocupandoReserva && esDuenoReserva && fechaCheckIn && fechaCheckOut) {
+        try {
+          const reservas = await buscarReservas(fechaCheckIn, fechaCheckOut, habitacionSeleccionada.numero)
+          if (reservas && reservas.length > 0) {
+            // Tomamos la primera reserva coincidente
+            const r = reservas[0]
+            // Vincular sólo por idReserva
+            estadia.dtoReserva = {
+              idReserva: r.idReserva,
+              estadoReserva: r.estadoReserva,
+              fechaDesde: r.fechaDesde,
+              fechaHasta: r.fechaHasta,
+              nombreHuespedResponsable: r.nombreHuespedResponsable,
+              apellidoHuespedResponsable: r.apellidoHuespedResponsable,
+              telefonoHuespedResponsable: r.telefonoHuespedResponsable,
+              idHabitacion: r.idHabitacion,
+            } as any
+          }
+        } catch (e) {
+          console.warn("[CU15] No se pudo obtener idReserva para vincular:", e)
+        }
+      }
+
+      // No crear aún: guardar como pendiente y mostrar opciones
+      setEstadiaPendiente(estadia);
+      setPostCheckin(true);
     } catch (error: any) {
       console.error("Error al confirmar estadía:", error);
-      alert("Error al confirmar el check-in: " + error.message);
+      alert("Error al preparar el check-in: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ejecutarCreacionEstadia = async () => {
+    if (!estadiaPendiente) return;
+    setErrorCreacion(null);
+    setLoading(true);
+    try {
+      await crearEstadia(estadiaPendiente);
+      alert("La operación ha culminado con éxito. Check-in realizado correctamente.");
+    } catch (error: any) {
+      const mensaje = error.message || "Error desconocido al crear la estadía";
+      setErrorCreacion(mensaje);
+      console.error("[CU15] Error al crear estadía:", error);
     } finally {
       setLoading(false);
     }
@@ -617,6 +724,13 @@ export default function OcuparHabitacion() {
 
         {paso === "grilla" && (
           <div className="space-y-6">
+            {loading ? (
+              <Card className="p-12 flex flex-col items-center justify-center gap-4">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+                <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">Procesando datos...</p>
+              </Card>
+            ) : (
+              <>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-white border border-slate-200 rounded-lg p-4 dark:bg-slate-900 dark:border-slate-700">
                 <p className="text-slate-600 text-sm dark:text-slate-400">Disponibles</p>
@@ -651,12 +765,25 @@ export default function OcuparHabitacion() {
                   <thead>
                     <tr className="bg-slate-100 dark:bg-slate-800">
                       <th className="border border-slate-300 dark:border-slate-700 px-4 py-2 text-slate-900 dark:text-slate-50 font-semibold">Fecha</th>
-                      {COMODIDADES_ORDEN.map((comodidad) => {
-                        const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
-                        return habitacionesPorComodidad.map((hab) => (
-                          <th key={hab.id} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[80px]">
-                            <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{comodidad}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Hab. {hab.numero}</div>
+                      {/* Agrupar por tipo de habitación */}
+                      {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                        const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo);
+                        if (habsTipo.length === 0) return null;
+                        return (
+                          <th key={tipo} colSpan={habsTipo.length} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-bold bg-blue-50 dark:bg-blue-900/30">
+                            {formatearTipo(tipo)}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                    <tr className="bg-slate-50 dark:bg-slate-800/50">
+                      <th className="border border-slate-300 dark:border-slate-700 px-4 py-2"></th>
+                      {/* Sub-encabezados con números de habitación */}
+                      {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                        const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+                        return habsTipo.map((hab) => (
+                          <th key={hab.id} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[80px] text-xs">
+                            Hab. {hab.numero}
                           </th>
                         ));
                       })}
@@ -672,13 +799,15 @@ export default function OcuparHabitacion() {
                           <div className="text-sm">{dia.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })}</div>
                           {diaIdx === 0 && <div className="text-xs text-blue-600 dark:text-blue-400 font-bold">HOY (Check-in)</div>}
                         </td>
-                        {COMODIDADES_ORDEN.map((comodidad) => {
-                          const habitacionesPorComodidad = habitaciones.filter((h: HabitacionEstado) => h.comodidad === comodidad).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
-                          return habitacionesPorComodidad.map((hab) => {
+                        {/* Mostrar celdas por tipo de habitación */}
+                        {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                          const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+                          return habsTipo.map((hab) => {
                             const disponible = esCeldaDisponible(hab.id, diaIdx);
                             const seleccionada = esCeldaSeleccionada(hab.id, diaIdx);
                             const inicioActual = esInicioSeleccionActual(hab.id, diaIdx);
                             const estadoDia = obtenerEstadoCelda(hab.id, diaIdx);
+                              const baseColor = getEstadoColor(estadoDia);
 
                             return (
                               <td
@@ -687,14 +816,12 @@ export default function OcuparHabitacion() {
                               >
                                 <div
                                   onClick={() => handleClickCelda(hab.id, diaIdx)}
-                                  className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
+                                  className={`rounded px-2 py-1 text-xs font-semibold text-white transition ${
                                     seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : diaIdx === 0
-                                      ? getEstadoColor(estadoDia) + " opacity-80"
-                                      : disponible
-                                      ? getEstadoColor(estadoDia) + " hover:brightness-110"
-                                      : "bg-slate-600 dark:bg-slate-700 cursor-not-allowed opacity-50"
+                                      ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                      : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO"
+                                      ? `${baseColor} cursor-not-allowed opacity-90`
+                                      : `${baseColor} ${diaIdx === 0 ? "opacity-80" : "hover:brightness-110"} cursor-pointer`
                                   }`}
                                   title={
                                     seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
@@ -703,16 +830,22 @@ export default function OcuparHabitacion() {
                                       ? "Check-in HOY"
                                       : disponible
                                       ? "Click para seleccionar Check-out"
-                                      : estadoDia
+                                      : estadoDia === "RESERVADA"
+                                      ? "Reservada"
+                                      : estadoDia === "OCUPADA"
+                                      ? "Ocupada"
+                                      : "Mantenimiento"
                                   }
                                 >
                                   {seleccionada || (diaIdx === 0 && seleccion?.habitacionId === hab.id)
                                     ? "✓"
-                                    : disponible
-                                    ? "○"
                                     : estadoDia === "RESERVADA"
                                     ? "R"
-                                    : "X"}
+                                    : estadoDia === "OCUPADA"
+                                    ? "X"
+                                    : estadoDia === "MANTENIMIENTO"
+                                    ? "M"
+                                    : "○"}
                                 </div>
                               </td>
                             );
@@ -727,6 +860,7 @@ export default function OcuparHabitacion() {
                   <span>○ = Disponible</span>
                   <span>R = Reservada</span>
                   <span>X = Ocupada</span>
+                  <span>M = Mantenimiento</span>
                 </div>
               </div>
             </Card>
@@ -765,15 +899,21 @@ export default function OcuparHabitacion() {
               </Card>
             )}
 
-            {/* Diálogo de confirmación: Habitación totalmente reservada */}
+            {/* Diálogo de confirmación: Habitación reservada en el rango */}
             {confirmacionTipo === "reservada" && seleccion && (
               <Card className="border-2 border-orange-500 bg-orange-50/50 p-6 dark:border-orange-600 dark:bg-orange-950/20">
                 <div className="flex items-start gap-4">
                   <div className="text-orange-600 text-3xl dark:text-orange-400">⚠️</div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-orange-600 mb-2 dark:text-orange-400">Habitación Reservada</h3>
-                    <p className="text-slate-700 mb-4 dark:text-slate-200">
-                      La habitación seleccionada está completamente reservada en el rango de fechas elegido.
+                    <h3 className="text-xl font-bold text-orange-600 mb-2 dark:text-orange-400">Habitación con reserva</h3>
+                    <p className="text-slate-700 mb-2 dark:text-slate-200">
+                      El rango seleccionado incluye días reservados.
+                    </p>
+                    <p className="text-slate-700 mb-2 text-sm dark:text-slate-200">
+                      Rango: {diasRango[seleccion.diaInicio]?.toLocaleDateString()} — {diasRango[seleccion.diaFin]?.toLocaleDateString()}
+                    </p>
+                    <p className="text-slate-600 mb-4 text-sm dark:text-slate-300">
+                      Titular: dato no disponible (se mostrará desde el backend si está en la reserva).
                     </p>
                     <p className="text-slate-600 text-sm mb-6 dark:text-slate-300">
                       ¿Desea ocuparla igualmente?
@@ -837,6 +977,8 @@ export default function OcuparHabitacion() {
                 Continuar →
               </Button>
             </div>
+              </>
+            )}
           </div>
         )}
 
@@ -858,10 +1000,19 @@ export default function OcuparHabitacion() {
                   {huespedes.map((h, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700">
                       <div>
-                        <p className="text-slate-900 dark:text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
+                        <p className="text-slate-900 dark:text-white font-semibold">{responsableIdx === idx && "👤 "}{h.apellido}, {h.nombres}{responsableIdx === idx && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
                         <p className="text-slate-600 dark:text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
                       </div>
-                      {idx > 0 && <Button onClick={() => handleEliminarHuesped(idx)} className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600" size="sm">Eliminar</Button>}
+                      <div className="flex gap-2">
+                        {responsableIdx !== idx && (
+                          <Button onClick={() => handleSetResponsable(idx)} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500" size="sm">
+                            Hacer responsable
+                          </Button>
+                        )}
+                        <Button onClick={() => handleEliminarHuesped(idx)} className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600" size="sm">
+                          Eliminar
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -989,7 +1140,7 @@ export default function OcuparHabitacion() {
               <Button onClick={handleVolverPaso} variant="outline">
                 ← Atrás
               </Button>
-              <Button onClick={handleContinuarConfirmacion}>
+              <Button onClick={handleContinuarConfirmacion} disabled={responsableIdx === null}>
                 Continuar →
               </Button>
             </div>
@@ -1010,11 +1161,11 @@ export default function OcuparHabitacion() {
                 </div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Huéspedes ({huespedes.length})</h3>
+                  <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Huéspedes ({huespedes.length})</h3>
                 <div className="space-y-3">
                   {huespedes.map((h, idx) => (
                     <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700">
-                      <p className="text-slate-900 dark:text-white font-semibold">{idx === 0 && "👤 "}{h.apellido}, {h.nombres}{idx === 0 && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
+                      <p className="text-slate-900 dark:text-white font-semibold">{responsableIdx === idx && "👤 "}{h.apellido}, {h.nombres}{responsableIdx === idx && <span className="text-xs text-blue-600 dark:text-blue-400 ml-2">(Responsable)</span>}</p>
                       <p className="text-slate-600 dark:text-slate-400 text-sm">{h.tipoDocumento}: {h.nroDocumento}</p>
                     </div>
                   ))}
@@ -1023,19 +1174,35 @@ export default function OcuparHabitacion() {
               <Card className="border-orange-200 bg-orange-50/50 p-4 dark:border-orange-900 dark:bg-orange-950/20">
                 <p className="text-orange-700 dark:text-orange-200 text-sm">⚠️ Por favor, verifique que todos los datos sean correctos antes de confirmar el check-in.</p>
               </Card>
-              <div className="flex gap-4">
-                <Button onClick={handleVolverPaso} variant="outline">
-                  ← Modificar Datos
-                </Button>
-                <Button 
-                  onClick={handleConfirmarEstadia} 
-                  disabled={loading}
-                  className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "✓ "}
-                  {loading ? "Confirmando..." : "Confirmar Check-In"}
-                </Button>
-              </div>
+              {!postCheckin ? (
+                <div className="flex gap-4">
+                  <Button onClick={handleVolverPaso} variant="outline">
+                    ← Modificar Datos
+                  </Button>
+                  <Button 
+                    onClick={handleConfirmarEstadia} 
+                    disabled={loading}
+                    className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "✓ "}
+                    {loading ? "Confirmando..." : "Confirmar Check-In"}
+                  </Button>
+                </div>
+              ) : (
+                <Card className="p-6 border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
+                  {errorCreacion && (
+                    <Card className="mb-4 border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/20">
+                      <p className="text-red-700 dark:text-red-300 text-sm">{errorCreacion}</p>
+                    </Card>
+                  )}
+                  <p className="mb-4 text-green-700 dark:text-green-300">Check-In realizado. ¿Qué desea hacer?</p>
+                  <div className="flex gap-3">
+                    <Button onClick={() => { setPostCheckin(false); setPaso("huespedes"); }} className="bg-blue-600 hover:bg-blue-700">Seguir cargando</Button>
+                    <Button onClick={async () => { await ejecutarCreacionEstadia(); if (!errorCreacion) { setPostCheckin(false); handleVolverASeleccion(); setPaso("fechasGrilla"); } }} className="bg-orange-600 hover:bg-orange-700">Cargar otra habitación</Button>
+                    <Button onClick={async () => { await ejecutarCreacionEstadia(); if (!errorCreacion) { router.push("/"); } }} variant="outline">Salir</Button>
+                  </div>
+                </Card>
+              )}
             </div>
           </Card>
         )}

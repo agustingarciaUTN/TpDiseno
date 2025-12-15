@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Hotel, Home, Calendar, UserCheck, CheckCircle, Loader2 } from "lucide-react"
+import { Hotel, Home, Calendar, UserCheck, CheckCircle } from "lucide-react"
+import GrillaHabitacionesEstado from "@/components/grilla-habitaciones-estado"
 
 interface HabitacionEstado {
     id: string
@@ -123,9 +124,10 @@ export default function ReservarHabitacion() {
 
     const handleConfirmarHasta = async () => {
         if (validarFechaHasta()) {
+            // Cambiar al paso de grilla primero para que se vea el mensaje de carga
+            setPaso("grilla")
             // Cargar habitaciones con estado real para el rango de fechas
             await cargarHabitacionesConEstado()
-            setPaso("grilla")
         }
     }
 
@@ -135,9 +137,14 @@ export default function ReservarHabitacion() {
 
         setLoading(true)
         setErrorCarga("")
+        
+        // Delay mínimo para asegurar que el mensaje de carga se vea
+        const [response] = await Promise.all([
+            fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`),
+            new Promise(resolve => setTimeout(resolve, 300))
+        ])
+        
         try {
-            const url = `http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`
-            const response = await fetch(url)
             if (!response.ok) throw new Error("Error al cargar habitaciones")
 
             const data = await response.json()
@@ -558,10 +565,10 @@ export default function ReservarHabitacion() {
                 {paso === "grilla" && (
                     <div className="space-y-6">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center p-12">
-                                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-                                <p className="text-slate-600 dark:text-slate-400">Cargando habitaciones disponibles...</p>
-                            </div>
+                            <Card className="p-12 flex flex-col items-center justify-center gap-4">
+                                <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+                                <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">Procesando datos...</p>
+                            </Card>
                         ) : errorCarga ? (
                             <Card className="p-6 text-center border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
                                 <p className="text-red-600 dark:text-red-400 mb-4">{errorCarga}</p>
