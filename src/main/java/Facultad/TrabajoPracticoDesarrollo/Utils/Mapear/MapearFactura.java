@@ -1,6 +1,9 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoEstadiaSimple;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoResponsableDePago;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoResponsableSimple;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoFactura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.ResponsablePago;
@@ -9,7 +12,7 @@ import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
 
 public class MapearFactura {
 
-    public static Factura mapearDtoAEntidad (DtoFactura dto, ResponsablePago responsable) {
+    public static Factura mapearDtoAEntidad (DtoFactura dto, ResponsablePago responsable, Estadia estadia) {
         if (dto == null) return  null;
 
         return new Factura.Builder()
@@ -17,7 +20,7 @@ public class MapearFactura {
                 .fechaEmision(dto.getFechaEmision())
                 .importeTotal(dto.getImporteTotal())
                 .responsable(responsable)
-                .estadia(MapearEstadia.mapearDtoAEntidad(dto.getDtoEstadia()))
+                .estadia(estadia)
                 .tipo(dto.getTipoFactura())
                 .fechaVencimiento(dto.getFechaVencimiento())
                 .estadoFactura(dto.getEstadoFactura())
@@ -28,9 +31,15 @@ public class MapearFactura {
 
     }
 
-    public static DtoFactura mapearEntidadADto (Factura entidad, DtoResponsableDePago responsable) {
+    public static DtoFactura mapearEntidadADto (Factura entidad) {
 
         if (entidad == null) return null;
+
+        DtoResponsableSimple respSimple = new DtoResponsableSimple();
+        respSimple.setIdResponsable(entidad.getResponsablePago().getIdResponsable());
+
+        DtoEstadiaSimple estSimple = new DtoEstadiaSimple();
+        estSimple.setIdEstadia(entidad.getEstadia().getIdEstadia());
 
         return new DtoFactura.Builder()
                 .numeroFactura(entidad.getNumeroFactura())
@@ -41,8 +50,8 @@ public class MapearFactura {
                 .importeTotal(entidad.getImporteTotal())
                 .importeNeto(entidad.getImporteNeto())
                 .iva(entidad.getIva())
-                .dtoEstadia(MapearEstadia.mapearEntidadADto(entidad.getEstadia()))
-                .dtoResponsable(responsable)
+                .idEstadia(estSimple)
+                .idResponsable(respSimple)
                 .dtoNotaDeCredito(MapearNotaDeCredito.mapearEntidadADto(entidad.getNotaDeCredito()))
                 .build();
 

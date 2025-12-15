@@ -4,19 +4,23 @@ import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoFactura;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 import java.util.Date;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DtoFactura {
   //  private int idFactura;
 
     public static final String REGEX_NUMERO = "^\\d{4}-\\d{8}$";
 
     @NotBlank
-    @Pattern(regexp = REGEX_NUMERO, message = "El formato debe ser XXXX-XXXXXXXX")
+    //@Pattern(regexp = REGEX_NUMERO, message = "El formato debe ser XXXX-XXXXXXXX")
     @Size(min = 2, max = 20)
     private String numeroFactura;
 
@@ -25,7 +29,7 @@ public class DtoFactura {
     private Date fechaEmision;
 
     @NotNull
-    @FutureOrPresent
+    //@FutureOrPresent
     private Date fechaVencimiento;
 
     private EstadoFactura estadoFactura;
@@ -43,13 +47,18 @@ public class DtoFactura {
     @PositiveOrZero
     private double iva;
 
+    /*
     @NotNull
     @Valid
     private DtoEstadia dtoEstadia;
+    */
+
+    @NotNull
+    private DtoEstadiaSimple idEstadia;
 
     @NotNull
     @Valid
-    private DtoResponsableDePago dtoResponsable;
+    private DtoResponsableSimple idResponsable;
 
     @Valid
     private DtoNotaDeCredito dtoNotaDeCredito;
@@ -65,16 +74,16 @@ public class DtoFactura {
         this.importeTotal = builder.importeTotal;
         this.importeNeto = builder.importeNeto;
         this.iva = builder.iva;
-        this.dtoEstadia = builder.dtoEstadia;
-        this.dtoResponsable = builder.dtoResponsable;
+        this.idEstadia = builder.idEstadia;
+        this.idResponsable = builder.idResponsable;
         this.dtoNotaDeCredito = builder.dtoNotaDeCredito;
     }
 
-    public DtoEstadia getIdEstadia() { return dtoEstadia; }
-    public void setIdEstadia(DtoEstadia dtoEstadia) { this.dtoEstadia = dtoEstadia; }
+    public DtoEstadiaSimple getIdEstadia() { return idEstadia; }
+    public void setIdEstadia(DtoEstadiaSimple idEstadia) { this.idEstadia = idEstadia; }
 
-    public DtoResponsableDePago getIdResponsable() { return dtoResponsable; }
-    public void setIdResponsable(DtoResponsableDePago dtoResponsable) { this.dtoResponsable = dtoResponsable; }
+    public DtoResponsableSimple getIdResponsable() { return idResponsable; }
+    public void setIdResponsable(DtoResponsableSimple idResponsable) { this.idResponsable = idResponsable; }
 
     public DtoNotaDeCredito getIdNotaDeCredito() { return dtoNotaDeCredito; }
     public void setIdNotaDeCredito(DtoNotaDeCredito dtoNotaDeCredito) { this.dtoNotaDeCredito = dtoNotaDeCredito; }
@@ -90,8 +99,8 @@ public class DtoFactura {
         private double importeTotal;
         private double importeNeto;
         private double iva;
-        private DtoEstadia dtoEstadia;
-        private DtoResponsableDePago dtoResponsable;
+        private DtoEstadiaSimple idEstadia;
+        private DtoResponsableSimple idResponsable;
         private DtoNotaDeCredito dtoNotaDeCredito;
 
         public Builder() {}
@@ -106,8 +115,8 @@ public class DtoFactura {
         public Builder importeNeto(double val) { importeNeto = val; return this; }
         public Builder iva(double val) { iva = val; return this; }
 
-        public Builder dtoEstadia(DtoEstadia val) { dtoEstadia = val; return this; }
-        public Builder dtoResponsable(DtoResponsableDePago val) { dtoResponsable = val; return this; }
+        public Builder idEstadia(DtoEstadiaSimple val) { idEstadia = val; return this; }
+        public Builder idResponsable(DtoResponsableSimple val) { idResponsable = val; return this; }
         public Builder dtoNotaDeCredito(DtoNotaDeCredito val) { dtoNotaDeCredito = val; return this; }
 
         public DtoFactura build() {

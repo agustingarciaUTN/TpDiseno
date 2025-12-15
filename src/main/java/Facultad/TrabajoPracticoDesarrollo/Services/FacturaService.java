@@ -3,6 +3,7 @@ package Facultad.TrabajoPracticoDesarrollo.Services;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.*;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.*;
+import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import Facultad.TrabajoPracticoDesarrollo.enums.PosIva;
 import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
@@ -121,7 +122,14 @@ public class FacturaService {
         Huesped h = huespedRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Huésped no encontrado"));
 
-        LocalDate nacimiento = h.getFechaNacimiento().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate nacimiento;
+        if (h.getFechaNacimiento() instanceof java.sql.Date) {
+            nacimiento = ((java.sql.Date) h.getFechaNacimiento()).toLocalDate();
+        } else {
+            // Fallback por si es java.util.Date puro
+            nacimiento = new java.sql.Date(h.getFechaNacimiento().getTime()).toLocalDate();
+        }
+
         if (Period.between(nacimiento, LocalDate.now()).getYears() < 18) {
             throw new IllegalArgumentException("La persona seleccionada es menor de edad.");
         }
@@ -215,18 +223,13 @@ public class FacturaService {
         }
 
         Estadia estadia = estadiaRepository.findById(dto.getIdEstadia().getIdEstadia()).orElseThrow();
-        ResponsablePago responsable = responsablePagoRepository.findById(dto.getIdResponsable().getIdResponsable()).orElseThrow();
 
-        // Mapeo manual a Entidad
-        Factura factura = new Factura();
-        factura.setNumeroFactura(dto.getNumeroFactura());
-        factura.setFechaEmision(dto.getFechaEmision());
-        factura.setFechaVencimiento(dto.getFechaVencimiento());
-        factura.setImporteTotal(dto.getImporteTotal());
-        factura.setImporteNeto(dto.getImporteNeto());
-        factura.setIva(dto.getIva());
-        factura.setTipoFactura(dto.getTipoFactura());
-        factura.setEstadoFactura(EstadoFactura.PENDIENTE); // Nace pendiente
+        Integer idDelResponsable = dto.getIdResponsable().getIdResponsable();
+
+        ResponsablePago responsable = responsablePagoRepository.findById(idDelResponsable)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el responsable ID: " + idDelResponsable));
+
+        Factura factura = MapearFactura.mapearDtoAEntidad(dto, responsable, estadia);
 
         // Relaciones
         factura.setEstadia(estadia);
@@ -256,8 +259,22 @@ public class FacturaService {
         PersonaFisica nuevaPf = new PersonaFisica();
         nuevaPf.setHuesped(huesped);
 
-        // Heredamos datos de contacto del huésped para la facturación
-        nuevaPf.setDireccion(huesped.getDireccion());
+        if (huesped.getDireccion() != null) {
+            Direccion dirOriginal = huesped.getDireccion();
+            Direccion nuevaDireccion = new Direccion();
+
+            // Usamos los SETTERS que Lombok genera automáticamente (@Setter)
+            nuevaDireccion.setCalle(dirOriginal.getCalle());
+            nuevaDireccion.setNumero(dirOriginal.getNumero());
+            nuevaDireccion.setDepartamento(dirOriginal.getDepartamento());
+            nuevaDireccion.setPiso(dirOriginal.getPiso());
+            nuevaDireccion.setLocalidad(dirOriginal.getLocalidad());
+            nuevaDireccion.setProvincia(dirOriginal.getProvincia());
+            nuevaDireccion.setPais(dirOriginal.getPais());
+            nuevaDireccion.setCodPostal(dirOriginal.getCodPostal());
+            // Asignamos la nueva dirección clonada a la Persona Física
+            nuevaPf.setDireccion(nuevaDireccion);
+        }
 
         personaFisicaRepository.save(nuevaPf);
 

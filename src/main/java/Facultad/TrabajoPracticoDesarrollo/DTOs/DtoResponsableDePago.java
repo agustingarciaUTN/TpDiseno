@@ -15,11 +15,11 @@ import lombok.experimental.SuperBuilder;
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "type" // Campo discriminador en el JSON
+        property = "tipoResponsable" // Campo discriminador en el JSON
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = DtoPersonaFisica.class, name = "fisica"),
-        @JsonSubTypes.Type(value = DtoPersonaJuridica.class, name = "juridica")
+        @JsonSubTypes.Type(value = DtoPersonaFisica.class, name = "F"),
+        @JsonSubTypes.Type(value = DtoPersonaJuridica.class, name = "J")
 })
 public abstract class DtoResponsableDePago {
     private Integer idResponsable;

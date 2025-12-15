@@ -100,9 +100,10 @@ public class Huesped {
         this.posicionIva = builder.posicionIva;
         this.cuit = builder.cuit;
         this.direccion = builder.direccion;
-        this.telefono = builder.telefono;
-        this.email = builder.email;
-        this.ocupacion = builder.ocupacion;
+        // BLINDAJE EXTRA
+        this.telefono = (builder.telefono != null) ? new ArrayList<>(builder.telefono) : new ArrayList<>();
+        this.email = (builder.email != null) ? new ArrayList<>(builder.email) : new ArrayList<>();
+        this.ocupacion = (builder.ocupacion != null) ? new ArrayList<>(builder.ocupacion) : new ArrayList<>();
     }
 
     // --- 3. CLASE BUILDER ---
@@ -134,9 +135,21 @@ public class Huesped {
         public Builder cuit(String val) { cuit = val; return this; }
         public Builder direccion(Direccion val) { direccion = val; return this; }
 
-        public Builder telefonos(List<Long> val) { telefono = val; return this; }
-        public Builder emails(List<String> val) { email = val; return this; }
-        public Builder ocupaciones(List<String> val) { ocupacion = val; return this; }
+        public Builder telefonos(List<Long> val) {
+            // Si viene null, dejamos la lista vacía. Si trae datos, creamos una NUEVA ArrayList con ellos.
+            this.telefono = (val != null) ? new ArrayList<>(val) : new ArrayList<>();
+            return this;
+        }
+
+        public Builder emails(List<String> val) {
+            this.email = (val != null) ? new ArrayList<>(val) : new ArrayList<>();
+            return this;
+        }
+
+        public Builder ocupaciones(List<String> val) {
+            this.ocupacion = (val != null) ? new ArrayList<>(val) : new ArrayList<>();
+            return this;
+        }
 
         public Huesped build() {
             return new Huesped(this);
