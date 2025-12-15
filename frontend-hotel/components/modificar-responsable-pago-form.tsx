@@ -209,7 +209,7 @@ export default function ModificarResponsablePagoForm() {
                     <Button variant="ghost" asChild>
                         <Link href="/">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Volver al menú
+                            Volver al Menú Principal
                         </Link>
                     </Button>
                 </div>

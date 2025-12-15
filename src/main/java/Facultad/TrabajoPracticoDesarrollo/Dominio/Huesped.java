@@ -86,6 +86,10 @@ public class Huesped {
     @Column(name = "ocupacion")
     private List<String> ocupacion = new ArrayList<>();
 
+    // Relación con EstadiaHuesped (permite saber en qué estadías estuvo el huésped)
+    @OneToMany(mappedBy = "huesped")
+    private List<EstadiaHuesped> estadiaHuespedes = new ArrayList<>();
+
     // --- 1. CONSTRUCTOR VACÍO (Obligatorio para JPA) ---
     public Huesped() {}
 

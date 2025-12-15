@@ -36,13 +36,16 @@ public class DtoEstadia {
     private DtoReserva dtoReserva;
 
 
-    @JsonIgnore
-    @Valid // Valida cada huésped de la lista
+    // No validar @Valid porque solo enviamos tipoDocumento y nroDocumento (referencia al huésped existente)
     @NotEmpty(message = "Debe haber al menos un huésped asociado a la estadía")
     private ArrayList<DtoHuesped> dtoHuespedes;
 
     @NotNull(message = "La habitación es obligatoria")
     private DtoHabitacion dtoHabitacion;
+
+    // Constructor público sin argumentos para Jackson
+    public DtoEstadia() {
+    }
 
     private DtoEstadia(Builder builder) {
         this.idEstadia = builder.idEstadia;
@@ -54,8 +57,9 @@ public class DtoEstadia {
         this.dtoHabitacion = builder.dtoHabitacion;
     }
 
-    @JsonIgnore
     public ArrayList<DtoHuesped> getDtoHuespedes() { return dtoHuespedes; }
+    
+    public void setDtoHuespedes(ArrayList<DtoHuesped> dtoHuespedes) { this.dtoHuespedes = dtoHuespedes; }
 
     public DtoHabitacion getDtoHabitacion(){return dtoHabitacion;}
 

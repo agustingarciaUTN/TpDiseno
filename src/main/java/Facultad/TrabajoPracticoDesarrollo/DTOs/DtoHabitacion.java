@@ -35,6 +35,10 @@ public class DtoHabitacion {
     @Valid
     private ArrayList<DtoReserva> dtoReservas = new ArrayList<>();
 
+    // Constructor público sin argumentos para Jackson
+    public DtoHabitacion() {
+    }
+
     // --- CONSTRUCTOR PRIVADO ---
     private DtoHabitacion(Builder builder) {
         this.numero = builder.numero;

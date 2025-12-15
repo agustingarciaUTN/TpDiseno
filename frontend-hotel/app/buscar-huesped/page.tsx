@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useState, type FormEvent, type ChangeEvent } from "react"
+import {useState, type FormEvent, type ChangeEvent, useEffect} from "react"
 import { useRouter } from "next/navigation"
 import { useGuest } from "@/lib/guest-context"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Search, UserPlus, Edit, Home, CheckCircle } from "lucide-react"
@@ -223,6 +223,17 @@ export default function BuscarHuesped() {
         }
     }
 
+    const handleVolverMenu = () => {
+        setSelectedGuest(null); // Limpiamos explícitamente solo al volver al menú
+        router.push("/");
+    }
+
+    useEffect(() => {
+        // Esto se ejecuta cuando entras a la pantalla
+        console.log("Entrando al buscador...");
+
+    }, []); // Los corchetes vacíos son importantes
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -241,81 +252,87 @@ export default function BuscarHuesped() {
                     </p>
                 </div>
 
-                <Card className="p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-50">Criterios de Búsqueda</h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="apellido">Apellido</Label>
-                                <Input
-                                    id="apellido"
-                                    name="apellido"
-                                    value={form.apellido}
-                                    onChange={handleChange}
-                                    placeholder="Ej: G"
-                                    maxLength={1}
-                                />
-                                {errors.apellido && <p className="text-xs text-red-500">{errors.apellido}</p>}
+                <Card>
+                    {/* ENCABEZADO CON BOTÓN A LA DERECHA */}
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                            Criterios de Búsqueda
+                        </CardTitle>
+                        <Button variant="outline" onClick={handleVolverMenu} className="gap-2">
+                            <Home className="h-4 w-4" />
+                            Menú Principal
+                        </Button>
+                    </CardHeader>
+
+                    <CardContent>
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="apellido">Apellido</Label>
+                                    <Input
+                                        id="apellido"
+                                        name="apellido"
+                                        value={form.apellido}
+                                        onChange={handleChange}
+                                        placeholder="Ej: G"
+                                        maxLength={1}
+                                    />
+                                    {errors.apellido && <p className="text-xs text-red-500">{errors.apellido}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="nombres">Nombres</Label>
+                                    <Input
+                                        id="nombres"
+                                        name="nombres"
+                                        value={form.nombres}
+                                        onChange={handleChange}
+                                        placeholder="Ej: A"
+                                        maxLength={1}
+                                    />
+                                    {errors.nombres && <p className="text-xs text-red-500">{errors.nombres}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
+                                    <select
+                                        id="tipoDocumento"
+                                        name="tipoDocumento"
+                                        value={form.tipoDocumento}
+                                        onChange={handleChange}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <option value="">Todos</option>
+                                        {Object.entries(TIPO_DOCUMENTO_LABELS).map(([value, label]) => (
+                                            <option key={value} value={value}>
+                                                {label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="nroDocumento">Nro Documento</Label>
+                                    <Input
+                                        id="nroDocumento"
+                                        name="nroDocumento"
+                                        value={form.nroDocumento}
+                                        onChange={handleChange}
+                                        disabled={!form.tipoDocumento}
+                                        placeholder={form.tipoDocumento ? "Ingrese el número" : "Seleccione tipo primero"}
+                                    />
+                                    {errors.nroDocumento && <p className="text-xs text-red-500">{errors.nroDocumento}</p>}
+                                </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="nombres">Nombres</Label>
-                                <Input
-                                    id="nombres"
-                                    name="nombres"
-                                    value={form.nombres}
-                                    onChange={handleChange}
-                                    placeholder="Ej: A"
-                                    maxLength={1}
-                                />
-                                {errors.nombres && <p className="text-xs text-red-500">{errors.nombres}</p>}
+                            <div className="mt-6 flex gap-3">
+                                <Button type="submit" disabled={isSearching} className="gap-2">
+                                    <Search className="h-4 w-4" />
+                                    {isSearching ? "Buscando..." : "Buscar"}
+                                </Button>
                             </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
-                                <select
-                                    id="tipoDocumento"
-                                    name="tipoDocumento"
-                                    value={form.tipoDocumento}
-                                    onChange={handleChange}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <option value="">Todos</option>
-                                    {Object.entries(TIPO_DOCUMENTO_LABELS).map(([value, label]) => (
-                                        <option key={value} value={value}>
-                                            {label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="nroDocumento">Nro Documento</Label>
-                                <Input
-                                    id="nroDocumento"
-                                    name="nroDocumento"
-                                    value={form.nroDocumento}
-                                    onChange={handleChange}
-                                    disabled={!form.tipoDocumento}
-                                    placeholder={form.tipoDocumento ? "Ingrese el número" : "Seleccione tipo primero"}
-                                />
-                                {errors.nroDocumento && <p className="text-xs text-red-500">{errors.nroDocumento}</p>}
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex gap-3">
-                            <Button type="submit" disabled={isSearching} className="gap-2">
-                                <Search className="h-4 w-4" />
-                                {isSearching ? "Buscando..." : "Buscar"}
-                            </Button>
-                            <Button type="button" variant="outline" asChild>
-                                <Link href="/">
-                                    <Home className="mr-2 h-4 w-4" />
-                                    Volver al Inicio
-                                </Link>
-                            </Button>
-                        </div>
-                    </form>
+                        </form>
+                    </CardContent>
                 </Card>
 
                 {searchPerformed && resultados !== null && (
@@ -377,18 +394,18 @@ export default function BuscarHuesped() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                              {index + 1}
-                            </span>
+                                                        <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                                                            {index + 1}
+                                                        </span>
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-slate-900 dark:text-slate-50">
                                                             {h.apellido}, {h.nombres}
                                                         </p>
                                                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                              <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                                {h.tipoDocumento}
-                              </span>{" "}
+                                                            <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                                                {h.tipoDocumento}
+                                                            </span>{" "}
                                                             {h.numeroDocumento}
                                                         </p>
                                                         {h.email && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">📧 {h.email}</p>}

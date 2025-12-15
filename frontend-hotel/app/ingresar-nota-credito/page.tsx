@@ -366,7 +366,7 @@ export default function IngresarNotaCreditoPage() {
                                     Nueva Búsqueda
                                 </Button>
                                 <Button onClick={() => router.push("/")} className="flex-1 bg-green-600 hover:bg-green-700">
-                                    Volver al Inicio
+                                    Volver al Menú Principal
                                 </Button>
                             </div>
                         </CardContent>

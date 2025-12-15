@@ -94,10 +94,7 @@ export interface DtoUsuario {
 
 // --- HABITACIÓN (CU5) ---
 export enum EstadoHabitacion {
-  DISPONIBLE = "DISPONIBLE",
-  OCUPADA = "OCUPADA",
-  RESERVADA = "RESERVADA",
-  EN_MANTENIMIENTO = "EN_MANTENIMIENTO",
+  HABILITADA = "HABILITADA",
   FUERA_DE_SERVICIO = "FUERA_DE_SERVICIO"
 }
 

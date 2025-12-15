@@ -224,7 +224,7 @@ export default function RegistrarPagoPage() {
                             </p>
                         </div>
                         <Button asChild variant="outline">
-                            <Link href="/">Volver al inicio</Link>
+                            <Link href="/">Volver al Menú Principal</Link>
                         </Button>
                     </div>
                 </div>

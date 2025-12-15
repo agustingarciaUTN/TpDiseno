@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Services;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.EstadiaHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.HuespedId;
@@ -10,6 +11,7 @@ import Facultad.TrabajoPracticoDesarrollo.Repositories.EstadiaRepository;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.HabitacionRepository;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.HuespedRepository;
 import Facultad.TrabajoPracticoDesarrollo.Utils.Mapear.MapearEstadia;
+import Facultad.TrabajoPracticoDesarrollo.enums.Responsable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,17 +98,37 @@ public class EstadiaService {
                 .orElseThrow(() -> new Exception("La habitación no existe."));
         estadiaNueva.setHabitacion(habReal);
 
-        // b. Vincular Huéspedes Reales
-        List<Huesped> huespedesReales = new ArrayList<>();
+        // b. Vincular Huéspedes Reales y crear registros EstadiaHuesped
+        // El primer huésped es el responsable (responsable=SI)
+        List<EstadiaHuesped> estadiaHuespedList = new ArrayList<>();
+        boolean esPrimero = true;
+        
         for (DtoHuesped dtoH : listaHuespedes) {
             HuespedId hid = new HuespedId(dtoH.getTipoDocumento(), dtoH.getNroDocumento());
             Huesped hReal = huespedRepository.findById(hid)
                     .orElseThrow(() -> new Exception("El huésped " + dtoH.getNroDocumento() + " no está registrado. Debe darlo de alta antes."));
-            huespedesReales.add(hReal);
+            
+            // Crear el registro EstadiaHuesped con responsable
+            EstadiaHuesped eh = new EstadiaHuesped();
+            eh.setTipoDocumento(hReal.getTipoDocumento());
+            eh.setNroDocumento(hReal.getNroDocumento());
+            eh.setResponsable(esPrimero ? Responsable.SI : Responsable.NO);
+            eh.setHuesped(hReal);
+            
+            estadiaHuespedList.add(eh);
+            esPrimero = false;
         }
-        estadiaNueva.setHuespedes(huespedesReales); // Asigna la lista para la tabla intermedia
-
-        // 5. Guardar (Cascade persistirá la relación en estadia_huesped)
-        estadiaRepository.save(estadiaNueva);
+        
+        // 5. Guardar la estadía primero para obtener el ID (sin la lista de EstadiaHuesped todavía)
+        Estadia estadiaGuardada = estadiaRepository.save(estadiaNueva);
+        
+        // 6. Ahora actualizar el idEstadia en cada EstadiaHuesped y establecer la relación bidireccional
+        for (EstadiaHuesped eh : estadiaHuespedList) {
+            eh.setIdEstadia(estadiaGuardada.getIdEstadia());
+            eh.setEstadia(estadiaGuardada);
+        }
+        
+        // 7. Establecer la relación bidireccional y dejar que JPA persista los EstadiaHuesped en el siguiente flush
+        estadiaGuardada.setEstadiaHuespedes(estadiaHuespedList);
     }
 }

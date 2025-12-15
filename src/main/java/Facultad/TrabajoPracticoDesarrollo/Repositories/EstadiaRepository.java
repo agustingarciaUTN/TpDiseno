@@ -46,7 +46,7 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
      * Útil para evitar que un acompañante sea agregado si ya está en otra habitación.
      * Hace un JOIN implícito con la lista de huéspedes.
      */
-    @Query("SELECT COUNT(e) > 0 FROM Estadia e JOIN e.huespedes h " +
+    @Query("SELECT COUNT(e) > 0 FROM Estadia e JOIN e.estadiaHuespedes eh JOIN eh.huesped h " +
             "WHERE h.tipoDocumento = :tipoDoc AND h.nroDocumento = :nroDoc " +
             "AND e.fechaCheckIn < :fechaFin " +
             "AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut > :fechaInicio)")
@@ -71,5 +71,6 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
     );*/
 
     // Para saber si el huésped ya pisó el hotel (CU11)
-    boolean existsByHuespedesContaining(Huesped huesped);
+    @Query("SELECT COUNT(e) > 0 FROM Estadia e JOIN e.estadiaHuespedes eh WHERE eh.huesped = :huesped")
+    boolean existsByHuespedesContaining(@Param("huesped") Huesped huesped);
 }
