@@ -16,6 +16,10 @@ public class DtoDetalleFacturacion {
     public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
 
     // Datos del Responsable
+    @NotNull
+    @Positive
+    private int idResponsable;
+
     @NotBlank
     @Size(min = 2, max = 200)
     private String nombreResponsable;
@@ -51,6 +55,7 @@ public class DtoDetalleFacturacion {
     private TipoFactura tipoFactura; // A o B
 
     private DtoDetalleFacturacion(Builder builder){
+        this.idResponsable = builder.idResponsable;
         this.nombreResponsable = builder.nombreResponsable;
         this.cuitResponsable = builder.cuitResponsable;
         this.montoEstadiaBase = builder.montoEstadiaBase;
@@ -64,6 +69,7 @@ public class DtoDetalleFacturacion {
     }
 
     public static class Builder {
+        private int idResponsable;
         private String nombreResponsable;
         private String cuitResponsable;
         private double montoEstadiaBase;
@@ -77,6 +83,7 @@ public class DtoDetalleFacturacion {
 
         public Builder () {}
 
+        public Builder idResponsable(int val) { idResponsable = val; return this; }
         public Builder nombreResponsable(String val) { nombreResponsable = val; return this;}
         public Builder cuitResponsable(String val) { cuitResponsable = val; return this; }
         public Builder montoEstadiaBase(double val) { montoEstadiaBase = val; return this; }

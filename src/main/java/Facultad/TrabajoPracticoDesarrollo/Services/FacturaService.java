@@ -194,6 +194,7 @@ public class FacturaService {
 
         // 6. Construir DTO Final con Builder
         return new DtoDetalleFacturacion.Builder()
+                .idResponsable(idResponsable)
                 .nombreResponsable(nombreResp)
                 .cuitResponsable(cuitResp)
                 .montoEstadiaBase(estadia.getValorEstadia())
