@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Hotel, Home, Calendar, UserCheck, CheckCircle } from "lucide-react"
+import { Hotel, Home, Calendar, UserCheck, CheckCircle, Loader2 } from "lucide-react"
 import GrillaHabitacionesEstado from "@/components/grilla-habitaciones-estado"
 
 interface HabitacionEstado {
@@ -199,20 +199,22 @@ export default function ReservarHabitacion() {
     }
 
     // Generar días del rango
-    const generarDias = (): Date[] => {
-        if (!fechaDesde || !fechaHasta) return []
-        const desde = createLocalDate(fechaDesde)
-        const hasta = createLocalDate(fechaHasta)
-        const dias: Date[] = []
-        const actual = new Date(desde)
-        while (actual < hasta) {
-            dias.push(new Date(actual))
-            actual.setDate(actual.getDate() + 1)
+    const generarDias = (desde?: string, hasta?: string): Date[] => {
+        const fechaDesdeUse = desde || fechaDesde;
+        const fechaHastaUse = hasta || fechaHasta;
+        if (!fechaDesdeUse || !fechaHastaUse) return [];
+        const desdeDate = createLocalDate(fechaDesdeUse);
+        const hastaDate = createLocalDate(fechaHastaUse);
+        const dias: Date[] = [];
+        const actual = new Date(desdeDate);
+        while (actual < hastaDate) {
+            dias.push(new Date(actual));
+            actual.setDate(actual.getDate() + 1);
         }
-        return dias
+        return dias;
     }
 
-    const diasRango = generarDias()
+    const diasRango = generarDias(fechaDesde, fechaHasta);
 
     // Verificar si una celda está disponible para selección
     const esCeldaDisponible = (habitacionId: string, diaIdx: number): boolean => {
@@ -280,7 +282,7 @@ export default function ReservarHabitacion() {
                 ])
                 setSeleccionActual(null)
             } else {
-                alert("Hay días no disponibles en el rango seleccionado")
+                alert("No se puede seleccionar ese rango. Hay días con reservas, ocupadas o en mantenimiento.")
                 setSeleccionActual(null)
             }
         }
@@ -438,13 +440,15 @@ export default function ReservarHabitacion() {
     const getEstadoColor = (estado: string) => {
         switch (estado) {
             case "DISPONIBLE":
-                return "bg-green-600 dark:bg-green-500"
+                return "bg-green-600 dark:bg-green-700"
             case "RESERVADA":
-                return "bg-blue-600 dark:bg-blue-500"
+                return "bg-orange-600 dark:bg-orange-700"
             case "OCUPADA":
-                return "bg-red-600 dark:bg-red-500"
+                return "bg-red-600 dark:bg-red-700"
+            case "MANTENIMIENTO":
+                return "bg-yellow-600 dark:bg-yellow-700"
             default:
-                return "bg-slate-600"
+                return "bg-slate-600 dark:bg-slate-700"
         }
     }
 
@@ -584,9 +588,9 @@ export default function ReservarHabitacion() {
                                         <p className="text-sm text-slate-600 dark:text-slate-400">Disponibles</p>
                                         <p className="text-3xl font-bold text-green-600 dark:text-green-400">{conteo.disponibles}</p>
                                     </Card>
-                                    <Card className="border-l-4 border-blue-500 p-4">
+                                    <Card className="border-l-4 border-orange-500 p-4">
                                         <p className="text-sm text-slate-600 dark:text-slate-400">Reservadas</p>
-                                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{conteo.reservadas}</p>
+                                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{conteo.reservadas}</p>
                                     </Card>
                                     <Card className="border-l-4 border-red-500 p-4">
                                         <p className="text-sm text-slate-600 dark:text-slate-400">Ocupadas</p>
@@ -604,117 +608,113 @@ export default function ReservarHabitacion() {
                                 </Card>
 
                                 {/* Grilla de disponibilidad */}
-                                <Card className="p-6 overflow-x-auto">
-                                    <div className="min-w-[800px]">
-                                        <table className="w-full text-sm border-collapse">
+                                <Card className="p-6">
+                                    <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
+                                        Grilla de disponibilidad: {createLocalDate(fechaDesde).toLocaleDateString()} al {createLocalDate(fechaHasta).toLocaleDateString()}
+                                    </h2>
+                                    <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
+                                        Haga click en una celda para iniciar la selección, luego haga click en otra celda de la misma habitación para completar el rango.
+                                    </p>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-collapse text-sm">
                                             <thead>
-                                            <tr className="bg-slate-100 dark:bg-slate-800">
-                                                <th className="border px-4 py-2 text-left font-semibold text-slate-900 dark:text-slate-50 w-32">
-                                                    Tipo de habitacion
-                                                </th>
-                                                {TIPOS_HABITACION_ORDEN.map((tipoHab) => {
-                                                    const habsTipo = habitaciones
-                                                        .filter((h: HabitacionEstado) => h.tipo === tipoHab)
-                                                        .sort((a, b) => Number.parseInt(a.numero) - Number.parseInt(b.numero))
-
-                                                    return habsTipo.length > 0 ? (
-                                                        <th
-                                                            key={tipoHab}
-                                                            colSpan={habsTipo.length}
-                                                            className="border px-3 py-2 text-center font-bold text-slate-900 dark:text-slate-50 bg-slate-200 dark:bg-slate-700"
-                                                        >
-                                                            {tipoHab}
-                                                        </th>
-                                                    ) : null
-                                                })}
-                                            </tr>
-                                            <tr className="bg-slate-100 dark:bg-slate-800">
-                                                <th className="border px-4 py-2 text-left font-semibold text-slate-900 dark:text-slate-50 text-xs">
-                                                    Dias/Habitaciones
-                                                </th>
-                                                {TIPOS_HABITACION_ORDEN.map((tipoHab) => {
-                                                    const habsTipo = habitaciones
-                                                        .filter((h: HabitacionEstado) => h.tipo === tipoHab)
-                                                        .sort((a, b) => Number.parseInt(a.numero) - Number.parseInt(b.numero))
-
-                                                    return habsTipo.map((hab: HabitacionEstado) => (
-                                                        <th
-                                                            key={hab.id}
-                                                            className="border px-3 py-2 text-center font-semibold text-slate-900 dark:text-slate-50 w-24 text-xs"
-                                                        >
-                                                            hab {hab.numero}
-                                                        </th>
-                                                    ))
-                                                })}
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {diasRango.map((dia, dayIdx) => (
-                                                <tr
-                                                    key={dayIdx}
-                                                    className={
-                                                        dayIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-slate-900/30"
-                                                    }
-                                                >
-                                                    <td className="border px-4 py-2 font-semibold text-slate-700 dark:text-slate-300">
-                                                        {dia.toLocaleDateString("es-ES", {
-                                                            day: "2-digit",
-                                                            month: "2-digit",
-                                                            year: "numeric",
-                                                        })}
-                                                    </td>
-                                                    {TIPOS_HABITACION_ORDEN.map((tipoHab) => {
-                                                        const habsTipo = habitaciones
-                                                            .filter((h: HabitacionEstado) => h.tipo === tipoHab)
-                                                            .sort((a, b) => Number.parseInt(a.numero) - Number.parseInt(b.numero))
-
-                                                        return habsTipo.map((hab: HabitacionEstado) => {
-                                                            const disponible = esCeldaDisponible(hab.id, dayIdx)
-                                                            const seleccionada = esCeldaSeleccionada(hab.id, dayIdx)
-                                                            const inicioActual = esInicioSeleccionActual(hab.id, dayIdx)
-                                                            const estadoCelda = obtenerEstadoCelda(hab.id, dayIdx)
-
-                                                            return (
-                                                                <td key={`${hab.id}-${dayIdx}`} className="border px-2 py-2 text-center">
-                                                                    <div
-                                                                        onClick={() => handleClickCelda(hab.id, dayIdx)}
-                                                                        className={`rounded px-2 py-1 text-xs font-semibold text-white transition cursor-pointer ${
-                                                                            seleccionada
-                                                                                ? "bg-blue-600 hover:bg-blue-700"
-                                                                                : inicioActual
-                                                                                    ? "bg-purple-500 animate-pulse"
-                                                                                    : disponible
-                                                                                        ? getEstadoColor(estadoCelda) + " hover:brightness-110"
-                                                                                        : getEstadoColor(estadoCelda) + " cursor-not-allowed opacity-70"
-                                                                        }`}
-                                                                        title={
-                                                                            seleccionada
-                                                                                ? "Seleccionada - Click para remover"
-                                                                                : inicioActual
-                                                                                    ? "Click en otra celda para finalizar"
-                                                                                    : disponible
-                                                                                        ? "Click para seleccionar"
-                                                                                        : estadoCelda
-                                                                        }
-                                                                    >
-                                                                        {seleccionada
-                                                                            ? "✓"
-                                                                            : inicioActual
-                                                                                ? "►"
-                                                                                : estadoCelda === "DISPONIBLE"
-                                                                                    ? "○"
-                                                                                    : estadoCelda === "RESERVADA"
-                                                                                        ? "R"
-                                                                                        : "X"}
-                                                                    </div>
-                                                                </td>
-                                                            )
-                                                        })
+                                                <tr className="bg-slate-100 dark:bg-slate-800">
+                                                    <th className="border border-slate-300 dark:border-slate-700 px-4 py-2 text-slate-900 dark:text-slate-50 font-semibold">Fecha</th>
+                                                    {/* Agrupar por tipo de habitación */}
+                                                    {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                                                        const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo)
+                                                        if (habsTipo.length === 0) return null
+                                                        return (
+                                                            <th key={tipo} colSpan={habsTipo.length} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-bold bg-blue-50 dark:bg-blue-900/30">
+                                                                {tipo}
+                                                            </th>
+                                                        )
                                                     })}
                                                 </tr>
-                                            ))}
+                                                <tr className="bg-slate-50 dark:bg-slate-800/50">
+                                                    <th className="border border-slate-300 dark:border-slate-700 px-4 py-2"></th>
+                                                    {/* Sub-encabezados con números de habitación */}
+                                                    {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                                                        const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo).sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+                                                        return habsTipo.map((hab) => (
+                                                            <th key={hab.id} className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center text-slate-900 dark:text-slate-50 font-semibold min-w-[80px] text-xs">
+                                                                Hab. {hab.numero}
+                                                            </th>
+                                                        ))
+                                                    })}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {diasRango.map((dia, diaIdx) => (
+                                                    <tr
+                                                        key={diaIdx}
+                                                        className={diaIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}
+                                                    >
+                                                        <td className="border border-slate-300 dark:border-slate-700 px-4 py-2 font-semibold text-slate-900 dark:text-slate-200">
+                                                            <div className="text-sm">{dia.toLocaleDateString("es-AR", { weekday: "short", day: "2-digit", month: "2-digit" })}</div>
+                                                        </td>
+                                                        {/* Mostrar celdas por tipo de habitación */}
+                                                        {TIPOS_HABITACION_ORDEN.map((tipo) => {
+                                                            const habsTipo = habitaciones.filter((h: HabitacionEstado) => h.tipo === tipo).sort((a, b) => parseInt(a.numero) - parseInt(b.numero))
+                                                            return habsTipo.map((hab) => {
+                                                                const disponible = esCeldaDisponible(hab.id, diaIdx)
+                                                                const seleccionada = esCeldaSeleccionada(hab.id, diaIdx)
+                                                                const inicioActual = esInicioSeleccionActual(hab.id, diaIdx)
+                                                                const estadoDia = obtenerEstadoCelda(hab.id, diaIdx)
+                                                                const baseColor = getEstadoColor(estadoDia)
+
+                                                                return (
+                                                                    <td
+                                                                        key={`${hab.id}-${diaIdx}`}
+                                                                        className="border border-slate-300 dark:border-slate-700 px-2 py-2 text-center"
+                                                                    >
+                                                                        <div
+                                                                            onClick={() => handleClickCelda(hab.id, diaIdx)}
+                                                                            className={`rounded px-2 py-1 text-xs font-semibold text-white transition ${
+                                                                                seleccionada || (diaIdx === 0 && seleccionActual?.habitacionId === hab.id)
+                                                                                    ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                                                                    : estadoDia === "RESERVADA" || estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO"
+                                                                                    ? `${baseColor} cursor-not-allowed opacity-75`
+                                                                                    : `${baseColor} hover:brightness-110 cursor-pointer`
+                                                                            }`}
+                                                                            title={
+                                                                                seleccionada
+                                                                                    ? "Seleccionada"
+                                                                                    : disponible
+                                                                                    ? "Click para seleccionar"
+                                                                                    : estadoDia === "RESERVADA"
+                                                                                    ? "Reservada - No se puede pisar"
+                                                                                    : estadoDia === "OCUPADA"
+                                                                                    ? "Ocupada"
+                                                                                    : "Mantenimiento"
+                                                                            }
+                                                                        >
+                                                                            {seleccionada
+                                                                                ? "✓"
+                                                                                : estadoDia === "RESERVADA"
+                                                                                ? "R"
+                                                                                : estadoDia === "OCUPADA"
+                                                                                ? "X"
+                                                                                : estadoDia === "MANTENIMIENTO"
+                                                                                ? "M"
+                                                                                : "○"}
+                                                                        </div>
+                                                                    </td>
+                                                                )
+                                                            })
+                                                        })}
+                                                    </tr>
+                                                ))}
                                             </tbody>
                                         </table>
+                                        <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 flex gap-4 flex-wrap">
+                                            <span>✓ = Seleccionada</span>
+                                            <span>○ = Disponible</span>
+                                            <span>R = Reservada (no se puede pisar)</span>
+                                            <span>X = Ocupada</span>
+                                            <span>M = Mantenimiento</span>
+                                        </div>
                                     </div>
                                 </Card>
 

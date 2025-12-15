@@ -169,11 +169,8 @@ export default function OcuparHabitacion() {
       setSeleccion(null);
       setSeleccionActual(null);
 
-      // Mostrar loader antes de cambiar de paso
+      // Mostrar loader
       setLoading(true);
-      
-      // Cambiar a grilla ANTES de cargar para mostrar "Procesando datos..."
-      setPaso("grilla");
       
       // Calcular fechas ahora para pasarlas directamente
       const hoy = new Date();
@@ -181,36 +178,48 @@ export default function OcuparHabitacion() {
       const fechaDesde = hoy.toISOString().split("T")[0];
       const fechaHasta = fechaHastaGrilla;
       
-      // Recargar habitaciones con el nuevo rango de fechas
-      await recargarHabitacionesConNuevasFechas(fechaDesde, fechaHasta);
+      // PRIMERO cargar las habitaciones
+      const success = await recargarHabitacionesConNuevasFechas(fechaDesde, fechaHasta);
+      
+      // Si cargó OK, cambiar a grilla
+      if (success) {
+        setPaso("grilla");
+      }
+      
+      setLoading(false);
     }
   };
 
-  const recargarHabitacionesConNuevasFechas = async (fechaDesde: string, fechaHasta: string) => {
+  const recargarHabitacionesConNuevasFechas = async (fechaDesde: string, fechaHasta: string): Promise<boolean> => {
     if (!fechaDesde || !fechaHasta) {
       console.error("[CU15] No se pueden recargar: fechas no definidas", { fechaDesde, fechaHasta });
-      return;
+      setErrorCarga("Fechas no válidas");
+      return false;
     }
     
-    setLoading(true);
     try {
       console.log(`[CU15] Solicitando datos: fechaDesde=${fechaDesde}, fechaHasta=${fechaHasta}`);
-      // Delay mínimo para asegurar que el mensaje de carga se vea
-      const [response] = await Promise.all([
-        fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`),
-        new Promise(resolve => setTimeout(resolve, 300))
-      ]);
+      const response = await fetch(`http://localhost:8080/api/habitaciones/estados?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[CU15] Error del backend (${response.status}):`, errorText);
-        throw new Error(`Error ${response.status}: ${errorText}`);
+        setErrorCarga(`Error ${response.status}: ${errorText}`);
+        return false;
       }
+      
       const data = await response.json();
       console.log("[CU15] Datos recargados del backend:", data);
-      console.log("[CU15] Primera habitación estadosPorDia recargada:", data[0]?.estadosPorDia);
+      console.log("[CU15] Cantidad de habitaciones:", data.length);
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        console.error("[CU15] No hay habitaciones en la respuesta");
+        setErrorCarga("No se encontraron habitaciones");
+        return false;
+      }
       
       const habitacionesMapeadas = data.map((h: any) => {
+        console.log(`[CU15] Mapeando habitación ${h.numero}:`, h.tipoHabitacion, "estadosPorDia keys:", Object.keys(h.estadosPorDia || {}));
         const estadoReservaBase = (h.estadosPorDia && h.estadosPorDia[fechaDesde]) || "DISPONIBLE";
         const mapeada = {
           id: h.numero.toString(),
@@ -224,27 +233,30 @@ export default function OcuparHabitacion() {
         };
         return mapeada;
       });
-      setHabitaciones(habitacionesMapeadas);
       
-      // Actualizar los estados de fecha
+      console.log("[CU15] Habitaciones mapeadas:", habitacionesMapeadas.length);
+      setHabitaciones(habitacionesMapeadas);
       setFechaDesdeGrilla(fechaDesde);
       setFechaHastaGrilla(fechaHasta);
+      setErrorCarga("");
+      return true;
     } catch (error) {
       console.error("[CU15] Error al recargar habitaciones:", error);
-      setErrorCarga("No se pudieron cargar las habitaciones");
-    } finally {
-      setLoading(false);
+      setErrorCarga("Error de conexión al cargar habitaciones");
+      return false;
     }
   };
 
   // Generar días del rango de grilla
-  const generarDias = (): Date[] => {
-    if (!fechaDesdeGrilla || !fechaHastaGrilla) return [];
-    const desde = createLocalDate(fechaDesdeGrilla);
-    const hasta = createLocalDate(fechaHastaGrilla);
+  const generarDias = (desde?: string, hasta?: string): Date[] => {
+    const fechaDesde = desde || fechaDesdeGrilla;
+    const fechaHasta = hasta || fechaHastaGrilla;
+    if (!fechaDesde || !fechaHasta) return [];
+    const desdeDate = createLocalDate(fechaDesde);
+    const hastaDate = createLocalDate(fechaHasta);
     const dias: Date[] = [];
-    const actual = new Date(desde);
-    while (actual <= hasta) {
+    const actual = new Date(desdeDate);
+    while (actual <= hastaDate) {
       dias.push(new Date(actual));
       actual.setDate(actual.getDate() + 1);
     }
@@ -257,7 +269,7 @@ export default function OcuparHabitacion() {
     if (!habitacion) return false;
 
     // Verificar el estado específico de este día
-    const estadoDia = obtenerEstadoCelda(habitacionId, diaIdx);
+    const estadoDia = obtenerEstadoCelda(habitacionId, diaIdx, fechaDesdeGrilla);
     
     // Permitir click también en reservadas (para ofrecer ocupar igual)
     if (estadoDia === "OCUPADA" || estadoDia === "MANTENIMIENTO") return false;
@@ -300,7 +312,7 @@ export default function OcuparHabitacion() {
     // fechaDesde siempre es HOY (diaIdx 0), diaIdx es el check-out
     const diaInicio = 0; // Siempre HOY
     const diaFin = diaIdx;
-    const dias = generarDias();
+    const dias = generarDias(fechaDesdeGrilla, fechaHastaGrilla);
 
     // Crear rango de índices seleccionados
     const rangoDias = Array.from(
@@ -312,7 +324,7 @@ export default function OcuparHabitacion() {
     let hayOcupadaOMant = false;
     let hayReservada = false;
     rangoDias.forEach(idx => {
-      const estado = obtenerEstadoCelda(habitacionId, idx);
+      const estado = obtenerEstadoCelda(habitacionId, idx, fechaDesdeGrilla);
       if (estado === "OCUPADA" || estado === "MANTENIMIENTO") hayOcupadaOMant = true;
       if (estado === "RESERVADA") hayReservada = true;
     });
@@ -400,10 +412,9 @@ export default function OcuparHabitacion() {
   };
 
   // Obtener el estado de una celda específica por día
-  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO" => {
+  const obtenerEstadoCelda = (habitacionId: string, diaIdx: number, fechaDesde: string): "DISPONIBLE" | "RESERVADA" | "OCUPADA" | "MANTENIMIENTO" => {
     const habitacion = habitaciones.find(h => h.id === habitacionId);
     if (!habitacion) {
-      console.log(`[CU15] Habitación ${habitacionId} no encontrada`);
       return "MANTENIMIENTO";
     }
 
@@ -413,16 +424,14 @@ export default function OcuparHabitacion() {
     }
 
     // Si está habilitada, buscar el estado del día específico
-    if (habitacion.estadosPorDia) {
-      const dia = createLocalDate(fechaDesdeGrilla);
+    if (habitacion.estadosPorDia && Object.keys(habitacion.estadosPorDia).length > 0) {
+      const dia = createLocalDate(fechaDesde);
       dia.setDate(dia.getDate() + diaIdx);
       const fechaDia = dia.toISOString().split('T')[0];
       const estadoDia = habitacion.estadosPorDia[fechaDia];
-      console.log(`[CU15] Hab ${habitacionId}, día ${fechaDia}, estado: ${estadoDia}, estadosPorDia:`, habitacion.estadosPorDia);
       return estadoDia || "DISPONIBLE";
     }
 
-    console.log(`[CU15] Hab ${habitacionId} no tiene estadosPorDia, usando estado general: ${habitacion.estado}`);
     return habitacion.estado || "DISPONIBLE";
   };
 
@@ -631,7 +640,7 @@ export default function OcuparHabitacion() {
     else if (paso === "confirmacion") setPaso("huespedes");
   };
 
-  const diasRango = generarDias();
+  const diasRango = generarDias(fechaDesdeGrilla, fechaHastaGrilla);
   const conteo = {
     disponibles: habitaciones.filter((h: HabitacionEstado) => h.estado === "DISPONIBLE").length,
     reservadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "RESERVADA").length,
@@ -724,10 +733,18 @@ export default function OcuparHabitacion() {
 
         {paso === "grilla" && (
           <div className="space-y-6">
-            {loading ? (
+            {errorCarga && (
+              <Card className="p-4 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
+                <p className="text-red-600 dark:text-red-400">{errorCarga}</p>
+              </Card>
+            )}
+            {loading || diasRango.length === 0 || habitaciones.length === 0 ? (
               <Card className="p-12 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
                 <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">Procesando datos...</p>
+                {habitaciones.length === 0 && !loading && (
+                  <p className="text-sm text-slate-500">Esperando habitaciones...</p>
+                )}
               </Card>
             ) : (
               <>
@@ -750,6 +767,7 @@ export default function OcuparHabitacion() {
               <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
                 Grilla de disponibilidad: {createLocalDate(fechaDesdeGrilla).toLocaleDateString()} al {createLocalDate(fechaHastaGrilla).toLocaleDateString()}
               </h2>
+
               <p className="text-slate-600 text-sm mb-4 dark:text-slate-400">
                 Haga click en una celda disponible para iniciar la selección, luego haga click en otra celda de la misma habitación para completar el rango.
               </p>
@@ -806,7 +824,7 @@ export default function OcuparHabitacion() {
                             const disponible = esCeldaDisponible(hab.id, diaIdx);
                             const seleccionada = esCeldaSeleccionada(hab.id, diaIdx);
                             const inicioActual = esInicioSeleccionActual(hab.id, diaIdx);
-                            const estadoDia = obtenerEstadoCelda(hab.id, diaIdx);
+                            const estadoDia = obtenerEstadoCelda(hab.id, diaIdx, fechaDesdeGrilla);
                               const baseColor = getEstadoColor(estadoDia);
 
                             return (
