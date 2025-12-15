@@ -113,7 +113,7 @@ export default function Home() {
                                 </div>
                             </Card>
 
-                            {/* Modificar Huésped */}
+                            {/* Modificar Huésped
                             <Card
                                 className={`group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 ${
                                     !selectedGuest ? "opacity-40 pointer-events-none" : ""
@@ -138,7 +138,7 @@ export default function Home() {
                                         </Button>
                                     )}
                                 </div>
-                            </Card>
+                            </Card>*/}
 
                             {/* Dar de Alta Huésped */}
                             <Card
@@ -167,7 +167,7 @@ export default function Home() {
                                 </div>
                             </Card>
 
-                            {/* Dar de Baja Huésped */}
+                            {/* Dar de Baja Huésped
                             <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-rose-100/50" />
                                 <div className="relative">
@@ -182,7 +182,7 @@ export default function Home() {
                                         <Link href="/baja-huesped">Eliminar huésped</Link>
                                     </Button>
                                 </div>
-                            </Card>
+                            </Card>*/}
                         </div>
                     </section>
 
