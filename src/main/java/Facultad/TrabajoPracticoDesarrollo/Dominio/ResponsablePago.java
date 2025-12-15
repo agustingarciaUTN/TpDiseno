@@ -16,7 +16,7 @@ public abstract class ResponsablePago {
     private Integer idResponsable;
 
     // Columna discriminadora (F o J), aunque con JOINED es opcional, a veces ayuda.
-    // En tu caso, parece ser meramente informativa en la BD.
+    // Mas informativa que otra cosa, nose si la podemos llegar a usar.
     @Column(name = "tipo_responsable")
     private String tipoResponsable;
 
