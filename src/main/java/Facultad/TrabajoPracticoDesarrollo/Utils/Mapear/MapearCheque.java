@@ -9,22 +9,18 @@ public class MapearCheque  {
         return new Cheque.Builder()
                 .numeroCheque(dtoCheque.getNumeroCheque())
                 .banco(dtoCheque.getBanco())
-                .monto(dtoCheque.getMonto())
                 .plaza(dtoCheque.getPlaza())
                 .fechaCobro(dtoCheque.getFechaCobro())
-                .fechaDePago(dtoCheque.getFechaDePago())
                 .build();
     }
 
     public static DtoCheque mapearEntidadADto(Cheque cheque) {
         if (cheque == null) return null;
-        return new DtoCheque.Builder()
+        return DtoCheque.builder()
                 .numeroCheque(cheque.getNumeroCheque())
                 .banco(cheque.getBanco())
                 .plaza(cheque.getPlaza())
-                .monto(cheque.getMonto())
                 .fechaCobro(cheque.getFechaCobro())
-                .fechaDePago(cheque.getFechaDePago())
                 .build();
     }
 }

@@ -5,7 +5,9 @@ import {
   DtoHabitacion,
   DtoReserva,
   DtoEstadia,
-  DtoPago
+  DtoPago,
+  DtoFactura,
+  DtoResultadoRegistroPago
 } from "./types"
 
 // Asegúrate de que esta URL sea correcta. Si usas Docker o red local, ajusta la IP.
@@ -232,10 +234,14 @@ export async function buscarReservas(
   return apiFetch<DtoReserva[]>(`/reservas/buscar?${params.toString()}`)
 }
 
-// --- PAGOS ---
+// --- CU16: REGISTRAR PAGO ---
 
-export async function registrarPago(pago: DtoPago): Promise<string> {
-  return apiFetch<string>("/pagos/registrar", {
+export async function buscarFacturasPendientes(numeroHabitacion: string): Promise<DtoFactura[]> {
+  return apiFetch<DtoFactura[]>(`/pagos/buscar-facturas-pendientes?numeroHabitacion=${numeroHabitacion}`)
+}
+
+export async function registrarPago(pago: DtoPago): Promise<DtoResultadoRegistroPago> {
+  return apiFetch<DtoResultadoRegistroPago>("/pagos/registrar", {
     method: "POST",
     body: pago,
   })

@@ -6,34 +6,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AlertCircle, DollarSign, CreditCard } from "lucide-react"
+import { AlertCircle, DollarSign, CreditCard, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
+import { buscarFacturasPendientes, registrarPago } from "@/lib/api"
+import { DtoFactura, Moneda, TipoMedioPago, DtoMedioPago, DtoPago, EstadoFactura } from "@/lib/types"
 
-type Invoice = {
-    id: number
-    numeroFactura: string
-    responsableNombre: string
-    responsableApellido: string
-    monto: number
-    fecha: string
-    estado: "PENDIENTE" | "PAGADA"
-}
-
-type PaymentMethod = "MONEDA" | "CHEQUES" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
+type PaymentMethod = "EFECTIVO" | "CHEQUE" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
 
 export default function RegistrarPagoPage() {
     const [roomNumber, setRoomNumber] = useState("")
-    const [invoices, setInvoices] = useState<Invoice[]>([])
-    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+    const [invoices, setInvoices] = useState<DtoFactura[]>([])
+    const [selectedInvoice, setSelectedInvoice] = useState<DtoFactura | null>(null)
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">("")
     const [paymentAmount, setPaymentAmount] = useState("")
+    const [moneda, setMoneda] = useState<Moneda>(Moneda.PESOS_ARGENTINOS)
+    const [cotizacion, setCotizacion] = useState("1")
     const [change, setChange] = useState(0)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
     const [isSearching, setIsSearching] = useState(false)
     const [showPaymentFields, setShowPaymentFields] = useState(false)
     const [roomNumberError, setRoomNumberError] = useState("")
+    const [mediosPagoAcumulados, setMediosPagoAcumulados] = useState<DtoMedioPago[]>([])
+    const [montoAcumulado, setMontoAcumulado] = useState(0)
 
     const handleRoomNumberChange = (value: string) => {
         const numericValue = value.replace(/\D/g, "")
@@ -45,7 +41,7 @@ export default function RegistrarPagoPage() {
         }
     }
 
-    const handleSearchRoom = () => {
+    const handleSearchRoom = async () => {
         setError("")
         setSuccess("")
         setSelectedInvoice(null)
@@ -63,26 +59,31 @@ export default function RegistrarPagoPage() {
 
         setIsSearching(true)
 
-        setTimeout(() => {
-            const foundInvoices = mockInvoices[roomNumber] || []
-
-            if (foundInvoices.length === 0) {
+        try {
+            const facturas = await buscarFacturasPendientes(roomNumber)
+            
+            if (facturas.length === 0) {
                 setError(`No se encontraron facturas pendientes para la habitación ${roomNumber}`)
                 setInvoices([])
             } else {
-                setInvoices(foundInvoices)
+                setInvoices(facturas)
                 setError("")
             }
-
+        } catch (err: any) {
+            setError(err.message || `Error al buscar facturas para la habitación ${roomNumber}`)
+            setInvoices([])
+        } finally {
             setIsSearching(false)
-        }, 500)
+        }
     }
 
-    const handleSelectInvoice = (invoice: Invoice) => {
+    const handleSelectInvoice = (invoice: DtoFactura) => {
         setSelectedInvoice(invoice)
         setChange(0)
-        setPaymentAmount("")
+        setPaymentAmount(invoice.importeTotal.toString())
         setPaymentMethod("")
+        setMoneda(Moneda.PESOS_ARGENTINOS)
+        setCotizacion("1")
         setShowPaymentFields(true)
         setError("")
         setSuccess("")
@@ -97,6 +98,10 @@ export default function RegistrarPagoPage() {
         setCheckDate("")
         setCardNumber("")
         setCardQuota("")
+        setCardNetwork("")
+        setCardCvv("")
+        setCardExpiry("")
+        setCardBank("")
     }
 
     const handlePaymentMethodChange = (method: PaymentMethod) => {
@@ -115,95 +120,243 @@ export default function RegistrarPagoPage() {
             return
         }
 
-        if (paymentMethod === "MONEDA") {
+        if (paymentMethod === "EFECTIVO") {
             if (!cashAmount || Number.parseFloat(cashAmount) <= 0) {
                 setError("Debe ingresar el importe en efectivo")
                 return
             }
-        } else if (paymentMethod === "CHEQUES") {
+        } else if (paymentMethod === "CHEQUE") {
             if (!checkNumber || !checkBank || !checkPlaza || !checkDate) {
                 setError("Debe completar todos los datos del cheque")
                 return
             }
-        } else if (paymentMethod === "TARJETA_CREDITO" || paymentMethod === "TARJETA_DEBITO") {
-            if (!cardNumber || !cardQuota) {
+        } else if (paymentMethod === "TARJETA_CREDITO") {
+            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || !cardQuota) {
+                setError("Debe completar todos los datos de la tarjeta")
+                return
+            }
+        } else if (paymentMethod === "TARJETA_DEBITO") {
+            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry) {
                 setError("Debe completar todos los datos de la tarjeta")
                 return
             }
         }
 
-        if (amount < selectedInvoice.monto) {
-            const remaining = selectedInvoice.monto - amount
+        // Permitir pagos parciales - solo validar que el monto sea > 0
+        if (amount > selectedInvoice.importeTotal) {
+            const changeAmount = amount - selectedInvoice.importeTotal
+            setChange(changeAmount)
+            setError("")
+        } else {
             setChange(0)
-            setError(`El monto ingresado es menor a la deuda. Resta pagar: $${remaining.toFixed(2)}`)
-            return
+            setError("")
         }
-
-        const changeAmount = amount - selectedInvoice.monto
-        setChange(changeAmount)
-        setError("")
     }
 
-    const handleConfirmPayment = () => {
+    const handleAddPaymentMethod = () => {
         if (!selectedInvoice) return
 
         const amount = Number.parseFloat(paymentAmount)
+        const cotizacionNum = Number.parseFloat(cotizacion)
 
-        if (amount >= selectedInvoice.monto) {
+        if (isNaN(amount) || amount <= 0) {
+            setError("Debe ingresar un monto válido mayor a 0")
+            return
+        }
+
+        if (!paymentMethod) {
+            setError("Debe seleccionar un método de pago")
+            return
+        }
+
+        if (paymentMethod === "EFECTIVO") {
+            if (!cashAmount || Number.parseFloat(cashAmount) <= 0) {
+                setError("Debe ingresar el importe en efectivo")
+                return
+            }
+        } else if (paymentMethod === "CHEQUE") {
+            if (!checkNumber || !checkBank || !checkPlaza || !checkDate) {
+                setError("Debe completar todos los datos del cheque")
+                return
+            }
+        } else if (paymentMethod === "TARJETA_CREDITO") {
+            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || !cardQuota) {
+                setError("Debe completar todos los datos de la tarjeta")
+                return
+            }
+        } else if (paymentMethod === "TARJETA_DEBITO") {
+            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry) {
+                setError("Debe completar todos los datos de la tarjeta")
+                return
+            }
+        }
+
+        // Crear el medio de pago (acumular en memoria)
+        const fechaActual = new Date().toISOString().split('T')[0]
+        const nuevoMedio: DtoMedioPago = {
+            tipoMedio: TipoMedioPago[paymentMethod as keyof typeof TipoMedioPago],
+            monto: amount,
+            moneda: moneda,
+            fechaDePago: fechaActual
+        } as DtoMedioPago
+
+        // Agregar campos específicos según el tipo
+        if (paymentMethod === "EFECTIVO") {
+            Object.assign(nuevoMedio, {})
+        } else if (paymentMethod === "CHEQUE") {
+            Object.assign(nuevoMedio, {
+                numeroCheque: checkNumber,
+                banco: checkBank,
+                plaza: checkPlaza,
+                fechaCobro: checkDate
+            })
+        } else if (paymentMethod === "TARJETA_CREDITO") {
+            Object.assign(nuevoMedio, {
+                numeroDeTarjeta: cardNumber,
+                redDePago: cardNetwork,
+                cuotasCantidad: Number.parseInt(cardQuota || "1"),
+                codigoSeguridad: Number.parseInt(cardCvv),
+                fechaVencimiento: cardExpiry,
+                banco: cardBank
+            })
+        } else if (paymentMethod === "TARJETA_DEBITO") {
+            Object.assign(nuevoMedio, {
+                numeroDeTarjeta: cardNumber,
+                redDePago: cardNetwork,
+                codigoSeguridad: Number.parseInt(cardCvv),
+                fechaVencimiento: cardExpiry,
+                banco: cardBank
+            })
+        }
+
+        // Calcular el equivalente en pesos argentinos (para acumular)
+        const montoEnPesos = moneda === Moneda.PESOS_ARGENTINOS 
+            ? amount 
+            : amount * cotizacionNum
+
+        // Agregar a la lista
+        setMediosPagoAcumulados([...mediosPagoAcumulados, nuevoMedio])
+        const nuevoMontoAcumuladoEnPesos = montoAcumulado + montoEnPesos
+        setMontoAcumulado(nuevoMontoAcumuladoEnPesos)
+
+        // Calcular cuánto falta
+        const faltaPagar = Math.max(0, selectedInvoice.importeTotal - nuevoMontoAcumuladoEnPesos)
+
+        // Limpiar formulario para agregar otro medio
+        setPaymentMethod("")
+        setPaymentAmount("")
+        setMoneda(Moneda.PESOS_ARGENTINOS)
+        setCotizacion("1")
+        resetPaymentFields()
+        setError("")
+        
+        if (faltaPagar > 0) {
+            setSuccess(`Medio agregado. Total acumulado: $${nuevoMontoAcumuladoEnPesos.toFixed(2)} | Falta: $${faltaPagar.toFixed(2)}`)
+        } else {
+            setSuccess(`Medio agregado. Total acumulado: $${nuevoMontoAcumuladoEnPesos.toFixed(2)} | Listo para finalizar`)
+        }
+
+        setTimeout(() => {
+            setSuccess("")
+        }, 3000)
+    }
+
+    const handleRemoverMedioPago = (indice: number) => {
+        const medioARemover = mediosPagoAcumulados[indice]
+        const montoEnPesos = medioARemover.moneda === Moneda.PESOS_ARGENTINOS 
+            ? medioARemover.monto 
+            : medioARemover.monto * Number.parseFloat(cotizacion)
+        
+        // Remover de la lista
+        const nuevosMedios = mediosPagoAcumulados.filter((_, idx) => idx !== indice)
+        setMediosPagoAcumulados(nuevosMedios)
+        
+        // Actualizar monto acumulado
+        const nuevoMontoAcumulado = montoAcumulado - montoEnPesos
+        setMontoAcumulado(nuevoMontoAcumulado)
+        
+        setError("")
+        setSuccess(`Medio de pago removido. Total acumulado: $${nuevoMontoAcumulado.toFixed(2)}`)
+        setTimeout(() => {
+            setSuccess("")
+        }, 2000)
+    }
+
+    const handleFinalizarPago = async () => {
+        if (!selectedInvoice || mediosPagoAcumulados.length === 0) {
+            setError("No hay medios de pago agregados")
+            return
+        }
+
+        const cotizacionNum = Number.parseFloat(cotizacion)
+
+        // Validar que el total sea suficiente
+        if (montoAcumulado < selectedInvoice.importeTotal) {
+            setError(`El monto total ($${montoAcumulado.toFixed(2)}) es menor al de la factura ($${selectedInvoice.importeTotal.toFixed(2)})`)
+            return
+        }
+
+        try {
+            const dtoPago: DtoPago = {
+                numeroFactura: selectedInvoice.numeroFactura,
+                fechaPago: new Date().toISOString().split('T')[0],
+                moneda: moneda,
+                cotizacion: cotizacionNum,
+                montoTotal: montoAcumulado,
+                mediosPago: mediosPagoAcumulados
+            }
+
+            const resultado = await registrarPago(dtoPago)
+            
+            // Mostrar resultado
+            setSuccess(`${resultado.mensaje}${resultado.vuelto > 0 ? ` Vuelto: $${resultado.vuelto.toFixed(2)}` : ""}`)
+            setChange(resultado.vuelto)
+
+            // Actualizar la factura en la lista (marcar como PAGADA sin cambiar monto)
+            setInvoices((prevInvoices) =>
+                prevInvoices.map((inv) => 
+                    inv.numeroFactura === selectedInvoice.numeroFactura 
+                        ? { ...inv, estadoFactura: EstadoFactura.PAGADA } 
+                        : inv
+                ),
+            )
+
+            // Limpiar después de 3 segundos
             setTimeout(() => {
-                setSuccess("Factura salida. TOQUE UNA TECLA PARA CONTINUAR... y VUELTO")
+                setSelectedInvoice(null)
+                setShowPaymentFields(false)
+                setMediosPagoAcumulados([])
+                setMontoAcumulado(0)
+                setPaymentAmount("")
+                setChange(0)
+                setPaymentMethod("")
+                setMoneda(Moneda.PESOS_ARGENTINOS)
+                setCotizacion("1")
+                resetPaymentFields()
+                setSuccess("")
+            }, 3000)
 
-                setInvoices((prevInvoices) =>
-                    prevInvoices.map((inv) => (inv.id === selectedInvoice.id ? { ...inv, estado: "PAGADA" as const } : inv)),
-                )
-
-                setTimeout(() => {
-                    setSelectedInvoice(null)
-                    setShowPaymentFields(false)
-                    setPaymentAmount("")
-                    setChange(0)
-                    setPaymentMethod("")
-                    resetPaymentFields()
-                }, 2000)
-            }, 500)
+        } catch (err: any) {
+            setError(err.message || "Error al registrar el pago")
         }
     }
 
-    const mockInvoices: Record<string, Invoice[]> = {
-        "101": [
-            {
-                id: 1,
-                numeroFactura: "F-001",
-                responsableNombre: "Juan",
-                responsableApellido: "Pérez",
-                monto: 5000,
-                fecha: "2025-12-05",
-                estado: "PENDIENTE",
-            },
-            {
-                id: 2,
-                numeroFactura: "F-002",
-                responsableNombre: "María",
-                responsableApellido: "González",
-                monto: 3000,
-                fecha: "2025-12-08",
-                estado: "PENDIENTE",
-            },
-        ],
-        "102": [
-            {
-                id: 3,
-                numeroFactura: "F-003",
-                responsableNombre: "Carlos",
-                responsableApellido: "Rodríguez",
-                monto: 8000,
-                fecha: "2025-12-09",
-                estado: "PENDIENTE",
-            },
-        ],
-        "103": [],
+    const handleCancelarPago = () => {
+        setSelectedInvoice(null)
+        setShowPaymentFields(false)
+        setMediosPagoAcumulados([])
+        setMontoAcumulado(0)
+        setPaymentAmount("")
+        setChange(0)
+        setPaymentMethod("")
+        setMoneda(Moneda.PESOS_ARGENTINOS)
+        setCotizacion("1")
+        resetPaymentFields()
+        setError("")
+        setSuccess("")
     }
 
+    // Estados para campos de pago
     const [cashAmount, setCashAmount] = useState("")
     const [checkNumber, setCheckNumber] = useState("")
     const [checkBank, setCheckBank] = useState("")
@@ -211,6 +364,10 @@ export default function RegistrarPagoPage() {
     const [checkDate, setCheckDate] = useState("")
     const [cardNumber, setCardNumber] = useState("")
     const [cardQuota, setCardQuota] = useState("")
+    const [cardNetwork, setCardNetwork] = useState("")
+    const [cardCvv, setCardCvv] = useState("")
+    const [cardExpiry, setCardExpiry] = useState("")
+    const [cardBank, setCardBank] = useState("")
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -287,10 +444,10 @@ export default function RegistrarPagoPage() {
                                 <div className="space-y-3">
                                     {invoices.map((invoice) => (
                                         <div
-                                            key={invoice.id}
+                                            key={invoice.numeroFactura}
                                             onClick={() => handleSelectInvoice(invoice)}
                                             className={`cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md ${
-                                                selectedInvoice?.id === invoice.id
+                                                selectedInvoice?.numeroFactura === invoice.numeroFactura
                                                     ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950"
                                                     : "border-slate-200 hover:border-slate-300 dark:border-slate-700"
                                             }`}
@@ -299,22 +456,22 @@ export default function RegistrarPagoPage() {
                                                 <div className="space-y-1">
                                                     <p className="font-semibold text-slate-900 dark:text-slate-50">{invoice.numeroFactura}</p>
                                                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                        {invoice.responsableNombre} {invoice.responsableApellido}
+                                                        {invoice.nombreResponsable || 'N/A'} {invoice.apellidoResponsable || ''}
                                                     </p>
-                                                    <p className="text-xs text-slate-600 dark:text-slate-400">Fecha: {invoice.fecha}</p>
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400">Fecha: {new Date(invoice.fechaEmision).toLocaleDateString()}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-                                                        ${invoice.monto.toFixed(2)}
+                                                        ${invoice.importeTotal.toFixed(2)}
                                                     </p>
                                                     <span
                                                         className={`mt-1 inline-block text-xs px-2 py-1 rounded-full ${
-                                                            invoice.estado === "PAGADA"
+                                                            invoice.estadoFactura === "PAGADA"
                                                                 ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400"
                                                                 : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
                                                         }`}
                                                     >
-                            {invoice.estado}
+                            {invoice.estadoFactura}
                           </span>
                                                 </div>
                                             </div>
@@ -333,12 +490,12 @@ export default function RegistrarPagoPage() {
                                     Registrar Pago - {selectedInvoice.numeroFactura}
                                 </CardTitle>
                                 <CardDescription className="text-slate-600 dark:text-slate-400">
-                                    Responsable: {selectedInvoice.responsableNombre} {selectedInvoice.responsableApellido}
+                                    Responsable: {selectedInvoice.nombreResponsable || 'N/A'} {selectedInvoice.apellidoResponsable || ''}
                                 </CardDescription>
                                 <div className="mt-2">
                                     <p className="text-sm text-slate-600 dark:text-slate-400">Total a Pagar:</p>
                                     <p className="text-4xl font-bold text-slate-900 dark:text-slate-50">
-                                        ${selectedInvoice.monto.toFixed(2)}
+                                        ${selectedInvoice.importeTotal.toFixed(2)}
                                     </p>
                                 </div>
                             </CardHeader>
@@ -348,29 +505,58 @@ export default function RegistrarPagoPage() {
                                     <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">${change.toFixed(2)}</p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="paymentMethod">Método de Pago *</Label>
-                                    <Select value={paymentMethod} onValueChange={handlePaymentMethodChange}>
-                                        <SelectTrigger id="paymentMethod">
-                                            <SelectValue placeholder="Seleccione un método" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="MONEDA">Moneda</SelectItem>
-                                            <SelectItem value="CHEQUES">Cheques</SelectItem>
-                                            <SelectItem value="TARJETA_CREDITO">Tarjeta de Crédito</SelectItem>
-                                            <SelectItem value="TARJETA_DEBITO">Tarjeta de Débito</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="moneda">Moneda *</Label>
+                                        <Select value={moneda} onValueChange={(value) => setMoneda(value as Moneda)}>
+                                            <SelectTrigger id="moneda">
+                                                <SelectValue placeholder="Seleccione moneda" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value={Moneda.PESOS_ARGENTINOS}>Pesos Argentinos</SelectItem>
+                                                <SelectItem value={Moneda.DOLARES}>Dólares</SelectItem>
+                                                <SelectItem value={Moneda.EUROS}>Euros</SelectItem>
+                                                <SelectItem value={Moneda.REALES}>Reales</SelectItem>
+                                                <SelectItem value={Moneda.PESOS_URUGUAYOS}>Pesos Uruguayos</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="cotizacion">Cotización *</Label>
+                                        <Input
+                                            id="cotizacion"
+                                            type="number"
+                                            step="0.01"
+                                            value={cotizacion}
+                                            onChange={(e) => setCotizacion(e.target.value)}
+                                            placeholder="1.0"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="paymentMethod">Método de Pago *</Label>
+                                        <Select value={paymentMethod} onValueChange={handlePaymentMethodChange}>
+                                            <SelectTrigger id="paymentMethod">
+                                                <SelectValue placeholder="Seleccione un método" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="EFECTIVO">Efectivo</SelectItem>
+                                                <SelectItem value="CHEQUE">Cheque</SelectItem>
+                                                <SelectItem value="TARJETA_CREDITO">Tarjeta de Crédito</SelectItem>
+                                                <SelectItem value="TARJETA_DEBITO">Tarjeta de Débito</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
-                                {paymentMethod === "MONEDA" && (
+                                {paymentMethod === "EFECTIVO" && (
                                     <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
                                         <h4 className="font-semibold">Datos de Pago en Efectivo</h4>
                                         <div className="space-y-2">
-                                            <Label htmlFor="cashAmount">Importe *</Label>
+                                            <Label htmlFor="cashAmount">Importe Entregado *</Label>
                                             <Input
                                                 id="cashAmount"
                                                 type="number"
+                                                step="0.01"
                                                 value={cashAmount}
                                                 onChange={(e) => setCashAmount(e.target.value)}
                                                 placeholder="0.00"
@@ -379,7 +565,7 @@ export default function RegistrarPagoPage() {
                                     </div>
                                 )}
 
-                                {paymentMethod === "CHEQUES" && (
+                                {paymentMethod === "CHEQUE" && (
                                     <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900">
                                         <h4 className="font-semibold">Datos del Cheque</h4>
                                         <div className="grid gap-4 md:grid-cols-2">
@@ -420,19 +606,64 @@ export default function RegistrarPagoPage() {
                                                     id="cardNumber"
                                                     value={cardNumber}
                                                     onChange={(e) => setCardNumber(e.target.value)}
-                                                    placeholder="1234 5678 9012 3456"
+                                                    placeholder="1234567890123456"
+                                                    maxLength={16}
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="cardQuota">Cotización *</Label>
+                                                <Label htmlFor="cardNetwork">Red de Pago *</Label>
+                                                <Select value={cardNetwork} onValueChange={setCardNetwork}>
+                                                    <SelectTrigger id="cardNetwork">
+                                                        <SelectValue placeholder="Seleccione red" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="VISA">Visa</SelectItem>
+                                                        <SelectItem value="MASTERCARD">Mastercard</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cardBank">Banco *</Label>
                                                 <Input
-                                                    id="cardQuota"
-                                                    type="number"
-                                                    value={cardQuota}
-                                                    onChange={(e) => setCardQuota(e.target.value)}
-                                                    placeholder="1"
+                                                    id="cardBank"
+                                                    value={cardBank}
+                                                    onChange={(e) => setCardBank(e.target.value)}
+                                                    placeholder="Nombre del banco"
                                                 />
                                             </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cardCvv">Código de Seguridad *</Label>
+                                                <Input
+                                                    id="cardCvv"
+                                                    type="text"
+                                                    maxLength={4}
+                                                    value={cardCvv}
+                                                    onChange={(e) => setCardCvv(e.target.value)}
+                                                    placeholder="123"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cardExpiry">Fecha de Vencimiento *</Label>
+                                                <Input
+                                                    id="cardExpiry"
+                                                    type="date"
+                                                    value={cardExpiry}
+                                                    onChange={(e) => setCardExpiry(e.target.value)}
+                                                />
+                                            </div>
+                                            {paymentMethod === "TARJETA_CREDITO" && (
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="cardQuota">Cuotas *</Label>
+                                                    <Input
+                                                        id="cardQuota"
+                                                        type="number"
+                                                        min="1"
+                                                        value={cardQuota}
+                                                        onChange={(e) => setCardQuota(e.target.value)}
+                                                        placeholder="1"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -464,32 +695,95 @@ export default function RegistrarPagoPage() {
                                 )}
 
                                 <div className="flex gap-4">
-                                    <Button onClick={calculatePayment} className="flex-1" disabled={!paymentMethod || !paymentAmount}>
-                                        Calcular
-                                    </Button>
                                     <Button
-                                        onClick={handleConfirmPayment}
+                                        onClick={handleAddPaymentMethod}
                                         className="flex-1"
-                                        disabled={change === 0 || Number.parseFloat(paymentAmount) < selectedInvoice.monto}
+                                        disabled={!paymentMethod || !paymentAmount}
                                         variant="default"
                                     >
-                                        Confirmar Pago
+                                        Agregar Medio de Pago
                                     </Button>
                                     <Button
-                                        onClick={() => {
-                                            setShowPaymentFields(false)
-                                            setSelectedInvoice(null)
-                                            setPaymentAmount("")
-                                            setPaymentMethod("")
-                                            setChange(0)
-                                            setError("")
-                                            resetPaymentFields()
-                                        }}
+                                        onClick={handleCancelarPago}
                                         variant="outline"
                                     >
                                         Cancelar
                                     </Button>
                                 </div>
+
+                                {/* Mostrar medios acumulados */}
+                                {mediosPagoAcumulados.length > 0 && (
+                                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+                                        <h4 className="mb-3 font-semibold text-blue-900 dark:text-blue-100">
+                                            Medios de Pago Agregados ({mediosPagoAcumulados.length})
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {mediosPagoAcumulados.map((medio, idx) => (
+                                                <div key={idx} className="flex items-center justify-between rounded bg-white p-2 dark:bg-slate-800">
+                                                    <div className="flex flex-col flex-1">
+                                                        <span className="text-sm font-medium">
+                                                            {medio.tipoMedio === TipoMedioPago.EFECTIVO && "Efectivo"}
+                                                            {medio.tipoMedio === TipoMedioPago.CHEQUE && `Cheque #${(medio as any).numeroCheque}`}
+                                                            {medio.tipoMedio === TipoMedioPago.TARJETA_CREDITO && `Tarj. Crédito: ${(medio as any).numeroDeTarjeta?.slice(-4)}`}
+                                                            {medio.tipoMedio === TipoMedioPago.TARJETA_DEBITO && `Tarj. Débito: ${(medio as any).numeroDeTarjeta?.slice(-4)}`}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500">
+                                                            {medio.moneda === Moneda.PESOS_ARGENTINOS ? "Pesos" : 
+                                                             medio.moneda === Moneda.DOLARES ? "Dólares" :
+                                                             medio.moneda === Moneda.EUROS ? "Euros" :
+                                                             medio.moneda === Moneda.REALES ? "Reales" : "Pesos Uruguayos"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold">${medio.monto.toFixed(2)}</span>
+                                                        <Button
+                                                            onClick={() => handleRemoverMedioPago(idx)}
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-300"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-3 border-t border-blue-200 pt-2 dark:border-blue-800">
+                                            <div className="flex justify-between font-semibold">
+                                                <span>Total Acumulado (en pesos):</span>
+                                                <span className="text-lg">${montoAcumulado.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-blue-700 dark:text-blue-300">
+                                                <span>Monto de Factura:</span>
+                                                <span>${selectedInvoice?.importeTotal.toFixed(2)}</span>
+                                            </div>
+                                            {montoAcumulado < (selectedInvoice?.importeTotal || 0) ? (
+                                                <div className="mt-2 flex justify-between rounded bg-yellow-100 px-2 py-1 text-sm font-semibold text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
+                                                    <span>Falta Pagar:</span>
+                                                    <span>${(selectedInvoice!.importeTotal - montoAcumulado).toFixed(2)}</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="mt-2 flex justify-between rounded bg-green-100 px-2 py-1 text-sm font-semibold text-green-800 dark:bg-green-900 dark:text-green-100">
+                                                        <span>✓ Listo para finalizar</span>
+                                                        {montoAcumulado > selectedInvoice!.importeTotal && (
+                                                            <span>Vuelto: ${(montoAcumulado - selectedInvoice!.importeTotal).toFixed(2)}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-3 flex gap-2">
+                                                        <Button
+                                                            onClick={handleFinalizarPago}
+                                                            className="flex-1"
+                                                            variant="default"
+                                                        >
+                                                            Finalizar Pago
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}

@@ -28,5 +28,7 @@ public abstract class DtoMedioPago {
     // Atributos comunes a todos los medios
 
     protected int idPago;
+    protected Double monto;
+    protected Moneda moneda;
     // ID de referencia al pago padre
 }

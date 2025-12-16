@@ -144,7 +144,7 @@ public class EstadiaService {
             // C. Seteamos las Relaciones y Atributos extra
             eh.setEstadia(estadiaNueva);
             eh.setHuesped(hReal);
-            eh.setEsResponsable(esPrimero);
+            eh.setEsResponsable(esPrimero ? Responsable.SI : Responsable.NO);
 
             estadiaHuespedList.add(eh);
             esPrimero = false;

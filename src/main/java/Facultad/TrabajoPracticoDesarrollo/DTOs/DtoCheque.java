@@ -2,13 +2,19 @@ package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class DtoCheque extends DtoMedioPago {
 
     @NotBlank
@@ -34,42 +40,4 @@ public class DtoCheque extends DtoMedioPago {
 
     @NotNull
     private Moneda moneda;
-
-    // --- CONSTRUCTOR PRIVADO ---
-    private DtoCheque(Builder builder) {
-        this.numeroCheque = builder.numeroCheque;
-        this.banco = builder.banco;
-        this.plaza = builder.plaza;
-        this.monto = builder.monto;
-        this.fechaCobro = builder.fechaCobro;
-        this.fechaDePago = builder.fechaDePago;
-        this.moneda = builder.moneda;
-    }
-
-    // --- CLASE STATIC BUILDER ---
-    public static class Builder {
-        private String numeroCheque;
-        private String banco;
-        private String plaza;
-        private Double monto;
-        private Date fechaCobro;
-        private Date fechaDePago;
-        private Moneda moneda;
-
-
-        public Builder() {}
-
-        public Builder moneda(Moneda val) {moneda = val; return this;}
-        public Builder numeroCheque(String val) { numeroCheque = val; return this; }
-        public Builder banco(String val) { banco = val; return this; }
-        public Builder plaza(String val) { plaza = val; return this; }
-        public Builder monto(Double val) { monto = val; return this; }
-        public Builder fechaCobro(Date val) { fechaCobro = val; return this; }
-        public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
-
-        public DtoCheque build() {
-            return new DtoCheque(this);
-        }
-    }
-
 }

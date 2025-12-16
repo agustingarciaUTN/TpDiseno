@@ -10,29 +10,23 @@ public class MapearTarjetaCredito  {
              //   .idPago(dtoTarjetaCredito.getIdPago())
                 .nro(dtoTarjetaCredito.getNumeroDeTarjeta())
                 .red(dtoTarjetaCredito.getRedDePago())
-                .monto(dtoTarjetaCredito.getMonto())
                 .cuotas(dtoTarjetaCredito.getCuotasCantidad())
                 .banco(dtoTarjetaCredito.getBanco())
                 .fechaVencimiento(dtoTarjetaCredito.getFechaVencimiento())
                 .codigoSeguridad(dtoTarjetaCredito.getCodigoSeguridad())
-                .moneda(dtoTarjetaCredito.getMoneda())
-                .fecha(dtoTarjetaCredito.getFechaDePago())
                 .build();
     }
 
     public static DtoTarjetaCredito mapearEntidadADto(TarjetaCredito tarjetaCredito) {
         if (tarjetaCredito == null) return null;
-        return new DtoTarjetaCredito.Builder()
+        return DtoTarjetaCredito.builder()
              //   .idPago(tarjetaCredito.getIdPago())
-                .red(tarjetaCredito.getRedDePago())
+                .redDePago(tarjetaCredito.getRedDePago())
                 .banco(tarjetaCredito.getBanco())
-                .numero(tarjetaCredito.getNumeroTarjeta())
-                .vencimiento(tarjetaCredito.getFechaVencimiento())
-                .seguridad(tarjetaCredito.getCodigoSeguridad())
-                .monto(tarjetaCredito.getMonto())
-                .moneda(tarjetaCredito.getMoneda())
-                .fechaPago(tarjetaCredito.getFechaPago())
-                .cuotas(tarjetaCredito.getCuotas())
+                .numeroDeTarjeta(tarjetaCredito.getNumeroTarjeta())
+                .fechaVencimiento(tarjetaCredito.getFechaVencimiento())
+                .codigoSeguridad(tarjetaCredito.getCodigoSeguridad())
+                .cuotasCantidad(tarjetaCredito.getCuotas())
                 .build();
     }
 }

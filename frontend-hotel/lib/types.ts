@@ -136,19 +136,99 @@ export interface DtoEstadia {
   dtoHabitacion: DtoHabitacion
 }
 
-// --- PAGO ---
+// --- PAGO (CU16) ---
 export enum Moneda {
-  ARS = "ARS",
-  USD = "USD",
-  EUR = "EUR"
+  PESOS_ARGENTINOS = "PESOS_ARGENTINOS",
+  DOLARES = "DOLARES",
+  REALES = "REALES",
+  PESOS_URUGUAYOS = "PESOS_URUGUAYOS",
+  EUROS = "EUROS"
+}
+
+export enum EstadoFactura {
+  PENDIENTE = "PENDIENTE",
+  PAGADA = "PAGADA"
+}
+
+export enum TipoMedioPago {
+  EFECTIVO = "EFECTIVO",
+  CHEQUE = "CHEQUE",
+  TARJETA_CREDITO = "TARJETA_CREDITO",
+  TARJETA_DEBITO = "TARJETA_DEBITO"
+}
+
+export interface DtoFactura {
+  numeroFactura: string
+  fechaEmision: string
+  importeTotal: number
+  importeNeto?: number
+  iva?: number
+  estadoFactura: EstadoFactura
+  tipoFactura?: string
+  fechaVencimiento?: string
+  idEstadia?: any
+  idResponsable?: any
+  nombreResponsable?: string
+  apellidoResponsable?: string
+  dtoNotaDeCredito?: any
+}
+
+export interface DtoEfectivo {
+  idEfectivo?: number
+  importe: number
+}
+
+export interface DtoCheque {
+  numeroCheque: string
+  banco: string
+  plaza: string
+  fechaCobro: string
+  monto: number
+}
+
+export interface DtoTarjetaCredito {
+  numeroTarjeta: string
+  redDePago: string
+  cuotas: number
+  codigoSeguridad: number
+  fechaVencimiento: string
+  monto: number
+}
+
+export interface DtoTarjetaDebito {
+  numeroTarjeta: string
+  redDePago: string
+  monto: number
+}
+
+export interface DtoMedioPago {
+  idMedioPago?: number
+  tipoMedio: TipoMedioPago
+  monto: number
+  moneda: Moneda
+  fechaDePago: string
+  efectivo?: DtoEfectivo
+  cheque?: DtoCheque
+  tarjetaCredito?: DtoTarjetaCredito
+  tarjetaDebito?: DtoTarjetaDebito
 }
 
 export interface DtoPago {
-  idPago: number
-  moneda: Moneda
-  montoTotal: number
-  cotizacion: number
+  idPago?: number
+  numeroFactura: string
   fechaPago: string
-  Factura: any // Simplificado por ahora
-  idsMediosPago?: number[]
+  moneda: Moneda
+  cotizacion: number
+  montoTotal: number
+  mediosPago: DtoMedioPago[]
+}
+
+export interface DtoResultadoRegistroPago {
+  mensaje: string
+  vuelto: number
+  saldoPendiente: number
+  numeroFactura: string
+  estadoFactura: string
+  estadoHabitacion?: string
+  facturaSaldada: boolean
 }

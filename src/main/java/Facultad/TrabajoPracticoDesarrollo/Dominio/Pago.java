@@ -29,7 +29,6 @@ public class Pago {
     @Temporal(TemporalType.DATE)
     private Date fechaPago;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "moneda")
     private Moneda moneda;
 
