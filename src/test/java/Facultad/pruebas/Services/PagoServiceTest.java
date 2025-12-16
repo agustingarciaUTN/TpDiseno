@@ -62,7 +62,7 @@ public class PagoServiceTest {
 
         DtoPago dto = new DtoPago.Builder()
                 .montoTotal(100.0)
-                .Factura(facturaDominio)
+                .numeroFactura("B-9999")
                 .build();
 
         // El servicio de facturas dice "no encontré nada" (null)
@@ -85,7 +85,7 @@ public class PagoServiceTest {
         DtoPago dto = new DtoPago.Builder()
                 .montoTotal(1500.0)
                 .fechaPago(new Date())
-                .Factura(facturaDominio)
+                .numeroFactura("B-0001")
                 .build();
 
         // El servicio de facturas confirma que existe
