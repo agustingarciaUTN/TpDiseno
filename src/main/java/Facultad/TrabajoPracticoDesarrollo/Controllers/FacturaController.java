@@ -39,7 +39,8 @@ public class FacturaController {
             @RequestParam(required = false) String nroDoc,
             @RequestParam(required = false) Integer idResponsableJuridico, // ID numérico si es empresa
             @RequestParam String horaSalida,
-            @RequestParam boolean esTercero
+            @RequestParam boolean esTercero,
+            @RequestParam(required = false) String cuit
     ) {
         try {
             int idResponsableFinal;
@@ -47,10 +48,20 @@ public class FacturaController {
             if (esTercero) {
                 // Si no viene ID, interrumpimos el flujo (tu solución anterior)
                 if (idResponsableJuridico == null) {
-                    return ResponseEntity.status(409)
-                            .body(java.util.Collections.singletonMap("accion", "REDIRECCIONAR_A_ALTA_RESPONSABLE"));
+
+                    // Intentamos buscarlo en la BD por CUIT
+                    Integer idEncontrado = facturaService.buscarIdPorCuit(cuit);
+
+                    if (idEncontrado != null) {
+                        idResponsableFinal = idEncontrado;
+                    } else {
+                        // Si es null, significa que NO existe en la BD -> Mandamos a crear
+                        return ResponseEntity.status(409)
+                                .body(java.util.Collections.singletonMap("accion", "REDIRECCIONAR_A_ALTA_RESPONSABLE"));
+                    }
+                } else {
+                    idResponsableFinal = idResponsableJuridico;
                 }
-                idResponsableFinal = idResponsableJuridico;
 
             } else {
                 // 1. Es Huesped: Validamos edad usando clave compuesta

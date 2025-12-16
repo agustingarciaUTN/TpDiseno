@@ -122,13 +122,10 @@ public class FacturaService {
         Huesped h = huespedRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Huésped no encontrado"));
 
-        LocalDate nacimiento;
-        if (h.getFechaNacimiento() instanceof java.sql.Date) {
-            nacimiento = ((java.sql.Date) h.getFechaNacimiento()).toLocalDate();
-        } else {
-            // Fallback por si es java.util.Date puro
-            nacimiento = new java.sql.Date(h.getFechaNacimiento().getTime()).toLocalDate();
-        }
+        LocalDate nacimiento = convertirAFechaLocal(h.getFechaNacimiento());
+
+        // Debug: Imprime esto en consola para ver qué está calculando
+        System.out.println("Fecha Nac: " + nacimiento + " | Edad: " + Period.between(nacimiento, LocalDate.now()).getYears());
 
         if (Period.between(nacimiento, LocalDate.now()).getYears() < 18) {
             throw new IllegalArgumentException("La persona seleccionada es menor de edad.");
@@ -231,11 +228,33 @@ public class FacturaService {
 
         Factura factura = MapearFactura.mapearDtoAEntidad(dto, responsable, estadia);
 
-        // Relaciones
-        factura.setEstadia(estadia);
-        factura.setResponsablePago(responsable);
+        // --- ARREGLO 2: FORZAR ESTADO PENDIENTE ---
+        // No importa si viene null, aquí nace la factura.
+        factura.setEstadoFactura(EstadoFactura.PENDIENTE);
+
+        // --- ARREGLO 3: CALCULAR NETO SI FALTA ---
+        // Si el neto viene nulo o es 0, lo calculamos desde el total.
+        if (factura.getImporteNeto() == null || factura.getImporteNeto() == 0) {
+            if (factura.getTipoFactura() == TipoFactura.A) {
+                // Si es A, el Total tiene IVA. Neto = Total / 1.21
+                double neto = factura.getImporteTotal() / 1.21;
+                factura.setImporteNeto(neto);
+                factura.setIva(factura.getImporteTotal() - neto);
+            } else {
+                // Si es B, usualmente el Neto es igual al Total (o se desglosa internamente igual)
+                // Para simplificar, asumimos Neto = Total / 1.21 también si queremos guardar el valor sin impuestos,
+                // o Neto = Total si consideramos que B no discrimina.
+                // Lo estándar contable: El neto siempre es la base imponible.
+                factura.setImporteNeto(factura.getImporteTotal() / 1.21);
+                factura.setIva(0.0); // En B no se muestra, pero existe contablemente. O lo dejas en 0.
+            }
+        }
 
         facturaRepository.save(factura);
+
+        estadia.setFechaCheckOut(factura.getFechaEmision());
+        estadiaRepository.save(estadia);
+
         return dto;
     }
 
@@ -320,6 +339,31 @@ public class FacturaService {
         responsablePagoRepository.save(nuevaEmpresa);
 
         return nuevaEmpresa.getIdResponsable();
+    }
+
+    private LocalDate convertirAFechaLocal(java.util.Date fecha) {
+        if (fecha == null) return null;
+
+        // Caso 1: Es java.sql.Date (Base de datos común)
+        if (fecha instanceof java.sql.Date) {
+            return ((java.sql.Date) fecha).toLocalDate();
+        }
+
+        // Caso 2: Es java.sql.Timestamp (PostgreSQL a veces devuelve esto)
+        if (fecha instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) fecha).toLocalDateTime().toLocalDate();
+        }
+
+        // Caso 3: Es java.util.Date puro (Memoria)
+        return fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    @Transactional(readOnly = true)
+    public Integer buscarIdPorCuit(String cuit) {
+        if (cuit == null || cuit.trim().isEmpty()) return null;
+
+        // Llamada eficiente a la BD
+        return responsablePagoRepository.buscarIdPorCuit(cuit);
     }
 
 }

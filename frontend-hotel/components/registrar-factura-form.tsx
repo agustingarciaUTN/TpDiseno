@@ -50,6 +50,7 @@ interface DetalleFacturacion {
     montoTotal: number;
     tipoFactura: "A" | "B";
     serviciosAdicionales: { descripcion: string; valor: number }[];
+    idResponsable: number;
 }
 
 export function RegistrarFacturaForm() {
@@ -70,6 +71,7 @@ export function RegistrarFacturaForm() {
     const [selectedOcupante, setSelectedOcupante] = useState<Ocupante | null>(null)
     const [items, setItems] = useState<ItemFactura[]>([])
     const [detalleCalculado, setDetalleCalculado] = useState<DetalleFacturacion | null>(null)
+    const [idResponsableSeleccionado, setIdResponsableSeleccionado] = useState<number | null>(null);
 
     // ESTADOS PARA TERCEROS Y ALTA RAPIDA
     const [showThirdPartyDialog, setShowThirdPartyDialog] = useState(false)
@@ -149,6 +151,10 @@ export function RegistrarFacturaForm() {
                 esTercero: params.esTercero.toString(),
             });
 
+            if (cuitTercero) {
+                query.append("cuit", cuitTercero);
+            }
+
             if (params.esTercero && params.idResponsableJuridico) {
                 query.append("idResponsableJuridico", params.idResponsableJuridico.toString());
             }
@@ -163,19 +169,25 @@ export function RegistrarFacturaForm() {
             if (res.status === 409) {
                 const data = await res.json();
                 if (data.accion === "REDIRECCIONAR_A_ALTA_RESPONSABLE") {
-                    // Nos quedamos en el modal y pedimos Razón Social
-                    setNecesitaAltaEmpresa(true);
-                    setErrorMessage("El CUIT no existe. Ingrese la Razón Social para darlo de alta ahora.");
+                    //setNecesitaAltaEmpresa(true);
+                    setErrorMessage("❌ El CUIT ingresado no existe. Verifique o déjelo vacío para dar de alta.");
                     setIsLoading(false);
                     return; // Interrumpimos
                 }
             }
 
-            if (!res.ok) throw new Error("Error al calcular detalle");
+            if (!res.ok) {
+                // Intentamos leer el mensaje que mandó el backend
+                const mensajeBackend = await res.text();
+                // Usamos ese mensaje, o el genérico si vino vacío
+                throw new Error(mensajeBackend || "Error al calcular detalle");
+            }
 
             // Si todo ok (200), procesamos los datos para mostrar
             const data: DetalleFacturacion = await res.json();
             setDetalleCalculado(data);
+
+            setIdResponsableSeleccionado(data.idResponsable);
 
             // Mapeamos los items para la selección visual
             const itemsMapeados: ItemFactura[] = [
@@ -223,11 +235,14 @@ export function RegistrarFacturaForm() {
             return;
         }
         setIsLoading(true);
+        setErrorMessage("");
+
         try {
             const res = await fetch('http://localhost:8080/api/factura/responsable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    tipoResponsable: "J",
                     cuit: cuitTercero,
                     razonSocial: razonSocialTercero,
                     telefono: [342000000], // Dato dummy obligatorio por DTO
@@ -244,18 +259,20 @@ export function RegistrarFacturaForm() {
 
             if (!res.ok) throw new Error("Error al crear empresa");
 
-            const data = await res.json();
-            const nuevoId = data.idResponsableGenerado;
+            const dataResp = await res.json();
+            const nuevoId = dataResp.idResponsableGenerado;
+
+            setIsLoading(false);
+
+            alert(`La firma ${razonSocialTercero} ha sido cargada al sistema.`);
+
+            // 2. Guardamos el ID para usarlo luego
+            setIdResponsableSeleccionado(nuevoId);
+            setIdEmpresaCreada(nuevoId); // Backup por si acaso
 
             // Exito! Ahora volvemos a intentar calcular con el nuevo ID
             setNecesitaAltaEmpresa(false);
-            setIdEmpresaCreada(nuevoId);
-
-            // Re-ejecutamos el cálculo automáticamente
-            await obtenerDetalleFacturacion({
-                esTercero: true,
-                idResponsableJuridico: nuevoId
-            });
+            setErrorMessage("");
 
         } catch (error: any) {
             setErrorMessage("No se pudo crear: " + error.message);
@@ -308,10 +325,7 @@ export function RegistrarFacturaForm() {
                 // Relaciones
                 idEstadia: { idEstadia: idEstadia },
                 idResponsable: {
-                    // Truco: Enviamos solo el ID envuelto en objeto
-                    idResponsable: idEmpresaCreada
-                        ? idEmpresaCreada
-                        : (await obtenerIdResponsableHuesped()) // Helper si es huesped
+                    idResponsable: idResponsableSeleccionado
                 }
             };
 
@@ -506,7 +520,7 @@ export function RegistrarFacturaForm() {
             <Dialog open={showThirdPartyDialog} onOpenChange={setShowThirdPartyDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{necesitaAltaEmpresa ? "Alta de Nueva Empresa" : "Facturar a Tercero"}</DialogTitle>
+                        <DialogTitle>{necesitaAltaEmpresa ? "Alta de Responsable de pago (CU-12)" : "Seleccionar Tercero"}</DialogTitle>
                         <DialogDescription>
                             {necesitaAltaEmpresa
                                 ? "El CUIT ingresado no existe. Complete los datos para registrarla."
@@ -521,7 +535,7 @@ export function RegistrarFacturaForm() {
                                 value={cuitTercero}
                                 onChange={(e) => setCuitTercero(e.target.value)}
                                 placeholder="30-12345678-9"
-                                disabled={necesitaAltaEmpresa} // Bloqueamos CUIT si ya estamos en alta
+                                disabled={false}
                             />
                         </div>
 
@@ -562,14 +576,16 @@ export function RegistrarFacturaForm() {
 
     // Wrapper auxiliar para llamar a la logica desde el dialog
     function obtainingDetalleFacturacionWrapper() {
-        if(!cuitTercero) return;
+        if (!cuitTercero || !cuitTercero.trim()) {
+            setErrorMessage("");
+            setNecesitaAltaEmpresa(true);
+            return;
+        }
+
         setErrorMessage("");
         obtenerDetalleFacturacion({
             esTercero: true,
-            // Truco: Enviamos ID nulo para que el backend dispare la validacion 409 la primera vez
-            // O podríamos implementar un endpoint de buscar por CUIT antes.
-            // Para tu TP, dejar ID nulo funciona con tu logica de controller.
-            idResponsableJuridico: undefined
+            idResponsableJuridico: undefined // Esto disparará la búsqueda en el backend
         });
     }
 }

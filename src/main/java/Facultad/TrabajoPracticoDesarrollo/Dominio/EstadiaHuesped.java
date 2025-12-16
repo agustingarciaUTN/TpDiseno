@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 
+import Facultad.TrabajoPracticoDesarrollo.Utils.SiNoBooleanConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,5 +29,6 @@ public class EstadiaHuesped {
     private Huesped huesped;
 
     @Column(name = "responsable")
+    @Convert(converter = SiNoBooleanConverter.class)
     private Boolean esResponsable;
 }

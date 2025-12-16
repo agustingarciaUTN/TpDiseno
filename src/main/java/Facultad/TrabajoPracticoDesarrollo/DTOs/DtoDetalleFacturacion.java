@@ -20,9 +20,9 @@ public class DtoDetalleFacturacion {
     public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
 
     // Datos del Responsable
-    @NotNull
-    @Positive
-    private int idResponsable;
+    //@NotNull
+    //@Positive
+    private Integer idResponsable;
 
     @NotBlank
     @Size(min = 2, max = 200)

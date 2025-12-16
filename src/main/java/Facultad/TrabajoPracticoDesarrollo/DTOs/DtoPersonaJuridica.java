@@ -19,8 +19,8 @@ public class DtoPersonaJuridica extends DtoResponsableDePago {
 
     public static final String REGEX_CUIT = "^\\d{2}-?\\d{8}-?\\d{1}$";
 
-    @NotNull
-    @Positive
+    //@NotNull
+    //@Positive
     private int idResponsablePago;
 
     @NotBlank

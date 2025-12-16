@@ -11,6 +11,7 @@ import java.util.List;
 @Table(name = "persona_juridica")
 @Getter @Setter
 @PrimaryKeyJoinColumn(name = "id_responsable")
+@DiscriminatorValue("J")
 public class PersonaJuridica extends ResponsablePago {
 
     @Column(name = "razon_social")
@@ -30,7 +31,7 @@ public class PersonaJuridica extends ResponsablePago {
 
     public PersonaJuridica() {
         super();
-        this.setTipoResponsable("J");
+    //    this.setTipoResponsable("J");
     }
 
     // Builder

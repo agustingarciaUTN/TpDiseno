@@ -7,7 +7,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "persona_fisica")
 @Getter @Setter
-@PrimaryKeyJoinColumn(name = "id_responsable") // PK y FK al padre
+@PrimaryKeyJoinColumn(name = "id_responsable")
+@DiscriminatorValue("F")// PK y FK al padre
 public class PersonaFisica extends ResponsablePago {
 
     // Relación con Huesped (Usando su clave compuesta)
@@ -20,7 +21,7 @@ public class PersonaFisica extends ResponsablePago {
 
     public PersonaFisica() {
         super();
-        this.setTipoResponsable("F"); // Valor fijo para Física
+    //    this.setTipoResponsable("F"); // Valor fijo para Física
     }
 
     public Huesped getHuesped() { return huesped; }
