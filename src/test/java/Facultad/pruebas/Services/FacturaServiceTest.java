@@ -32,6 +32,10 @@ public class FacturaServiceTest {
     @InjectMocks
     private FacturaService facturaService;
 
+    /**
+     * Test: Calcular detalle de facturación con recargo por salida tardía (Late Check-out).
+     * Escenario: Salida a las 19:00 hs (pasadas las 18:00) -> Recargo de 1 día completo.
+     */
     @Test
     void calcularDetalle_ConLateCheckout_AplicaRecargo() {
         // Arrange
@@ -39,7 +43,7 @@ public class FacturaServiceTest {
         int idResponsable = 5;
         String horaSalidaTarde = "19:00"; // Pasadas las 18:00 -> Recargo día completo
 
-        // Builder Habitacion: costo es float según tu entidad
+        // Configuramos precios y valores base
         Habitacion hab = new Habitacion.Builder()
                 .costo(10000.0f)
                 .build();
@@ -47,11 +51,11 @@ public class FacturaServiceTest {
         // Builder Estadia
         Estadia estadia = new Estadia.Builder()
                 .idEstadia(idEstadia)
-                .valorEstadia(20000.0) // Double
+                .valorEstadia(20000.0) // Valor original (ej: 2 noches)
                 .habitacion(hab)
                 .build();
 
-        // Builder Huesped
+        // El responsable es Consumidor Final -> Genera Factura B
         Huesped huesped = new Huesped.Builder()
                 .posicionIva(PosIva.CONSUMIDOR_FINAL)
                 .apellido("Gomez")
@@ -64,6 +68,7 @@ public class FacturaServiceTest {
                 .huesped(huesped)
                 .build();
 
+        // Mocks de retorno
         when(estadiaRepository.findById(idEstadia)).thenReturn(Optional.of(estadia));
         when(responsablePagoRepository.findById(idResponsable)).thenReturn(Optional.of(responsable));
         when(serviciosAdicionalesRepository.findByEstadia_IdEstadia(idEstadia)).thenReturn(new ArrayList<>());
@@ -73,19 +78,23 @@ public class FacturaServiceTest {
 
         // Assert
         assertEquals(TipoFactura.B, detalle.getTipoFactura());
-        // Monto base (20000.0) + Recargo día completo (10000.0) = 30000.0 subtotal
+
+        // Validación matemática:
+        // Subtotal = Valor Estadia (20.000) + Recargo 1 día (10.000) = 30.000
         assertEquals(30000.0, detalle.getSubtotal());
-        // 30000.0 * 1.21 = 36300.0 Total
+
+        // Total con IVA (21%) -> 30.000 * 1.21 = 36.300
         assertEquals(36300.0, detalle.getMontoTotal());
+
         assertTrue(detalle.getDetalleRecargo().contains("Día completo"));
     }
 
+    /**
+     * Test: Generar una factura nueva y persistirla.
+     */
     @Test
     void generarFactura_NuevaFactura_GuardaCorrectamente() throws Exception {
         // Arrange
-        // Nota: Asumimos que DtoEstadiaSimple y DtoResponsableSimple tienen constructores o setters accesibles
-        // ya que no tengo sus archivos de Builder específicos, usaré instanciación directa si es posible o mocks.
-        // Si tienen Builders, reemplaza esto con sus builders correspondientes.
         DtoEstadiaSimple dtoEstadia = new DtoEstadiaSimple();
         dtoEstadia.setIdEstadia(10);
 
@@ -101,8 +110,10 @@ public class FacturaServiceTest {
                 .idResponsable(dtoResp)
                 .build();
 
+        // Validamos que NO exista previamente
         when(facturaRepository.existsById("B-0001-00000001")).thenReturn(false);
-        // Mocks de respuesta de repositorios
+
+        // Simulamos que estadía y responsable existen
         when(estadiaRepository.findById(10)).thenReturn(Optional.of(new Estadia.Builder().idEstadia(10).build()));
         when(responsablePagoRepository.findById(5)).thenReturn(Optional.of(new PersonaFisica.Builder().idResponsablePago(5).build()));
 
@@ -113,17 +124,27 @@ public class FacturaServiceTest {
         verify(facturaRepository).save(any(Factura.class));
     }
 
+    /**
+     * Test: Intentar guardar una factura que ya existe en el sistema.
+     * Resultado esperado: Lanzar Excepción para evitar duplicados.
+     */
     @Test
     void guardarFactura_SiYaExiste_LanzaExcepcion() {
         // Arrange: Builder para la Entidad
+        // Preparamos una factura simulada usando el Builder
         Factura f = new Factura.Builder()
                 .numeroFactura("A-0001")
                 .estadoFactura(EstadoFactura.PENDIENTE)
                 .build();
 
+        // Simulamos que el repositorio encuentra una factura con ese NUMERO (return true)
         when(facturaRepository.existsById("A-0001")).thenReturn(true);
 
         // Act & Assert
+        // Verificamos que el método lance Exception al intentar guardar
         assertThrows(Exception.class, () -> facturaService.guardarFactura(f));
+
+        // Verificamos que NO se llame al método save del repositorio
+        verify(facturaRepository, never()).save(any(Factura.class));
     }
 }

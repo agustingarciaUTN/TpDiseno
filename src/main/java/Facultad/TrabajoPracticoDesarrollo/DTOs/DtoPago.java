@@ -35,7 +35,7 @@ public class DtoPago {
 
     @NotNull
     @Valid
-    private Factura Factura;
+    private Factura factura;
 
     // Lista de IDs de los medios de pago asociados (para no arrastrar objetos complejos aquí)
     private ArrayList<Integer> idsMediosPago;
@@ -47,7 +47,7 @@ public class DtoPago {
         this.montoTotal = builder.montoTotal;
         this.cotizacion = builder.cotizacion;
         this.fechaPago = builder.fechaPago;
-        this.Factura = builder.Factura;
+        this.factura = builder.factura;
         this.idsMediosPago = builder.idsMediosPago;
     }
 
@@ -58,7 +58,7 @@ public class DtoPago {
         private double montoTotal;
         private double cotizacion;
         private Date fechaPago;
-        private Factura Factura;
+        private Factura factura;
         private ArrayList<Integer> idsMediosPago = new ArrayList<>();
 
         public Builder() {}
@@ -68,8 +68,7 @@ public class DtoPago {
         public Builder montoTotal(double val) { montoTotal = val; return this; }
         public Builder cotizacion(double val) { cotizacion = val; return this; }
         public Builder fechaPago(Date val) { fechaPago = val; return this; }
-        public Builder Factura(Factura val) { Factura = val; return this; }
-
+        public Builder Factura(Factura val) { factura = val; return this; }
         public Builder idsMediosPago(ArrayList<Integer> val) { idsMediosPago = val; return this; }
         public Builder agregarIdMedioPago(int val) {
             if (this.idsMediosPago == null) this.idsMediosPago = new ArrayList<>();

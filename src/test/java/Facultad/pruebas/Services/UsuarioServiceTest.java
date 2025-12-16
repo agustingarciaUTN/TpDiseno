@@ -26,6 +26,10 @@ public class UsuarioServiceTest {
     @InjectMocks
     private UsuarioService usuarioService;
 
+    /**
+     * Test: Login exitoso.
+     * Simula el proceso de hasheo MD5 para validar la contraseña.
+     */
     @Test
     void autenticarUsuario_CredencialesValidas_RetornaTrue() {
         // Arrange
@@ -42,11 +46,11 @@ public class UsuarioServiceTest {
                 .password(hashEsperado) // La BD tiene el hash, no la plana
                 .build();
 
-        // 2. Mockear el repositorio: Buscamos por NOMBRE (no por ID ni por 'user')
+        // 2. Mockear el repositorio: Buscamos por NOMBRE
         when(usuarioRepository.findByNombre(nombreUsuario)).thenReturn(Optional.of(usuarioReal));
 
         // Act
-        // El servicio buscará por nombre y luego hasheará la pass plana para comparar
+        // El servicio toma la pass plana "1234", la hashea y compara
         boolean resultado = usuarioService.autenticarUsuario(nombreUsuario, passwordPlana);
 
         // Assert
@@ -54,6 +58,9 @@ public class UsuarioServiceTest {
         verify(usuarioRepository).findByNombre(nombreUsuario);
     }
 
+    /**
+     * Test: Intento de login con usuario inexistente.
+     */
     @Test
     void autenticarUsuario_UsuarioNoExiste_RetornaFalse() {
         // Arrange
@@ -67,6 +74,9 @@ public class UsuarioServiceTest {
         assertFalse(resultado, "El login debería fallar si el usuario no existe");
     }
 
+    /**
+     * Test: Intento de login con contraseña incorrecta.
+     */
     @Test
     void autenticarUsuario_ContraseniaIncorrecta_RetornaFalse() {
         // Arrange

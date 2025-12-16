@@ -31,6 +31,9 @@ public class PagoServiceTest {
     @InjectMocks
     private PagoService pagoService;
 
+    /**
+     * Test: Validar que no se pueda registrar un pago con monto cero o negativo.
+     */
     @Test
     void registrarPago_MontoInvalido_LanzaExcepcion() {
         // Arrange
@@ -39,30 +42,39 @@ public class PagoServiceTest {
                 .build();
 
         // Act & Assert
+        // Esperamos una excepción de argumento ilegal
         assertThrows(IllegalArgumentException.class, () -> pagoService.registrarPago(dto));
+
+        // Nos aseguramos de que NUNCA se haya llamado al repositorio para guardar
         verifyNoInteractions(pagoRepository);
     }
 
+    /**
+     * Test: Intentar pagar una factura que no existe en el sistema.
+     */
     @Test
     void registrarPago_FacturaNoExiste_LanzaExcepcion() {
-        // Arrange
-        // DTO necesita una factura (aunque sea simulada) para que getNumeroFactura no falle en null pointer antes de tiempo
-        // Pero usamos la Entidad Factura dentro de DtoPago según tu DtoPago.java (campo Factura de tipo Dominio)
+
+        // ARRANGE
         Factura facturaDominio = new Factura.Builder()
                 .numeroFactura("B-9999")
                 .build();
 
         DtoPago dto = new DtoPago.Builder()
                 .montoTotal(100.0)
-                .Factura(facturaDominio) // Método con mayúscula según tu DtoPago
+                .Factura(facturaDominio)
                 .build();
 
+        // El servicio de facturas dice "no encontré nada" (null)
         when(facturaService.buscarPorNumero("B-9999")).thenReturn(null);
 
         // Act & Assert
         assertThrows(Exception.class, () -> pagoService.registrarPago(dto));
     }
 
+    /**
+     * Test: Registro de pago exitoso.
+     */
     @Test
     void registrarPago_DatosValidos_GuardaPago() throws Exception {
         // Arrange
@@ -73,9 +85,10 @@ public class PagoServiceTest {
         DtoPago dto = new DtoPago.Builder()
                 .montoTotal(1500.0)
                 .fechaPago(new Date())
-                .Factura(facturaDominio) // Método con mayúscula
+                .Factura(facturaDominio)
                 .build();
 
+        // El servicio de facturas confirma que existe
         Factura facturaReal = new Factura.Builder()
                 .numeroFactura("B-0001")
                 .build();

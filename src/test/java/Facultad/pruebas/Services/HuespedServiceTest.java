@@ -40,12 +40,17 @@ public class HuespedServiceTest {
     @InjectMocks
     private HuespedService huespedService;
 
+    /**
+     * Test: Buscar huéspedes usando filtros (ej: por Apellido).
+     * Verifica que se llame a la query personalizada del repositorio.
+     */
     @Test
     void buscarHuespedes_ConCriterios_LlamaQuery() {
         // Arrange
         DtoHuespedBusqueda criterios = new DtoHuespedBusqueda();
         criterios.setApellido("Gomez");
 
+        // Simulamos que la BD devuelve una lista con un huésped
         when(huespedRepository.buscarPorCriterios(eq("Gomez"), any(), any(), any()))
                 .thenReturn(List.of(new Huesped()));
 
@@ -56,6 +61,10 @@ public class HuespedServiceTest {
         assertFalse(res.isEmpty());
     }
 
+    /**
+     * Test: Crear un nuevo huésped (Upsert).
+     * Verifica que se guarde primero la dirección y luego el huésped.
+     */
     @Test
     void upsertHuesped_Nuevo_GuardaTodo() {
         // Arrange: Usamos Builder para el DTO principal y anidamos el Builder de Dirección
@@ -64,7 +73,6 @@ public class HuespedServiceTest {
                 .documento("111222")
                 .nombres("Test")
                 .apellido("User")
-                // CORRECCIÓN AQUÍ: Usamos el Builder de DtoDireccion
                 .direccion(new DtoDireccion.Builder()
                         .calle("Calle Falsa")
                         .numero(123)
@@ -75,13 +83,14 @@ public class HuespedServiceTest {
                         .build())
                 .build();
 
+        // Simulamos que NO existe en la base de datos (Optional.empty) -> Es un Alta
         when(huespedRepository.findById(any(HuespedId.class))).thenReturn(Optional.empty());
 
         // Act
         huespedService.upsertHuesped(dto);
 
         // Assert
-        verify(direccionRepository).save(any(Direccion.class));
-        verify(huespedRepository).save(any(Huesped.class));
+        verify(direccionRepository).save(any(Direccion.class)); // Guarda dirección
+        verify(huespedRepository).save(any(Huesped.class)); // Guarda huésped
     }
 }

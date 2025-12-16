@@ -30,9 +30,14 @@ public class HabitacionServiceTest {
     @InjectMocks
     private HabitacionService habitacionService;
 
+    /**
+     * Test: Obtener todas las habitaciones.
+     * Verifica que se ordenen correctamente (lógica de negocio: Individual primero).
+     */
     @Test
     void obtenerTodas_OrdenaCorrectamente() {
         // Arrange: Usamos Builder para crear las habitaciones
+        // Creamos habitaciones desordenadas
         Habitacion h1 = new Habitacion.Builder()
                 .numero("102")
                 .tipoHabitacion(TipoHabitacion.DOBLE_ESTANDAR)
@@ -43,19 +48,34 @@ public class HabitacionServiceTest {
                 .tipoHabitacion(TipoHabitacion.INDIVIDUAL_ESTANDAR)
                 .build();
 
+        // Simulamos que el Repositorio las devuelve en orden "incorrecto" o arbitrario (h1 antes que h2).
+        // Esto fuerza a que el Servicio tenga que aplicar su lógica de ordenamiento.
         when(habitacionRepository.findAll()).thenReturn(Arrays.asList(h1, h2));
 
         // Act
         List<Habitacion> res = habitacionService.obtenerTodas();
 
         // Assert
+        // Verificamos que el primer elemento de la lista resultante sea la habitación INDIVIDUAL (h2).
+        // Si el servicio no ordenara, el primero sería h1 (DOBLE).
         assertEquals("101", res.get(0).getNumero()); // Individual va primero
     }
 
+    /**
+     * Test: Validar la lógica de rangos de fechas.
+     * Escenario Negativo: Se intenta validar un rango donde la fecha de Fin es ANTERIOR a la de Inicio.
+     * Resultado esperado: El método debe detectar la inconsistencia y retornar false.
+     */
     @Test
     void validarRangoFechas_FechasMalas_RetornaFalse() {
-        Date inicio = new Date();
-        Date fin = new Date(inicio.getTime() - 10000);
-        assertFalse(habitacionService.validarRangoFechas(inicio, fin));
+        Date inicio = new Date(); // Fecha actual
+        Date fin = new Date(inicio.getTime() - 10000); // Fecha fin = Hace 10 segundos (Pasado)
+        // --- ACT ---
+        // Llamamos a la validación con este rango imposible (Fin < Inicio).
+        boolean esValido = habitacionService.validarRangoFechas(inicio, fin);
+
+        // --- ASSERT ---
+        // El servicio debe rechazar este rango.
+        assertFalse(esValido, "El rango no puede ser válido si la fecha de fin es anterior a la de inicio");
     }
 }
