@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Servicio encargado del "Check-in" y la ocupación real.
+ * Transforma la "promesa" de una Reserva en una Estadía efectiva con gente adentro.
+ */
 @Service
 public class EstadiaService {
 
@@ -33,12 +37,24 @@ public class EstadiaService {
         this.habitacionRepository = habitacionRepository;
     }
 
+    /**
+     * Revisa la disponibilidad "física".
+     * A diferencia de las reservas, esto chequea si hay una Estadía vigente.
+     * Es decir, si hay maletas y gente en la habitación AHORA.
+     *
+     * @param idHabitacion Número de la habitación.
+     * @return true si no hay nadie (está vacía), false si está ocupada.
+     */
     @Transactional(readOnly = true)
     public boolean validarDisponibilidad(String idHabitacion, Date fechaInicio, Date fechaFin) {
         // Buscamos si hay una estadía ACTIVA (no finalizada) que ocupe la habitación en esas fechas
         return !estadiaRepository.existeEstadiaEnFechas(idHabitacion, fechaInicio, fechaFin);
     }
 
+    /**
+     * Busca todas las estadías activas en un rango de fechas.
+     * Útil para reportes o para ver quién está en el hotel.
+     */
     @Transactional(readOnly = true)
     public List<DtoEstadia> buscarEstadiasEnFecha(Date inicio, Date fin) {
         List<Estadia> entidades = estadiaRepository.buscarEstadiasEnRango(inicio, fin);
@@ -49,6 +65,14 @@ public class EstadiaService {
         return dtos;
     }
 
+    /**
+     * Hace el ingreso oficial (Check-in).
+     * Toma los datos de la habitación y vincula a todos los huéspedes que van a dormir ahí.
+     * Valida que la habitación no esté ocupada y que los acompañantes no estén en otra pieza.
+     *
+     * @param dtoEstadia Datos del check-in (habitación, fechas, lista de personas).
+     * @throws Exception Si intentas meter gente en una habitación que ya tiene ocupantes.
+     */
     @Transactional(rollbackFor = Exception.class)
     public void crearEstadia(DtoEstadia dtoEstadia) throws Exception {
 

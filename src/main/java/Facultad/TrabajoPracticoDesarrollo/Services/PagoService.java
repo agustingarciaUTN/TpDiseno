@@ -12,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 
+/**
+ * Servicio de Cobranzas.
+ * Simplemente registra que se ha realizado un pago sobre una factura.
+ */
 @Service
 public class PagoService {
 
@@ -24,6 +28,15 @@ public class PagoService {
         this.facturaService = facturaService;
     }
 
+    /**
+     * Asienta un pago en el sistema.
+     * Valida cosas básicas como que el monto sea positivo y que
+     * la factura que quieren pagar realmente exista.
+     *
+     * @param dtoPago Datos del pago (monto, fecha, forma de pago).
+     * @throws IllegalArgumentException Si intentan pagar $0 o negativo.
+     * @throws Exception Si la factura indicada no existe.
+     */
     @Transactional
     public void registrarPago(DtoPago dtoPago) throws Exception {
         // 1. Validaciones básicas
@@ -50,15 +63,9 @@ public class PagoService {
         }
 
         // 4. Guardar Pago
-        // JPA guardará automáticamente los medios de pago asociados (Efectivo/Tarjeta/Cheque)
-        // por la relación CascadeType.ALL definida en la entidad Pago.
         pagoRepository.save(nuevoPago);
 
-        // 5. Actualizar estado de la factura (Delegamos la lógica al FacturaService)
-        // Ejemplo: Si el pago cubre el total, la marcamos como pagada.
-        // Aquí simplificamos asumiendo que un pago registrado implica saldar la factura o parte de ella.
-        // Podrías sumar los pagos previos de esta factura si quisieras validar el total.
-
+        // Opcional: Podriamos actualizar estado de factura
         // facturaService.actualizarEstado(nroFactura, EstadoFactura.PAGADA);
     }
 }

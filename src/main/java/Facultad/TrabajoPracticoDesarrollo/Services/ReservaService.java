@@ -15,6 +15,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Servicio para manejar las Reservas.
+ * Se encarga de validar que las habitaciones estén libres antes de confirmar nada
+ * y gestiona el calendario de ocupación.
+ */
 @Service
 public class ReservaService {
 
@@ -28,6 +33,15 @@ public class ReservaService {
     // --- BÚSQUEDAS ---
 
     @Transactional(readOnly = true)
+
+    /**
+     * Busca qué reservas están "vivas" (activas) en un rango de fechas.
+     * Sirve para pintar la grilla en la pantalla y ver qué está ocupado.
+     *
+     * @param fechaInicio Desde cuándo queremos mirar.
+     * @param fechaFin    Hasta cuándo queremos mirar.
+     * @return Una lista limpia (DTOs) para mostrar en el frontend.
+     */
     public List<DtoReserva> buscarReservasEnFecha(Date inicio, Date fin) {
         List<Reserva> entidades = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
         List<DtoReserva> dtos = new ArrayList<>();
@@ -39,6 +53,15 @@ public class ReservaService {
     }
 
     @Transactional(readOnly = true)
+    /**
+     * El "semáforo" del sistema. Revisa si una habitación está libre en esas fechas.
+     * Verifica que no se superponga con ninguna otra reserva existente.
+     *
+     * @param idHabitacion La habitación que queremos chequear.
+     * @param fechaInicio  Cuándo entra el huésped.
+     * @param fechaFin     Cuándo sale.
+     * @return true si está libre (Luz Verde), false si ya está reservada (Luz Roja).
+     */
     public boolean validarDisponibilidad(String idHabitacion, Date fechaInicio, Date fechaFin) {
         // Buscamos si existe alguna reserva para esa habitación que se solape con las fechas
         // Lógica: (StartA <= EndB) and (EndA >= StartB)
@@ -49,6 +72,14 @@ public class ReservaService {
     // --- CREACIÓN (Lógica Principal) ---
 
     @Transactional(rollbackFor = Exception.class) // Hace rollback si algo falla
+    /**
+     * Guarda las reservas en la base de datos.
+     * Antes de guardar, hace una última validación de seguridad para asegurarse
+     * de que nadie haya ocupado la habitación en el último milisegundo.
+     *
+     * @param reservas Lista de reservas a crear.
+     * @throws Exception Si las fechas están mal o la habitación ya no está disponible.
+     */
     public void crearReservas(List<DtoReserva> listaDtos) throws Exception {
 
         // 1. Validaciones generales de la lista
@@ -79,6 +110,14 @@ public class ReservaService {
 
     // --- VALIDACIONES PRIVADAS ---
 
+    /**
+     * Validador de seguridad interno.
+     * Revisa que la lista no sea nula y que cada reserva tenga lo mínimo indispensable
+     * (habitación y nombre del responsable) antes de intentar procesar nada.
+     *
+     * @param reservas La lista cruda que vino del front.
+     * @throws Exception Si la lista está vacía o faltan datos obligatorios.
+     */
     private void validarListaReservas(List<DtoReserva> reservas) throws Exception {
         if (reservas == null || reservas.isEmpty()) {
             throw new Exception("La lista de reservas está vacía.");
@@ -90,7 +129,14 @@ public class ReservaService {
                 throw new Exception("Falta el número de habitación.");
         }
     }
-
+    /**
+     * Regla de negocio temporal.
+     * Se asegura de que no estemos intentando reservar con fecha de inicio en el pasado.
+     * Convierte fechas de Date a LocalDate para comparar solo día/mes/año sin horas.
+     *
+     * @param fechaDesde La fecha de ingreso propuesta.
+     * @throws Exception Si la fecha es anterior a hoy.
+     */
     private void validarFechaIngreso(Date fechaDesde) throws Exception {
         LocalDate hoy = LocalDate.now();
         LocalDate fechaIngreso = fechaDesde.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();

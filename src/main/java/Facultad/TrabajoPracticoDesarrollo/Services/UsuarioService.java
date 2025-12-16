@@ -9,6 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * Servicio de Seguridad. Maneja el login y los usuarios del sistema (recepcionistas/admins).
+ * Se asegura de que las contraseñas no viajen ni se guarden en texto plano.
+ */
 @Service
 public class UsuarioService {
 
@@ -19,6 +23,13 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    /**
+     * Crea un usuario nuevo en el sistema.
+     * Importante: Nunca guarda la contraseña real, guarda el Hash para seguridad.
+     *
+     * @param nombre      Nombre único de usuario.
+     * @param contrasenia Contraseña a establecer.
+     */
     @Transactional
     public void crearUsuario(String nombre, String contrasenia) {
         // Verificar si el usuario ya existe
@@ -35,6 +46,15 @@ public class UsuarioService {
         usuarioRepository.save(nuevoUsuario);
     }
 
+    /**
+     * Intenta loguear a un usuario.
+     * Toma la contraseña que escribió el usuario, la encripta (Hash MD5) y
+     * la compara con la huella digital que tenemos en la base de datos.
+     *
+     * @param nombre      El usuario (ej: "admin").
+     * @param contrasenia La contraseña tal cual la tipeó.
+     * @return true si las credenciales coinciden, false si le erró.
+     */
     @Transactional(readOnly = true)
     public boolean autenticarUsuario(String nombre, String contrasenia) {
         if (nombre == null || nombre.isBlank() || contrasenia == null || contrasenia.isBlank()) {

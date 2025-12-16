@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityManager;
 
+/**
+ * Gestiona la libreta de contactos de los Huéspedes.
+ * Sirve para no tener que cargar los datos de la misma persona mil veces.
+ */
 @Service //Le avisa a Spring que esta clase contiene Lógica de Negocio y que debe estar disponible para ser inyectada en los Controllers
 public class HuespedService {
 
@@ -53,8 +57,11 @@ public class HuespedService {
     }
 
     /**
-     * Busca huéspedes según los criterios del DTO.
-     * Si el DTO está vacío, devuelve todos.
+     * Buscador inteligente de huéspedes.
+     * Puedes buscar por apellido, DNI, o cualquier combinación de datos que tengas a mano.
+     *
+     * @param criterios DTO con los filtros (si algo viene null, lo ignora).
+     * @return Lista de personas que coinciden con la búsqueda.
      */
     @Transactional(readOnly = true)
     public List<Huesped> buscarHuespedes(DtoHuespedBusqueda criterios) {
@@ -113,19 +120,6 @@ public class HuespedService {
     private Direccion crearSinPersistirDireccion(DtoDireccion dto) {
         return MapearDireccion.mapearDtoAEntidad(dto);
     }
-
-
-    // Una vez que cargamos un objeto con findById, estamos obligados a trabajar sobre ESE objeto.
-    // No podemos traer otro nuevo a partir del mapearDtoAEntidad, ya que tendria la misma PK.
-    //a forma correcta y profesional en JPA no es "crear un objeto para pisar el viejo", sino "modificar el objeto que ya tenés en la mano"
-
-    //Traés el objeto (findById). -> Está "Limpio".
-    //
-    //Le hacés setNombre(...), setTelefono(...). -> Ahora está "Sucio" (Dirty).
-    //
-    //Termina la transacción (@Transactional).
-    //
-    //Hibernate ve que está sucio y automáticamente genera el UPDATE solo con los campos que cambiaron.
 
     /**
      * Lógica de Alta o Modificación (UPSERT).
@@ -198,7 +192,12 @@ public class HuespedService {
 
     }
 
-    // CU10
+    /**
+     * Método potente de migración (Cambio de DNI).
+     * Si detecta que cambió la identidad (Tipo/Nro Doc), verifica si es una FUSIÓN
+     * (unir dos perfiles en uno) o un CAMBIO DE CLAVE simple.
+     * Mueve reservas, estadías y facturas al nuevo perfil si es necesario.
+     */
     @Transactional
     public void modificarHuesped(String tipoOrig, String nroOrig, DtoHuesped dtoNuevo) {
 
@@ -364,6 +363,10 @@ public class HuespedService {
         }
     }
 
+    /**
+     * Elimina un huésped siempre y cuando no tenga historial (esté "limpio").
+     * Si se alojó alguna vez o tiene facturas, el sistema lo protege y tira error.
+     */
     @Transactional
     public void darDeBajaHuesped(String tipo, String nro) {
 

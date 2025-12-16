@@ -15,6 +15,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Inventario de Habitaciones.
+ * Provee la lista de qué habitaciones tenemos disponibles para vender.
+ */
 @Service
 public class HabitacionService {
 
@@ -34,7 +38,11 @@ public class HabitacionService {
     }
 
     /**
-     * Retorna todas las habitaciones ordenadas por Tipo (según el Enum) y luego por Número.
+     * Trae todas las habitaciones del hotel.
+     * Las ordena por tipo (primero las Simples, luego Dobles, etc.) para que
+     * en la pantalla se vean ordenaditas y no mezcladas.
+     *
+     * @return Lista completa y ordenada de habitaciones.
      */
     @Transactional(readOnly = true)
     public List<Habitacion> obtenerTodas() {
@@ -53,8 +61,9 @@ public class HabitacionService {
     }
 
     /**
-     * Valida la coherencia de fechas para las búsquedas (Lógica de negocio pura).
-     * No accede a la BD, solo verifica reglas.
+     * Validación auxiliar de fechas.
+     * Se asegura de que no estemos intentando viajar al pasado (Fin antes que Inicio)
+     * y que no pidan un rango exagerado (más de 60 días) que rompa la vista.
      */
     public boolean validarRangoFechas(Date inicio, Date fin) {
         if (inicio == null || fin == null) return false;
@@ -76,8 +85,9 @@ public class HabitacionService {
     }
 
     /**
-     * Obtiene el estado de todas las habitaciones para un rango de fechas específico
-     * Considera: estado físico, reservas activas y estadías en curso
+     * Genera el reporte completo para la pantalla de "Estado de Habitaciones".
+     * Itera día por día en el rango solicitado y calcula el estado de cada habitación.
+     * Devuelve una estructura lista para ser consumida por el frontend.
      */
     @Transactional(readOnly = true)
     public List<java.util.Map<String, Object>> obtenerEstadoPorFechas(String fechaDesdeStr, String fechaHastaStr) {
@@ -137,7 +147,18 @@ public class HabitacionService {
             throw new RuntimeException("Error al calcular estados: " + e.getMessage(), e);
         }
     }
-    
+
+    // --- MÉTODOS PRIVADOS ---
+
+    /**
+     * El cerebro de la Grilla de Estados.
+     * Cruza tres fuentes de verdad para determinar el color de la celda:
+     * 1. Estado Físico (Mantenimiento).
+     * 2. Ocupación Real (Estadía activa en esa fecha).
+     * 3. Compromiso Futuro (Reserva confirmada en esa fecha).
+     *
+     * @return "MANTENIMIENTO", "OCUPADA", "RESERVADA" o "DISPONIBLE".
+     */
     private String determinarEstadoHabitacion(
             Habitacion hab, 
             java.time.LocalDate fecha,
@@ -186,7 +207,11 @@ public class HabitacionService {
         // 4. Si no tiene nada, está disponible
         return "DISPONIBLE";
     }
-    
+
+    /**
+     * Convierte Date (Legacy) a LocalDate (Moderno) de forma segura,
+     * soportando tanto java.util.Date como java.sql.Date para evitar ClassCastException.
+     */
     private java.time.LocalDate convertToLocalDate(Date date) {
         // Manejar tanto java.util.Date como java.sql.Date
         if (date instanceof java.sql.Date) {
@@ -196,7 +221,11 @@ public class HabitacionService {
             .atZone(java.time.ZoneId.systemDefault())
             .toLocalDate();
     }
-    
+
+    /**
+     * Convierte a la inversa: LocalDate a Date.
+     * Necesario porque la base de datos (JPA) a veces prefiere Date antiguo.
+     */
     private Date convertToDate(java.time.LocalDate localDate) {
         return Date.from(localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
     }

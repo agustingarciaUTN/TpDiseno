@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * El contador del sistema. Se encarga de calcular montos, impuestos (IVA)
+ * y aplicar recargos si el huésped se porta mal (ej: sale tarde).
+ */
 @Service
 public class FacturaService {
 
@@ -55,8 +59,13 @@ public class FacturaService {
         return facturaRepository.existsById(numeroFactura);
     }
 
+
     // --- MÉTODOS TRANSACCIONALES ---
 
+    /**
+     * Guarda la factura físicamente en la BD.
+     * Valida que no estemos duplicando números de comprobante.
+     */
     @Transactional
     public void guardarFactura(Factura factura) throws Exception {
         if (factura == null) throw new IllegalArgumentException("La factura no puede ser nula.");
@@ -91,6 +100,10 @@ public class FacturaService {
         notaDeCreditoRepository.save(nota);
     }
 
+    /**
+     * Recupera quiénes están en la habitación para mostrarlos en la pantalla de facturación.
+     * Sirve para que el recepcionista elija quién de todos va a pagar.
+     */
     @Transactional(readOnly = true)
     public DtoOcupantesHabitacion buscarOcupantes(String nroHabitacion) {
         Estadia estadia = estadiaRepository.findEstadiaActivaPorHabitacion(nroHabitacion)
@@ -114,6 +127,10 @@ public class FacturaService {
                 .build();
     }
 
+    /**
+     * Valida que la persona elegida para pagar sea mayor de edad.
+     * Un menor no puede ser responsable legal de una factura.
+     */
     public void validarResponsable(TipoDocumento tipo, String nro) {
 
         // Creamos el ID compuesto para buscar
@@ -132,6 +149,17 @@ public class FacturaService {
         }
     }
 
+    /**
+     * Prepara la cuenta antes de cerrarla (Calculadora).
+     * Aquí está la lógica del negocio importante:
+     * - Si te vas después de las 11:00, te cobra medio día.
+     * - Si te vas después de las 18:00, te cobra el día entero.
+     *
+     * @param idEstadia         Qué estadía estamos cobrando.
+     * @param idResponsable Quién va a poner la plata.
+     * @param horaSalida        A qué hora entregó la llave (para calcular la multa).
+     * @return Un objeto con todos los números calculados (subtotal, recargos, total).
+     */
     @Transactional(readOnly = true)
     public DtoDetalleFacturacion calcularDetalle(int idEstadia, int idResponsable, String horaSalida) {
         Estadia estadia = estadiaRepository.findById(idEstadia).orElseThrow();
@@ -213,6 +241,11 @@ public class FacturaService {
                 .build();
     }
 
+    /**
+     * Emite la factura definitiva y la guarda para siempre.
+     * Una vez que esto corre, ya queda registrada la deuda en el sistema.
+     * Cierra la estadía (Check-out) asignando la fecha de emisión como salida real.
+     */
     @Transactional
     public DtoFactura generarFactura(DtoFactura dto) throws Exception {
         if (existeFactura(dto.getNumeroFactura())) {
@@ -258,6 +291,10 @@ public class FacturaService {
         return dto;
     }
 
+    /**
+     * "Asciende" a un Huésped a la categoría de Responsable de Pago (Persona Física).
+     * Si ya era responsable, devuelve su ID. Si no, lo crea copiando su dirección.
+     */
     @Transactional
     public int obtenerOAltaPersonaFisica(TipoDocumento tipo, String nro) {
         // 1. Buscamos si ya existe como Responsable (PersonaFisica)
@@ -300,6 +337,9 @@ public class FacturaService {
         return nuevaPf.getIdResponsable();
     }
 
+    /**
+     * Da de alta una Empresa (Persona Jurídica) como pagador.
+     */
     @Transactional
     public int guardarResponsableJuridico(DtoPersonaJuridica dto) {
 
@@ -341,6 +381,27 @@ public class FacturaService {
         return nuevaEmpresa.getIdResponsable();
     }
 
+    /**
+     * Da de alta una Empresa (Persona Jurídica) como pagador.
+     */
+    @Transactional(readOnly = true)
+    public Integer buscarIdPorCuit(String cuit) {
+        if (cuit == null || cuit.trim().isEmpty()) return null;
+
+        // Llamada eficiente a la BD
+        return responsablePagoRepository.buscarIdPorCuit(cuit);
+    }
+
+    // --- MÉTODOS PRIVADOS ---
+
+    /**
+     * Normalizador de fechas (Helper interno).
+     * Java tiene muchas clases de fechas (java.util.Date, java.sql.Date, Timestamp).
+     * Este método convierte lo que sea que venga de la BD a un LocalDate moderno y manejable.
+     *
+     * @param fecha La fecha en formato antiguo o desconocido.
+     * @return La fecha en formato LocalDate (Java 8+).
+     */
     private LocalDate convertirAFechaLocal(java.util.Date fecha) {
         if (fecha == null) return null;
 
@@ -356,14 +417,6 @@ public class FacturaService {
 
         // Caso 3: Es java.util.Date puro (Memoria)
         return fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-    }
-
-    @Transactional(readOnly = true)
-    public Integer buscarIdPorCuit(String cuit) {
-        if (cuit == null || cuit.trim().isEmpty()) return null;
-
-        // Llamada eficiente a la BD
-        return responsablePagoRepository.buscarIdPorCuit(cuit);
     }
 
 }
