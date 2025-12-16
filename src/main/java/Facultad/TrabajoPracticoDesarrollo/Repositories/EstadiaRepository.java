@@ -27,6 +27,15 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
             "(e.fechaCheckOut IS NULL OR e.fechaCheckOut > :inicio)")
     List<Estadia> buscarEstadiasEnRango(@Param("inicio") Date inicio, @Param("fin") Date fin);
 
+    @Query("SELECT e FROM Estadia e " +
+            "WHERE e.habitacion.numero = :nroHabitacion " +
+            "AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut >= :fechaHoy) " +
+            "ORDER BY e.fechaCheckIn DESC LIMIT 1")
+    Optional<Estadia> findEstadiaFacturable(
+            @Param("nroHabitacion") String nroHabitacion,
+            @Param("fechaHoy") LocalDate fechaHoy
+    );
+
     /**
      * Verifica si una habitación está ocupada físicamente en una fecha específica (o rango).
      * Se usa para validar Check-In.
