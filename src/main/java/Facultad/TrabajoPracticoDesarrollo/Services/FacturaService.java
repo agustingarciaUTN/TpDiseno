@@ -249,9 +249,20 @@ public class FacturaService {
     @Transactional
     public DtoFactura generarFactura(DtoFactura dto) throws Exception {
 
+        //Los dos métodos que siguen los hice en un principio pero leyendo el enunciado creeria que no van
         /*
         if (existeFactura(dto.getNumeroFactura())) {
             throw new IllegalArgumentException("El número de factura ya existe: " + dto.getNumeroFactura());
+        }
+
+        //Verificar si ya existe factura para esta estadía
+        Integer idEstadia = dto.getIdEstadia().getIdEstadia();
+        List<Factura> facturasExistentes = facturaRepository.findByEstadia_IdEstadia(idEstadia);
+
+        if (!facturasExistentes.isEmpty()) {
+            //Obtenemos el número de la primera factura para ser específicos en el error
+            String nroExistente = facturasExistentes.get(0).getNumeroFactura();
+            throw new IllegalArgumentException("Error: Esta estadía ya fue facturada previamente con el comprobante N° " + nroExistente);
         }
         */
 
