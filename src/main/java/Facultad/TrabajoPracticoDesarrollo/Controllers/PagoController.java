@@ -113,4 +113,48 @@ public class PagoController {
                     .body(Collections.singletonMap("error", "Error al obtener pagos: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/buscar-responsable")
+    public ResponseEntity<?> buscarResponsable(
+            @RequestParam(required = false) String cuit,
+            @RequestParam(required = false) String tipoDoc,
+            @RequestParam(required = false) String nroDoc) {
+        try {
+            DtoResponsableDePago responsable = pagoService.buscarResponsableParaNotaCredito(cuit, tipoDoc, nroDoc);
+            return ResponseEntity.ok(responsable);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint para buscar facturas de un responsable.
+     * Corresponde al paso 4 del flujo principal (listar grilla)[cite: 8].
+     */
+    @GetMapping("/facturas-por-responsable/{idResponsable}")
+    public ResponseEntity<?> buscarFacturasPorResponsable(@PathVariable Long idResponsable) {
+        try {
+            List<DtoFactura> facturas = pagoService.buscarFacturasParaNotaCredito(idResponsable);
+            return ResponseEntity.ok(facturas);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint para generar la Nota de Crédito.
+     * Corresponde al paso 7 (generar) y 8 (mostrar detalle)[cite: 8, 13].
+     */
+    @PostMapping("/generar-nota-credito")
+    public ResponseEntity<?> generarNotaCredito(@RequestBody DtoSolicitudNotaCredito solicitud) {
+        try {
+            DtoNotaCreditoGenerada nota = pagoService.generarNotaCredito(solicitud);
+            return ResponseEntity.ok(nota);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", e.getMessage()));
+        }
+    }
 }

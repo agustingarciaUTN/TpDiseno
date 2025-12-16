@@ -16,11 +16,6 @@ public abstract class ResponsablePago {
     @Column(name = "id_responsable")
     private Integer idResponsable;
 
-    /* Columna discriminadora (F o J), aunque con JOINED es opcional, a veces ayuda.
-    Mas informativa que otra cosa, nose si la podemos llegar a usar.
-    @Column(name = "tipo_responsable")
-    private String tipoResponsable;
-    */
 
     // Relación con Dirección (1 a 1)
     @OneToOne(cascade = CascadeType.ALL)
@@ -37,6 +32,11 @@ public abstract class ResponsablePago {
     }
 
     public Integer getIdPersonaFisica() {
+        return this.idResponsable;
+    }
+
+
+    public Integer getId() {
         return this.idResponsable;
     }
 }

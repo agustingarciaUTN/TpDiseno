@@ -29,6 +29,8 @@ public class PagoService {
     private final HabitacionRepository habitacionRepository;
     private final FacturaService facturaService;
     private final TarjetaRepository tarjetaRepository;
+    private final NotaDeCreditoRepository notaDeCreditoRepository;
+    private final ResponsablePagoRepository responsablePagoRepository;
 
     @Autowired
     public PagoService(FacturaRepository facturaRepository,
@@ -37,7 +39,7 @@ public class PagoService {
                        EstadiaRepository estadiaRepository,
                        HabitacionRepository habitacionRepository,
                        FacturaService facturaService,
-                       TarjetaRepository tarjetaRepository) {
+                       TarjetaRepository tarjetaRepository, NotaDeCreditoRepository notaDeCreditoRepository, ResponsablePagoRepository responsablePagoRepository) {
         this.facturaRepository = facturaRepository;
         this.pagoRepository = pagoRepository;
         this.medioDePagoRepository = medioDePagoRepository;
@@ -45,6 +47,8 @@ public class PagoService {
         this.habitacionRepository = habitacionRepository;
         this.facturaService = facturaService;
         this.tarjetaRepository = tarjetaRepository;
+        this.notaDeCreditoRepository = notaDeCreditoRepository;
+        this.responsablePagoRepository = responsablePagoRepository;
     }
 
     /**
@@ -219,4 +223,100 @@ public class PagoService {
     }
 
 
+    // --- PASO 3: Buscar Facturas para la Grilla  ---
+    public List<DtoFactura> buscarFacturasCandidatasANotaCredito(Long idResponsable) {
+        // Buscamos facturas PENDIENTES (que no estén ya pagadas/anuladas)
+        List<Factura> facturas = facturaRepository.findFacturasPendientesPorResponsable(idResponsable, EstadoFactura.PAGADA);
+
+        return facturas.stream().map(f -> {
+
+            // 1. Armar DtoResponsableResumido
+            DtoResponsableSimple dtoResp = new DtoResponsableSimple();
+
+            dtoResp.setIdResponsable(f.getResponsablePago().getId());
+
+
+            // 2. Armar DtoEstadiaSimple
+            DtoEstadiaSimple dtoEstadia = new DtoEstadiaSimple();
+            if(f.getEstadia() != null) {
+                dtoEstadia.setIdEstadia(f.getEstadia().getIdEstadia());
+            }
+
+            // 3. Construir DtoFactura
+            return new DtoFactura.Builder()
+                    .numeroFactura(f.getNumeroFactura())
+                    .fechaEmision(f.getFechaEmision())
+                    .fechaVencimiento(f.getFechaVencimiento())
+                    .importeNeto(f.getImporteNeto())
+                    .iva(f.getIva())
+                    .importeTotal(f.getImporteTotal())
+                    .estado(f.getEstadoFactura())
+                    .tipo(f.getTipoFactura())
+                    .idResponsable(dtoResp)
+                    .idEstadia(dtoEstadia)
+                    .build();
+
+        }).collect(Collectors.toList());
+    }
+
+    // --- PASO 7: Generar Nota de Crédito ---
+    @Transactional
+    public DtoNotaCreditoGenerada generarNotaCredito(DtoSolicitudNotaCredito solicitud) {
+
+        // 1. Obtener facturas
+        List<Factura> facturas = facturaRepository.findAllById(solicitud.getIdsFacturasACancelar());
+
+        if (facturas.isEmpty()) {
+            throw new RuntimeException("No se seleccionaron facturas.");
+        }
+
+        // 2. Calcular totales
+        double totalNeto = 0.0;
+        double totalIva = 0.0;
+        double totalDevolucion = 0.0;
+
+        // Tomamos el responsable de la primera (todos deben ser el mismo)
+        ResponsablePago responsable = facturas.get(0).getResponsablePago();
+
+        for (Factura f : facturas) {
+            if (f.getEstadoFactura() == EstadoFactura.PAGADA) {
+                throw new RuntimeException("La factura " + f.getNumeroFactura() + " ya está pagada/anulada.");
+            }
+            totalNeto += (f.getImporteNeto() != null ? f.getImporteNeto() : 0.0);
+            totalIva += (f.getIva() != null ? f.getIva() : 0.0);
+            totalDevolucion += f.getImporteTotal();
+        }
+
+        // 3. Crear Nota de Crédito (Usando tu entidad que solo guarda monto)
+        NotaDeCredito nc = new NotaDeCredito.Builder()
+                .monto(totalDevolucion)
+                // .fecha(LocalDate.now()) // Si agregas fecha a la entidad NotaDeCredito
+                .build();
+
+        nc = notaRepo.save(nc);
+
+        // 4. Actualizar Facturas
+        for (Factura f : facturas) {
+            f.setNotaDeCredito(nc);
+            f.setEstadoFactura(EstadoFactura.PAGADA); // <--- AQUÍ USAMOS PAGADA
+        }
+        facturaRepo.saveAll(facturas);
+
+        // 5. Retornar respuesta
+        DtoNotaCreditoGenerada respuesta = new DtoNotaCreditoGenerada();
+        // Generamos un número visual (Ej: NC-0001)
+        respuesta.setNroNotaCredito("NC-" + String.format("%08d", nc.getNumeroNotaCredito()));
+
+        String nombreCompleto = responsable.getRazonSocial() != null
+                ? responsable.getRazonSocial()
+                : responsable.getNombre() + " " + responsable.getApellido();
+
+        respuesta.setResponsableNombre(nombreCompleto);
+        respuesta.setImporteNeto(totalNeto);
+        respuesta.setImporteIva(totalIva);
+        respuesta.setImporteTotal(totalDevolucion);
+
+        return respuesta;
+    }
 }
+

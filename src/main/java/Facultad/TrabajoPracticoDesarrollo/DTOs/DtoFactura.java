@@ -58,7 +58,7 @@ public class DtoFactura {
 
     @NotNull
     @Valid
-    private DtoResponsableSimple idResponsable;
+    private DtoResponsableResumido idResponsable;
 
     @Valid
     private DtoNotaDeCredito dtoNotaDeCredito;

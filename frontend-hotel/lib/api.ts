@@ -153,6 +153,39 @@ export async function buscarHuespedes(criterios: Partial<BuscarHuespedForm>): Pr
   })
 }
 
+// --- CU3: NOTA DE CRÉDITO ---
+
+// Buscar un responsable (Persona o Empresa) por CUIT o Documento
+export async function buscarResponsable(
+    metodo: "cuit" | "document",
+    valor: string,
+    tipoDoc?: string
+): Promise<any> {
+    const params = new URLSearchParams();
+    if (metodo === "cuit") {
+        params.append("cuit", valor);
+    } else {
+        params.append("tipoDoc", tipoDoc || "");
+        params.append("nroDoc", valor);
+    }
+
+    // Asumo que tienes un endpoint así. Si no, avísame para crearlo en Java.
+    return apiFetch<any>(`/pagos/buscar-responsable?${params.toString()}`);
+}
+
+// Buscar facturas (pagadas o pendientes) de un responsable
+export async function buscarFacturasPorResponsable(idResponsable: number): Promise<any[]> {
+    return apiFetch<any[]>(`/pagos/facturas-por-responsable/${idResponsable}`);
+}
+
+// Generar la Nota de Crédito en el Backend
+export async function generarNotaCredito(dto: any): Promise<any> {
+    return apiFetch<any>("/pagos/generar-nota-credito", {
+        method: "POST",
+        body: dto
+    });
+}
+
 // --- CU9: ALTA HUÉSPED ---
 
 export async function verificarExistenciaHuesped(

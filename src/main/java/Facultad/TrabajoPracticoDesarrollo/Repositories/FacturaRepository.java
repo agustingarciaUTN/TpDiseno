@@ -2,6 +2,7 @@ package Facultad.TrabajoPracticoDesarrollo.Repositories;
 
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.ResponsablePago;
+import Facultad.TrabajoPracticoDesarrollo.enums.EstadoFactura;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,7 +32,13 @@ public interface FacturaRepository extends JpaRepository<Factura, String> {
     // En FacturaRepository
     boolean existsByResponsablePago(ResponsablePago responsable);
 
-    boolean existsByNumeroFactura(String numeroFactura);
+    //boolean existsByNumeroFactura(String numeroFactura);
+
+    @Query("SELECT f FROM Factura f WHERE f.responsablePago.id = :idResp AND f.estadoFactura != :estadoAnulada")
+    List<Factura> findFacturasPendientesPorResponsable(
+            @Param("idResp") Long idResponsable,
+            @Param("estadoAnulada") EstadoFactura estadoAnulada
+    );
 
     Factura findTopByOrderByNumeroFacturaDesc();
 

@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotaDeCreditoRepository extends JpaRepository<NotaDeCredito, Integer> {
-    // JpaRepository ya provee save(), findById(), findAll(), etc.
 }

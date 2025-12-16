@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true) // <--- ¡MAGIA! Ignora lo que no sea el ID (nombre, tipo, etc.)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DtoResponsableSimple {
     private Integer idResponsable;
+    private String nombreCompleto;
+
 }

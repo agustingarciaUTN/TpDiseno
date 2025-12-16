@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true) // Ignora todo menos el ID
 public class DtoEstadiaSimple {
-    private int idEstadia;
+    private Integer idEstadia;
 
-    public DtoEstadiaSimple(int idEstadia) {
+    public DtoEstadiaSimple(Integer idEstadia) {
         this.idEstadia = idEstadia;
     }
 }
