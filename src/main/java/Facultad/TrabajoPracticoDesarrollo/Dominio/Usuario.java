@@ -11,14 +11,18 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_usuario")
+
+    @Column(name = "\"idUsuario\"")
     private Integer idUsuario;
 
-    @Column(name = "usuario", unique = true)
+
+    @Column(name = "nombre", unique = true)
     private String nombre;
 
-    @Column(name = "contrasenia")
+
+    @Column(name = "\"hashContrasenia\"")
     private String contrasenia;
+
 
     @Column(name = "tipo_usuario")
     private String tipoUsuario;
