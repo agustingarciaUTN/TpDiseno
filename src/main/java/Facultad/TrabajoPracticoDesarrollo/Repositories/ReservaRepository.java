@@ -66,4 +66,16 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             @Param("nuevoNombre") String nuevoNombre, @Param("nuevoApellido") String nuevoApellido,
             @Param("nuevoTel") String nuevoTel
     );
+
+    // CU06: Búsqueda para cancelación
+    @Query(value = "SELECT * FROM reserva r " +
+            "WHERE CAST(r.estado_reserva AS text) = 'ACTIVA' " +
+            "AND (CAST(:apellido AS text) IS NULL OR CAST(r.\"ApellidoHuespedResponsable\" AS text) ILIKE :apellido) " +
+            "AND (CAST(:nombre AS text) IS NULL OR CAST(r.\"NombreHuespedResponsable\" AS text) ILIKE :nombre)",
+            nativeQuery = true)
+    List<Reserva> buscarParaCancelar(
+            @Param("apellido") String apellido,
+            @Param("nombre") String nombre
+    );
+
 }

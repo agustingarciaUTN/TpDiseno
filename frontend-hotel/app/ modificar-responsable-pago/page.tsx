@@ -1,4 +1,4 @@
-import ModificarResponsablePagoForm from "@/components/modificar-responsable-pago-form"
+/*import ModificarResponsablePagoForm from "@/components/modificar-responsable-pago-form"
 
 export default function ModificarResponsablePagoPage() {
     return (
@@ -7,3 +7,4 @@ export default function ModificarResponsablePagoPage() {
         </div>
     )
 }
+*/

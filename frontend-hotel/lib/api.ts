@@ -204,7 +204,6 @@ export async function verificarDisponibilidadHabitacion(
 }
 
 export async function crearReserva(reserva: DtoReserva | DtoReserva[]): Promise<string> {
-  // El backend espera una LISTA de reservas
   const payload = Array.isArray(reserva) ? reserva : [reserva]
   return apiFetch<string>("/reservas/crear", {
     method: "POST",
@@ -244,8 +243,25 @@ export async function registrarPago(pago: DtoPago): Promise<string> {
 
 // CU11: Dar de Baja Huésped
 export async function darDeBajaHuesped(tipo: string, nro: string): Promise<string> {
-    // Nota: fetch lanzará error si el status no es 2xx, capturando el mensaje del backend
     return apiFetch<string>(`/huespedes/borrar/${tipo}/${nro}`, {
         method: "DELETE",
     })
+}
+
+// Buscar reservas por apellido/nombre
+export async function buscarReservasPorHuesped(apellido: string, nombre: string): Promise<any[]> {
+    const params = new URLSearchParams({ apellido });
+    if (nombre) params.append("nombre", nombre);
+
+    return apiFetch<any[]>(`/reservas/buscar-huesped?${params.toString()}`, {
+        method: "GET",
+    });
+}
+
+// Cancelar lista de reservas
+export async function cancelarReservas(ids: number[]): Promise<string> {
+    return apiFetch<string>("/reservas/cancelar", {
+        method: "POST",
+        body: ids,
+    });
 }

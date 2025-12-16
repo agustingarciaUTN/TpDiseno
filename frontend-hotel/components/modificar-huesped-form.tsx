@@ -284,14 +284,16 @@ export function ModificarHuespedForm() {
 
     // Función para limpiar y salir correctamente
     const handleVolverMenu = () => {
-        // 1. Levantamos la bandera para que el useEffect no intente redirigirnos a "buscar-huesped"
-        // cuando detecte que selectedGuest es null.
+        // 1. Evitamos que el useEffect se queje
         isExiting.current = true;
 
-        // 2. Limpiamos el huésped del contexto global
+        // 2. Limpiamos el huésped del contexto global (ESTO ES LA CLAVE)
         setSelectedGuest(null);
 
-        // 3. Ahora sí, nos vamos al menú
+        // 3. Borramos localStorage por si acaso (limpieza doble)
+        localStorage.removeItem("guestData"); // O como se llame tu clave interna
+
+        // 4. Nos vamos
         router.push("/");
     }
 
@@ -344,12 +346,8 @@ export function ModificarHuespedForm() {
         setShowConfirmDialog(false)
 
         try {
-            // Mapeo inverso de Strings "Bonitos" a Enums de Backend (si hace falta)
-            // Asumimos que el backend acepta "Responsable Inscripto" y lo convierte,
-            // O podemos enviarlo en mayúsculas SnakeCase.
             const mapPosicionIVAToBackend = (posIva: string) => {
-                // Si ya viene en formato ENUM (ej: CONSUMIDOR_FINAL), devolverlo tal cual.
-                // Si viene "Consumidor Final", mapearlo.
+
                 const mapping: Record<string, string> = {
                     'Consumidor Final': 'CONSUMIDOR_FINAL',
                     'Responsable Inscripto': 'RESPONSABLE_INSCRIPTO',
@@ -427,18 +425,19 @@ export function ModificarHuespedForm() {
         }
     }
 
+
     if (!originalData) return <div className="p-8 text-center">Cargando datos del huésped...</div>
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
 
-                {/* --- HEADER (Idéntico a CU09 pero con Modificar) --- */}
+                {/* --- HEADER --- */}
                 <div className="mb-8 space-y-2">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600 text-white">
-                                <Edit className="h-5 w-5" /> {/* Icono Edit */}
+                                <Edit className="h-5 w-5" />
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
@@ -460,7 +459,7 @@ export function ModificarHuespedForm() {
                         <p className="text-sm text-slate-500 dark:text-slate-400">(*) Campos obligatorios</p>
                     </div>
 
-                    {/* --- FORMULARIO (Idéntico Estilo CU09) --- */}
+                    {/* --- FORMULARIO --- */}
                     <div className="mb-8">
                         <h2 className="mb-6 text-2xl font-semibold text-slate-900 dark:text-slate-50">Datos Personales</h2>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -603,9 +602,9 @@ export function ModificarHuespedForm() {
                         </div>
                     </div>
 
-                    {/* --- BOTONES FOOTER (Diferencia clave con CU09: Botón Borrar) --- */}
                     <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between pt-4 border-t">
                         <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                            {/* Botón Cancelar del Formulario (Abre el popup) */}
                             <Button onClick={() => setShowCancelDialog(true)} variant="outline" className="w-full sm:w-auto">
                                 Cancelar
                             </Button>
@@ -647,7 +646,8 @@ export function ModificarHuespedForm() {
                     </DialogContent>
                 </Dialog>
 
-                {/* Cancelar */}
+                {/* --- AQUÍ ESTABA EL ERROR --- */}
+                {/* Cancelar (Pop-up corregido con DialogContent) */}
                 <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
                     <DialogContent>
                         <DialogHeader>
@@ -656,7 +656,9 @@ export function ModificarHuespedForm() {
                         </DialogHeader>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setShowCancelDialog(false)}>No, continuar</Button>
-                            <Button variant="destructive" onClick={() => router.push("/")}>Sí, cancelar</Button>
+
+                            {/* Este botón ahora llama a handleVolverMenu para limpiar la memoria */}
+                            <Button variant="destructive" onClick={handleVolverMenu}>Sí, cancelar</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

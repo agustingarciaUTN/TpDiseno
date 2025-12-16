@@ -85,8 +85,29 @@ public class ReservaController {
     }
 
 
-    @GetMapping("/hola")
-    public String saludar() {
-        return "¡El Backend de Reservas está activo y usando JPA!";
+
+    @GetMapping("/buscar-huesped")
+    public ResponseEntity<?> buscarPorHuesped(
+            @RequestParam String apellido,
+            @RequestParam(required = false) String nombre
+    ) {
+        try {
+            List<DtoReserva> resultado = reservaService.buscarReservasPorHuesped(apellido, nombre);
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error en la búsqueda: " + e.getMessage());
+        }
     }
+
+
+    @PostMapping("/cancelar")
+    public ResponseEntity<?> cancelarReservas(@RequestBody List<Integer> idsReservas) {
+        try {
+            reservaService.cancelarReservas(idsReservas);
+            return ResponseEntity.ok("Reservas canceladas correctamente.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al cancelar: " + e.getMessage());
+        }
+    }
+
 }

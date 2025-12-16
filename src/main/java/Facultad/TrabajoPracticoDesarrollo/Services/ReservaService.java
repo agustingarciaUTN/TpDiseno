@@ -129,6 +129,7 @@ public class ReservaService {
                 throw new Exception("Falta el número de habitación.");
         }
     }
+
     /**
      * Regla de negocio temporal.
      * Se asegura de que no estemos intentando reservar con fecha de inicio en el pasado.
@@ -144,5 +145,45 @@ public class ReservaService {
         if (fechaIngreso.isBefore(hoy)) {
             throw new Exception("La fecha de ingreso no puede ser anterior al día de hoy.");
         }
+    }
+
+
+    // CU06 - Búsqueda
+    @Transactional(readOnly = true)
+    public List<DtoReserva> buscarReservasPorHuesped(String apellido, String nombre) {
+
+        String apellidoParam = (apellido != null && !apellido.isBlank()) ? apellido + "%" : null;
+        String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre + "%" : null;
+
+        List<Reserva> reservas = reservaRepository.buscarParaCancelar(apellidoParam, nombreParam);
+
+
+        List<DtoReserva> dtos = new ArrayList<>();
+        for (Reserva r : reservas) {
+            dtos.add(MapearReserva.mapearEntidadADto(r));
+        }
+        return dtos;
+    }
+
+    // CU06 - Cancelación
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelarReservas(List<Integer> idsReservas) throws Exception {
+        if (idsReservas == null || idsReservas.isEmpty()) {
+            throw new Exception("No se seleccionaron reservas para cancelar.");
+        }
+
+        for (Integer id : idsReservas) {
+            // Verificamos que exista y esté activa antes de cancelar (Concurrencia)
+            Reserva r = reservaRepository.findById(id)
+                    .orElseThrow(() -> new Exception("La reserva " + id + " no existe."));
+
+            // Chequear si ya estaba cancelada
+            if (r.getEstadoReserva() == EstadoReserva.CANCELADA) continue;
+
+
+            r.setEstadoReserva(EstadoReserva.CANCELADA);
+            reservaRepository.save(r);
+        }
+
     }
 }

@@ -273,23 +273,6 @@ export default function Home() {
                                     </Button>
                                 </div>
                             </Card>
-
-                            {/* Modificar Responsable de Pago */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
-                                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-blue-100/50" />
-                                <div className="relative">
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                                        <Edit className="h-6 w-6" />
-                                    </div>
-                                    <h3 className="mb-2 text-xl font-semibold text-slate-900">Modificar Responsable de Pago</h3>
-                                    <p className="mb-4 text-sm leading-relaxed text-slate-600">
-                                        Modificar datos personales de los responsables de pago.
-                                    </p>
-                                    <Button asChild className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                                        <Link href="/modificar-responsable-pago">Modificar datos</Link>
-                                    </Button>
-                                </div>
-                            </Card>
                         </div>
                     </section>
 

@@ -52,6 +52,8 @@ public class DtoReserva {
     @Pattern(regexp = REGEX_HABITACION, message = "El número de habitación debe ser numérico y estar entre 1 y 999.")
     private String idHabitacion;
 
+
+
     // --- CONSTRUCTOR VACÍO PARA JACKSON ---
     public DtoReserva() {}
 
