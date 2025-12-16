@@ -29,8 +29,8 @@ public class UsuarioService {
 
         // Crear nuevo usuario con hash MD5
         Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setNombre(nombre);
-        nuevoUsuario.setHashContrasenia(UsuarioHelper.generarHashMD5(contrasenia));
+        nuevoUsuario.setUser(nombre);
+        nuevoUsuario.setContrasenia(UsuarioHelper.generarHashMD5(contrasenia));
         
         usuarioRepository.save(nuevoUsuario);
     }
@@ -56,10 +56,10 @@ public class UsuarioService {
         
         // DEBUG: Mostrar los hashes
         System.out.println("🔍 Hash ingresado: " + hashIngresado);
-        System.out.println("🔍 Hash en BD: " + usuario.getHashContrasenia());
+        System.out.println("🔍 Hash en BD: " + usuario.getContrasenia());
 
         // 3. Comparar con el Hash guardado en la BD
-        boolean resultado = hashIngresado.equals(usuario.getHashContrasenia());
+        boolean resultado = hashIngresado.equals(usuario.getContrasenia());
         System.out.println("🔍 ¿Coinciden? " + resultado);
         return resultado;
     }

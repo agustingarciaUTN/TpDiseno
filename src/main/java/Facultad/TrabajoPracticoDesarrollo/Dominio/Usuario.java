@@ -12,20 +12,43 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
-    private Integer id;
+    private Integer idUsuario;
 
-    @Column(name = "nombre")
-    private String nombre;
+    @Column(name = "usuario", unique = true)
+    private String user;
 
-    // CORRECCIÓN: Atributo para guardar el Hash
-    @Column(name = "\"hashContrasenia\"")
-    private String hashContrasenia;
+    @Column(name = "contrasenia")
+    private String contrasenia;
 
+    @Column(name = "tipo_usuario")
+    private String tipoUsuario;
+
+    // --- CONSTRUCTORES ---
     public Usuario() {}
 
-    public Usuario(String nombre, String hashContrasenia) {
-        this.nombre = nombre;
-        this.hashContrasenia = hashContrasenia;
+    private Usuario(Builder builder) {
+        this.idUsuario = builder.idUsuario;
+        this.user = builder.user;
+        this.contrasenia = builder.contrasenia;
+        this.tipoUsuario = builder.tipoUsuario;
     }
 
+    // --- CLASE STATIC BUILDER ---
+    public static class Builder {
+        private Integer idUsuario;
+        private String user;
+        private String contrasenia;
+        private String tipoUsuario;
+
+        public Builder() {}
+
+        public Builder id(Integer val) { idUsuario = val; return this; }
+        public Builder user(String val) { user = val; return this; }
+        public Builder password(String val) { contrasenia = val; return this; } // Mapea a 'contrasenia'
+        public Builder tipo(String val) { tipoUsuario = val; return this; }
+
+        public Usuario build() {
+            return new Usuario(this);
+        }
+    }
 }

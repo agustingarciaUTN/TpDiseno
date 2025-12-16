@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo;
+package Facultad.pruebas;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

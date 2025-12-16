@@ -16,7 +16,7 @@ import java.util.Date;
 
 @Data
 @AllArgsConstructor
-public class DtoEstadia {
+public class    DtoEstadia {
 
 
     private int idEstadia;
