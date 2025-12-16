@@ -412,20 +412,4 @@ public class HuespedService {
 
     }
 
-
-    /**
-     * Intenta borrar una dirección SOLO si nadie más la está usando.
-     * Se debe llamar DESPUÉS de haber eliminado/desvinculado al huésped.
-     */
-    /*private void limpiarDireccionHuerfana(Direccion direccion) {
-        if (direccion != null) {
-            // Verificamos si quedó alguien más usándola
-            long cantidadUsos = huespedRepository.countByDireccion(direccion);
-
-            if (cantidadUsos == 0) {
-                // Nadie la usa, es basura. La borramos.
-                direccionRepository.delete(direccion);
-            }
-        }
-    }*/
 }
