@@ -1,32 +1,23 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.MedioPago;
-import Facultad.TrabajoPracticoDesarrollo.Dominio.Pago;
-import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoPago;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.*;
+import Facultad.TrabajoPracticoDesarrollo.DTOs.*;
 
 
 public class MapearPago {
 
-    public static Pago mapearDtoAEntidad(DtoPago dtoPago) {
+    public static Pago mapearDtoAEntidad(DtoPago dtoPago, Factura factura) {
         if (dtoPago == null) return null;
 
-        // Referencia Factura
-        Factura facturaRef = new Factura.Builder().build();
-        facturaRef.setNumeroFactura(dtoPago.getFactura().getNumeroFactura());
-
-        // Nota: No podemos reconstruir los objetos MedioPago solo desde una lista de IDs genéricos.
-        // La lista de medios quedará vacía en la entidad y deberá cargarse por separado si hace falta.
-
+        // Mapeamos el Pago con la factura ya cargada
         return new Pago.Builder()
                 .id(dtoPago.getIdPago())
                 .cotizacion(dtoPago.getCotizacion())
                 .moneda(dtoPago.getMoneda())
                 .monto(dtoPago.getMontoTotal())
                 .fecha(dtoPago.getFechaPago())
-                .factura(facturaRef)
+                .factura(factura)
                 .build();
-
     }
 
     public static DtoPago mapearEntidadADto(Pago pago) {
@@ -38,11 +29,21 @@ public class MapearPago {
                 .montoTotal(pago.getMontoTotal())
                 .cotizacion(pago.getCotizacion())
                 .fechaPago(pago.getFechaPago())
-                .Factura(pago.getFactura());
+                .numeroFactura(pago.getFactura() != null ? pago.getFactura().getNumeroFactura() : null);
 
+        // Agregar los medios de pago mapeados (si existen)
         if (pago.getMediosPago() != null) {
             for (MedioPago mp : pago.getMediosPago()) {
-                builder.agregarIdMedioPago(mp.getPago().getIdPago()); // ID del padre MedioPago
+                // Mapear cada medio de pago según su tipo
+                if (mp.getEfectivo() != null) {
+                    builder.agregarMedioPago(MapearEfectivo.mapearEntidadADto(mp.getEfectivo()));
+                } else if (mp.getCheque() != null) {
+                    builder.agregarMedioPago(MapearCheque.mapearEntidadADto(mp.getCheque()));
+                } else if (mp.getTarjeta() instanceof TarjetaCredito) {
+                    builder.agregarMedioPago(MapearTarjetaCredito.mapearEntidadADto((TarjetaCredito) mp.getTarjeta()));
+                } else if (mp.getTarjeta() instanceof TarjetaDebito) {
+                    builder.agregarMedioPago(MapearTarjetaDebito.mapearEntidadADto((TarjetaDebito) mp.getTarjeta()));
+                }
             }
         }
 

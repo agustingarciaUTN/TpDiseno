@@ -6,52 +6,31 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class DtoEfectivo extends DtoMedioPago {
 
-    @NotNull
     @Positive
-    private Integer idEfectivo;  // ID específico de la tabla efectivo
+    private Integer idEfectivo;  // ID específico de la tabla efectivo (opcional en request)
 
     @NotNull
     private Moneda moneda;
 
     @NotNull
-    private float monto;
+    private Double monto;
 
     @NotNull
     @PastOrPresent(message = "La fehca de pago no puede ser futura")
     private Date fechaDePago;
-
-    // --- CONSTRUCTOR PRIVADO ---
-    private DtoEfectivo(Builder builder) {
-        this.idEfectivo = builder.idEfectivo;
-        this.moneda = builder.moneda;
-        this.monto = builder.monto;
-        this.fechaDePago = builder.fechaDePago;
-    }
-
-
-    // --- CLASE STATIC BUILDER ---
-    public static class Builder {
-        private Integer idEfectivo;
-        private Moneda moneda;
-        private float monto;
-        private Date fechaDePago;
-
-        public Builder() {}
-
-        public Builder idEfectivo(Integer val) { idEfectivo = val; return this; }
-        public Builder moneda(Moneda val) { moneda = val; return this; }
-        public Builder monto(float val) { monto = val; return this; }
-        public Builder fechaDePago(Date val) { fechaDePago = val; return this; }
-
-        public DtoEfectivo build() {
-            return new DtoEfectivo(this);
-        }
-    }
 }

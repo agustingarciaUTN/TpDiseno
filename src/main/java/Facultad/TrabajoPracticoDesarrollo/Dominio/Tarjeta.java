@@ -12,6 +12,7 @@ import java.util.Date;
 @Table(name = "tarjeta")
 @Getter @Setter
 @Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "tipo_tarjeta", discriminatorType = DiscriminatorType.STRING, length = 1)
 public abstract class Tarjeta {
 
     @Id
@@ -31,17 +32,6 @@ public abstract class Tarjeta {
 
     @Column(name = "codigo_seg")
     private Integer codigoSeguridad;
-
-    @Column(name = "monto")
-    private Double monto;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "moneda")
-    private Moneda moneda;
-
-    @Column(name = "fecha_pago")
-    @Temporal(TemporalType.DATE)
-    private Date fechaPago;
 
     public Tarjeta() {}
 

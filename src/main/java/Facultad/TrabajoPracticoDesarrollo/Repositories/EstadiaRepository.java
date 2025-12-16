@@ -67,8 +67,11 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
     );
 
     // Busca una estadía activa (sin fecha de salida o fecha salida futura/hoy) para una habitación
-    @Query("SELECT e FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion AND e.fechaCheckOut IS NULL")
+    @Query("SELECT e FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut >= CURRENT_DATE)")
     Optional<Estadia> findEstadiaActivaPorHabitacion(@Param("nroHabitacion") String nroHabitacion);
+
+    // Busca todas las estadías de una habitación (para buscar facturas pendientes)
+    List<Estadia> findByHabitacion_Numero(String numero);
 
     //Metodo utilizado para el CU10, cuando tenemos que reasignar una estadia de un huesped a otro
     // TODO: Revisar - Estadia tiene List<Huesped>, no un solo huesped
