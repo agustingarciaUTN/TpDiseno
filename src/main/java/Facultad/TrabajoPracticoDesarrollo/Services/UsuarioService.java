@@ -40,7 +40,7 @@ public class UsuarioService {
 
         // Crear nuevo usuario con hash MD5
         Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setUser(nombre);
+        nuevoUsuario.setNombre(nombre);
         nuevoUsuario.setContrasenia(UsuarioHelper.generarHashMD5(contrasenia));
         
         usuarioRepository.save(nuevoUsuario);

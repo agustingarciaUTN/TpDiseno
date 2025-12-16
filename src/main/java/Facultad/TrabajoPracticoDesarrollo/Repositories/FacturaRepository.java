@@ -33,4 +33,6 @@ public interface FacturaRepository extends JpaRepository<Factura, String> {
 
     boolean existsByNumeroFactura(String numeroFactura);
 
+    Factura findTopByOrderByNumeroFacturaDesc();
+
 }

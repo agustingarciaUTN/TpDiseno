@@ -16,24 +16,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { AlertCircle, CheckCircle2, FileText, ArrowLeft, Loader2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, FileText, ArrowLeft, Loader2, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
 
-type PosicionIVA = "Responsable Inscripto" | "Consumidor Final" | "Monotributista" | "Exento"
-
+// ... (Interfaces Ocupante, ItemFactura, DetalleFacturacion igual que antes) ...
 interface Ocupante {
-    // Mapeo del DtoDatosOcupantes
     tipoDocumento: string;
     nroDocumento: string;
     nombres: string;
     apellido: string;
-    // Campos derivados para UI
-    esMenor?: boolean;
-    posicionIVA?: string; // Si el backend lo devuelve, genial. Si no, lo simulamos o pedimos.
 }
 
 interface ItemFactura {
-    id: string; // Para el backend puede ser un ID numérico, aquí usamos string para key
+    id: string;
     descripcion: string;
     monto: number;
     selected: boolean;
@@ -54,7 +49,7 @@ interface DetalleFacturacion {
 }
 
 export function RegistrarFacturaForm() {
-    // ESTADOS
+    // ESTADOS PRINCIPALES
     const [step, setStep] = useState<"search" | "select-person" | "select-items" | "invoice-type" | "success">("search")
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState("")
@@ -63,24 +58,34 @@ export function RegistrarFacturaForm() {
     const [numeroHabitacion, setNumeroHabitacion] = useState("")
     const [horaSalida, setHoraSalida] = useState("")
 
-    // DATOS RECIBIDOS DEL BACKEND
+    // DATOS RECIBIDOS
     const [idEstadia, setIdEstadia] = useState<number | null>(null)
     const [ocupantes, setOcupantes] = useState<Ocupante[]>([])
 
-    // SELECCIÓN ACTUAL
+    // SELECCIÓN
     const [selectedOcupante, setSelectedOcupante] = useState<Ocupante | null>(null)
     const [items, setItems] = useState<ItemFactura[]>([])
     const [detalleCalculado, setDetalleCalculado] = useState<DetalleFacturacion | null>(null)
     const [idResponsableSeleccionado, setIdResponsableSeleccionado] = useState<number | null>(null);
 
-    // ESTADOS PARA TERCEROS Y ALTA RAPIDA
+    // ESTADOS PARA TERCEROS / ALTA
     const [showThirdPartyDialog, setShowThirdPartyDialog] = useState(false)
-    const [cuitTercero, setCuitTercero] = useState("")
-    // Estado nuevo: Si necesitamos crear la empresa (Error 409)
     const [necesitaAltaEmpresa, setNecesitaAltaEmpresa] = useState(false)
-    const [razonSocialTercero, setRazonSocialTercero] = useState("")
-    const [idEmpresaCreada, setIdEmpresaCreada] = useState<number | null>(null)
 
+    // Formulario Alta Empresa
+    const [cuitTercero, setCuitTercero] = useState("")
+    const [razonSocialTercero, setRazonSocialTercero] = useState("")
+    const [telefonoTercero, setTelefonoTercero] = useState("")
+    const [direccion, setDireccion] = useState({
+        calle: "",
+        numero: "",
+        piso: "",
+        departamento: "",
+        codPostal: "",
+        localidad: "",
+        provincia: "",
+        pais: "Argentina"
+    })
 
     // --- PASO 1: BUSCAR HABITACIÓN ---
     const handleSearch = async () => {
@@ -89,31 +94,21 @@ export function RegistrarFacturaForm() {
             setErrorMessage("Complete todos los campos obligatorios")
             return
         }
-
         setIsLoading(true)
         try {
-            // LLAMADA AL BACKEND: PASO 1
             const res = await fetch('http://localhost:8080/api/factura/buscar-ocupantes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                        numeroHabitacion: numeroHabitacion,
-                        horaSalida: horaSalida
-                })
+                body: JSON.stringify({ numeroHabitacion, horaSalida })
             });
-
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.message || "No se encontró ocupación activa en esa habitación");
+                throw new Error(errorData.message || "No se encontró ocupación activa.");
             }
-
             const data = await res.json();
-
-            // Guardamos datos clave
             setIdEstadia(data.idEstadia);
-            setOcupantes(data.ocupantes); // Asumiendo que el DTO trae la lista
+            setOcupantes(data.ocupantes);
             setStep("select-person");
-
         } catch (error: any) {
             setErrorMessage(error.message);
         } finally {
@@ -121,13 +116,11 @@ export function RegistrarFacturaForm() {
         }
     }
 
-    // --- PASO 2: SELECCIONAR PERSONA (HUESPED) ---
+    // --- PASO 2: SELECCIONAR PERSONA ---
     const handleSelectPerson = async (ocupante: Ocupante) => {
         setErrorMessage("")
         setSelectedOcupante(ocupante)
-        setIdEmpresaCreada(null) // Limpiamos selección de empresa si elige persona
 
-        // Llamamos al backend para pre-calcular (y validar edad/responsable)
         await obtenerDetalleFacturacion({
             esTercero: false,
             tipoDoc: ocupante.tipoDocumento,
@@ -135,7 +128,7 @@ export function RegistrarFacturaForm() {
         });
     }
 
-    // --- LÓGICA CENTRAL: CALCULAR DETALLE (Con manejo de 409) ---
+    // --- LÓGICA CENTRAL: CALCULAR DETALLE ---
     const obtenerDetalleFacturacion = async (params: {
         esTercero: boolean,
         tipoDoc?: string,
@@ -144,20 +137,14 @@ export function RegistrarFacturaForm() {
     }) => {
         setIsLoading(true)
         try {
-            // Construimos Query Params
             const query = new URLSearchParams({
                 idEstadia: idEstadia!.toString(),
                 horaSalida: horaSalida,
                 esTercero: params.esTercero.toString(),
             });
 
-            if (cuitTercero) {
-                query.append("cuit", cuitTercero);
-            }
-
-            if (params.esTercero && params.idResponsableJuridico) {
-                query.append("idResponsableJuridico", params.idResponsableJuridico.toString());
-            }
+            if (params.esTercero && cuitTercero) query.append("cuit", cuitTercero);
+            if (params.idResponsableJuridico) query.append("idResponsableJuridico", params.idResponsableJuridico.toString());
             if (!params.esTercero && params.tipoDoc && params.nroDoc) {
                 query.append("tipoDoc", params.tipoDoc);
                 query.append("nroDoc", params.nroDoc);
@@ -165,61 +152,38 @@ export function RegistrarFacturaForm() {
 
             const res = await fetch(`http://localhost:8080/api/factura/calcular-detalle?${query.toString()}`);
 
-            // === INTERCEPCIÓN DEL ERROR 409 (ALTA EMPRESA) ===
             if (res.status === 409) {
                 const data = await res.json();
                 if (data.accion === "REDIRECCIONAR_A_ALTA_RESPONSABLE") {
-                    //setNecesitaAltaEmpresa(true);
-                    setErrorMessage("❌ El CUIT ingresado no existe. Verifique o déjelo vacío para dar de alta.");
+                    setErrorMessage("El CUIT no existe. Complete el formulario para dar el alta.");
                     setIsLoading(false);
-                    return; // Interrumpimos
+                    return;
                 }
             }
 
             if (!res.ok) {
-                // Intentamos leer el mensaje que mandó el backend
-                const mensajeBackend = await res.text();
-                // Usamos ese mensaje, o el genérico si vino vacío
-                throw new Error(mensajeBackend || "Error al calcular detalle");
+                const msg = await res.text();
+                throw new Error(msg || "Error al calcular detalle");
             }
 
-            // Si todo ok (200), procesamos los datos para mostrar
             const data: DetalleFacturacion = await res.json();
             setDetalleCalculado(data);
-
             setIdResponsableSeleccionado(data.idResponsable);
 
-            // Mapeamos los items para la selección visual
+            // Mapeo Items
             const itemsMapeados: ItemFactura[] = [
-                {
-                    id: "estadia",
-                    descripcion: "Alojamiento Base",
-                    monto: data.montoEstadiaBase,
-                    selected: true
-                }
+                { id: "estadia", descripcion: "Alojamiento Base", monto: data.montoEstadiaBase, selected: true }
             ];
-
             if (data.recargoHorario > 0) {
-                itemsMapeados.push({
-                    id: "recargo",
-                    descripcion: data.detalleRecargo,
-                    monto: data.recargoHorario,
-                    selected: true
-                });
+                itemsMapeados.push({ id: "recargo", descripcion: data.detalleRecargo, monto: data.recargoHorario, selected: true });
             }
-
             data.serviciosAdicionales.forEach((serv, idx) => {
-                itemsMapeados.push({
-                    id: `serv-${idx}`,
-                    descripcion: serv.descripcion,
-                    monto: serv.valor,
-                    selected: true
-                });
+                itemsMapeados.push({ id: `serv-${idx}`, descripcion: serv.descripcion, monto: serv.valor, selected: true });
             });
 
             setItems(itemsMapeados);
-            setShowThirdPartyDialog(false); // Cerramos modal si estaba abierto
-            setStep("select-items"); // Avanzamos
+            setShowThirdPartyDialog(false);
+            setStep("select-items");
 
         } catch (error: any) {
             setErrorMessage(error.message);
@@ -230,12 +194,24 @@ export function RegistrarFacturaForm() {
 
     // --- LÓGICA: ALTA RÁPIDA DE EMPRESA (POST) ---
     const handleCrearEmpresa = async () => {
-        if (!razonSocialTercero.trim()) {
-            setErrorMessage("La Razón Social es obligatoria");
+        setErrorMessage("");
+
+        // 1. Validaciones Frontend Básicas
+        if (!cuitTercero || !razonSocialTercero || !telefonoTercero ||
+            !direccion.calle || !direccion.numero || !direccion.codPostal ||
+            !direccion.localidad || !direccion.provincia || !direccion.pais) {
+            setErrorMessage("Por favor complete todos los campos obligatorios (*)");
             return;
         }
+
+        // Validación Regex CUIT
+        const cuitRegex = /^\d{2}-?\d{8}-?\d{1}$/;
+        if (!cuitRegex.test(cuitTercero)) {
+            setErrorMessage("El formato del CUIT es inválido (Ej: 30-12345678-9)");
+            return;
+        }
+
         setIsLoading(true);
-        setErrorMessage("");
 
         try {
             const res = await fetch('http://localhost:8080/api/factura/responsable', {
@@ -245,101 +221,86 @@ export function RegistrarFacturaForm() {
                     tipoResponsable: "J",
                     cuit: cuitTercero,
                     razonSocial: razonSocialTercero,
-                    telefono: [342000000], // Dato dummy obligatorio por DTO
-                    dtoDireccion: { // Dirección dummy obligatoria por DTO
-                        calle: "Domicilio Fiscal",
-                        numero: 123,
-                        localidad: "Santa Fe",
-                        provincia: "Santa Fe",
-                        pais: "Argentina",
-                        codPostal: 3000
+                    telefono: [parseInt(telefonoTercero)], // Enviamos como lista de Long
+                    dtoDireccion: {
+                        calle: direccion.calle,
+                        numero: parseInt(direccion.numero),
+                        piso: direccion.piso ? parseInt(direccion.piso) : null,
+                        departamento: direccion.departamento,
+                        codPostal: parseInt(direccion.codPostal),
+                        localidad: direccion.localidad,
+                        provincia: direccion.provincia,
+                        pais: direccion.pais
                     }
                 })
             });
 
-            if (!res.ok) throw new Error("Error al crear empresa");
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || "Error al crear empresa");
+            }
 
             const dataResp = await res.json();
             const nuevoId = dataResp.idResponsableGenerado;
 
             setIsLoading(false);
-
             alert(`La firma ${razonSocialTercero} ha sido cargada al sistema.`);
 
-            // 2. Guardamos el ID para usarlo luego
+            // Éxito: Volvemos al modo de búsqueda simple con el CUIT precargado
             setIdResponsableSeleccionado(nuevoId);
-            setIdEmpresaCreada(nuevoId); // Backup por si acaso
-
-            // Exito! Ahora volvemos a intentar calcular con el nuevo ID
             setNecesitaAltaEmpresa(false);
             setErrorMessage("");
 
+            // Limpiamos campos del formulario (opcional)
+            // setRazonSocialTercero(""); setDireccion({...});
+
         } catch (error: any) {
-            setErrorMessage("No se pudo crear: " + error.message);
+            setErrorMessage("Error: " + error.message);
             setIsLoading(false);
         }
     }
 
-    // --- MANEJO DE ITEMS Y TOTALES ---
+    // --- MANEJO UI ---
     const handleToggleItem = (itemId: string) => {
         setItems(items.map((item) => (item.id === itemId ? { ...item, selected: !item.selected } : item)))
     }
 
-    const calculateTotalLocal = () => {
-        return items.filter(i => i.selected).reduce((acc, curr) => acc + curr.monto, 0);
-    }
+    const calculateTotalLocal = () => items.filter(i => i.selected).reduce((acc, curr) => acc + curr.monto, 0);
 
-    // Recalculo simple para UI basado en el tipo de factura que dijo el backend
     const getMontosFinales = () => {
         const totalItems = calculateTotalLocal();
         const esA = detalleCalculado?.tipoFactura === "A";
-
-        // Lógica simplificada de visualización (El backend ya dio los valores exactos para todos los items)
-        // Si el usuario desmarca algo, restamos proporcionalmente
-        const iva = esA ? totalItems * 0.21 : 0; // Solo para mostrar discriminado
-        const total = esA ? totalItems + iva : totalItems; // Ajustar según si el backend manda montos netos o brutos
-
-        // *Nota*: Lo ideal es volver a llamar al backend si cambian los items,
-        // pero para este ejemplo usaremos los valores del backend como base.
+        const iva = esA ? totalItems * 0.21 : 0;
         return {
             subtotal: totalItems,
-            iva: detalleCalculado?.montoIva || 0, // Usamos el del backend por defecto
+            iva: detalleCalculado?.montoIva || 0,
             total: detalleCalculado?.montoTotal || 0
         };
     }
 
-    // --- PASO FINAL: GENERAR FACTURA ---
     const handleGenerateInvoice = async () => {
         setIsLoading(true);
         try {
-            // Construimos el DTO para generar
             const facturaFinal = {
-                numeroFactura: `F-${Date.now()}`, // Generamos uno al azar para probar
+                numeroFactura: "Generando...",
                 fechaEmision: new Date().toISOString(),
-                fechaVencimiento: new Date().toISOString(), // +10 dias
+                fechaVencimiento: new Date().toISOString(),
                 importeTotal: getMontosFinales().total,
                 importeNeto: getMontosFinales().subtotal,
                 iva: getMontosFinales().iva,
                 tipoFactura: detalleCalculado?.tipoFactura,
-
-                // Relaciones
                 idEstadia: { idEstadia: idEstadia },
-                idResponsable: {
-                    idResponsable: idResponsableSeleccionado
-                }
+                idResponsable: { idResponsable: idResponsableSeleccionado }
             };
 
-            // POST FINAL
             const res = await fetch('http://localhost:8080/api/factura/generar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(facturaFinal)
             });
 
-            if(!res.ok) throw new Error("Error al generar factura final");
-
+            if(!res.ok) throw new Error("Error al generar factura");
             setStep("success");
-
         } catch (error: any) {
             setErrorMessage(error.message);
         } finally {
@@ -347,43 +308,32 @@ export function RegistrarFacturaForm() {
         }
     }
 
-    // Helper sucio para obtener el ID de responsable del huésped (ya que el front no lo guardó explícitamente)
-    // En un caso real, el /calcular-detalle debería devolver también el idResponsableFinal.
-    const obtenerIdResponsableHuesped = async () => {
-       // Asumimos que ya existe porque pasamos el paso 2
-       // Podrías guardar este ID en el estado durante el 'calcular-detalle'
-       return 1; // HARDCODE PARA EVITAR ERROR EN DEMO SI NO LO TIENES
+    const obtainingDetalleFacturacionWrapper = () => {
+        if (!cuitTercero || !cuitTercero.trim()) {
+            setErrorMessage("");
+            setNecesitaAltaEmpresa(true); // Activa el modo alta
+            return;
+        }
+        setErrorMessage("");
+        obtenerDetalleFacturacion({ esTercero: true, idResponsableJuridico: undefined });
     }
 
+    const handleDireccionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setDireccion({ ...direccion, [e.target.name]: e.target.value });
+    }
 
     const resetForm = () => {
-        setStep("search")
-        setNumeroHabitacion("")
-        setHoraSalida("")
-        setErrorMessage("")
-        setOcupantes([])
-        setSelectedOcupante(null)
-        setItems([])
-        setDetalleCalculado(null)
-        setCuitTercero("")
-        setNecesitaAltaEmpresa(false)
-        setRazonSocialTercero("")
+        window.location.reload(); // Manera más fácil de limpiar todo
     }
 
+    // --- RENDER ---
     return (
         <div className="space-y-6">
-        <h1 className="bg-red-500 text-white p-4 text-2xl font-bold">
-                        SI VES ESTO, ESTÁS EN EL ARCHIVO CORRECTO
-                    </h1>
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Link>
-                </Button>
+                <Button variant="ghost" size="icon" asChild><Link href="/"><ArrowLeft className="h-5 w-5" /></Link></Button>
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Registrar Factura</h1>
-                    <p className="text-slate-600 dark:text-slate-400">Integración con Spring Boot</p>
+                    <h1 className="text-3xl font-bold text-slate-900">Registrar Factura</h1>
+                    <p className="text-slate-600">Integración con Spring Boot</p>
                 </div>
             </div>
 
@@ -394,33 +344,19 @@ export function RegistrarFacturaForm() {
                 </Alert>
             )}
 
-            {/* --- PASO 1: BUSQUEDA --- */}
+            {/* PASO 1 */}
             {step === "search" && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" /> Buscar Habitación
-                        </CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Buscar Habitación</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="numeroHabitacion">Nro Habitación</Label>
-                                <Input
-                                    id="numeroHabitacion"
-                                    placeholder="Ej: 101"
-                                    value={numeroHabitacion}
-                                    onChange={(e) => setNumeroHabitacion(e.target.value)}
-                                />
+                                <Label>Nro Habitación</Label>
+                                <Input value={numeroHabitacion} onChange={(e) => setNumeroHabitacion(e.target.value)} placeholder="Ej: 101" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="horaSalida">Hora Salida</Label>
-                                <Input
-                                    id="horaSalida"
-                                    type="time"
-                                    value={horaSalida}
-                                    onChange={(e) => setHoraSalida(e.target.value)}
-                                />
+                                <Label>Hora Salida</Label>
+                                <Input type="time" value={horaSalida} onChange={(e) => setHoraSalida(e.target.value)} />
                             </div>
                         </div>
                         <Button onClick={handleSearch} className="w-full" disabled={isLoading}>
@@ -430,82 +366,55 @@ export function RegistrarFacturaForm() {
                 </Card>
             )}
 
-            {/* --- PASO 2: SELECCION RESPONSABLE --- */}
+            {/* PASO 2 */}
             {step === "select-person" && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Seleccionar Responsable</CardTitle>
-                        <CardDescription>Ocupantes encontrados en la habitación {numeroHabitacion}</CardDescription>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Seleccionar Responsable</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-3">
                             {ocupantes.map((ocup, idx) => (
-                                <Card
-                                    key={idx}
-                                    className="cursor-pointer hover:border-blue-500"
-                                    onClick={() => handleSelectPerson(ocup)}
-                                >
+                                <Card key={idx} className="cursor-pointer hover:border-blue-500" onClick={() => handleSelectPerson(ocup)}>
                                     <CardContent className="flex items-center justify-between p-4">
-                                        <div>
-                                            <p className="font-medium">{ocup.apellido}, {ocup.nombres}</p>
-                                            <p className="text-sm text-slate-500">{ocup.tipoDocumento}: {ocup.nroDocumento}</p>
-                                        </div>
+                                        <div><p className="font-medium">{ocup.apellido}, {ocup.nombres}</p><p className="text-sm text-slate-500">{ocup.tipoDocumento}: {ocup.nroDocumento}</p></div>
                                         <Badge variant="outline">Huésped</Badge>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
-
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={() => setStep("search")} className="flex-1">Volver</Button>
-                            <Button variant="secondary" onClick={() => {
-                                setErrorMessage("");
-                                setShowThirdPartyDialog(true);
-                                setNecesitaAltaEmpresa(false);
-                            }} className="flex-1">
-                                Facturar a Empresa (Tercero)
-                            </Button>
+                            <Button variant="secondary" onClick={() => { setErrorMessage(""); setShowThirdPartyDialog(true); setNecesitaAltaEmpresa(false); }} className="flex-1">Facturar a Empresa</Button>
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {/* --- PASO 3: CONFIRMACIÓN ITEMS --- */}
+            {/* PASO 3 */}
             {step === "select-items" && detalleCalculado && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Detalle de Facturación</CardTitle>
-                        <CardDescription>Responsable: {detalleCalculado.nombreResponsable}</CardDescription>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Detalle Facturación</CardTitle><CardDescription>Resp: {detalleCalculado.nombreResponsable}</CardDescription></CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             {items.map((item) => (
                                 <div key={item.id} className="flex items-center justify-between border p-3 rounded">
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox checked={item.selected} onCheckedChange={() => handleToggleItem(item.id)} />
-                                        <span>{item.descripcion}</span>
-                                    </div>
+                                    <div className="flex items-center gap-2"><Checkbox checked={item.selected} onCheckedChange={() => handleToggleItem(item.id)} /><span>{item.descripcion}</span></div>
                                     <span className="font-bold">${item.monto}</span>
                                 </div>
                             ))}
                         </div>
-
                         <div className="bg-slate-100 p-4 rounded text-right">
                              <p>Tipo Factura: <strong>{detalleCalculado.tipoFactura}</strong></p>
                              <p className="text-2xl font-bold text-blue-600">Total: ${detalleCalculado.montoTotal}</p>
                         </div>
-
                         <div className="flex gap-2">
                              <Button onClick={() => setStep("select-person")} variant="outline">Volver</Button>
-                             <Button onClick={handleGenerateInvoice} disabled={isLoading} className="flex-1">
-                                {isLoading ? "Generando..." : "Confirmar e Imprimir"}
-                             </Button>
+                             <Button onClick={handleGenerateInvoice} disabled={isLoading} className="flex-1">{isLoading ? "Generando..." : "Confirmar e Imprimir"}</Button>
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {/* --- PASO EXITO --- */}
+            {/* EXITO */}
             {step === "success" && (
                 <Card className="bg-green-50 border-green-200">
                     <CardContent className="flex flex-col items-center p-8 text-center">
@@ -516,76 +425,93 @@ export function RegistrarFacturaForm() {
                 </Card>
             )}
 
-            {/* --- DIALOGO TERCEROS (CON LOGICA DE ALTA) --- */}
+            {/* MODAL TERCEROS */}
             <Dialog open={showThirdPartyDialog} onOpenChange={setShowThirdPartyDialog}>
-                <DialogContent>
+                <DialogContent className={necesitaAltaEmpresa ? "max-w-3xl" : "max-w-md"}>
                     <DialogHeader>
-                        <DialogTitle>{necesitaAltaEmpresa ? "Alta de Responsable de pago (CU-12)" : "Seleccionar Tercero"}</DialogTitle>
-                        <DialogDescription>
-                            {necesitaAltaEmpresa
-                                ? "El CUIT ingresado no existe. Complete los datos para registrarla."
-                                : "Ingrese el CUIT del responsable."}
-                        </DialogDescription>
+                        <DialogTitle>{necesitaAltaEmpresa ? "Alta de Responsable de Pago (CU-12)" : "Seleccionar Tercero"}</DialogTitle>
+                        <DialogDescription>{necesitaAltaEmpresa ? "Complete todos los campos obligatorios (*) para registrar la empresa." : "Ingrese el CUIT del responsable."}</DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>CUIT</Label>
-                            <Input
-                                value={cuitTercero}
-                                onChange={(e) => setCuitTercero(e.target.value)}
-                                placeholder="30-12345678-9"
-                                disabled={false}
-                            />
+                        {/* Buscador CUIT */}
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label>CUIT {necesitaAltaEmpresa && "*"}</Label>
+                            <Input value={cuitTercero} onChange={(e) => setCuitTercero(e.target.value)} placeholder="30-12345678-9" disabled={false} />
                         </div>
 
-                        {/* INPUT QUE APARECE SOLO SI DA ERROR 409 */}
+                        {/* FORMULARIO DE ALTA EXTENDIDO */}
                         {necesitaAltaEmpresa && (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                                <Label>Razón Social</Label>
-                                <Input
-                                    value={razonSocialTercero}
-                                    onChange={(e) => setRazonSocialTercero(e.target.value)}
-                                    placeholder="Ej: Empresa S.A."
-                                    autoFocus
-                                />
-                                <p className="text-xs text-slate-500">Se crearán datos de dirección genéricos para la demo.</p>
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 border-t pt-4 mt-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-1 space-y-2">
+                                        <Label>Razón Social *</Label>
+                                        <Input value={razonSocialTercero} onChange={(e) => setRazonSocialTercero(e.target.value)} placeholder="Ej: Empresa S.A." />
+                                    </div>
+                                    <div className="col-span-1 space-y-2">
+                                        <Label>Teléfono *</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Phone className="h-4 w-4 text-slate-500" />
+                                            <Input value={telefonoTercero} onChange={(e) => setTelefonoTercero(e.target.value)} placeholder="Ej: 342555555" type="number"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-slate-700 font-medium mt-2">
+                                    <MapPin className="h-4 w-4" /> Dirección
+                                </div>
+
+                                <div className="grid grid-cols-6 gap-3 bg-slate-50 p-3 rounded-md">
+                                    <div className="col-span-4 space-y-1">
+                                        <Label className="text-xs">Calle *</Label>
+                                        <Input name="calle" value={direccion.calle} onChange={handleDireccionChange} placeholder="Ej: San Martin" className="h-8" />
+                                    </div>
+                                    <div className="col-span-2 space-y-1">
+                                        <Label className="text-xs">Número *</Label>
+                                        <Input name="numero" value={direccion.numero} onChange={handleDireccionChange} placeholder="123" type="number" className="h-8" />
+                                    </div>
+
+                                    <div className="col-span-2 space-y-1">
+                                        <Label className="text-xs">Piso</Label>
+                                        <Input name="piso" value={direccion.piso} onChange={handleDireccionChange} placeholder="-" type="number" className="h-8" />
+                                    </div>
+                                    <div className="col-span-2 space-y-1">
+                                        <Label className="text-xs">Depto</Label>
+                                        <Input name="departamento" value={direccion.departamento} onChange={handleDireccionChange} placeholder="-" className="h-8" />
+                                    </div>
+                                    <div className="col-span-2 space-y-1">
+                                        <Label className="text-xs">CP *</Label>
+                                        <Input name="codPostal" value={direccion.codPostal} onChange={handleDireccionChange} placeholder="3000" type="number" className="h-8" />
+                                    </div>
+
+                                    <div className="col-span-3 space-y-1">
+                                        <Label className="text-xs">Localidad *</Label>
+                                        <Input name="localidad" value={direccion.localidad} onChange={handleDireccionChange} placeholder="Santa Fe" className="h-8" />
+                                    </div>
+                                    <div className="col-span-3 space-y-1">
+                                        <Label className="text-xs">Provincia *</Label>
+                                        <Input name="provincia" value={direccion.provincia} onChange={handleDireccionChange} placeholder="Santa Fe" className="h-8" />
+                                    </div>
+                                    <div className="col-span-6 space-y-1">
+                                        <Label className="text-xs">País *</Label>
+                                        <Input name="pais" value={direccion.pais} onChange={handleDireccionChange} className="h-8" disabled />
+                                    </div>
+                                </div>
                             </div>
                         )}
-
-                        {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+                        {errorMessage && <p className="text-sm text-red-500 font-medium text-center">{errorMessage}</p>}
                     </div>
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowThirdPartyDialog(false)}>Cancelar</Button>
-
                         {necesitaAltaEmpresa ? (
-                            <Button onClick={handleCrearEmpresa} disabled={isLoading}>
-                                {isLoading ? "Guardando..." : "Guardar Empresa"}
-                            </Button>
+                            <Button onClick={handleCrearEmpresa} disabled={isLoading}>{isLoading ? "Guardando..." : "Guardar Empresa"}</Button>
                         ) : (
-                            <Button onClick={() => obtainingDetalleFacturacionWrapper()} disabled={isLoading}>
-                                {isLoading ? "Buscando..." : "Buscar"}
-                            </Button>
+                            <Button onClick={obtainingDetalleFacturacionWrapper} disabled={isLoading}>{isLoading ? "Buscando..." : "Buscar"}</Button>
                         )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     )
-
-    // Wrapper auxiliar para llamar a la logica desde el dialog
-    function obtainingDetalleFacturacionWrapper() {
-        if (!cuitTercero || !cuitTercero.trim()) {
-            setErrorMessage("");
-            setNecesitaAltaEmpresa(true);
-            return;
-        }
-
-        setErrorMessage("");
-        obtenerDetalleFacturacion({
-            esTercero: true,
-            idResponsableJuridico: undefined // Esto disparará la búsqueda en el backend
-        });
-    }
 }

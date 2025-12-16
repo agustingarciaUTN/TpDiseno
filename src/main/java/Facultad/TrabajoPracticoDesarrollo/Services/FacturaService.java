@@ -248,9 +248,12 @@ public class FacturaService {
      */
     @Transactional
     public DtoFactura generarFactura(DtoFactura dto) throws Exception {
+
+        /*
         if (existeFactura(dto.getNumeroFactura())) {
             throw new IllegalArgumentException("El número de factura ya existe: " + dto.getNumeroFactura());
         }
+        */
 
         Estadia estadia = estadiaRepository.findById(dto.getIdEstadia().getIdEstadia()).orElseThrow();
 
@@ -259,7 +262,32 @@ public class FacturaService {
         ResponsablePago responsable = responsablePagoRepository.findById(idDelResponsable)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el responsable ID: " + idDelResponsable));
 
+        //Genera numero de factura
+        String puntoVenta = "0005"; // Fijo
+        Factura ultimaFactura = facturaRepository.findTopByOrderByNumeroFacturaDesc();
+
+        String ultimoNumero = null;
+        if (ultimaFactura != null) {
+            ultimoNumero = ultimaFactura.getNumeroFactura();
+        }
+
+        int siguienteNumero = 1;
+
+        if (ultimoNumero != null && !ultimoNumero.isEmpty()) {
+            try {
+                String parteNumerica = ultimoNumero.split("-")[1];
+                siguienteNumero = Integer.parseInt(parteNumerica) + 1;
+            } catch (Exception e) {
+                System.err.println("Error al parsear último número: " + ultimoNumero);
+            }
+        }
+
+        // Formato final: "0001-XXXXXXXX" (8 dígitos con ceros a la izquierda)
+        String numeroGenerado = String.format("%s-%08d", puntoVenta, siguienteNumero);
+
         Factura factura = MapearFactura.mapearDtoAEntidad(dto, responsable, estadia);
+
+        factura.setNumeroFactura(numeroGenerado);
 
         // --- ARREGLO 2: FORZAR ESTADO PENDIENTE ---
         // No importa si viene null, aquí nace la factura.
@@ -287,6 +315,8 @@ public class FacturaService {
 
         estadia.setFechaCheckOut(factura.getFechaEmision());
         estadiaRepository.save(estadia);
+
+        dto.setNumeroFactura(numeroGenerado);
 
         return dto;
     }
@@ -344,7 +374,10 @@ public class FacturaService {
     public int guardarResponsableJuridico(DtoPersonaJuridica dto) {
 
         // 1. Validaciones de negocio (ej. si el CUIT ya existe)
-        // ...
+        Integer idExistente = responsablePagoRepository.buscarIdPorCuit(dto.getCuit());
+        if (idExistente != null) {
+            throw new IllegalArgumentException("El CUIT " + dto.getCuit() + " ya está registrado en el sistema.");
+        }
 
         // 2. Mapeo DTO -> Entidad (Dirección)
         // Como el DTO viene del front, extraemos sus datos para llenar la entidad

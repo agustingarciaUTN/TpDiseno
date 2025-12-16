@@ -42,7 +42,7 @@ public class UsuarioServiceTest {
         // 1. Crear Entidad Mockeada (lo que devuelve la BD)
         Usuario usuarioReal = new Usuario.Builder()
                 .id(1)
-                .user(nombreUsuario)
+                .nombre(nombreUsuario)
                 .password(hashEsperado) // La BD tiene el hash, no la plana
                 .build();
 
@@ -86,7 +86,7 @@ public class UsuarioServiceTest {
 
         Usuario usuarioReal = new Usuario.Builder()
                 .id(1)
-                .user(nombreUsuario)
+                .nombre(nombreUsuario)
                 .password(hashCorrecto)
                 .build();
 
