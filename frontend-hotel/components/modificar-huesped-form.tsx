@@ -17,10 +17,10 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-    Edit, // Icono para Modificar
+    Edit,
     AlertCircle,
     CheckCircle2,
-    UserMinus, // Icono para Borrar
+    UserMinus,
     ArrowRight,
     Home
 } from "lucide-react"
