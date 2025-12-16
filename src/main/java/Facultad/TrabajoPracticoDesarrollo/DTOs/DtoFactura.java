@@ -39,13 +39,13 @@ public class DtoFactura {
 
     @NotNull
     @PositiveOrZero
-    private double importeTotal;
+    private Double importeTotal;
 
     @PositiveOrZero
-    private double importeNeto;
+    private Double importeNeto;
 
     @PositiveOrZero
-    private double iva;
+    private Double iva;
 
     /*
     @NotNull
@@ -96,9 +96,9 @@ public class DtoFactura {
         private Date fechaVencimiento;
         private EstadoFactura estadoFactura;
         private TipoFactura tipoFactura;
-        private double importeTotal;
-        private double importeNeto;
-        private double iva;
+        private Double importeTotal;
+        private Double importeNeto;
+        private Double iva;
         private DtoEstadiaSimple idEstadia;
         private DtoResponsableSimple idResponsable;
         private DtoNotaDeCredito dtoNotaDeCredito;
@@ -111,9 +111,9 @@ public class DtoFactura {
         public Builder fechaVencimiento(Date val) { fechaVencimiento = val; return this; }
         public Builder estado(EstadoFactura val) { estadoFactura = val; return this; }
         public Builder tipo(TipoFactura val) { tipoFactura = val; return this; }
-        public Builder importeTotal(double val) { importeTotal = val; return this; }
-        public Builder importeNeto(double val) { importeNeto = val; return this; }
-        public Builder iva(double val) { iva = val; return this; }
+        public Builder importeTotal(Double val) { importeTotal = val; return this; }
+        public Builder importeNeto(Double val) { importeNeto = val; return this; }
+        public Builder iva(Double val) { iva = val; return this; }
 
         public Builder idEstadia(DtoEstadiaSimple val) { idEstadia = val; return this; }
         public Builder idResponsable(DtoResponsableSimple val) { idResponsable = val; return this; }

@@ -106,7 +106,10 @@ public class FacturaService {
      */
     @Transactional(readOnly = true)
     public DtoOcupantesHabitacion buscarOcupantes(String nroHabitacion) {
-        Estadia estadia = estadiaRepository.findEstadiaActivaPorHabitacion(nroHabitacion)
+
+        LocalDate hoy = LocalDate.now();
+
+        Estadia estadia = estadiaRepository.findEstadiaFacturable(nroHabitacion, hoy)
                 .orElseThrow(() -> new IllegalArgumentException("No hay estadía activa en la habitación " + nroHabitacion));
 
         //Mapeamos la lista usando el Builder de DtoDatosOcupantes

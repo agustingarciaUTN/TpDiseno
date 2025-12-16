@@ -155,7 +155,7 @@ export function RegistrarFacturaForm() {
             if (res.status === 409) {
                 const data = await res.json();
                 if (data.accion === "REDIRECCIONAR_A_ALTA_RESPONSABLE") {
-                    setErrorMessage("El CUIT no existe. Complete el formulario para dar el alta.");
+                    setErrorMessage("El CUIT no existe. Ingrese un CUIT válido o uno vacío para dar de alta un responsable de pago.");
                     setIsLoading(false);
                     return;
                 }
@@ -208,6 +208,13 @@ export function RegistrarFacturaForm() {
         const cuitRegex = /^\d{2}-?\d{8}-?\d{1}$/;
         if (!cuitRegex.test(cuitTercero)) {
             setErrorMessage("El formato del CUIT es inválido (Ej: 30-12345678-9)");
+            return;
+        }
+
+         // Validacion Longitud del Teléfono
+         // Verificamos que tenga al menos 6 o 7 dígitos (ej: 422-2222)
+        if (telefonoTercero.length < 6) {
+            setErrorMessage("El número de teléfono es corto. Ingrese un número válido.");
             return;
         }
 
@@ -494,7 +501,7 @@ export function RegistrarFacturaForm() {
                                     </div>
                                     <div className="col-span-6 space-y-1">
                                         <Label className="text-xs">País *</Label>
-                                        <Input name="pais" value={direccion.pais} onChange={handleDireccionChange} className="h-8" disabled />
+                                        <Input name="pais" value={direccion.pais} onChange={handleDireccionChange} className="h-8" />
                                     </div>
                                 </div>
                             </div>

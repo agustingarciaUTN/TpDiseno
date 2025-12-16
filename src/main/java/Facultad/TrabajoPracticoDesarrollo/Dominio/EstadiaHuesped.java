@@ -1,7 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.Dominio;
 
 
-import Facultad.TrabajoPracticoDesarrollo.Utils.SiNoBooleanConverter;
+import Facultad.TrabajoPracticoDesarrollo.enums.Responsable;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +28,7 @@ public class EstadiaHuesped {
     })
     private Huesped huesped;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "responsable")
-    @Convert(converter = SiNoBooleanConverter.class)
-    private Boolean esResponsable;
+    private Responsable esResponsable;
 }

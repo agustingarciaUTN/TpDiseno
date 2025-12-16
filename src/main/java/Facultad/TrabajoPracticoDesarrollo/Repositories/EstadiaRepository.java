@@ -27,6 +27,15 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
             "(e.fechaCheckOut IS NULL OR e.fechaCheckOut > :inicio)")
     List<Estadia> buscarEstadiasEnRango(@Param("inicio") Date inicio, @Param("fin") Date fin);
 
+    @Query("SELECT e FROM Estadia e " +
+            "WHERE e.habitacion.numero = :nroHabitacion " +
+            "AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut >= :fechaHoy) " +
+            "ORDER BY e.fechaCheckIn DESC LIMIT 1")
+    Optional<Estadia> findEstadiaFacturable(
+            @Param("nroHabitacion") String nroHabitacion,
+            @Param("fechaHoy") LocalDate fechaHoy
+    );
+
     /**
      * Verifica si una habitación está ocupada físicamente en una fecha específica (o rango).
      * Se usa para validar Check-In.
@@ -58,8 +67,11 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
     );
 
     // Busca una estadía activa (sin fecha de salida o fecha salida futura/hoy) para una habitación
-    @Query("SELECT e FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion AND e.fechaCheckOut IS NULL")
+    @Query("SELECT e FROM Estadia e WHERE e.habitacion.numero = :nroHabitacion AND (e.fechaCheckOut IS NULL OR e.fechaCheckOut >= CURRENT_DATE)")
     Optional<Estadia> findEstadiaActivaPorHabitacion(@Param("nroHabitacion") String nroHabitacion);
+
+    // Busca todas las estadías de una habitación (para buscar facturas pendientes)
+    List<Estadia> findByHabitacion_Numero(String numero);
 
     //Metodo utilizado para el CU10, cuando tenemos que reasignar una estadia de un huesped a otro
     // TODO: Revisar - Estadia tiene List<Huesped>, no un solo huesped

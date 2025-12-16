@@ -10,27 +10,21 @@ public class MapearTarjetaDebito {
           //      .idPago(dtoTarjetaDebito.getIdPago())
                 .nro(dtoTarjetaDebito.getNumeroDeTarjeta())
                 .red(dtoTarjetaDebito.getRedDePago())
-                .monto(dtoTarjetaDebito.getMonto())
                 .banco(dtoTarjetaDebito.getBanco())
                 .fechaVencimiento(dtoTarjetaDebito.getFechaVencimiento())
                 .codigoSeguridad(dtoTarjetaDebito.getCodigoSeguridad())
-                .moneda(dtoTarjetaDebito.getMoneda())
-                .fecha(dtoTarjetaDebito.getFechaDePago())
                 .build();
     }
 
     public static DtoTarjetaDebito mapearEntidadADto(TarjetaDebito tarjetaDebito) {
         if (tarjetaDebito == null) return null;
-        return new DtoTarjetaDebito.Builder()
+        return DtoTarjetaDebito.builder()
            //     .idPago(tarjetaDebito.getIdPago())
-                .red(tarjetaDebito.getRedDePago())
+                .redDePago(tarjetaDebito.getRedDePago())
                 .banco(tarjetaDebito.getBanco())
-                .numero(tarjetaDebito.getNumeroTarjeta())
-                .vencimiento(tarjetaDebito.getFechaVencimiento())
-                .seguridad(tarjetaDebito.getCodigoSeguridad())
-                .monto(tarjetaDebito.getMonto())
-                .moneda(tarjetaDebito.getMoneda())
-                .fechaPago(tarjetaDebito.getFechaPago())
+                .numeroDeTarjeta(tarjetaDebito.getNumeroTarjeta())
+                .fechaVencimiento(tarjetaDebito.getFechaVencimiento())
+                .codigoSeguridad(tarjetaDebito.getCodigoSeguridad())
                 .build();
     }
 }
