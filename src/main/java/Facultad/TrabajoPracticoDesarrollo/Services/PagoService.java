@@ -201,6 +201,32 @@ public class PagoService {
         return response;
     }
 
+    @Transactional(readOnly = true)
+public Object buscarTarjetaPorNumeroYTipo(String numero, String tipo) {
+    var opt = tarjetaRepository.findById(numero);
+    if (opt.isEmpty()) return null;
+    var tarjeta = opt.get();
+    if ("credito".equalsIgnoreCase(tipo) && tarjeta instanceof Facultad.TrabajoPracticoDesarrollo.Dominio.TarjetaCredito tc) {
+        Facultad.TrabajoPracticoDesarrollo.DTOs.DtoTarjetaCredito dto = new Facultad.TrabajoPracticoDesarrollo.DTOs.DtoTarjetaCredito();
+        dto.setNumeroDeTarjeta(tc.getNumeroTarjeta());
+        dto.setBanco(tc.getBanco());
+        dto.setRedDePago(tc.getRedDePago());
+        dto.setFechaVencimiento(tc.getFechaVencimiento());
+        dto.setCodigoSeguridad(tc.getCodigoSeguridad() != null ? tc.getCodigoSeguridad() : 0);
+        dto.setCuotasCantidad(tc.getCuotas());
+        return dto;
+    } else if ("debito".equalsIgnoreCase(tipo) && tarjeta instanceof Facultad.TrabajoPracticoDesarrollo.Dominio.TarjetaDebito td) {
+        Facultad.TrabajoPracticoDesarrollo.DTOs.DtoTarjetaDebito dto = new Facultad.TrabajoPracticoDesarrollo.DTOs.DtoTarjetaDebito();
+        dto.setNumeroDeTarjeta(td.getNumeroTarjeta());
+        dto.setBanco(td.getBanco());
+        dto.setRedDePago(td.getRedDePago());
+        dto.setFechaVencimiento(td.getFechaVencimiento());
+        dto.setCodigoSeguridad(td.getCodigoSeguridad() != null ? td.getCodigoSeguridad() : 0);
+        return dto;
+    }
+    return null;
+}
+
     /**
      * Verifica si todas las facturas de una estadía están pagadas
      */
