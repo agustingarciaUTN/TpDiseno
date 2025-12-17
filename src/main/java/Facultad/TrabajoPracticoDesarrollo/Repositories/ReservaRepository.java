@@ -139,4 +139,18 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             @Param("nombre") String nombre
     );
 
-}
+    // Mantenimiento: Actualizar nombre/apellido cuando el huésped los corrige
+    @Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE Reserva r SET " +
+            "r.nombreHuespedResponsable = :nombre, " +
+            "r.apellidoHuespedResponsable = :apellido, " +
+            "r.telefonoHuespedResponsable = :telefono " +
+            "WHERE r.tipoDocumentoResponsable = :tipo AND r.nroDocumentoResponsable = :nro")
+    void actualizarDatosPersonales(
+            @Param("tipo") TipoDocumento tipo,
+            @Param("nro") String nro,
+            @Param("nombre") String nombre,
+            @Param("apellido") String apellido,
+            @Param("telefono") String telefono
+    );}

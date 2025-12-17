@@ -526,7 +526,7 @@ export default function AltaHuesped() {
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                                    Caso de Uso
+                                    Caso de Uso 9
                                 </p>
                                 <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Alta de Huésped</h1>
                             </div>

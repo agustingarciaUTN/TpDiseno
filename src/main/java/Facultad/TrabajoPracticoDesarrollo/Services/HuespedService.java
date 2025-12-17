@@ -127,11 +127,15 @@ public class HuespedService {
      */
     @Transactional
     public void upsertHuesped(DtoHuesped dto) {
+
+
         // 1. Buscamos si ya existe en la BD (Respetando el "alt" del diagrama)
         HuespedId id = new HuespedId(dto.getTipoDocumento(), dto.getNroDocumento());
         Optional<Huesped> existenteOpt = huespedRepository.findById(id);
+        boolean esModificacion = existenteOpt.isPresent(); // Flag para saber qué camino tomamos
 
-        if (existenteOpt.isPresent()) {
+
+        if (esModificacion) {
             // ==========================================
             // CAMINO: MODIFICACIÓN (El huésped YA existe)
             // ==========================================
@@ -160,7 +164,8 @@ public class HuespedService {
 
             // C. Guardamos finalmente el Huésped
             // DIAGRAMA: "GHU -> DHU: modificarYPersistirHuesped"
-            huespedRepository.save(huespedExistente);
+            huespedRepository.saveAndFlush(huespedExistente);
+
 
         } else {
             // ==========================================
@@ -187,9 +192,29 @@ public class HuespedService {
             // 4. Guardamos el Huésped
             // DIAGRAMA: "GHU -> DHU: persistirHuesped"
             huespedRepository.save(nuevoHuesped);
+
+
         }
+/*
+        // --- SINCRONIZACIÓN DE RESERVAS ---
+        // Solo lo hacemos si fue una modificación
+        if (esModificacion) {
 
+            // Recuperamos el dato limpio del DTO o del objeto guardado
+            String telefonoPrincipal = (dto.getTelefono() != null && !dto.getTelefono().isEmpty())
+                    ? String.valueOf(dto.getTelefono().get(0)) : null;
 
+            reservaRepository.actualizarDatosPersonales(
+                    dto.getTipoDocumento(),
+                    dto.getNroDocumento(),
+                    dto.getNombres(),
+                    dto.getApellido(),
+                    telefonoPrincipal
+            );
+
+            reservaRepository.flush(); // Forzar commit de esta query
+        }
+*/
     }
 
     /**
