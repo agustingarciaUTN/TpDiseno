@@ -1,4 +1,4 @@
-package Facultad.TrabajoPracticoDesarrollo.Config;
+package Facultad.TrabajoPracticoDesarrollo.Converters;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.Moneda;
 import jakarta.persistence.AttributeConverter;
