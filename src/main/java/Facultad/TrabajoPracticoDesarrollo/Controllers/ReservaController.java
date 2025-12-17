@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.Map;
 import java.util.Date;
 import java.util.List;
 
@@ -150,7 +150,8 @@ public class ReservaController {
             @RequestParam(required = false) String nombre
     ) {
         try {
-            List<DtoReserva> resultado = reservaService.buscarReservasPorHuesped(apellido, nombre);
+            // Ahora recibimos una lista de Mapas, no de DTOs
+            List<Map<String, Object>> resultado = reservaService.buscarReservasPorHuesped(apellido, nombre);
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error en la búsqueda: " + e.getMessage());
@@ -174,5 +175,7 @@ public class ReservaController {
             return ResponseEntity.badRequest().body("Error al cancelar: " + e.getMessage());
         }
     }
+
+    
 
 }

@@ -8,13 +8,17 @@ import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.Map;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-
+import Facultad.TrabajoPracticoDesarrollo.Repositories.EstadiaRepository; // Importar
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia; // Importar
+import java.util.Optional;
 /**
  * Servicio para manejar las Reservas.
  * Se encarga de validar que las habitaciones estén libres antes de confirmar nada
@@ -24,10 +28,12 @@ import java.util.List;
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
+    private final EstadiaRepository estadiaRepository;
 
     @Autowired
-    public ReservaService(ReservaRepository reservaRepository) {
+    public ReservaService(ReservaRepository reservaRepository, EstadiaRepository estadiaRepository) {
         this.reservaRepository = reservaRepository;
+        this.estadiaRepository = estadiaRepository;
     }
 
     // --- BÚSQUEDAS PARA OTROS SERVICIOS ---
@@ -127,18 +133,43 @@ public class ReservaService {
     }
 
     // CU06 - Búsqueda
-    @Transactional(readOnly = true)
-    public List<DtoReserva> buscarReservasPorHuesped(String apellido, String nombre) {
+  @Transactional(readOnly = true)
+    public List<Map<String, Object>> buscarReservasPorHuesped(String apellido, String nombre) {
         String apellidoParam = (apellido != null && !apellido.isBlank()) ? apellido + "%" : null;
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre + "%" : null;
 
         List<Reserva> reservas = reservaRepository.buscarParaCancelar(apellidoParam, nombreParam);
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        List<DtoReserva> dtos = new ArrayList<>();
         for (Reserva r : reservas) {
-            dtos.add(MapearReserva.mapearEntidadADto(r));
+            Map<String, Object> map = new HashMap<>();
+            
+            // 1. Datos de la Reserva
+            map.put("idReserva", r.getIdReserva());
+            map.put("apellidoHuespedResponsable", r.getApellidoHuespedResponsable());
+            map.put("nombreHuespedResponsable", r.getNombreHuespedResponsable());
+            if (r.getFechaDesde() != null) map.put("fechaDesde", sdf.format(r.getFechaDesde()));
+            if (r.getFechaHasta() != null) map.put("fechaHasta", sdf.format(r.getFechaHasta())); // Usamos fechaHasta para coincidir con DTO
+            
+            // 2. Datos de la Habitación (Soluciona el problema de "Estándar")
+            if (r.getHabitacion() != null) {
+                map.put("idHabitacion", r.getHabitacion().getNumero());
+                map.put("tipoHabitacion", r.getHabitacion().getTipoHabitacion().toString());
+            }
+
+            // 3. DATOS DE ESTADÍA (Soluciona el problema de validación)
+            // Buscamos si hay una estadía con este id_reserva
+            Optional<Estadia> estadiaAsociada = estadiaRepository.findByReservaId(r.getIdReserva());
+            if (estadiaAsociada.isPresent()) {
+                map.put("idEstadia", estadiaAsociada.get().getIdEstadia());
+            } else {
+                map.put("idEstadia", null);
+            }
+
+            resultado.add(map);
         }
-        return dtos;
+        return resultado;
     }
 
     // CU06 - Cancelación

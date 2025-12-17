@@ -38,6 +38,8 @@ interface ReservaRow {
     tipoHabitacion: string
     fechaInicio: string
     fechaFin: string
+    fechaHasta: string; // AGREGAR: Para que esReservaPasada funcione
+    idEstadia?: number; // AGREGAR: Para detectar si está linkeada
 }
 
 export function CancelarReservaForm() {
@@ -101,16 +103,17 @@ export function CancelarReservaForm() {
         try {
             const data = await buscarReservasPorHuesped(apellido, nombre)
 
-            // Mapeamos lo que viene del back a la estructura de la tabla (CON EL FIX QUE HICIMOS ANTES)
             const filas: ReservaRow[] = data.map((d: any) => ({
-                idReserva: d.idReserva || d.id,
-                apellido: d.apellidoHuespedResponsable || d.apellidoHuesped || apellido,
-                nombre: d.nombreHuespedResponsable || d.nombreHuesped || nombre,
-                nroHabitacion: d.idHabitacion || d.nroHabitacion,
-                tipoHabitacion: d.tipoHabitacion || "Estándar",
-                fechaInicio: d.fechaDesde || d.fechaInicio,
-                fechaFin: d.fechaHasta || d.fechaFin
-            }))
+            idReserva: d.idReserva,
+            apellido: d.apellidoHuespedResponsable,
+            nombre: d.nombreHuespedResponsable,
+            nroHabitacion: d.idHabitacion || d.nroHabitacion, // El back ahora manda idHabitacion
+            tipoHabitacion: d.tipoHabitacion || "Estándar",   // El back ahora manda el tipo correcto
+            fechaInicio: d.fechaDesde,
+            fechaFin: d.fechaHasta,    // Para mostrar en tabla
+            fechaHasta: d.fechaHasta,  // IMPORTANTE: Para esReservaPasada
+            idEstadia: d.idEstadia     // IMPORTANTE: Para estaLinkeadaAEstadia
+}))
 
             setResultados(filas)
             setHasSearched(true)
