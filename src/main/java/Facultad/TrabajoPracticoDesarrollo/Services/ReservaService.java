@@ -30,18 +30,20 @@ public class ReservaService {
         this.reservaRepository = reservaRepository;
     }
 
-    // --- BÚSQUEDAS ---
-
-    @Transactional(readOnly = true)
+    // --- BÚSQUEDAS PARA OTROS SERVICIOS ---
 
     /**
-     * Busca qué reservas están "vivas" (activas) en un rango de fechas.
-     * Sirve para pintar la grilla en la pantalla y ver qué está ocupado.
-     *
-     * @param fechaInicio Desde cuándo queremos mirar.
-     * @param fechaFin    Hasta cuándo queremos mirar.
-     * @return Una lista limpia (DTOs) para mostrar en el frontend.
+     * Busca reservas activas en un rango de fechas devolviendo las Entidades.
+     * Método utilizado por HabitacionService para calcular la grilla de disponibilidad.
      */
+    @Transactional(readOnly = true)
+    public List<Reserva> buscarReservasEnRango(Date fechaInicio, Date fechaFin) {
+        return reservaRepository.buscarReservasActivasEnRango(fechaInicio, fechaFin);
+    }
+
+    // --- BÚSQUEDAS PARA CONTROLADOR ---
+
+    @Transactional(readOnly = true)
     public List<DtoReserva> buscarReservasEnFecha(Date inicio, Date fin) {
         List<Reserva> entidades = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
         List<DtoReserva> dtos = new ArrayList<>();
@@ -53,71 +55,33 @@ public class ReservaService {
     }
 
     @Transactional(readOnly = true)
-    /**
-     * El "semáforo" del sistema. Revisa si una habitación está libre en esas fechas.
-     * Verifica que no se superponga con ninguna otra reserva existente.
-     *
-     * @param idHabitacion La habitación que queremos chequear.
-     * @param fechaInicio  Cuándo entra el huésped.
-     * @param fechaFin     Cuándo sale.
-     * @return true si está libre (Luz Verde), false si ya está reservada (Luz Roja).
-     */
     public boolean validarDisponibilidad(String idHabitacion, Date fechaInicio, Date fechaFin) {
-        // Buscamos si existe alguna reserva para esa habitación que se solape con las fechas
-        // Lógica: (StartA <= EndB) and (EndA >= StartB)
         return !reservaRepository.existeReservaEnFecha(idHabitacion, fechaInicio, fechaFin);
     }
 
-
     // --- CREACIÓN (Lógica Principal) ---
 
-    @Transactional(rollbackFor = Exception.class) // Hace rollback si algo falla
-    /**
-     * Guarda las reservas en la base de datos.
-     * Antes de guardar, hace una última validación de seguridad para asegurarse
-     * de que nadie haya ocupado la habitación en el último milisegundo.
-     *
-     * @param reservas Lista de reservas a crear.
-     * @throws Exception Si las fechas están mal o la habitación ya no está disponible.
-     */
+    @Transactional(rollbackFor = Exception.class)
     public void crearReservas(List<DtoReserva> listaDtos) throws Exception {
-
-        // 1. Validaciones generales de la lista
         validarListaReservas(listaDtos);
 
-        // 2. Procesar cada reserva
         for (DtoReserva dto : listaDtos) {
-
-            // a. Validar fechas (Lógica de negocio: no puede ser anterior a hoy)
             validarFechaIngreso(dto.getFechaDesde());
 
-            // b. Validar disponibilidad en BD (concurrencia)
             if (reservaRepository.existeReservaEnFecha(dto.getIdHabitacion(), dto.getFechaDesde(), dto.getFechaHasta())) {
                 throw new Exception("La habitación " + dto.getIdHabitacion() + " ya está reservada en las fechas seleccionadas.");
             }
 
-            // c. Mapeo a Entidad
             Reserva reservaEntidad = MapearReserva.mapearDtoAEntidad(dto);
-
-            // d. Completar datos del sistema
             reservaEntidad.setEstadoReserva(EstadoReserva.ACTIVA);
-            reservaEntidad.setFechaReserva(new Date()); // Fecha de registro = Hoy
+            reservaEntidad.setFechaReserva(new Date()); 
 
-            // e. Guardar (JPA maneja el INSERT)
             reservaRepository.save(reservaEntidad);
         }
     }
 
     // --- VALIDACIONES PRIVADAS ---
 
-    /**
-     * Validador de seguridad interno.
-     * Revisa que la lista no sea nula y que cada reserva tenga lo mínimo indispensable
-     * (habitación y nombre del responsable) antes de intentar procesar nada.
-     *
-     * @param reservas La lista cruda que vino del front.
-     * @throws Exception Si la lista está vacía o faltan datos obligatorios.
-     */
     private void validarListaReservas(List<DtoReserva> reservas) throws Exception {
         if (reservas == null || reservas.isEmpty()) {
             throw new Exception("La lista de reservas está vacía.");
@@ -131,28 +95,21 @@ public class ReservaService {
                 throw new Exception("Falta el tipo de documento del responsable.");
             if (dto.getNroDocumentoResponsable() == null || dto.getNroDocumentoResponsable().isBlank())
                 throw new Exception("Falta el número de documento del responsable.");
-            // Validación específica por tipo de documento
+            
             String nro = dto.getNroDocumentoResponsable();
             switch (dto.getTipoDocumentoResponsable()) {
                 case DNI:
-                    if (!nro.matches("^\\d{7,8}$"))
-                        throw new Exception("El DNI debe tener 7 u 8 números");
+                    if (!nro.matches("^\\d{7,8}$")) throw new Exception("El DNI debe tener 7 u 8 números");
                     break;
                 case PASAPORTE:
-                    if (!nro.matches("^[A-Z0-9]{6,9}$"))
-                        throw new Exception("El pasaporte debe tener 6 a 9 caracteres alfanuméricos");
+                    if (!nro.matches("^[A-Z0-9]{6,9}$")) throw new Exception("El pasaporte debe tener 6 a 9 caracteres alfanuméricos");
                     break;
                 case LC:
-                    if (!nro.matches("^\\d{6,8}$"))
-                        throw new Exception("La LC debe tener 6 a 8 números");
-                    break;
                 case LE:
-                    if (!nro.matches("^\\d{6,8}$"))
-                        throw new Exception("La LE debe tener 6 a 8 números");
+                    if (!nro.matches("^\\d{6,8}$")) throw new Exception("El documento debe tener 6 a 8 números");
                     break;
                 case OTRO:
-                    if (!nro.matches("^[a-zA-Z0-9]{5,20}$"))
-                        throw new Exception("Formato de documento OTRO inválido (5-20 caracteres)");
+                    if (!nro.matches("^[a-zA-Z0-9]{5,20}$")) throw new Exception("Formato de documento OTRO inválido (5-20 caracteres)");
                     break;
                 default:
                     throw new Exception("Tipo de documento no soportado");
@@ -160,14 +117,6 @@ public class ReservaService {
         }
     }
 
-    /**
-     * Regla de negocio temporal.
-     * Se asegura de que no estemos intentando reservar con fecha de inicio en el pasado.
-     * Convierte fechas de Date a LocalDate para comparar solo día/mes/año sin horas.
-     *
-     * @param fechaDesde La fecha de ingreso propuesta.
-     * @throws Exception Si la fecha es anterior a hoy.
-     */
     private void validarFechaIngreso(Date fechaDesde) throws Exception {
         LocalDate hoy = LocalDate.now();
         LocalDate fechaIngreso = fechaDesde.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -177,16 +126,13 @@ public class ReservaService {
         }
     }
 
-
     // CU06 - Búsqueda
     @Transactional(readOnly = true)
     public List<DtoReserva> buscarReservasPorHuesped(String apellido, String nombre) {
-
         String apellidoParam = (apellido != null && !apellido.isBlank()) ? apellido + "%" : null;
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre + "%" : null;
 
         List<Reserva> reservas = reservaRepository.buscarParaCancelar(apellidoParam, nombreParam);
-
 
         List<DtoReserva> dtos = new ArrayList<>();
         for (Reserva r : reservas) {
@@ -203,17 +149,13 @@ public class ReservaService {
         }
 
         for (Integer id : idsReservas) {
-            // Verificamos que exista y esté activa antes de cancelar (Concurrencia)
             Reserva r = reservaRepository.findById(id)
                     .orElseThrow(() -> new Exception("La reserva " + id + " no existe."));
 
-            // Chequear si ya estaba cancelada
             if (r.getEstadoReserva() == EstadoReserva.CANCELADA) continue;
-
 
             r.setEstadoReserva(EstadoReserva.CANCELADA);
             reservaRepository.save(r);
         }
-
     }
 }

@@ -4,13 +4,20 @@ import Facultad.TrabajoPracticoDesarrollo.Dominio.Habitacion;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Reserva;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Estadia;
 import Facultad.TrabajoPracticoDesarrollo.Repositories.HabitacionRepository;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.ReservaRepository;
-import Facultad.TrabajoPracticoDesarrollo.Repositories.EstadiaRepository;
+// Quitamos Repositorios de Reserva/Estadía e importamos Servicios
+import Facultad.TrabajoPracticoDesarrollo.Services.ReservaService;
+import Facultad.TrabajoPracticoDesarrollo.Services.EstadiaService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -23,18 +30,20 @@ import java.time.ZoneId;
 public class HabitacionService {
 
     private final HabitacionRepository habitacionRepository;
-    private final ReservaRepository reservaRepository;
-    private final EstadiaRepository estadiaRepository;
+    
+    // Inyectamos Servicios en lugar de Repositorios
+    private final ReservaService reservaService;
+    private final EstadiaService estadiaService;
 
     @Autowired
     public HabitacionService(
             HabitacionRepository habitacionRepository,
-            ReservaRepository reservaRepository,
-            EstadiaRepository estadiaRepository
+            ReservaService reservaService,
+            EstadiaService estadiaService
     ) {
         this.habitacionRepository = habitacionRepository;
-        this.reservaRepository = reservaRepository;
-        this.estadiaRepository = estadiaRepository;
+        this.reservaService = reservaService;
+        this.estadiaService = estadiaService;
     }
 
     @Transactional(readOnly = true)
@@ -53,6 +62,7 @@ public class HabitacionService {
     public boolean validarRangoFechas(Date inicio, Date fin) {
         if (inicio == null || fin == null) return false;
         if (inicio.after(fin)) return false;
+
         long diferencia = Math.abs(fin.getTime() - inicio.getTime());
         long dias = TimeUnit.DAYS.convert(diferencia, TimeUnit.MILLISECONDS);
         return dias <= 60;
@@ -60,7 +70,7 @@ public class HabitacionService {
 
     /**
      * Genera el reporte completo para la pantalla de "Estado de Habitaciones".
-     * Ahora devuelve un objeto detallado por día con metadata de reservas.
+     * Ahora devuelve información detallada (Map) y delega la búsqueda a los servicios.
      */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> obtenerEstadoPorFechas(String fechaDesdeStr, String fechaHastaStr) {
@@ -68,16 +78,14 @@ public class HabitacionService {
             LocalDate fechaDesde = LocalDate.parse(fechaDesdeStr);
             LocalDate fechaHasta = LocalDate.parse(fechaHastaStr);
             
-            // Convertir a Date para los repositorios
             Date inicio = convertToDate(fechaDesde);
             Date fin = convertToDate(fechaHasta);
             
-            // Buscar reservas y estadías que toquen el rango
-            List<Reserva> reservasActivas = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
-            List<Estadia> estadiasActivas = estadiaRepository.buscarEstadiasEnRango(inicio, fin);
+            // CAMBIO: Delegamos la búsqueda a los servicios correspondientes
+            List<Reserva> reservasActivas = reservaService.buscarReservasEnRango(inicio, fin);
+            List<Estadia> estadiasActivas = estadiaService.buscarEstadiasEnRango(inicio, fin);
             
             List<Habitacion> todasHabitaciones = obtenerTodas();
-            
             List<Map<String, Object>> resultado = new ArrayList<>();
             
             for (Habitacion hab : todasHabitaciones) {
@@ -87,25 +95,23 @@ public class HabitacionService {
                 habInfo.put("capacidad", hab.getCapacidad());
                 habInfo.put("costoPorNoche", hab.getCostoPorNoche());
                 
-                // Calcular estado detallado para cada día
                 Map<String, Object> estadosPorDia = new HashMap<>();
                 LocalDate diaActual = fechaDesde;
                 
                 while (!diaActual.isAfter(fechaHasta)) {
+                    // Usamos la lógica detallada para el frontend nuevo
                     Map<String, Object> estadoDetalle = determinarEstadoDetallado(hab, diaActual, reservasActivas, estadiasActivas);
                     estadosPorDia.put(diaActual.toString(), estadoDetalle);
                     diaActual = diaActual.plusDays(1);
                 }
                 
                 habInfo.put("estadosPorDia", estadosPorDia);
-                
-                // Estado general (compatible con versiones simples)
-                Map<String, Object> estadoHoy = (Map<String, Object>) estadosPorDia.get(fechaDesde.toString());
-                habInfo.put("estadoHabitacion", estadoHoy.get("estado"));
+                // Estado general para compatibilidad
+                Map<String, Object> infoHoy = (Map<String, Object>) estadosPorDia.get(fechaDesde.toString());
+                habInfo.put("estadoHabitacion", infoHoy.get("estado"));
                 
                 resultado.add(habInfo);
             }
-            
             return resultado;
         } catch (Exception e) {
             e.printStackTrace();
@@ -116,7 +122,7 @@ public class HabitacionService {
     // --- MÉTODOS PRIVADOS ---
 
     /**
-     * Determina el estado y devuelve un mapa con metadata (ids, fechas reales, etc.)
+     * Determina el estado detallado (ID, Fechas, Estado) para el frontend.
      */
     private Map<String, Object> determinarEstadoDetallado(
             Habitacion hab, 
@@ -126,14 +132,14 @@ public class HabitacionService {
     ) {
         Map<String, Object> detalle = new HashMap<>();
         
-        // 1. Verificar estado físico primero (Mantenimiento)
+        // 1. Mantenimiento
         if (hab.getEstadoHabitacion() != null && 
             hab.getEstadoHabitacion().getDescripcion().contains("FUERA")) {
             detalle.put("estado", "MANTENIMIENTO");
             return detalle;
         }
         
-        // 2. Verificar si hay estadía activa (OCUPADA)
+        // 2. Estadía (OCUPADA)
         Estadia estadiaFound = estadiasActivas.stream()
             .filter(e -> {
                 if (e.getHabitacion() == null || !e.getHabitacion().getNumero().equals(hab.getNumero())) return false;
@@ -141,7 +147,7 @@ public class HabitacionService {
                 
                 LocalDate checkIn = convertToLocalDate(e.getFechaCheckIn());
                 LocalDate checkOut = e.getFechaCheckOut() != null ? 
-                    convertToLocalDate(e.getFechaCheckOut()) : fecha.plusYears(1); // Si no tiene checkout, asumimos ocupada indefinidamente por ahora
+                    convertToLocalDate(e.getFechaCheckOut()) : fecha.plusYears(1);
                     
                 return !fecha.isBefore(checkIn) && fecha.isBefore(checkOut);
             })
@@ -154,7 +160,7 @@ public class HabitacionService {
             return detalle;
         }
         
-        // 3. Verificar si hay reserva activa (RESERVADA)
+        // 3. Reserva (RESERVADA)
         Reserva reservaFound = reservasActivas.stream()
             .filter(r -> {
                 if (r.getHabitacion() == null || !r.getHabitacion().getNumero().equals(hab.getNumero())) return false;
@@ -172,13 +178,11 @@ public class HabitacionService {
         if (reservaFound != null) {
             detalle.put("estado", "RESERVADA");
             detalle.put("idReserva", reservaFound.getIdReserva());
-            // Enviamos fechas reales para validación en frontend
             detalle.put("fechaInicio", reservaFound.getFechaDesde().toString()); 
             detalle.put("fechaFin", reservaFound.getFechaHasta().toString());
             return detalle;
         }
         
-        // 4. Si no tiene nada, está disponible
         detalle.put("estado", "DISPONIBLE");
         return detalle;
     }
