@@ -125,7 +125,27 @@ Aquí tienes la sección 5 lista para copiar y pegar en tu `README.md`, ajustada
 
 ---
 
-## 7. Cómo levantar el proyecto
+## 7. Estado de Implementación de Casos de Uso
+
+A continuación se detalla el grado de cobertura de los requisitos funcionales planteados por la cátedra y los endpoints expuestos en la API para resolverlos:
+
+| Nro. | Nombre del Caso de Uso | Estado | Endpoint (API REST) |
+|:---:|:---|:---:|:---|
+| **CU01** | Autenticar Usuario | ✅ Implementado | `POST /auth/login` |
+| **CU02** | Buscar Huésped | ✅ Implementado | `GET /huespedes` |
+| **CU04** | Reservar Habitación | ✅ Implementado | `POST /reservas` |
+| **CU05** | Mostrar Estado de Habitaciones | ✅ Implementado | `GET /habitaciones/estado` |
+| **CU06** | Cancelar Reserva | ✅ Implementado | `DELETE /reservas/{id}` |
+| **CU07** | Facturar (Check-out) | ✅ Implementado | `POST /facturas/checkout` |
+| **CU09** | Dar alta de Huésped | ✅ Implementado | `POST /huespedes` |
+| **CU10** | Modificar Huésped | ✅ Implementado | `PUT /huespedes/{id}` |
+| **CU11** | Dar baja de Huésped | ✅ Implementado | `DELETE /huespedes/{id}` |
+| **CU12** | Dar alta de Responsable de Pago | ✅ Implementado | `POST /responsables` |
+| **CU15** | Ocupar Habitación (Check-in) | ✅ Implementado | `POST /estadias` |
+| **CU16** | Ingresar Pago | ✅ Implementado | `POST /pagos` |
+
+---
+## 8. Cómo levantar el proyecto
 
 1. **Clonar el repo.**
 2. **Configurar BD:** Poner tus credenciales de PostgreSQL en `src/main/resources/application.properties`.
