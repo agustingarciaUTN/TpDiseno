@@ -44,7 +44,6 @@ public class Reserva {
     @Column(name = "\"TelefonoHuespedResponsable\"")//EN ESTOS TRES ES POSIBLE QUE HAYA QUE SACAR LAS BARRAS INVERTIDAS Y LAS COMILLAS
     private String telefonoHuespedResponsable;
 
-    // --- AGREGAMOS ESTO PARA PODER BORRAR/MIGRAR ---
     @Enumerated(EnumType.STRING)
     @Column(name = "\"TipoDocumentoResponsable\"")
     private TipoDocumento tipoDocumentoResponsable;

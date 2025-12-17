@@ -29,6 +29,6 @@ public class EstadiaHuesped {
     private Huesped huesped;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "responsable")
+    @Column(name = "\"EsResponsable\"")
     private Responsable esResponsable;
 }
