@@ -107,12 +107,20 @@ public class EstadiaService {
             }
         }
 
+        Habitacion habReal = habitacionRepository.findById(dtoEstadia.getDtoHabitacion().getNumero())
+                .orElseThrow(() -> new Exception("La habitación no existe."));
+
+        // Sumamos responsable + acompañantes
+        int cantidadPersonas = dtoEstadia.getDtoHuespedes().size();
+
+        if (cantidadPersonas > habReal.getCapacidad()) {
+            throw new IllegalArgumentException("La cantidad de huéspedes (" + cantidadPersonas + ") excede la capacidad de la habitación (" + habReal.getCapacidad() + ").");
+        }
+
         // 4. Mapeo Inicial (Sin relaciones todavía)
         Estadia estadiaNueva = MapearEstadia.mapearDtoAEntidad(dtoEstadia);
 
         // a. Vincular Habitación
-        Habitacion habReal = habitacionRepository.findById(dtoEstadia.getDtoHabitacion().getNumero())
-                .orElseThrow(() -> new Exception("La habitación no existe."));
         estadiaNueva.setHabitacion(habReal);
 
         // 5. GUARDADO PARCIAL: Guardamos la estadía SOLO con la habitación para generar el ID (idEstadia)
