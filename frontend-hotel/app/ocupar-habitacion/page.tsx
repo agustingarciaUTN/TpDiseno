@@ -590,7 +590,7 @@ export default function OcuparHabitacion() {
               <DoorOpen className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU15</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Caso de Uso 15</p>
               <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Ocupar Habitación (Check-In)</h1>
             </div>
           </div>
