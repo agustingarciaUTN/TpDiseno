@@ -189,7 +189,7 @@ export function RegistrarFacturaForm() {
                 }
             ];
 
-            // 2. Recargo (Solo si es mayor a 0)
+            // 2. Recargo
             const recargo = Number(data.recargoHorario);
             if (recargo > 0) {
                 itemsMapeados.push({
@@ -200,20 +200,28 @@ export function RegistrarFacturaForm() {
                 });
             }
 
-            // 3. Servicios Adicionales (Filtrando nulos/vacíos)
+            // 3. Servicios Adicionales (BLINDADO)
             if (Array.isArray(data.serviciosAdicionales)) {
-                data.serviciosAdicionales.forEach((serv, idx) => {
-                    const valor = Number(serv.valor);
-                    // Solo agregamos si tiene descripción O si el valor es mayor a 0
-                    // Esto evita la fila vacía de $0 si el backend manda basura
-                    if (serv && (serv.descripcion || valor > 0)) {
-                        itemsMapeados.push({
-                            id: `serv-${idx}`,
-                            descripcion: serv.descripcion || "Servicio Adicional",
-                            monto: valor || 0,
-                            selected: true
-                        });
+                data.serviciosAdicionales.forEach((serv: any, idx) => {
+                    // Convertimos valor a número seguro
+                    const valor = Number(serv?.valor) || 0;
+
+                    let textoDescripcion = "Servicio Adicional";
+
+                    if (serv) {
+                        const posibleTexto = serv.descripcion || serv.description || serv.detalle || serv.nombre;
+                        if (posibleTexto && typeof posibleTexto === 'string' && posibleTexto.trim().length > 0) {
+                            textoDescripcion = posibleTexto.trim();
+                        }
                     }
+
+                    // Agregamos el ítem
+                    itemsMapeados.push({
+                        id: `serv-${idx}`,
+                        descripcion: textoDescripcion,
+                        monto: valor,
+                        selected: true
+                    });
                 });
             }
 
