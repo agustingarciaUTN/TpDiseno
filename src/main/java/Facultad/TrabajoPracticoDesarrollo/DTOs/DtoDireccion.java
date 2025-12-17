@@ -14,8 +14,8 @@ public class DtoDireccion {
     // Texto Geográfico: Solo letras y espacios (Para Ciudad, Provincia, País)
     public static final String REGEX_TEXTO = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";
 
-    // Alfanumérico Corto: Para piso y depto (Ej: "4", "B", "PB") - Sin espacios ni símbolos
-    public static final String REGEX_ALFANUMERICO = "^[a-zA-Z0-9]+$";
+    // Alfanumérico Corto: Para piso y depto (Ej: "4", "B", "PB") - Sin símbolos
+    public static final String REGEX_ALFANUMERICO = "^[a-zA-Z0-9 ]+$";
 
 
     private int idDireccion;
@@ -31,11 +31,11 @@ public class DtoDireccion {
     private Integer numero;
 
     @Pattern(regexp = REGEX_ALFANUMERICO, message = "El departamento solo acepta letras y números (Ej: A, 2, PB)")
-    @Size(max = 5, message = "El departamento es muy largo")
+    @Size(max = 20, message = "El departamento es muy largo")
     private String departamento;
 
     @Pattern(regexp = REGEX_ALFANUMERICO, message = "El piso solo acepta letras y números")
-    @Size(max = 5, message = "El piso es muy largo")
+    @Size(max = 20, message = "El piso es muy largo")
     private String piso;
 
     @NotNull(message = "El código postal es obligatorio")

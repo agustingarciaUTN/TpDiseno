@@ -87,27 +87,6 @@ public class DtoHuesped {
         }
     }
 
-    // --- VALIDACIÓN DE CONSISTENCIA CUIT-DNI ---
-    @AssertTrue(message = "El CUIT no coincide con el número de documento ingresado")
-    public boolean isCuitConsistente() {
-        // 1. Si no hay CUIT o no hay DNI, no validamos consistencia aquí
-        // (Dejamos que @NotNull o @NotBlank se encarguen de la obligatoriedad si corresponde)
-        if (cuit == null || cuit.isEmpty() || nroDocumento == null || nroDocumento.isEmpty()) {
-            return true;
-        }
-        // 2. Construimos la Expresión Regular Dinámica
-        // ^       : Inicio de línea
-        // \d{2}   : Exactamente 2 dígitos (Prefijo: 20, 27, 30, etc.)
-        // -       : Guión literal
-        // %s      : Aquí insertamos el nroDocumento real
-        // -       : Guión literal
-        // \d      : Exactamente 1 dígito (Verificador)
-        // $       : Fin de línea
-        String regexDinamica = String.format("^\\d{2}-%s-\\d$", nroDocumento);
-
-        // 3. Validamos
-        return cuit.matches(regexDinamica);
-    }
 
     // 1. Constructor Privado (Recibe el Builder)
     private DtoHuesped(Builder builder) {
