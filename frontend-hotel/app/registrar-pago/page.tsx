@@ -25,7 +25,8 @@ import {
 } from "lucide-react"
 
 // Importaciones de tu lógica de negocio (asegúrate que las rutas sean correctas)
-import { buscarFacturasPendientes, registrarPago } from "@/lib/api"
+import { buscarFacturasPendientes, registrarPago, verificarChequeExiste, verificarTarjetaExiste } from "@/lib/api"
+import { validateField } from "@/lib/validators"
 import { DtoFactura, Moneda, TipoMedioPago, DtoMedioPago, DtoPago, EstadoFactura } from "@/lib/types"
 
 type PaymentMethod = "EFECTIVO" | "CHEQUE" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
@@ -48,7 +49,7 @@ export default function RegistrarPagoPage() {
     const [mediosPagoAcumulados, setMediosPagoAcumulados] = useState<DtoMedioPago[]>([])
     const [montoAcumulado, setMontoAcumulado] = useState(0)
 
-    // Estados para campos de pago detallados
+    // Estados para campos de pago detallados y errores
     const [cashAmount, setCashAmount] = useState("")
     const [checkNumber, setCheckNumber] = useState("")
     const [checkBank, setCheckBank] = useState("")
@@ -60,6 +61,84 @@ export default function RegistrarPagoPage() {
     const [cardCvv, setCardCvv] = useState("")
     const [cardExpiry, setCardExpiry] = useState("")
     const [cardBank, setCardBank] = useState("")
+
+    // Errores individuales
+    const [checkNumberError, setCheckNumberError] = useState("")
+    const [checkBankError, setCheckBankError] = useState("")
+    const [checkPlazaError, setCheckPlazaError] = useState("")
+    const [checkDateError, setCheckDateError] = useState("")
+    const [cardNumberError, setCardNumberError] = useState("")
+    const [cardBankError, setCardBankError] = useState("")
+    const [cardExpiryError, setCardExpiryError] = useState("")
+    const [cardCvvError, setCardCvvError] = useState("")
+    const [tarjetaBddError, setTarjetaBddError] = useState("")
+    const [chequeBddError, setChequeBddError] = useState("")
+    // Validaciones cheque
+    const handleCheckNumberChange = (val: string) => {
+        const onlyNumbers = val.replace(/\D/g, "")
+        setCheckNumber(onlyNumbers)
+        if (!/^[0-9]+$/.test(onlyNumbers)) {
+            setCheckNumberError("Solo números")
+        } else if (onlyNumbers.length < 4) {
+            setCheckNumberError("Debe tener al menos 4 dígitos")
+        } else {
+            setCheckNumberError("")
+        }
+        setChequeBddError("") // Limpiar error BDD al editar
+    }
+    const handleCheckBankChange = (val: string) => {
+        setCheckBank(val)
+        if (!/^[a-zA-Z0-9\s]+$/.test(val)) setCheckBankError("Solo letras, números y espacio")
+        else setCheckBankError("")
+    }
+    const handleCheckPlazaChange = (val: string) => {
+        setCheckPlaza(val)
+        if (!/^[a-zA-Z\s]+$/.test(val)) setCheckPlazaError("Solo letras y espacio")
+        else setCheckPlazaError("")
+    }
+    const handleCheckDateChange = (val: string) => {
+        setCheckDate(val)
+        if (val) {
+            const inputDate = new Date(val)
+            const now = new Date()
+            const pastLimit = new Date()
+            pastLimit.setDate(now.getDate() - 30)
+            if (inputDate < pastLimit) setCheckDateError("Máximo 30 días hacia atrás")
+            else setCheckDateError("")
+        } else setCheckDateError("")
+    }
+
+    // Validaciones tarjeta
+    const handleCardNumberChange = (val: string) => {
+        // Formateo automático visual para 16 dígitos
+        let digits = val.replace(/\D/g, "").slice(0, 16)
+        let formatted = digits.replace(/(.{4})/g, "$1 ").trim()
+        if (formatted.length > 19) formatted = formatted.slice(0, 19)
+        setCardNumber(formatted)
+        if (!/^\d{4} \d{4} \d{4} \d{4}$/.test(formatted)) setCardNumberError("Debe tener 16 dígitos")
+        else setCardNumberError("")
+        setTarjetaBddError("") // Limpiar error BDD al editar
+    }
+    const handleCardBankChange = (val: string) => {
+        setCardBank(val)
+        if (!/^[a-zA-Z\s]+$/.test(val)) setCardBankError("Solo letras y espacio")
+        else setCardBankError("")
+    }
+    const handleCardExpiryChange = (val: string) => {
+        setCardExpiry(val)
+        if (val) {
+            const inputDate = new Date(val)
+            const now = new Date()
+            if (inputDate <= now) setCardExpiryError("Debe ser posterior a hoy")
+            else setCardExpiryError("")
+        } else setCardExpiryError("")
+    }
+    const handleCardCvvChange = (val: string) => {
+        const onlyNumbers = val.replace(/\D/g, "").slice(0, 3)
+        setCardCvv(onlyNumbers)
+        if (!/^\d{3}$/.test(onlyNumbers)) setCardCvvError("Debe tener 3 números")
+        else setCardCvvError("")
+    }
 
     // --- MANEJADORES (Lógica original) ---
 
@@ -143,7 +222,7 @@ export default function RegistrarPagoPage() {
         setError("")
     }
 
-    const handleAddPaymentMethod = () => {
+    const handleAddPaymentMethod = async () => {
         if (!selectedInvoice) return
 
         const amount = Number.parseFloat(paymentAmount)
@@ -170,26 +249,64 @@ export default function RegistrarPagoPage() {
                 setError("Debe completar todos los datos del cheque")
                 return
             }
-        } else if (paymentMethod === "TARJETA_CREDITO") {
-            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || !cardQuota) {
+            // Verificar en BDD
+            try {
+                const existe = await verificarChequeExiste(checkNumber)
+                if (existe) {
+                    setChequeBddError("El número de cheque ya existe")
+                    return
+                } else {
+                    setChequeBddError("")
+                }
+            } catch {
+                setChequeBddError("No se pudo verificar en BDD")
+                return
+            }
+        } else if (paymentMethod === "TARJETA_CREDITO" || paymentMethod === "TARJETA_DEBITO") {
+            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || (paymentMethod === "TARJETA_CREDITO" && !cardQuota)) {
                 setError("Debe completar todos los datos de la tarjeta")
                 return
             }
-        } else if (paymentMethod === "TARJETA_DEBITO") {
-            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry) {
-                setError("Debe completar todos los datos de la tarjeta")
+            // Verificar en BDD
+            try {
+                const tipo = paymentMethod === "TARJETA_CREDITO" ? "credito" : "debito"
+                const digits = cardNumber.replace(/\D/g, "")
+                if (digits.length === 16) {
+                    const tarjeta = await verificarTarjetaExiste(digits, tipo)
+                    if (tarjeta) {
+                        let diferencias = []
+                        if (tarjeta.banco && tarjeta.banco !== cardBank) diferencias.push("Banco")
+                        if (tarjeta.redDePago && tarjeta.redDePago !== cardNetwork) diferencias.push("Red")
+                        if (tarjeta.fechaVencimiento && tarjeta.fechaVencimiento !== cardExpiry) diferencias.push("Vencimiento")
+                        // Comparar CVV como string de 3 dígitos
+                        const cvvFront = cardCvv.padStart(3, '0')
+                        const cvvBack = tarjeta.codigoSeguridad?.toString().padStart(3, '0')
+                        if (cvvBack && cvvBack !== cvvFront) diferencias.push("CVV")
+                        if (diferencias.length > 0) {
+                            setTarjetaBddError(`Difiere en: ${diferencias.join(", ")}`)
+                            return
+                        } else {
+                            setTarjetaBddError("")
+                        }
+                    } else {
+                        setTarjetaBddError("")
+                    }
+                }
+            } catch {
+                setTarjetaBddError("No se pudo verificar en BDD")
                 return
             }
         }
 
         // Crear el medio de pago
         const fechaActual = new Date().toISOString().split('T')[0]
-        const nuevoMedio: DtoMedioPago = {
+        const digitsTarjeta = cardNumber.replace(/\D/g, "")
+        const nuevoMedio: any = {
             tipoMedio: TipoMedioPago[paymentMethod as keyof typeof TipoMedioPago],
             monto: amount,
             moneda: moneda,
             fechaDePago: fechaActual
-        } as DtoMedioPago
+        }
 
         if (paymentMethod === "EFECTIVO") {
             Object.assign(nuevoMedio, {})
@@ -202,7 +319,7 @@ export default function RegistrarPagoPage() {
             })
         } else if (paymentMethod === "TARJETA_CREDITO") {
             Object.assign(nuevoMedio, {
-                numeroDeTarjeta: cardNumber,
+                numeroDeTarjeta: digitsTarjeta,
                 redDePago: cardNetwork,
                 cuotasCantidad: Number.parseInt(cardQuota || "1"),
                 codigoSeguridad: Number.parseInt(cardCvv),
@@ -211,7 +328,7 @@ export default function RegistrarPagoPage() {
             })
         } else if (paymentMethod === "TARJETA_DEBITO") {
             Object.assign(nuevoMedio, {
-                numeroDeTarjeta: cardNumber,
+                numeroDeTarjeta: digitsTarjeta,
                 redDePago: cardNetwork,
                 codigoSeguridad: Number.parseInt(cardCvv),
                 fechaVencimiento: cardExpiry,
@@ -381,10 +498,12 @@ export default function RegistrarPagoPage() {
                         </div>
 
                         {error && !selectedInvoice && (
-                            <Alert variant="destructive" className="mt-6">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
+                            <div className="mt-6">
+                                {/* El mensaje de error ya se muestra en pantalla, no mostrar notistack/N Issue */}
+                                <p className="text-sm text-red-500 font-medium flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4" /> {error}
+                                </p>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -488,16 +607,38 @@ export default function RegistrarPagoPage() {
 
                                         {paymentMethod === "CHEQUE" && (
                                             <div className="grid grid-cols-2 gap-4 animate-in fade-in">
-                                                <div className="space-y-2"><Label>Nro. Cheque</Label><Input value={checkNumber} onChange={(e) => setCheckNumber(e.target.value)} className="bg-white" /></div>
-                                                <div className="space-y-2"><Label>Banco</Label><Input value={checkBank} onChange={(e) => setCheckBank(e.target.value)} className="bg-white" /></div>
-                                                <div className="space-y-2"><Label>Plaza</Label><Input value={checkPlaza} onChange={(e) => setCheckPlaza(e.target.value)} className="bg-white" /></div>
-                                                <div className="space-y-2"><Label>Fecha Cobro</Label><Input type="date" value={checkDate} onChange={(e) => setCheckDate(e.target.value)} className="bg-white" /></div>
+                                                <div className="space-y-2">
+                                                    <Label>Nro. Cheque</Label>
+                                                    <Input value={checkNumber} onChange={(e) => handleCheckNumberChange(e.target.value)} className="bg-white" />
+                                                    {checkNumberError && <p className="text-xs text-red-500">{checkNumberError}</p>}
+                                                    {chequeBddError && <p className="text-xs text-red-500">{chequeBddError}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Banco</Label>
+                                                    <Input value={checkBank} onChange={(e) => handleCheckBankChange(e.target.value)} className="bg-white" />
+                                                    {checkBankError && <p className="text-xs text-red-500">{checkBankError}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Plaza</Label>
+                                                    <Input value={checkPlaza} onChange={(e) => handleCheckPlazaChange(e.target.value)} className="bg-white" />
+                                                    {checkPlazaError && <p className="text-xs text-red-500">{checkPlazaError}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Fecha Cobro</Label>
+                                                    <Input type="date" value={checkDate} onChange={(e) => handleCheckDateChange(e.target.value)} className="bg-white" />
+                                                    {checkDateError && <p className="text-xs text-red-500">{checkDateError}</p>}
+                                                </div>
                                             </div>
                                         )}
 
                                         {(paymentMethod === "TARJETA_CREDITO" || paymentMethod === "TARJETA_DEBITO") && (
                                             <div className="grid grid-cols-2 gap-4 animate-in fade-in">
-                                                <div className="col-span-2 space-y-2"><Label>Número Tarjeta</Label><Input value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="0000 0000 0000 0000" maxLength={16} className="bg-white" /></div>
+                                                <div className="col-span-2 space-y-2">
+                                                    <Label>Número Tarjeta</Label>
+                                                    <Input value={cardNumber} onChange={(e) => handleCardNumberChange(e.target.value)} placeholder="0000 0000 0000 0000" maxLength={19} className="bg-white" />
+                                                    {cardNumberError && <p className="text-xs text-red-500">{cardNumberError}</p>}
+                                                    {tarjetaBddError && <p className="text-xs text-red-500">{tarjetaBddError}</p>}
+                                                </div>
                                                 <div className="space-y-2">
                                                     <Label>Red</Label>
                                                     <Select value={cardNetwork} onValueChange={setCardNetwork}>
@@ -505,9 +646,21 @@ export default function RegistrarPagoPage() {
                                                         <SelectContent><SelectItem value="VISA">Visa</SelectItem><SelectItem value="MASTERCARD">Mastercard</SelectItem></SelectContent>
                                                     </Select>
                                                 </div>
-                                                <div className="space-y-2"><Label>Banco</Label><Input value={cardBank} onChange={(e) => setCardBank(e.target.value)} className="bg-white" /></div>
-                                                <div className="space-y-2"><Label>Vencimiento</Label><Input type="date" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} className="bg-white" /></div>
-                                                <div className="space-y-2"><Label>CVV</Label><Input value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} maxLength={4} className="bg-white" /></div>
+                                                <div className="space-y-2">
+                                                    <Label>Banco</Label>
+                                                    <Input value={cardBank} onChange={(e) => handleCardBankChange(e.target.value)} className="bg-white" />
+                                                    {cardBankError && <p className="text-xs text-red-500">{cardBankError}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Vencimiento</Label>
+                                                    <Input type="date" value={cardExpiry} onChange={(e) => handleCardExpiryChange(e.target.value)} className="bg-white" />
+                                                    {cardExpiryError && <p className="text-xs text-red-500">{cardExpiryError}</p>}
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>CVV</Label>
+                                                    <Input value={cardCvv} onChange={(e) => handleCardCvvChange(e.target.value)} maxLength={3} className="bg-white" />
+                                                    {cardCvvError && <p className="text-xs text-red-500">{cardCvvError}</p>}
+                                                </div>
                                                 {paymentMethod === "TARJETA_CREDITO" && (
                                                     <div className="col-span-2 space-y-2"><Label>Cuotas</Label><Input type="number" value={cardQuota} onChange={(e) => setCardQuota(e.target.value)} placeholder="1" className="bg-white" /></div>
                                                 )}

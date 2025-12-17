@@ -97,6 +97,19 @@ public class PagoController {
         }
     }
 
+    @GetMapping("/tarjeta-existe/{numero}")
+public ResponseEntity<?> verificarTarjetaExiste(@PathVariable String numero, @RequestParam String tipo) {
+    try {
+        var dto = pagoService.buscarTarjetaPorNumeroYTipo(numero, tipo);
+        if (dto == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", "No existe la tarjeta"));
+        }
+        return ResponseEntity.ok(dto);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", e.getMessage()));
+    }
+}
+
     /**
      * Endpoint adicional: Obtener historial de pagos de una factura.
      *
