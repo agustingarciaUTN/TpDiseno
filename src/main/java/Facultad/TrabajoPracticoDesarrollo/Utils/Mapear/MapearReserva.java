@@ -40,21 +40,25 @@ public class MapearReserva {
         Habitacion habRef = null;
         if (dto.getIdHabitacion() != null) {
             habRef = new Habitacion.Builder()
-                    .numero(dto.getIdHabitacion())
-                    .build();
+                .numero(dto.getIdHabitacion())
+                .build();
         }
 
-        return new Reserva.Builder()
-                .id(dto.getIdReserva())
-                .estado(dto.getEstadoReserva())
-                .fechaReserva(dto.getFechaReserva())
-                .fechaDesde(dto.getFechaDesde())
-                .fechaHasta(dto.getFechaHasta())
-                .nombreResponsable(dto.getNombreHuespedResponsable())
-                .apellidoResponsable(dto.getApellidoHuespedResponsable())
-                .telefonoResponsable(dto.getTelefonoHuespedResponsable())
-                .habitacion(habRef)
-                .build();
+        Reserva reserva = new Reserva.Builder()
+            .id(dto.getIdReserva())
+            .estado(dto.getEstadoReserva())
+            .fechaReserva(dto.getFechaReserva())
+            .fechaDesde(dto.getFechaDesde())
+            .fechaHasta(dto.getFechaHasta())
+            .nombreResponsable(dto.getNombreHuespedResponsable())
+            .apellidoResponsable(dto.getApellidoHuespedResponsable())
+            .telefonoResponsable(dto.getTelefonoHuespedResponsable())
+            .habitacion(habRef)
+            .build();
+        // Mapear tipo y nro documento
+        reserva.setTipoDocumentoResponsable(dto.getTipoDocumentoResponsable());
+        reserva.setNroDocumentoResponsable(dto.getNroDocumentoResponsable());
+        return reserva;
     }
 
 
@@ -74,19 +78,23 @@ public class MapearReserva {
         if (entidad == null) return null;
 
         // Extraemos el ID de la habitación si existe el objeto
-        String idHab = entidad.getHabitacion().getNumero();
+        String idHab = entidad.getHabitacion() != null ? entidad.getHabitacion().getNumero() : null;
 
-        return new DtoReserva.Builder()
-                .id(entidad.getIdReserva())
-                .estado(entidad.getEstadoReserva())
-                .fechaReserva(entidad.getFechaReserva())
-                .fechaDesde(entidad.getFechaDesde())
-                .fechaHasta(entidad.getFechaHasta())
-                .nombreResponsable(entidad.getNombreHuespedResponsable())
-                .apellidoResponsable(entidad.getApellidoHuespedResponsable())
-                .telefonoResponsable(entidad.getTelefonoHuespedResponsable())
-                .idHabitacion(idHab)
-                .build();
+        DtoReserva dto = new DtoReserva.Builder()
+            .id(entidad.getIdReserva())
+            .estado(entidad.getEstadoReserva())
+            .fechaReserva(entidad.getFechaReserva())
+            .fechaDesde(entidad.getFechaDesde())
+            .fechaHasta(entidad.getFechaHasta())
+            .nombreResponsable(entidad.getNombreHuespedResponsable())
+            .apellidoResponsable(entidad.getApellidoHuespedResponsable())
+            .telefonoResponsable(entidad.getTelefonoHuespedResponsable())
+            .idHabitacion(idHab)
+            .build();
+        // Mapear tipo y nro documento
+        dto.setTipoDocumentoResponsable(entidad.getTipoDocumentoResponsable());
+        dto.setNroDocumentoResponsable(entidad.getNroDocumentoResponsable());
+        return dto;
     }
 
     /**

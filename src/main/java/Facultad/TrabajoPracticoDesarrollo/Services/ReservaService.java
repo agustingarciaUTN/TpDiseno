@@ -127,6 +127,36 @@ public class ReservaService {
                 throw new Exception("Falta nombre responsable para habitación " + dto.getIdHabitacion());
             if (dto.getIdHabitacion() == null)
                 throw new Exception("Falta el número de habitación.");
+            if (dto.getTipoDocumentoResponsable() == null)
+                throw new Exception("Falta el tipo de documento del responsable.");
+            if (dto.getNroDocumentoResponsable() == null || dto.getNroDocumentoResponsable().isBlank())
+                throw new Exception("Falta el número de documento del responsable.");
+            // Validación específica por tipo de documento
+            String nro = dto.getNroDocumentoResponsable();
+            switch (dto.getTipoDocumentoResponsable()) {
+                case DNI:
+                    if (!nro.matches("^\\d{7,8}$"))
+                        throw new Exception("El DNI debe tener 7 u 8 números");
+                    break;
+                case PASAPORTE:
+                    if (!nro.matches("^[A-Z0-9]{6,9}$"))
+                        throw new Exception("El pasaporte debe tener 6 a 9 caracteres alfanuméricos");
+                    break;
+                case LC:
+                    if (!nro.matches("^\\d{6,8}$"))
+                        throw new Exception("La LC debe tener 6 a 8 números");
+                    break;
+                case LE:
+                    if (!nro.matches("^\\d{6,8}$"))
+                        throw new Exception("La LE debe tener 6 a 8 números");
+                    break;
+                case OTRO:
+                    if (!nro.matches("^[a-zA-Z0-9]{5,20}$"))
+                        throw new Exception("Formato de documento OTRO inválido (5-20 caracteres)");
+                    break;
+                default:
+                    throw new Exception("Tipo de documento no soportado");
+            }
         }
     }
 

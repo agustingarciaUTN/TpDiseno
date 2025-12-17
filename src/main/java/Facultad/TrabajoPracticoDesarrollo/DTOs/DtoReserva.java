@@ -1,6 +1,7 @@
 package Facultad.TrabajoPracticoDesarrollo.DTOs;
 
 import Facultad.TrabajoPracticoDesarrollo.enums.EstadoReserva;
+import Facultad.TrabajoPracticoDesarrollo.enums.TipoDocumento;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -47,6 +48,14 @@ public class DtoReserva {
     @Pattern(regexp = REGEX_TELEFONO, message = "El formato del teléfono no es válido")
     private String telefonoHuespedResponsable;
 
+
+    // Documento responsable
+    @NotNull(message = "El tipo de documento es obligatorio")
+    private TipoDocumento tipoDocumentoResponsable;
+
+    @NotBlank(message = "El número de documento es obligatorio")
+    private String nroDocumentoResponsable;
+
     // Validación de la Habitación
     @NotBlank(message = "El número de habitación es obligatorio")
     @Pattern(regexp = REGEX_HABITACION, message = "El número de habitación debe ser numérico y estar entre 1 y 999.")
@@ -67,6 +76,8 @@ public class DtoReserva {
         this.nombreHuespedResponsable = builder.nombreHuespedResponsable;
         this.apellidoHuespedResponsable = builder.apellidoHuespedResponsable;
         this.telefonoHuespedResponsable = builder.telefonoHuespedResponsable;
+        this.tipoDocumentoResponsable = builder.tipoDocumentoResponsable;
+        this.nroDocumentoResponsable = builder.nroDocumentoResponsable;
         this.idHabitacion = builder.idHabitacion;
     }
 
@@ -80,6 +91,8 @@ public class DtoReserva {
         private String nombreHuespedResponsable;
         private String apellidoHuespedResponsable;
         private String telefonoHuespedResponsable;
+        private TipoDocumento tipoDocumentoResponsable;
+        private String nroDocumentoResponsable;
         private String idHabitacion;
 
         public Builder() {}
@@ -93,7 +106,8 @@ public class DtoReserva {
         public Builder nombreResponsable(String val) { nombreHuespedResponsable = val; return this; }
         public Builder apellidoResponsable(String val) { apellidoHuespedResponsable = val; return this; }
         public Builder telefonoResponsable(String val) { telefonoHuespedResponsable = val; return this; }
-
+        public Builder tipoDocumentoResponsable(TipoDocumento val) { tipoDocumentoResponsable = val; return this; }
+        public Builder nroDocumentoResponsable(String val) { nroDocumentoResponsable = val; return this; }
         public Builder idHabitacion(String val) { idHabitacion = val; return this; }
 
         public DtoReserva build() {
