@@ -514,111 +514,116 @@ export default function ReservarHabitacion() {
     ocupadas: habitaciones.filter((h: HabitacionEstado) => h.estado === "OCUPADA").length,
   }
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <div className="mb-6 flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
-              <Hotel className="h-6 w-6" />
+        <div className="mb-8 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+                <Hotel className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU04</p>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Reservar Habitación</h1>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">CU04</p>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Reservar Habitación</h1>
-            </div>
+            <Button asChild variant="outline">
+              <Link href="/">
+                <Home className="mr-2 h-4 w-4" />
+                Volver al Menú Principal
+              </Link>
+            </Button>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
-            Paso{" "}
-            {paso === "fechaDesde"
-              ? 1
-              : paso === "fechaHasta"
-                ? 2
-                : paso === "grilla"
-                  ? 3
-                  : paso === "datosHuesped"
-                    ? 4
-                    : 5}{" "}
-            de 5
+            Paso {paso === "fechaDesde" ? 1 : paso === "fechaHasta" ? 2 : paso === "grilla" ? 3 : paso === "datosHuesped" ? 4 : 5} de 5
           </p>
         </div>
 
         {/* PASO 1: Seleccionar Fecha Desde */}
         {paso === "fechaDesde" && (
-          <Card className="p-6 max-w-md">
-            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de inicio</h2>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="fechaDesde">Fecha Desde</Label>
-                <Input
-                  id="fechaDesde"
-                  type="date"
-                  value={fechaDesde}
-                  onChange={(e) => {
-                    setFechaDesde(e.target.value)
-                    setErrorFecha("")
-                  }}
-                />
+          <div className="flex justify-center items-center min-h-[60vh]">
+            <Card className="p-6 max-w-md w-full mx-auto">
+              <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de inicio</h2>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="fechaDesde">Fecha Desde <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="fechaDesde"
+                    type="date"
+                    value={fechaDesde}
+                    onChange={(e) => {
+                      setFechaDesde(e.target.value)
+                      setErrorFecha("")
+                    }}
+                    onBlur={validarFechaDesde}
+                  />
+                </div>
+                {errorFecha && (
+                  <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                    <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+                  </Card>
+                )}
+                <div className="flex gap-3">
+                  <Button onClick={handleConfirmarDesde} className="flex-1 gap-2">
+                    Continuar
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              {errorFecha && (
-                <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
-                  <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
-                </Card>
-              )}
-              <div className="flex gap-3">
-                <Button onClick={handleConfirmarDesde} className="flex-1 gap-2">
-                  Continuar
-                  <Calendar className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/">
-                    <Home className="mr-2 h-4 w-4" />
-                    Inicio
-                  </Link>
-                </Button>
+              <div className="mt-4 flex justify-end">
+                <p className="text-sm text-slate-500 dark:text-slate-400">(*) Campo obligatorio</p>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         )}
 
         {/* PASO 2: Seleccionar Fecha Hasta */}
         {paso === "fechaHasta" && (
-          <Card className="p-6 max-w-md">
-            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de fin</h2>
-            <div className="space-y-4">
-              <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-                <p className="text-sm text-slate-600 dark:text-slate-400">Fecha desde:</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                  {createLocalDate(fechaDesde).toLocaleDateString()}
-                </p>
-              </Card>
-              <div>
-                <Label htmlFor="fechaHasta">Fecha Hasta</Label>
-                <Input
-                  id="fechaHasta"
-                  type="date"
-                  value={fechaHasta}
-                  onChange={(e) => {
-                    setFechaHasta(e.target.value)
-                    setErrorFecha("")
-                  }}
-                />
-              </div>
-              {errorFecha && (
-                <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
-                  <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+          <div className="flex justify-center items-center min-h-[60vh]">
+            <Card className="p-6 max-w-md w-full mx-auto">
+              <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Seleccione fecha de fin</h2>
+              <div className="space-y-4">
+                <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Fecha desde:</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    {createLocalDate(fechaDesde).toLocaleDateString()}
+                  </p>
                 </Card>
-              )}
-              <div className="flex gap-3 mt-6">
-                <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent">
-                  ← Atrás
-                </Button>
-                <Button onClick={handleConfirmarHasta} className="flex-1 gap-2">
-                  Continuar
-                  <Calendar className="h-4 w-4" />
-                </Button>
+                <div>
+                  <Label htmlFor="fechaHasta">Fecha Hasta <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="fechaHasta"
+                    type="date"
+                    value={fechaHasta}
+                    onChange={(e) => {
+                      setFechaHasta(e.target.value)
+                      setErrorFecha("")
+                    }}
+                    onBlur={validarFechaHasta}
+                  />
+                </div>
+                {errorFecha && (
+                  <Card className="border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/20">
+                    <p className="text-sm text-red-600 dark:text-red-400">{errorFecha}</p>
+                  </Card>
+                )}
+                <div className="flex gap-3 mt-6">
+                  <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent">
+                    ← Atrás
+                  </Button>
+                  <Button onClick={handleConfirmarHasta} className="flex-1 gap-2">
+                    Continuar
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Card>
+              <div className="mt-4 flex justify-end">
+                <p className="text-sm text-slate-500 dark:text-slate-400">(*) Campo obligatorio</p>
+              </div>
+            </Card>
+          </div>
         )}
 
         {/* PASO 3: Grilla interactiva */}
@@ -850,100 +855,110 @@ export default function ReservarHabitacion() {
 
         {/* PASO 4: Datos del huésped */}
         {paso === "datosHuesped" && (
-          <Card className="p-6 max-w-md">
-            <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
-              Ingrese datos del huésped responsable
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="apellido">Apellido</Label>
-                <Input
-                  id="apellido"
-                  value={datosHuesped.apellido}
-                  onChange={(e) => {
-                    setDatosHuesped((prev) => ({ ...prev, apellido: e.target.value }))
-                    validarCampoHuesped("apellido", e.target.value)
-                  }}
-                />
-                {erroresHuesped.apellido && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.apellido}</p>
-                )}
+          <div className="flex justify-center items-center min-h-[60vh]">
+            <Card className="p-6 max-w-md w-full mx-auto">
+              <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">
+                Ingrese datos del huésped responsable
+              </h2>
+              <div className="mb-4 flex justify-end">
+                <p className="text-sm text-slate-500 dark:text-slate-400">(*) Campos obligatorios</p>
               </div>
-              <div>
-                <Label htmlFor="nombres">Nombres</Label>
-                <Input
-                  id="nombres"
-                  value={datosHuesped.nombres}
-                  onChange={(e) => {
-                    setDatosHuesped((prev) => ({ ...prev, nombres: e.target.value }))
-                    validarCampoHuesped("nombres", e.target.value)
-                  }}
-                />
-                {erroresHuesped.nombres && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.nombres}</p>
-                )}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="apellido">Apellido <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="apellido"
+                    value={datosHuesped.apellido}
+                    placeholder="Ej: González"
+                    onChange={(e) => {
+                      setDatosHuesped((prev) => ({ ...prev, apellido: e.target.value }))
+                    }}
+                    onBlur={(e) => validarCampoHuesped("apellido", e.target.value)}
+                  />
+                  {erroresHuesped.apellido && (
+                    <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.apellido}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="nombres">Nombres <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="nombres"
+                    value={datosHuesped.nombres}
+                    placeholder="Ej: Juan Carlos"
+                    onChange={(e) => {
+                      setDatosHuesped((prev) => ({ ...prev, nombres: e.target.value }))
+                    }}
+                    onBlur={(e) => validarCampoHuesped("nombres", e.target.value)}
+                  />
+                  {erroresHuesped.nombres && (
+                    <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.nombres}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="telefono">Teléfono <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="telefono"
+                    value={datosHuesped.telefono}
+                    placeholder="Ej: +54 911 12345678"
+                    onChange={(e) => {
+                      setDatosHuesped((prev) => ({ ...prev, telefono: e.target.value }))
+                    }}
+                    onBlur={(e) => validarCampoHuesped("telefono", e.target.value)}
+                  />
+                  {erroresHuesped.telefono && (
+                    <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.telefono}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="tipoDocumento">Tipo de Documento <span className="text-red-600">*</span></Label>
+                  <select
+                    id="tipoDocumento"
+                    className="w-full border rounded px-3 py-2"
+                    value={datosHuesped.tipoDocumento}
+                    onChange={(e) => {
+                      setDatosHuesped((prev) => ({ ...prev, tipoDocumento: e.target.value }))
+                      validarCampoHuesped("tipoDocumento", e.target.value)
+                    }}
+                    onBlur={(e) => validarCampoHuesped("tipoDocumento", e.target.value)}
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="DNI">DNI</option>
+                    <option value="LE">LE</option>
+                    <option value="LC">LC</option>
+                    <option value="PASAPORTE">Pasaporte</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
+                  {erroresHuesped.tipoDocumento && (
+                    <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.tipoDocumento}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="nroDocumento">Número de Documento <span className="text-red-600">*</span></Label>
+                  <Input
+                    id="nroDocumento"
+                    value={datosHuesped.nroDocumento}
+                    placeholder={CONFIG_DOCUMENTOS[datosHuesped.tipoDocumento]?.placeholder || "Ej: 12345678"}
+                    onChange={(e) => {
+                      setDatosHuesped((prev) => ({ ...prev, nroDocumento: e.target.value }))
+                    }}
+                    onBlur={(e) => validarCampoHuesped("nroDocumento", e.target.value)}
+                  />
+                  {erroresHuesped.nroDocumento && (
+                    <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.nroDocumento}</p>
+                  )}
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent">
+                    ← Atrás
+                  </Button>
+                  <Button onClick={handleConfirmarHuesped} className="flex-1 gap-2">
+                    Continuar
+                    <UserCheck className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="telefono">Teléfono</Label>
-                <Input
-                  id="telefono"
-                  value={datosHuesped.telefono}
-                  onChange={(e) => {
-                    setDatosHuesped((prev) => ({ ...prev, telefono: e.target.value }))
-                    validarCampoHuesped("telefono", e.target.value)
-                  }}
-                />
-                {erroresHuesped.telefono && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.telefono}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
-                <select
-                  id="tipoDocumento"
-                  className="w-full border rounded px-3 py-2"
-                  value={datosHuesped.tipoDocumento}
-                  onChange={(e) => {
-                    setDatosHuesped((prev) => ({ ...prev, tipoDocumento: e.target.value }))
-                    validarCampoHuesped("tipoDocumento", e.target.value)
-                  }}
-                >
-                  <option value="DNI">DNI</option>
-                  <option value="LE">LE</option>
-                  <option value="LC">LC</option>
-                  <option value="PASAPORTE">Pasaporte</option>
-                  <option value="OTRO">Otro</option>
-                </select>
-                {erroresHuesped.tipoDocumento && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.tipoDocumento}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="nroDocumento">Número de Documento</Label>
-                <Input
-                  id="nroDocumento"
-                  value={datosHuesped.nroDocumento}
-                  placeholder={CONFIG_DOCUMENTOS[datosHuesped.tipoDocumento]?.placeholder || ""}
-                  onChange={(e) => {
-                    setDatosHuesped((prev) => ({ ...prev, nroDocumento: e.target.value }))
-                    validarCampoHuesped("nroDocumento", e.target.value)
-                  }}
-                />
-                {erroresHuesped.nroDocumento && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.nroDocumento}</p>
-                )}
-              </div>
-              <div className="flex gap-3 mt-6">
-                <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent">
-                  ← Atrás
-                </Button>
-                <Button onClick={handleConfirmarHuesped} className="flex-1 gap-2">
-                  Continuar
-                  <UserCheck className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         )}
 
         {/* PASO 5: Confirmación */}
