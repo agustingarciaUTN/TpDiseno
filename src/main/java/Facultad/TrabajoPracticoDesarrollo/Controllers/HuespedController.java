@@ -13,6 +13,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Controlador REST para operaciones sobre huéspedes.
+ *
+ * <p>Expone endpoints bajo la ruta {@code /api/huespedes} para:
+ * - buscar huéspedes por criterios,
+ * - verificar existencia por tipo y número de documento,
+ * - crear, modificar y borrar huéspedes,
+ * - endpoint de prueba para verificar que el controller está activo.</p>
+ *
+ * <p>Se permite acceso desde cualquier origen mediante CORS.</p>
+ */
 @RestController//Declarado como API, le dice a Spring que atiende pedidos web
 @RequestMapping("/api/huespedes")
 @CrossOrigin(origins = "*") // Permite peticiones desde cualquier Frontend (React/Angular/Postman)
@@ -20,12 +32,27 @@ public class HuespedController {
 
     //Aca le decimos a Spring que necesitamos un HuespedService para trabajar
     private final HuespedService huespedService;
-    // 2. Inyección por Constructor (Spring te pasa el Gestor listo)
+
+    /**
+     * Construye el controlador inyectando el servicio de huéspedes.
+     *
+     * @param huespedService servicio que contiene la lógica de negocio para huéspedes
+     */
     public HuespedController(HuespedService huespedService) {
         this.huespedService = huespedService;
     }
 
 
+    /**
+     * Busca huéspedes según criterios opcionales.
+     *
+     * <p>Recibe un {@link DtoHuespedBusqueda} en el cuerpo de la petición. Si el cuerpo es {@code null},
+     * se consideran criterios por defecto (todas las coincidencias).</p>
+     *
+     * @param criterios criterios de búsqueda (opcional)
+     * @return {@code 200 OK} con la lista de {@link DtoHuesped} que cumplen los criterios,
+     *         o {@code 500 Internal Server Error} en caso de error inesperado.
+     */
     @PostMapping("/buscar")
     public ResponseEntity<List<DtoHuesped>> buscarHuespedes(@RequestBody(required = false) DtoHuespedBusqueda criterios) {
         try {
@@ -51,9 +78,19 @@ public class HuespedController {
         }
     }
 
-    // Endpoint para verificar existencia antes de guardar (Requerido por CU9)
-    // En HuespedController.java
-
+    /**
+     * Verifica la existencia de un huésped por tipo y número de documento.
+     *
+     * <p>Construye un DTO dummy con {@code tipo} y {@code nro}, convierte el tipo al enum correspondiente
+     * y delega la verificación al servicio.</p>
+     *
+     * @param tipo código del tipo de documento (ej: {@code "DNI"}, insensible a mayúsculas)
+     * @param nro número de documento
+     * @return {@code 200 OK} con {@link DtoHuesped} si existe un duplicado,
+     *         {@code 200 OK} con {@code null} si no existe,
+     *         {@code 400 Bad Request} si el tipo de documento es inválido,
+     *         {@code 500 Internal Server Error} en caso de error técnico.
+     */
     @GetMapping("/existe/{tipo}/{nro}")
     public ResponseEntity<?> verificarExistencia(@PathVariable String tipo, @PathVariable String nro) {
         try {
@@ -85,6 +122,17 @@ public class HuespedController {
         }
     }
 
+    /**
+     * Crea o actualiza un huésped a partir del {@link DtoHuesped} recibido.
+     *
+     * <p>El DTO es validado por las anotaciones de bean validation; en caso de violaciones,
+     * un GlobalExceptionHandler debe interceptar y devolver errores apropiados.</p>
+     *
+     * @param dtoHuesped DTO validado con los datos del huésped
+     * @return {@code 200 OK} con mensaje de éxito si se guarda correctamente,
+     *         {@code 400 Bad Request} con lista de errores de negocio si la validación de negocio falla,
+     *         {@code 400 Bad Request} o {@code 500 Internal Server Error} en caso de error.
+     */
     @PostMapping("/crear")//Si alguien llama a la dirección base /api/huespedes PERO usando el verbo POST y agregando /crear, entra a este metodo.
     public ResponseEntity<?> darDeAltaHuesped(@Valid @RequestBody DtoHuesped dtoHuesped) {
         try {
@@ -112,13 +160,29 @@ public class HuespedController {
         }
     }
 
+    /**
+     * Endpoint simple de verificación del controlador.
+     *
+     * @return cadena indicando que el controlador de huéspedes está activo.
+     */
     // Ejemplo para probar que el controller vive
     @GetMapping("/test")
     public String test() {
         return "Controller de Huéspedes activo";
     }
 
-    // Endpoint para CU10
+    /**
+     * Modifica los datos de un huésped identificado por tipo y número de documento.
+     *
+     * <p>Valida el DTO recibido; si hay errores de negocio devuelve {@code 400 Bad Request} con detalle.</p>
+     *
+     * @param tipo tipo de documento del huésped a modificar
+     * @param nro número de documento del huésped a modificar
+     * @param dtoNuevo DTO validado con los nuevos datos
+     * @return {@code 200 OK} con mensaje de éxito si la modificación fue correcta,
+     *         {@code 400 Bad Request} con errores si la validación de negocio falla,
+     *         {@code 400 Bad Request} o {@code 500 Internal Server Error} en caso de error.
+     */
     @PutMapping("/modificar/{tipo}/{nro}")
     public ResponseEntity<?> modificarHuesped(
             @PathVariable String tipo,
@@ -141,7 +205,15 @@ public class HuespedController {
         }
     }
 
-    // Endpoint para CU11
+    /**
+     * Elimina (da de baja) un huésped identificado por tipo y número de documento.
+     *
+     * @param tipo tipo de documento
+     * @param nro número de documento
+     * @return {@code 200 OK} con mensaje de éxito si se eliminó correctamente,
+     *         {@code 400 Bad Request} si existe una restricción de negocio que impide la baja,
+     *         {@code 500 Internal Server Error} en caso de error técnico.
+     */
     @DeleteMapping("/borrar/{tipo}/{nro}")
     public ResponseEntity<?> borrarHuesped(@PathVariable String tipo, @PathVariable String nro) {
         try {

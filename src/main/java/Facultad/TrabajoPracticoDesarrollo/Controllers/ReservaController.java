@@ -12,6 +12,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
 
+
+/**
+ * Controlador REST para operaciones sobre reservas.
+ *
+ * <p>Expone endpoints bajo la ruta {@code /api/reservas} para:
+ * - buscar reservas por rango de fechas (y opcionalmente por habitación),
+ * - crear múltiples reservas,
+ * - verificar disponibilidad combinando reservas y estadías,
+ * - buscar reservas por huésped,
+ * - cancelar reservas por lista de IDs.</p>
+ *
+ * <p>Se permite acceso desde cualquier origen mediante CORS.</p>
+ */
 @RestController
 @RequestMapping("/api/reservas")
 @CrossOrigin(origins = "*")
@@ -21,13 +34,32 @@ public class ReservaController {
     private final ReservaService reservaService;
     private final EstadiaService estadiaService;
 
+    /**
+     * Construye el controlador inyectando los servicios necesarios.
+     *
+     * @param reservaService servicio que maneja la lógica de reservas
+     * @param estadiaService servicio que maneja la lógica de estadías
+     */
     @Autowired
     public ReservaController(ReservaService reservaService, EstadiaService estadiaService) {
         this.reservaService = reservaService;
         this.estadiaService = estadiaService;
     }
 
-    // Buscar reservas en un rango (opcionalmente por habitación)
+
+    /**
+     * Busca reservas dentro de un rango de fechas.
+     *
+     * <p>Parámetros esperados como {@code String} en formato {@code yyyy-MM-dd}:
+     * {@code fechaDesde} y {@code fechaHasta}. Opcionalmente se puede filtrar
+     * por {@code idHabitacion}.</p>
+     *
+     * @param fechaDesde fecha de inicio en formato {@code yyyy-MM-dd}
+     * @param fechaHasta fecha de fin en formato {@code yyyy-MM-dd}
+     * @param idHabitacion (opcional) id de la habitación para filtrar resultados
+     * @return {@code 200 OK} con la lista de {@link DtoReserva} encontrada,
+     *         o {@code 400 Bad Request} si ocurre error en el parseo de fechas.
+     */
     @GetMapping("/buscar")
     public ResponseEntity<?> buscarReservas(
             @RequestParam String fechaDesde,
@@ -52,6 +84,15 @@ public class ReservaController {
         }
     }
 
+    /**
+     * Crea múltiples reservas recibidas en el cuerpo de la petición.
+     *
+     * <p>Recibe una lista JSON de {@link DtoReserva} en el {@code RequestBody}.</p>
+     *
+     * @param listaReservas lista de reservas a crear
+     * @return {@code 200 OK} con mensaje de éxito, o {@code 400 Bad Request}
+     *         con el detalle del error si falla la operación.
+     */
     @PostMapping("/crear")
     public ResponseEntity<?> crearReservas(@RequestBody List<DtoReserva> listaReservas) {
         try {
@@ -64,7 +105,17 @@ public class ReservaController {
     }
 
 
-    // GET /api/reservas/disponibilidad?habitacion=1&desde=2023-10-01&hasta=2023-10-05
+    /**
+     * Verifica la disponibilidad de una habitación en un rango de fechas.
+     *
+     * <p>Combina la validación de {@link ReservaService} y {@link EstadiaService}
+     * para determinar si la habitación está libre.</p>
+     *
+     * @param idHabitacion id de la habitación a consultar
+     * @param fechaDesde fecha de inicio (se obtiene como {@link Date} desde el request)
+     * @param fechaHasta fecha de fin (se obtiene como {@link Date} desde el request)
+     * @return {@code 200 OK} con {@code true} si está disponible, {@code false} si está ocupada.
+     */
     @GetMapping("/disponibilidad")
     public ResponseEntity<?> verificarDisponibilidad(
             @RequestParam String idHabitacion,
@@ -85,7 +136,14 @@ public class ReservaController {
     }
 
 
-
+    /**
+     * Busca reservas por apellido de huésped y opcionalmente por nombre.
+     *
+     * @param apellido apellido del huésped (obligatorio)
+     * @param nombre nombre del huésped (opcional)
+     * @return {@code 200 OK} con la lista de {@link DtoReserva} que coinciden,
+     *         o {@code 400 Bad Request} si ocurre un error durante la búsqueda.
+     */
     @GetMapping("/buscar-huesped")
     public ResponseEntity<?> buscarPorHuesped(
             @RequestParam String apellido,
@@ -99,7 +157,14 @@ public class ReservaController {
         }
     }
 
-
+    /**
+     * Cancela reservas por su lista de IDs.
+     *
+     * <p>Recibe una lista JSON de enteros con los IDs de reservas a cancelar.</p>
+     *
+     * @param idsReservas lista de IDs de reservas a cancelar
+     * @return {@code 200 OK} con mensaje de éxito, o {@code 400 Bad Request} con el error.
+     */
     @PostMapping("/cancelar")
     public ResponseEntity<?> cancelarReservas(@RequestBody List<Integer> idsReservas) {
         try {

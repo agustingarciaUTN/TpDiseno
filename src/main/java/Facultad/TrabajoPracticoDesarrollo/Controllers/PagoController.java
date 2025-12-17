@@ -13,6 +13,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Controlador REST para operaciones relacionadas con pagos y facturas.
+ *
+ * <p>Expone endpoints bajo la ruta {@code /api/pagos} para:
+ * - buscar facturas pendientes por número de habitación,
+ * - registrar pagos de facturas,
+ * - obtener el historial de pagos de una factura.</p>
+ *
+ * <p>Se utiliza validación de entrada mediante {@code @Validated} y anotaciones
+ * de validación en parámetros y cuerpos de petición.</p>
+ */
 @RestController
 @RequestMapping("/api/pagos")
 @CrossOrigin(origins = "*")
@@ -21,20 +32,25 @@ public class PagoController {
 
     private final PagoService pagoService;
 
+    /**
+     * Construye el controlador inyectando el servicio de pagos.
+     *
+     * @param pagoService servicio que contiene la lógica de negocio para pagos y facturas
+     */
     @Autowired
     public PagoController(PagoService pagoService) {
         this.pagoService = pagoService;
     }
 
     /**
-     * CU16 - Endpoint 1: Buscar facturas pendientes por número de habitación
-     * Paso 3 y 4 del flujo principal
-     * 
-     * GET /api/pagos/buscar-facturas-pendientes?numeroHabitacion=101
-     * 
-     * Respuestas:
-     * - 200 OK: Lista de facturas pendientes
-     * - 400 Bad Request: Número de habitación incorrecto o sin facturas pendientes
+     * CU16 - Endpoint 1: Buscar facturas pendientes por número de habitación.
+     *
+     * <p>GET /api/pagos/buscar-facturas-pendientes?numeroHabitacion=101</p>
+     *
+     * @param numeroHabitacion número de habitación con exactamente 3 dígitos (ej: {@code "101"})
+     * @return {@code 200 OK} con la lista de {@link DtoFactura} pendientes,
+     *         {@code 400 Bad Request} con mensaje de error cuando el parámetro es inválido o no hay facturas,
+     *         {@code 500 Internal Server Error} en caso de error inesperado.
      */
     @GetMapping("/buscar-facturas-pendientes")
     public ResponseEntity<?> buscarFacturasPendientes(
@@ -54,30 +70,15 @@ public class PagoController {
     }
 
     /**
-     * CU16 - Endpoint 2: Registrar el pago de una factura
-     * Paso 9-13 del flujo principal
-     * 
-     * POST /api/pagos/registrar
-     * Body: {
-     *   "numeroFactura": "F-001",
-     *   "fechaPago": "2025-12-15",
-     *   "moneda": "PESOS_ARGENTINOS",
-     *   "cotizacion": 1.0,
-     *   "montoTotal": 5000.0,
-     *   "mediosPago": [
-     *     {
-     *       "tipoMedio": "EFECTIVO",
-     *       "monto": 5000.0,
-     *       "moneda": "PESOS_ARGENTINOS",
-     *       "fechaDePago": "2025-12-15"
-     *     }
-     *   ]
-     * }
-     * 
-     * Respuestas:
-     * - 200 OK: Pago registrado exitosamente con información del vuelto
-     * - 400 Bad Request: Datos inválidos o monto insuficiente
-     * - 404 Not Found: Factura no encontrada
+     * CU16 - Endpoint 2: Registrar el pago de una factura.
+     *
+     * <p>POST /api/pagos/registrar</p>
+     * <p>Body: {@link DtoPago} con datos del pago, monedas, cotización, monto total y lista de medios de pago.</p>
+     *
+     * @param dtoPago DTO con la información necesaria para registrar el pago. Debe ser válido según las anotaciones {@code @Valid}.
+     * @return {@code 200 OK} con {@link DtoResultadoRegistroPago} si el pago se registra correctamente,
+     *         {@code 400 Bad Request} si faltan datos o el monto es insuficiente,
+     *         {@code 500 Internal Server Error} en caso de error del servidor.
      */
     @PostMapping("/registrar")
     public ResponseEntity<?> registrarPago(@RequestBody @Valid DtoPago dtoPago) {
@@ -97,10 +98,13 @@ public class PagoController {
     }
 
     /**
-     * Endpoint adicional: Obtener historial de pagos de una factura
-     * Útil para mostrar todos los medios utilizados en el pago (observación del CU)
-     * 
-     * GET /api/pagos/factura/{numeroFactura}
+     * Endpoint adicional: Obtener historial de pagos de una factura.
+     *
+     * <p>GET /api/pagos/factura/{numeroFactura}</p>
+     *
+     * @param numeroFactura identificador de la factura (ej: {@code "F-001"})
+     * @return {@code 200 OK} con la lista de pagos asociados a la factura,
+     *         {@code 500 Internal Server Error} en caso de error al obtener los pagos.
      */
     @GetMapping("/factura/{numeroFactura}")
     public ResponseEntity<?> obtenerPagosPorFactura(@PathVariable String numeroFactura) {
