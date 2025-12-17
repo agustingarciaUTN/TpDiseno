@@ -9,7 +9,7 @@ public class DtoDireccion {
     // --- CONSTANTES DE VALIDACIÓN ---
 
     // Calle: Acepta letras, números, espacios, puntos y comas (Ej: "Av. Libertador, 1234")
-    public static final String REGEX_CALLE = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\s\\.\\,]+$";
+    public static final String REGEX_CALLE = "^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\\s.,°()-]+$";
 
     // Texto Geográfico: Solo letras y espacios (Para Ciudad, Provincia, País)
     public static final String REGEX_TEXTO = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$";

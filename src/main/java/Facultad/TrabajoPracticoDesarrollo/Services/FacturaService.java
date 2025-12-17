@@ -35,9 +35,10 @@ public class FacturaService {
     private final NotaDeCreditoRepository notaDeCreditoRepository;
     private final PersonaFisicaRepository personaFisicaRepository;
     private final ServiciosAdicionalesRepository serviciosAdicionalesRepository;
+    private final DireccionRepository direccionRepository;
 
     @Autowired
-    public FacturaService(ServiciosAdicionalesRepository serviciosAdicionalesRepository, PersonaFisicaRepository personaFisicaRepository, ResponsablePagoRepository responsablePagoRepository, HuespedRepository huespedRepository, EstadiaRepository estadiaRepository, FacturaRepository facturaRepository, NotaDeCreditoRepository notaDeCreditoRepository) {
+    public FacturaService(DireccionRepository direccionRepository, ServiciosAdicionalesRepository serviciosAdicionalesRepository, PersonaFisicaRepository personaFisicaRepository, ResponsablePagoRepository responsablePagoRepository, HuespedRepository huespedRepository, EstadiaRepository estadiaRepository, FacturaRepository facturaRepository, NotaDeCreditoRepository notaDeCreditoRepository) {
         this.estadiaRepository = estadiaRepository;
         this.facturaRepository = facturaRepository;
         this.responsablePagoRepository = responsablePagoRepository;
@@ -45,6 +46,7 @@ public class FacturaService {
         this.notaDeCreditoRepository = notaDeCreditoRepository;
         this.personaFisicaRepository = personaFisicaRepository;
         this.serviciosAdicionalesRepository = serviciosAdicionalesRepository;
+        this.direccionRepository = direccionRepository;
     }
 
     // --- MÉTODOS DE BÚSQUEDA ---
@@ -143,6 +145,10 @@ public class FacturaService {
                 .orElseThrow(() -> new IllegalArgumentException("Huésped no encontrado"));
 
         LocalDate nacimiento = convertirAFechaLocal(h.getFechaNacimiento());
+
+        if (nacimiento == null) {
+            throw new IllegalArgumentException("El huésped no tiene fecha de nacimiento registrada. Complétela antes de facturar.");
+        }
 
         // Debug: Imprime esto en consola para ver qué está calculando
         System.out.println("Fecha Nac: " + nacimiento + " | Edad: " + Period.between(nacimiento, LocalDate.now()).getYears());
@@ -296,7 +302,7 @@ public class FacturaService {
             }
         }
 
-        // Formato final: "0001-XXXXXXXX" (8 dígitos con ceros a la izquierda)
+        // Formato final: "0005-XXXXXXXX" (8 dígitos con ceros a la izquierda)
         String numeroGenerado = String.format("%s-%08d", puntoVenta, siguienteNumero);
 
         Factura factura = MapearFactura.mapearDtoAEntidad(dto, responsable, estadia);
@@ -408,6 +414,8 @@ public class FacturaService {
             direccionEntidad.setLocalidad(dirDto.getLocalidad());
             direccionEntidad.setProvincia(dirDto.getProvincia());
             direccionEntidad.setPais(dirDto.getPais());
+
+            direccionEntidad = direccionRepository.save(direccionEntidad);
         }
 
         // 3. Mapeo DTO -> Entidad (Persona Jurídica)
@@ -421,6 +429,10 @@ public class FacturaService {
         }
 
         nuevaEmpresa.setDireccion(direccionEntidad);
+
+        if (direccionEntidad != null) {
+            nuevaEmpresa.setDireccion(direccionEntidad);
+        }
 
         // 4. Guardar
         responsablePagoRepository.save(nuevaEmpresa);

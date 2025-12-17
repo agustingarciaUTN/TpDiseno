@@ -25,14 +25,13 @@ import {
     Search,
     User,
     Building2,
-    Receipt,
-    Plus
+    Receipt
 } from "lucide-react"
 
 // --- CONSTANTES Y REGEX DE VALIDACIÓN ---
 const regexCuit = /^\d{2}-?\d{8}-?\d{1}$/
 const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
-const regexCalle = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/
+const regexCalle = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,°()-]+$/
 const regexTexto = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
 
 const MSJ_OBLIGATORIO = "Este campo es obligatorio"
@@ -79,52 +78,56 @@ export function RegistrarFacturaForm() {
 
     // --- VALIDACIONES ---
     const validarCampoPopup = (nombre: string, valor: string) => {
-        let error = ""
-        switch (nombre) {
-            case "razonSocialTercero":
-                if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (valor.length < 2) error = MSJ_LARGO_CORTO
-                else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
-                break;
-            case "cuitTercero":
-                if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (!regexCuit.test(valor)) error = "Formato inválido (Ej: 30-12345678-9)"
-                else {
-                    const soloNumeros = valor.replace(/\D/g, "")
-                    if (soloNumeros.length !== 11) error = "El CUIT debe tener 11 números"
-                }
-                break;
-            case "telefonoTercero":
-                if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
-                break;
-            case "calle":
-            case "localidad":
-            case "departamento":
-            case "piso":
-                if (nombre === "calle" && !valor.trim()) error = MSJ_OBLIGATORIO
-                else if (nombre === "localidad" && !valor.trim()) error = MSJ_OBLIGATORIO
-                else if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
-                break;
-            case "numero":
-            case "codPostal":
-                if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
-                break;
-            case "provincia":
-            case "pais":
-                if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (!regexTexto.test(valor)) error = MSJ_TEXTO
-                break;
+            let error = ""
+            switch (nombre) {
+                case "razonSocialTercero":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (valor.length < 3) error = "El nombre es muy corto"
+                    else if (valor.length > 50) error = "El nombre es muy largo"
+                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
+                    break;
+                case "cuitTercero":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!regexCuit.test(valor)) error = "Formato inválido (Ej: 30-12345678-9)"
+                    // No validamos longitud numérica pura aca porque la regex exige formato xx-xxxxxxxx-x
+                    break;
+                case "telefonoTercero":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (valor.length < 7) error = "El número es muy corto" // Validación de longitud mínima
+                    else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
+                    break;
+                case "calle":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
+                    break;
+                case "localidad":
+                case "provincia":
+                case "pais":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!regexTexto.test(valor) && nombre !== 'calle') error = MSJ_TEXTO // Calle permite números
+                    break;
+                case "numero":
+                case "codPostal":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
+                    break;
+                case "departamento": // Opcional real
+                    // Solo validamos si escribió algo. Si está vacío, no hay error.
+                    if (valor.trim() && valor.length > 10) error = "Máx 10 caracteres"
+                    break;
+                case "piso": // Opcional real
+                    // Solo validamos si escribió algo.
+                    if (valor.trim() && !/^\d+$/.test(valor)) error = MSJ_NUMERICO
+                    break;
+            }
+            setPopupErrors((prev) => {
+                const newErrors = { ...prev }
+                if (error) newErrors[nombre] = error
+                else delete newErrors[nombre]
+                return newErrors
+            })
+            return error
         }
-        setPopupErrors((prev) => {
-            const newErrors = { ...prev }
-            if (error) newErrors[nombre] = error
-            else delete newErrors[nombre]
-            return newErrors
-        })
-        return error
-    }
 
     const validateAllPopup = () => {
         let isValid = true
@@ -147,7 +150,17 @@ export function RegistrarFacturaForm() {
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         setErrorMessage("")
-        if (!numeroHabitacion.trim() || !horaSalida.trim()) { setErrorMessage("Complete campos"); return }
+
+        if (!numeroHabitacion.trim()) {
+            setErrorMessage("Por favor, ingrese el número de habitación.");
+            return
+        }
+
+        if (!horaSalida.trim()) {
+            setErrorMessage("Por favor, ingrese la hora de salida.");
+            return
+        }
+
         setIsLoading(true)
         try {
             const res = await fetch('http://localhost:8080/api/factura/buscar-ocupantes', {
@@ -173,7 +186,19 @@ export function RegistrarFacturaForm() {
             if (!params.esTercero && params.tipoDoc) { query.append("tipoDoc", params.tipoDoc); query.append("nroDoc", params.nroDoc); }
 
             const res = await fetch(`http://localhost:8080/api/factura/calcular-detalle?${query.toString()}`);
-            if (!res.ok) throw new Error("Error al calcular detalle");
+            if (!res.ok) {
+                const errorText = await res.text();
+                let mensajeError = "Error al calcular detalle";
+
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    mensajeError = errorJson.message || errorJson.error || errorText;
+                } catch {
+                    if (errorText.length > 0) mensajeError = errorText;
+                }
+
+                throw new Error(mensajeError);
+            }
 
             const data: DetalleFacturacion = await res.json();
             setDetalleCalculado(data);
@@ -200,22 +225,17 @@ export function RegistrarFacturaForm() {
                 });
             }
 
-            // 3. Servicios Adicionales (BLINDADO)
+            // 3. Servicios Adicionales
             if (Array.isArray(data.serviciosAdicionales)) {
                 data.serviciosAdicionales.forEach((serv: any, idx) => {
-                    // Convertimos valor a número seguro
                     const valor = Number(serv?.valor) || 0;
-
                     let textoDescripcion = "Servicio Adicional";
-
                     if (serv) {
                         const posibleTexto = serv.descripcion || serv.description || serv.detalle || serv.nombre;
                         if (posibleTexto && typeof posibleTexto === 'string' && posibleTexto.trim().length > 0) {
                             textoDescripcion = posibleTexto.trim();
                         }
                     }
-
-                    // Agregamos el ítem
                     itemsMapeados.push({
                         id: `serv-${idx}`,
                         descripcion: textoDescripcion,
@@ -237,16 +257,19 @@ export function RegistrarFacturaForm() {
     const handleCrearEmpresa = async () => {
         setErrorMessage("");
         if (!validateAllPopup()) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
         setIsLoading(true);
+
+        const pisoFinal = direccion.piso.trim() === "" ? null : parseInt(direccion.piso);
+        const deptoFinal = direccion.departamento.trim() === "" ? null : direccion.departamento;
+
         try {
             const res = await fetch('http://localhost:8080/api/factura/responsable', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    tipoResponsable: "J", cuit: cuitTercero.replace(/\D/g, ""), razonSocial: razonSocialTercero, telefono: [parseInt(telefonoTercero)],
-                    dtoDireccion: { ...direccion, numero: parseInt(direccion.numero), codPostal: parseInt(direccion.codPostal), piso: direccion.piso ? parseInt(direccion.piso) : null }
+                    tipoResponsable: "J", cuit: cuitTercero, razonSocial: razonSocialTercero, telefono: [parseInt(telefonoTercero)],
+                    dtoDireccion: { ...direccion, numero: parseInt(direccion.numero), codPostal: parseInt(direccion.codPostal), piso: pisoFinal, departamento: deptoFinal }
                 })
             });
             if (!res.ok) throw new Error("Error al crear empresa");
@@ -266,41 +289,60 @@ export function RegistrarFacturaForm() {
     const handleDireccionBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         validarCampoPopup(e.target.name, e.target.value);
     }
+
     const handleTopLevelChange = (setter: any, field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-        setter(e.target.value); if(popupErrors[field]) { const newErrs = {...popupErrors}; delete newErrs[field]; setPopupErrors(newErrs); }
+        setter(e.target.value);
+        if(popupErrors[field]) { const newErrs = {...popupErrors}; delete newErrs[field]; setPopupErrors(newErrs); }
     }
 
-    // --- LÓGICA DE BÚSQUEDA CUIT vs ALTA ---
+    // --- LÓGICA DE BÚSQUEDA CUIT vs ALTA (MODIFICADA) ---
     const handleBuscarCuitOAlta = async () => {
-        if (!cuitTercero.trim()) { setErrorMessage("Ingrese un CUIT para buscar."); return; }
+        // 1. Caso VACÍO: Ir a Alta de Empresa
+        if (!cuitTercero.trim()) {
+            setErrorMessage("");
+            setPopupErrors({});
+            setStep("create-company"); // Vamos directo al formulario de alta
+            return;
+        }
+
+        // 2. Caso FORMATO INVÁLIDO: Mostrar error y quedarse aquí
+        if (!regexCuit.test(cuitTercero)) {
+            setErrorMessage("Formato de CUIT inválido. Debe ser xx-xxxxxxxx-x");
+            return;
+        }
 
         setIsLoading(true);
+        setErrorMessage(""); // Limpiamos errores previos
+
         try {
             const query = new URLSearchParams({ idEstadia: idEstadia!.toString(), horaSalida: horaSalida, esTercero: "true", cuit: cuitTercero });
             const res = await fetch(`http://localhost:8080/api/factura/calcular-detalle?${query.toString()}`);
 
+            // 3. Caso NO ENCONTRADO: Mostrar error y quedarse aquí (usuario decide)
             if (res.status === 409) {
-                setErrorMessage("El CUIT no existe. Complete el registro.");
-                setStep("create-company"); // CAMBIO DE PANTALLA
+                setErrorMessage("El CUIT no existe en la base de datos.");
                 setIsLoading(false);
                 return;
             }
 
             if(res.ok) {
                 const data = await res.json();
-                setDetalleCalculado(data); setIdResponsableSeleccionado(data.idResponsable);
+                setDetalleCalculado(data);
+                setIdResponsableSeleccionado(data.idResponsable);
+
                 const itemsMapeados: ItemFactura[] = [{ id: "estadia", descripcion: "Alojamiento Base", monto: data.montoEstadiaBase || 0, selected: true }];
                 if (data.recargoHorario > 0) itemsMapeados.push({ id: "recargo", descripcion: data.detalleRecargo || "Recargo", monto: data.recargoHorario || 0, selected: true });
                 if (data.serviciosAdicionales) data.serviciosAdicionales.forEach((serv: any, idx: number) => itemsMapeados.push({ id: `serv-${idx}`, descripcion: serv.descripcion, monto: serv.valor, selected: true }));
+
                 setItems(itemsMapeados);
                 setStep("select-items");
             }
-        } catch(e) { console.error(e); setIsLoading(false); }
-        finally { setIsLoading(false); }
-    }
-
-    const handleIrAAltaDirecta = () => {
-        setErrorMessage(""); setPopupErrors({}); setStep("create-company");
+        } catch(e: any) {
+            console.error(e);
+            setErrorMessage(e.message || "Error de conexión.");
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     // --- FUNCIONES FACTURACIÓN ---
@@ -387,7 +429,21 @@ export function RegistrarFacturaForm() {
                         <CardContent className="pt-6">
                             <form onSubmit={handleSearch} className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="space-y-2"><Label>Nro Habitación</Label><Input value={numeroHabitacion} onChange={e=>setNumeroHabitacion(e.target.value)} className="bg-white"/></div>
+                                    <div className="space-y-2"><Label>Nro Habitación</Label><Input
+                                    value={numeroHabitacion}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        // Solo actualizamos si son números y longitud <= 3
+                                        if (/^\d*$/.test(val) && val.length <= 3) {
+                                             setNumeroHabitacion(val);
+                                             setErrorMessage(""); // Limpiamos el error al escribir
+                                        }
+                                    }}
+                                    placeholder="Ej: 101"
+                                    className="bg-white"
+                                    maxLength={3} // Refuerzo HTML estándar
+                                    />
+                                    </div>
                                     <div className="space-y-2"><Label>Hora Salida</Label><Input type="time" value={horaSalida} onChange={e=>setHoraSalida(e.target.value)} className="bg-white"/></div>
                                 </div>
                                 <Button onClick={()=>handleSearch()} type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={isLoading}>{isLoading ? "Buscando..." : "Buscar Ocupantes"}</Button>
@@ -416,9 +472,19 @@ export function RegistrarFacturaForm() {
                             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                                 <Label className="mb-2 block">Facturar a Empresa (CUIT)</Label>
                                 <div className="flex gap-2">
-                                    <Input value={cuitTercero} onChange={handleTopLevelChange(setCuitTercero, "cuitTercero")} placeholder="Ej: 30-12345678-9" className="bg-white"/>
-                                    <Button onClick={handleBuscarCuitOAlta} disabled={isLoading}>Buscar</Button>
-                                    <Button variant="outline" onClick={handleIrAAltaDirecta} title="Alta Manual"><Plus className="h-4 w-4"/></Button>
+                                    {/* CORRECCIÓN: Limpiar error al escribir y placeholder actualizado */}
+                                    <Input
+                                        value={cuitTercero}
+                                        onChange={(e) => {
+                                            handleTopLevelChange(setCuitTercero, "cuitTercero")(e);
+                                            setErrorMessage(""); // Limpia la alerta global al editar
+                                        }}
+                                        placeholder="Ej: 30-12345678-9 (Dejar vacío para Alta Nueva)"
+                                        className={`bg-white ${errorMessage ? "border-red-500" : ""}`}
+                                    />
+                                    <Button onClick={handleBuscarCuitOAlta} disabled={isLoading}>Buscar / Alta</Button>
+
+                                    {/* CORRECCIÓN: Botón + eliminado */}
                                 </div>
                             </div>
 
@@ -427,7 +493,7 @@ export function RegistrarFacturaForm() {
                     </Card>
                 )}
 
-                {/* --- NUEVO "PASO": PANTALLA DE ALTA (REEMPLAZA AL POPUP) --- */}
+                {/* --- NUEVO "PASO": PANTALLA DE ALTA --- */}
                 {step === "create-company" && (
                     <Card className="shadow-xl border-emerald-100 animate-in slide-in-from-right-4">
                         <CardHeader className="bg-emerald-50/50 border-b border-emerald-100">
@@ -517,7 +583,7 @@ export function RegistrarFacturaForm() {
                     </Card>
                 )}
 
-                {/* --- PASO 3: DETALLE FACTURACIÓN (RESTAURADO) --- */}
+                {/* --- PASO 3: DETALLE FACTURACIÓN --- */}
                 {step === "select-items" && detalleCalculado && (
                     <Card className="shadow-xl border-slate-200 animate-in fade-in zoom-in-95">
                         <CardHeader className="bg-slate-50 border-b border-slate-100">
