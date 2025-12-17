@@ -95,9 +95,9 @@ export default function Home() {
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900">Gestión de Huéspedes</h2>
                         </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 justify-center place-items-center">
                             {/* Buscar Huésped */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-blue-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
@@ -142,7 +142,7 @@ export default function Home() {
 
                             {/* Dar de Alta Huésped */}
                             <Card
-                                className={`group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 ${
+                                className={`group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between ${
                                     selectedGuest ? "opacity-40 pointer-events-none" : ""
                                 }`}
                             >
@@ -194,9 +194,9 @@ export default function Home() {
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900">Gestión de Pagos y Facturación</h2>
                         </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 justify-center place-items-center">
                             {/* Facturar */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-amber-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 transition-colors group-hover:bg-amber-600 group-hover:text-white">
@@ -213,7 +213,7 @@ export default function Home() {
                             </Card>
 
                             {/* Registrar Pago */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-green-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 transition-colors group-hover:bg-green-600 group-hover:text-white">
@@ -229,52 +229,9 @@ export default function Home() {
                                 </div>
                             </Card>
 
-                            {/* Ingresar Nota de Crédito */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
-                                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-purple-100/50" />
-                                <div className="relative">
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600 transition-colors group-hover:bg-purple-600 group-hover:text-white">
-                                        <FileCheck className="h-6 w-6" />
-                                    </div>
-                                    <h3 className="mb-2 text-xl font-semibold text-slate-900">Ingresar Nota de Crédito</h3>
-                                    <p className="mb-4 text-sm leading-relaxed text-slate-600">
-                                        Generar notas de crédito para cancelar facturas pendientes.
-                                    </p>
-                                    <Button asChild className="w-full bg-purple-600 text-white hover:bg-purple-700">
-                                        <Link href="/ingresar-nota-credito">Generar nota</Link>
-                                    </Button>
-                                </div>
-                            </Card>
                         </div>
                     </section>
 
-                    {/* Gestión de Responsables de Pago */}
-                    <section>
-                        <div className="mb-6 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-                                <CreditCard className="h-5 w-5" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-slate-900">Gestión de Responsables de Pago</h2>
-                        </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {/* Alta Responsable de Pago */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
-                                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-emerald-100/50" />
-                                <div className="relative">
-                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                                        <UserCheck className="h-6 w-6" />
-                                    </div>
-                                    <h3 className="mb-2 text-xl font-semibold text-slate-900">Alta Responsable de Pago</h3>
-                                    <p className="mb-4 text-sm leading-relaxed text-slate-600">
-                                        Cargar datos personales de nuevos responsables de pago.
-                                    </p>
-                                    <Button asChild className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
-                                        <Link href="/alta-responsable-pago">Registrar responsable</Link>
-                                    </Button>
-                                </div>
-                            </Card>
-                        </div>
-                    </section>
 
                     {/* Gestión de Habitaciones */}
                     <section>
@@ -284,9 +241,9 @@ export default function Home() {
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900">Gestión de Habitaciones</h2>
                         </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 justify-center place-items-center">
                             {/* Ocupar Habitación */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-orange-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white">
@@ -312,9 +269,9 @@ export default function Home() {
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900">Gestión de Reservas</h2>
                         </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 justify-center place-items-center">
                             {/* Reservar Habitación */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-indigo-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
@@ -331,7 +288,7 @@ export default function Home() {
                             </Card>
 
                             {/* Cancelar Reserva */}
-                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1">
+                            <Card className="group relative overflow-hidden bg-white p-6 transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-md min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-red-100/50" />
                                 <div className="relative">
                                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-red-100 text-red-600 transition-colors group-hover:bg-red-600 group-hover:text-white">
