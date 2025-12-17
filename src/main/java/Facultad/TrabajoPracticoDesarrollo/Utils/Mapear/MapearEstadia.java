@@ -8,8 +8,29 @@ import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 
 import java.util.ArrayList;
 
+/**
+ * Utilidad para convertir entre la entidad {@link Estadia} y el DTO {@link DtoEstadia}.
+ *
+ * <p>Provee métodos estáticos para mapear en ambas direcciones. Los mapeos
+ * incluyen objetos relacionados (reserva, habitación) y la conversión de la
+ * colección de huéspedes a partir de {@link EstadiaHuesped}.</p>
+ *
+ * <p>Comportamiento ante {@code null}:
+ * - Si el DTO o la entidad de entrada es {@code null}, los métodos retornan {@code null}.</p>
+ */
 public class MapearEstadia {
 
+    /**
+     * Mapea un {@link DtoEstadia} a la entidad {@link Estadia}.
+     *
+     * <p>Se copian fechas, id y valor. Además:
+     * - Si el DTO contiene una reserva, se delega a {@link MapearReserva}.
+     * - Si el DTO contiene una habitación, se delega a {@link MapearHabitacion}.
+     * - Los huéspedes no se agregan aquí: se manejan en el Service usando {@link EstadiaHuesped}.</p>
+     *
+     * @param dto DTO de entrada; puede ser {@code null}
+     * @return instancia de {@link Estadia} construida desde el DTO, o {@code null} si {@code dto} es {@code null}
+     */
     public static Estadia mapearDtoAEntidad(DtoEstadia dto) {
         if (dto == null) return null;
 
@@ -35,6 +56,18 @@ public class MapearEstadia {
         return builder.build();
     }
 
+    /**
+     * Mapea una entidad {@link Estadia} a su {@link DtoEstadia}.
+     *
+     * <p>Se copian id, fechas y valor. También se mapean:
+     * - Reserva mediante {@link MapearReserva}.
+     * - Habitación mediante {@link MapearHabitacion}.
+     * - Lista de huéspedes: se recorre {@link Estadia#getEstadiaHuespedes()} y por cada
+     *   {@link EstadiaHuesped} se extrae el {@link Huesped} (si existe) y se mapea con {@link MapearHuesped}.</p>
+     *
+     * @param entidad entidad de entrada; puede ser {@code null}
+     * @return instancia de {@link DtoEstadia} construida desde la entidad, o {@code null} si {@code entidad} es {@code null}
+     */
     public static DtoEstadia mapearEntidadADto(Estadia entidad) {
         if (entidad == null) return null;
 

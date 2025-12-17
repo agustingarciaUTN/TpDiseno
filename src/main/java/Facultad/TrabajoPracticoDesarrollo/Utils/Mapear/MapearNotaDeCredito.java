@@ -1,12 +1,22 @@
 package Facultad.TrabajoPracticoDesarrollo.Utils.Mapear;
 
+import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoHuesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.Factura;
+import Facultad.TrabajoPracticoDesarrollo.Dominio.Huesped;
 import Facultad.TrabajoPracticoDesarrollo.Dominio.NotaDeCredito;
 import Facultad.TrabajoPracticoDesarrollo.DTOs.DtoNotaDeCredito;
 
 public class MapearNotaDeCredito  {
 
-
+    /**
+     * Mapea un {@link DtoNotaDeCredito} a la entidad {@link NotaDeCredito}.
+     *
+     * @param dtoNotaDeCredito DTO de entrada; puede ser {@code null}
+     * @return instancia de {@link NotaDeCredito} construida desde el DTO, o {@code null} si {@code dtoNotaDeCredito} es {@code null}
+     *
+     * <p>Comportamiento: copia número y monto de devolución. No resuelve referencias a facturas
+     * en el estado actual (ver bloque comentado para una aproximación).</p>
+     */
     public static NotaDeCredito mapearDtoAEntidad(DtoNotaDeCredito dtoNotaDeCredito) {
         if (dtoNotaDeCredito == null) return null;
 
@@ -14,16 +24,18 @@ public class MapearNotaDeCredito  {
                 .numero(dtoNotaDeCredito.getNumeroNotaCredito())
                 .monto(dtoNotaDeCredito.getMontoDevolucion());
 
-      /* if (dtoNotaDeCredito.getIdsFacturas() != null) {
-            for (Integer idFactura : dtoNotaDeCredito.getIdsFacturas()) {
-                Factura facRef = new Factura.Builder(null, null, 0, null, null).build();
-                facRef.setNumeroFactura(idFactura);
-            }
-        }  */
         return builder.build();
     }
 
-
+    /**
+     * Mapea una entidad {@link NotaDeCredito} a su {@link DtoNotaDeCredito}.
+     *
+     * @param notaDeCredito entidad de entrada; puede ser {@code null}
+     * @return instancia de {@link DtoNotaDeCredito} construida desde la entidad, o {@code null} si {@code notaDeCredito} es {@code null}
+     *
+     * <p>Comportamiento: copia número y monto. Si se requieren datos adicionales
+     * en el DTO (por ejemplo IDs de facturas asociadas), ampliar este método para extraerlos.</p>
+     */
     public static DtoNotaDeCredito mapearEntidadADto(NotaDeCredito notaDeCredito) {
         if (notaDeCredito == null) return null;
 
