@@ -24,9 +24,6 @@ public class Usuario {
     private String contrasenia;
 
 
-    @Column(name = "tipo_usuario")
-    private String tipoUsuario;
-
     // --- CONSTRUCTORES ---
     public Usuario() {}
 
@@ -34,7 +31,6 @@ public class Usuario {
         this.idUsuario = builder.idUsuario;
         this.nombre = builder.nombre;
         this.contrasenia = builder.contrasenia;
-        this.tipoUsuario = builder.tipoUsuario;
     }
 
     // --- CLASE STATIC BUILDER ---
@@ -42,14 +38,13 @@ public class Usuario {
         private Integer idUsuario;
         private String nombre;
         private String contrasenia;
-        private String tipoUsuario;
+
 
         public Builder() {}
 
         public Builder id(Integer val) { idUsuario = val; return this; }
         public Builder nombre(String val) { nombre = val; return this; }
         public Builder password(String val) { contrasenia = val; return this; } // Mapea a 'contrasenia'
-        public Builder tipo(String val) { tipoUsuario = val; return this; }
 
         public Usuario build() {
             return new Usuario(this);
