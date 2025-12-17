@@ -137,4 +137,8 @@ public interface EstadiaRepository extends JpaRepository<Estadia, Integer> {
      */
     @Query("SELECT COUNT(e) > 0 FROM Estadia e JOIN e.estadiaHuespedes eh WHERE eh.huesped = :huesped")
     boolean existsByHuespedesContaining(@Param("huesped") Huesped huesped);
+
+    // Buscar estadía por el ID de la reserva asociada
+    @Query("SELECT e FROM Estadia e WHERE e.reserva.idReserva = :idReserva")
+    Optional<Estadia> findByReservaId(@Param("idReserva") Integer idReserva);
 }

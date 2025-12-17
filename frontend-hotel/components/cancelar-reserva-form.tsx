@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -27,6 +27,7 @@ import {
     Trash2
 } from "lucide-react"
 import { buscarReservasPorHuesped, cancelarReservas } from "@/lib/api"
+import { esReservaPasada, estaLinkeadaAEstadia } from "@/lib/reserva-utils"
 
 // Tipo de dato para la grilla
 interface ReservaRow {
@@ -37,6 +38,8 @@ interface ReservaRow {
     tipoHabitacion: string
     fechaInicio: string
     fechaFin: string
+    fechaHasta: string; // AGREGAR: Para que esReservaPasada funcione
+    idEstadia?: number; // AGREGAR: Para detectar si está linkeada
 }
 
 export function CancelarReservaForm() {
@@ -65,11 +68,10 @@ export function CancelarReservaForm() {
             setFieldErrors(prev => ({ ...prev, [campo]: undefined }))
             return
         }
-
-        if (!REGEX_SOLO_LETRAS.test(valor)) {
+        if (!REGEX_SOLO_LETRAS.test(valor) || valor.length > 1) {
             setFieldErrors(prev => ({
                 ...prev,
-                [campo]: "Solo se permiten letras y espacios."
+                [campo]: "Solo se permite una letra."
             }))
         } else {
             setFieldErrors(prev => ({ ...prev, [campo]: undefined }))
@@ -88,25 +90,30 @@ export function CancelarReservaForm() {
             return
         }
 
-        // Validaciones CU06 Paso 3.A
-        if (!apellido.trim()) {
-            setError("El campo apellido no puede estar vacío.")
+        // Permitir búsqueda solo si hay una sola letra en alguno de los campos
+        if ((apellido && apellido.length !== 1) && (nombre && nombre.length !== 1)) {
+            setError("Debe ingresar solo una letra en apellido o nombre.")
+            return
+        }
+        if (!apellido && !nombre) {
+            setError("Debe ingresar una letra en apellido o nombre.")
             return
         }
 
         try {
             const data = await buscarReservasPorHuesped(apellido, nombre)
 
-            // Mapeamos lo que viene del back a la estructura de la tabla (CON EL FIX QUE HICIMOS ANTES)
             const filas: ReservaRow[] = data.map((d: any) => ({
-                idReserva: d.idReserva || d.id,
-                apellido: d.apellidoHuespedResponsable || d.apellidoHuesped || apellido,
-                nombre: d.nombreHuespedResponsable || d.nombreHuesped || nombre,
-                nroHabitacion: d.idHabitacion || d.nroHabitacion,
-                tipoHabitacion: d.tipoHabitacion || "Estándar",
-                fechaInicio: d.fechaDesde || d.fechaInicio,
-                fechaFin: d.fechaHasta || d.fechaFin
-            }))
+            idReserva: d.idReserva,
+            apellido: d.apellidoHuespedResponsable,
+            nombre: d.nombreHuespedResponsable,
+            nroHabitacion: d.idHabitacion || d.nroHabitacion, // El back ahora manda idHabitacion
+            tipoHabitacion: d.tipoHabitacion || "Estándar",   // El back ahora manda el tipo correcto
+            fechaInicio: d.fechaDesde,
+            fechaFin: d.fechaHasta,    // Para mostrar en tabla
+            fechaHasta: d.fechaHasta,  // IMPORTANTE: Para esReservaPasada
+            idEstadia: d.idEstadia     // IMPORTANTE: Para estaLinkeadaAEstadia
+}))
 
             setResultados(filas)
             setHasSearched(true)
@@ -202,14 +209,16 @@ export function CancelarReservaForm() {
                                 <Label htmlFor="apellido" className="text-slate-600">Apellido del Responsable *</Label>
                                 <Input
                                     id="apellido"
-                                    placeholder="Ej: Perez"
+                                    placeholder="Ej: P"
                                     value={apellido}
+                                    maxLength={1}
                                     onChange={(e) => {
-                                        setApellido(e.target.value)
+                                        const val = e.target.value.toUpperCase().replace(/[^A-ZÀ-ŸÑ\s]/g, "").slice(0, 1)
+                                        setApellido(val)
                                         if (fieldErrors.apellido) setFieldErrors(prev => ({...prev, apellido: undefined}))
                                     }}
                                     onBlur={(e) => validarCampo("apellido", e.target.value)}
-                                    className={`bg-white ${fieldErrors.apellido || (error && !apellido) ? "border-red-500 ring-red-200" : "focus:ring-blue-500"}`}
+                                    className={`bg-white ${fieldErrors.apellido ? "border-red-500 ring-red-200" : "focus:ring-blue-500"}`}
                                 />
                                 {fieldErrors.apellido && (
                                     <p className="text-xs text-red-500 font-medium animate-pulse">
@@ -223,10 +232,12 @@ export function CancelarReservaForm() {
                                 <Label htmlFor="nombre" className="text-slate-600">Nombre (Opcional)</Label>
                                 <Input
                                     id="nombre"
-                                    placeholder="Ej: Juan"
+                                    placeholder="Ej: J"
                                     value={nombre}
+                                    maxLength={1}
                                     onChange={(e) => {
-                                        setNombre(e.target.value)
+                                        const val = e.target.value.toUpperCase().replace(/[^A-ZÀ-ŸÑ\s]/g, "").slice(0, 1)
+                                        setNombre(val)
                                         if (fieldErrors.nombre) setFieldErrors(prev => ({...prev, nombre: undefined}))
                                     }}
                                     onBlur={(e) => validarCampo("nombre", e.target.value)}
@@ -268,43 +279,56 @@ export function CancelarReservaForm() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="relative w-full overflow-auto">
-                                <Table>
-                                    <TableHeader className="bg-slate-50 dark:bg-slate-900">
-                                        <TableRow>
-                                            <TableHead className="w-[50px] text-center">Sel.</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Apellido</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Nombres</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Habitación</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Tipo</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Desde</TableHead>
-                                            <TableHead className="font-semibold text-slate-700">Hasta</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {resultados.map((res) => (
-                                            <TableRow
-                                                key={res.idReserva}
-                                                className={`transition-colors ${seleccionados.includes(res.idReserva) ? "bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
-                                            >
-                                                <TableCell className="text-center">
-                                                    <Checkbox
-                                                        checked={seleccionados.includes(res.idReserva)}
-                                                        onCheckedChange={() => toggleSeleccion(res.idReserva)}
-                                                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium text-slate-900">{res.apellido}</TableCell>
-                                                <TableCell>{res.nombre}</TableCell>
-                                                <TableCell>
-                                                    <span className="font-mono font-bold text-slate-600">{res.nroHabitacion}</span>
-                                                </TableCell>
-                                                <TableCell>{res.tipoHabitacion}</TableCell>
-                                                <TableCell className="text-slate-500">{new Date(res.fechaInicio).toLocaleDateString()}</TableCell>
-                                                <TableCell className="text-slate-500">{new Date(res.fechaFin).toLocaleDateString()}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                                        <thead className="bg-slate-50 dark:bg-slate-900">
+                                            <tr>
+                                                <th className="w-[50px] text-center">Sel.</th>
+                                                <th className="font-semibold text-slate-700">Apellido</th>
+                                                <th className="font-semibold text-slate-700">Nombres</th>
+                                                <th className="font-semibold text-slate-700">Habitación</th>
+                                                <th className="font-semibold text-slate-700">Tipo</th>
+                                                <th className="font-semibold text-slate-700">Desde</th>
+                                                <th className="font-semibold text-slate-700">Hasta</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {resultados.map((res) => {
+                                                const pasada = esReservaPasada(res);
+                                                const linkeada = estaLinkeadaAEstadia(res);
+                                                const deshabilitada = pasada || linkeada;
+                                                return (
+                                                    <tr
+                                                        key={res.idReserva}
+                                                        className={`transition-colors ${seleccionados.includes(res.idReserva) ? "bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:hover:bg-red-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                                                    >
+                                                        <td className="text-center">
+                                                            <Checkbox
+                                                                checked={seleccionados.includes(res.idReserva)}
+                                                                onCheckedChange={() => !deshabilitada && toggleSeleccion(res.idReserva)}
+                                                                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                                                                disabled={deshabilitada}
+                                                            />
+                                                        </td>
+                                                        <td className="font-medium text-slate-900">{res.apellido}</td>
+                                                        <td>{res.nombre}</td>
+                                                        <td>
+                                                            <span className="font-mono font-bold text-slate-600">{res.nroHabitacion}</span>
+                                                        </td>
+                                                        <td>{res.tipoHabitacion}</td>
+                                                        <td className="text-slate-500">{new Date(res.fechaInicio).toLocaleDateString()}</td>
+                                                        <td className="text-slate-500">{new Date(res.fechaFin).toLocaleDateString()}</td>
+                                                        {deshabilitada && (
+                                                            <td className="text-xs text-red-500 font-semibold">
+                                                                {pasada ? "Reserva pasada" : "Vinculada a estadía"}
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <div className="flex justify-end gap-3 p-6 bg-slate-50/50 dark:bg-slate-900/20 border-t border-slate-100">
