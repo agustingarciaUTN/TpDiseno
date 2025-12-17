@@ -48,6 +48,34 @@ const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
     OTRO: "Otro",
 }
 
+const CONFIG_DOCUMENTOS: Record<string, { regex: RegExp; error: string; placeholder: string }> = {
+    DNI: {
+        regex: /^\d{7,8}$/,
+        error: "El DNI debe tener 7 u 8 números",
+        placeholder: "Ej: 12345678"
+    },
+    PASAPORTE: {
+        regex: /^[A-Z0-9]{6,9}$/,
+        error: "El pasaporte debe tener 6 a 9 caracteres alfanuméricos",
+        placeholder: "Ej: A1234567"
+    },
+    LC: {
+        regex: /^\d{6,8}$/,
+        error: "La LC debe tener 6 a 8 números",
+        placeholder: "Ej: 1234567"
+    },
+    LE: {
+        regex: /^\d{6,8}$/,
+        error: "La LE debe tener 6 a 8 números",
+        placeholder: "Ej: 1234567"
+    },
+    OTRO: {
+        regex: /^[a-zA-Z0-9]{5,20}$/,
+        error: "Formato inválido (5-20 caracteres)",
+        placeholder: "Nro. de Identificación"
+    }
+}
+
 export default function BuscarHuesped() {
     const router = useRouter()
     const { setSelectedGuest } = useGuest()
@@ -73,27 +101,18 @@ export default function BuscarHuesped() {
             case "apellido":
             case "nombres":
                 if (!value.trim()) return ""
-                // Nota: Mantengo tu lógica de 1 sola letra si es lo que deseas,
-                // si quisieras buscar por nombre completo, quita estas dos líneas:
                 if (value.length > 1) return "Solo ingrese una letra inicial"
                 if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ]$/.test(value)) return "Solo puede contener una letra"
                 return ""
 
             case "nroDocumento":
-                if (!form.tipoDocumento && value) return "Seleccione tipo primero"
                 if (!value.trim()) return ""
+                if (!form.tipoDocumento) return "Seleccione tipo primero"
 
-                switch (form.tipoDocumento) {
-                    case "DNI":
-                    case "LE":
-                    case "LC":
-                        if (!/^\d{7,8}$/.test(value)) return "Debe contener 7 u 8 dígitos"
-                        break
-                    case "PASAPORTE":
-                        if (!/^[A-Za-z0-9]+$/.test(value)) return "Puede contener letras y números"
-                        break
+                const config = CONFIG_DOCUMENTOS[form.tipoDocumento]
+                if (config && !config.regex.test(value)) {
+                    return config.error
                 }
-                if (!/^[^\s]+$/.test(value)) return "El documento no debe contener espacios ni símbolos"
                 return ""
 
             default:
@@ -103,7 +122,18 @@ export default function BuscarHuesped() {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        setForm((prev) => ({ ...prev, [name]: value }))
+        // Convertir a mayúsculas automáticamente si son iniciales para consistencia
+        const finalValue = (name === "apellido" || name === "nombres") ? value.toUpperCase() : value
+        setForm((prev) => ({ ...prev, [name]: finalValue }))
+
+        // Si se cambia el tipo de documento, limpiamos error del número para revalidar luego
+        if (name === "tipoDocumento") {
+            setErrors((prev) => ({ ...prev, nroDocumento: "" }))
+        }
+    }
+
+    const handleBlur = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target
         const error = validateField(name as keyof BuscarHuespedForm, value)
         setErrors((prev) => ({ ...prev, [name]: error }))
     }
@@ -269,6 +299,7 @@ export default function BuscarHuesped() {
                                         name="apellido"
                                         value={form.apellido}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         placeholder="Ej: G"
                                         maxLength={1}
                                         className="bg-white"
@@ -283,6 +314,7 @@ export default function BuscarHuesped() {
                                         name="nombres"
                                         value={form.nombres}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         placeholder="Ej: A"
                                         maxLength={1}
                                         className="bg-white"
@@ -315,8 +347,9 @@ export default function BuscarHuesped() {
                                         name="nroDocumento"
                                         value={form.nroDocumento}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         disabled={!form.tipoDocumento}
-                                        placeholder={form.tipoDocumento ? "Ingrese el número" : "Seleccione tipo primero"}
+                                        placeholder={form.tipoDocumento ? CONFIG_DOCUMENTOS[form.tipoDocumento]?.placeholder : "Seleccione tipo primero"}
                                         className="bg-white"
                                     />
                                     {errors.nroDocumento && <p className="text-xs text-red-500">{errors.nroDocumento}</p>}
