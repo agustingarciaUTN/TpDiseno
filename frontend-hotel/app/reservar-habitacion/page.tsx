@@ -78,6 +78,40 @@ export default function ReservarHabitacion() {
     })
     const [erroresHuesped, setErroresHuesped] = useState<Partial<DatosHuesped>>({})
 
+    // Validación en tiempo real para campos del huésped
+    const validarCampoHuesped = (campo: keyof DatosHuesped, valor: string) => {
+        let error = "";
+        if (campo === "apellido" || campo === "nombres") {
+            const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]+$/;
+            if (!valor.trim()) {
+                error = campo === "apellido" ? "El apellido es obligatorio" : "El nombre es obligatorio";
+            } else if (valor.length < 2 || valor.length > 50) {
+                error = campo === "apellido" ? "El apellido debe tener entre 2 y 50 caracteres" : "El nombre debe tener entre 2 y 50 caracteres";
+            } else if (!regexNombre.test(valor)) {
+                error = campo === "apellido"
+                    ? "El apellido solo puede contener letras, espacios y guiones"
+                    : "El nombre solo puede contener letras, espacios y guiones";
+            }
+        }
+        if (campo === "telefono") {
+            const regexTelefono = /^\+?[0-9\-]+$/;
+            let telefonoNormalizado = valor.trim();
+            if (!telefonoNormalizado.startsWith("+")) {
+                telefonoNormalizado = "+54" + telefonoNormalizado.replace(/[^0-9\-]/g, "");
+            }
+            if (!valor.trim()) {
+                error = "El teléfono es obligatorio";
+            } else if (!regexTelefono.test(telefonoNormalizado)) {
+                error = "El teléfono solo puede contener números, + y guion";
+            } else if (telefonoNormalizado.replace(/[^0-9]/g, "").length < 8) {
+                error = "El teléfono debe tener al menos 8 dígitos";
+            } else if (!/^\+\d{7,15}$/.test(telefonoNormalizado.replace(/-/g, ""))) {
+                error = "El teléfono debe tener formato internacional válido (ej: +541112345678)";
+            }
+        }
+        setErroresHuesped((prev) => ({ ...prev, [campo]: error }));
+    };
+
     // Las habitaciones se cargarán después de seleccionar las fechas
 
     // Validaciones de fechas
@@ -320,42 +354,44 @@ export default function ReservarHabitacion() {
     const validarDatosHuesped = (): boolean => {
         const errores: Partial<DatosHuesped> = {}
 
-        // Regex patterns del backend DtoReserva
-        const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
-        const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
+        // Regex patterns personalizados
+        const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]+$/;
+        const regexTelefono = /^\+?[0-9\-]+$/;
 
-        // Apellido - BACKEND: @NotBlank, @Pattern(REGEX_NOMBRE)
+        // Apellido - solo letras (con acento), espacios y guiones
         if (!datosHuesped.apellido.trim()) {
-            errores.apellido = "El apellido es obligatorio"
+            errores.apellido = "El apellido es obligatorio";
         } else if (datosHuesped.apellido.length < 2 || datosHuesped.apellido.length > 50) {
-            errores.apellido = "El apellido debe tener entre 2 y 50 caracteres"
+            errores.apellido = "El apellido debe tener entre 2 y 50 caracteres";
         } else if (!regexNombre.test(datosHuesped.apellido)) {
-            errores.apellido = "El apellido solo puede contener letras y espacios"
+            errores.apellido = "El apellido solo puede contener letras, espacios y guiones";
         }
 
-        // Nombres - BACKEND: @NotBlank, @Pattern(REGEX_NOMBRE)
+        // Nombres - solo letras (con acento), espacios y guiones
         if (!datosHuesped.nombres.trim()) {
-            errores.nombres = "El nombre es obligatorio"
+            errores.nombres = "El nombre es obligatorio";
         } else if (datosHuesped.nombres.length < 2 || datosHuesped.nombres.length > 50) {
-            errores.nombres = "El nombre debe tener entre 2 y 50 caracteres"
+            errores.nombres = "El nombre debe tener entre 2 y 50 caracteres";
         } else if (!regexNombre.test(datosHuesped.nombres)) {
-            errores.nombres = "El nombre solo puede contener letras y espacios"
+            errores.nombres = "El nombre solo puede contener letras, espacios y guiones";
         }
 
-        // Teléfono - BACKEND: @NotBlank, @Pattern(REGEX_TELEFONO)
+        // Teléfono - solo números, + y guion
         if (!datosHuesped.telefono.trim()) {
-            errores.telefono = "El teléfono es obligatorio"
+            errores.telefono = "El teléfono es obligatorio";
         } else {
-            // Normalizar teléfono: agregar +54 si no tiene código de país
-            let telefonoNormalizado = datosHuesped.telefono.trim()
+            let telefonoNormalizado = datosHuesped.telefono.trim();
+            // Si no empieza con +, agregar +54 (opcional, puedes quitarlo si no quieres forzar código país)
             if (!telefonoNormalizado.startsWith("+")) {
-                telefonoNormalizado = "+54 " + telefonoNormalizado
-                setDatosHuesped((prev) => ({ ...prev, telefono: telefonoNormalizado }))
+                telefonoNormalizado = "+54" + telefonoNormalizado.replace(/[^0-9\-]/g, "");
+                setDatosHuesped((prev) => ({ ...prev, telefono: telefonoNormalizado }));
             }
             if (!regexTelefono.test(telefonoNormalizado)) {
-                errores.telefono = "Formato de teléfono inválido"
+                errores.telefono = "El teléfono solo puede contener números, + y guion";
             } else if (telefonoNormalizado.replace(/[^0-9]/g, "").length < 8) {
-                errores.telefono = "El teléfono debe tener al menos 8 dígitos"
+                errores.telefono = "El teléfono debe tener al menos 8 dígitos";
+            } else if (!/^\+\d{7,15}$/.test(telefonoNormalizado.replace(/-/g, ""))) {
+                errores.telefono = "El teléfono debe tener formato internacional válido (ej: +541112345678)";
             }
         }
 
@@ -584,21 +620,7 @@ export default function ReservarHabitacion() {
                             </Card>
                         ) : (
                             <>
-                                {/* Resumen de estados */}
-                                <div className="grid grid-cols-3 gap-4">
-                                    <Card className="border-l-4 border-green-500 p-4">
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">Disponibles</p>
-                                        <p className="text-3xl font-bold text-green-600 dark:text-green-400">{conteo.disponibles}</p>
-                                    </Card>
-                                    <Card className="border-l-4 border-orange-500 p-4">
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">Reservadas</p>
-                                        <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{conteo.reservadas}</p>
-                                    </Card>
-                                    <Card className="border-l-4 border-red-500 p-4">
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">Ocupadas</p>
-                                        <p className="text-3xl font-bold text-red-600 dark:text-red-400">{conteo.ocupadas}</p>
-                                    </Card>
-                                </div>
+                                {/* Resumen de estados eliminado por requerimiento */}
 
                                 {/* Instrucciones */}
                                 <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
@@ -804,7 +826,10 @@ export default function ReservarHabitacion() {
                                 <Input
                                     id="apellido"
                                     value={datosHuesped.apellido}
-                                    onChange={(e) => setDatosHuesped((prev) => ({ ...prev, apellido: e.target.value }))}
+                                    onChange={(e) => {
+                                        setDatosHuesped((prev) => ({ ...prev, apellido: e.target.value }));
+                                        validarCampoHuesped("apellido", e.target.value);
+                                    }}
                                 />
                                 {erroresHuesped.apellido && (
                                     <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.apellido}</p>
@@ -815,7 +840,10 @@ export default function ReservarHabitacion() {
                                 <Input
                                     id="nombres"
                                     value={datosHuesped.nombres}
-                                    onChange={(e) => setDatosHuesped((prev) => ({ ...prev, nombres: e.target.value }))}
+                                    onChange={(e) => {
+                                        setDatosHuesped((prev) => ({ ...prev, nombres: e.target.value }));
+                                        validarCampoHuesped("nombres", e.target.value);
+                                    }}
                                 />
                                 {erroresHuesped.nombres && (
                                     <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.nombres}</p>
@@ -826,7 +854,10 @@ export default function ReservarHabitacion() {
                                 <Input
                                     id="telefono"
                                     value={datosHuesped.telefono}
-                                    onChange={(e) => setDatosHuesped((prev) => ({ ...prev, telefono: e.target.value }))}
+                                    onChange={(e) => {
+                                        setDatosHuesped((prev) => ({ ...prev, telefono: e.target.value }));
+                                        validarCampoHuesped("telefono", e.target.value);
+                                    }}
                                 />
                                 {erroresHuesped.telefono && (
                                     <p className="text-sm text-red-600 dark:text-red-400">{erroresHuesped.telefono}</p>
@@ -847,82 +878,87 @@ export default function ReservarHabitacion() {
 
                 {/* PASO 5: Confirmación */}
                 {paso === "confirmacion" && (
-                    <Card className="p-6 max-w-md">
-                        <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-50">Confirmación de reserva</h2>
-                        <div className="space-y-4">
-                            <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Fecha desde:</p>
-                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                                    {createLocalDate(fechaDesde).toLocaleDateString()}
-                                </p>
-                            </Card>
-                            <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Fecha hasta:</p>
-                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                                    {createLocalDate(fechaHasta).toLocaleDateString()}
-                                </p>
-                            </Card>
-                            <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Huésped responsable:</p>
-                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">{`${datosHuesped.nombres} ${datosHuesped.apellido}`}</p>
-                            </Card>
-                            <Card className="border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Teléfono:</p>
-                                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">{datosHuesped.telefono}</p>
-                            </Card>
-                            <Card className="p-6">
-                                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">
-                                    Habitaciones seleccionadas
-                                </h3>
-                                <div className="space-y-3">
-                                    {selecciones.map((sel, idx) => {
-                                        const hab = habitaciones.find((h: HabitacionEstado) => h.id === sel.habitacionId)
-                                        if (!hab) return null
-                                        const noches = sel.diaFin - sel.diaInicio + 1
-                                        const subtotal = hab.precioNoche * noches
-                                        return (
-                                            <div
-                                                key={idx}
-                                                className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700"
-                                            >
-                                                <div>
-                                                    <p className="font-semibold text-slate-900 dark:text-white">
-                                                        Habitación {hab.numero} ({hab.tipo})
-                                                    </p>
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {diasRango[sel.diaInicio]?.toLocaleDateString()} -{" "}
-                                                        {diasRango[sel.diaFin]?.toLocaleDateString()} ({noches} noche{noches > 1 ? "s" : ""})
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <p className="text-blue-600 dark:text-blue-400 font-semibold">${subtotal}</p>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
+                    <Card className="p-8 max-w-2xl mx-auto">
+                        <h2 className="text-xl font-semibold mb-6 text-slate-900 dark:text-slate-50">Confirmación de reserva</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {/* Fechas */}
+                            <div>
+                                <div className="text-sm text-slate-500 mb-1">Fecha desde:</div>
+                                <div className="rounded-lg bg-blue-50/50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 px-4 py-3 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                                    {fechaDesde && createLocalDate(fechaDesde).toLocaleDateString()}
                                 </div>
-                                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">Total:</p>
-                                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${calcularTotal()}</p>
+                            </div>
+                            <div>
+                                <div className="text-sm text-slate-500 mb-1">Fecha hasta:</div>
+                                <div className="rounded-lg bg-blue-50/50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 px-4 py-3 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                                    {fechaHasta && createLocalDate(fechaHasta).toLocaleDateString()}
                                 </div>
-                            </Card>
-                            <div className="flex gap-3 mt-6">
-                                <Button onClick={handleVolverPaso} variant="outline" className="flex-1 bg-transparent" disabled={loading}>
+                            </div>
+                            {/* Huesped responsable y teléfono */}
+                            <div>
+                                <div className="text-sm text-slate-500 mb-1">Huésped responsable:</div>
+                                <div className="rounded-lg bg-blue-50/50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 px-4 py-3 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                                    {datosHuesped.nombres} {datosHuesped.apellido}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-sm text-slate-500 mb-1">Teléfono:</div>
+                                <div className="rounded-lg bg-blue-50/50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900 px-4 py-3 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                                    {datosHuesped.telefono}
+                                </div>
+                            </div>
+                        </div>
+                        {/* Habitaciones reservadas */}
+                        <div className="mb-6">
+                            <div className="text-sm text-slate-500 mb-1">Habitaciones reservadas:</div>
+                            <div className="space-y-2">
+                                {selecciones.map((sel, idx) => {
+                                    const habitacion = habitaciones.find(h => h.id === sel.habitacionId)
+                                    const diaInicioDate = diasRango[sel.diaInicio]
+                                    const diaFinDate = diasRango[sel.diaFin]
+                                    return (
+                                        <div key={idx} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 flex flex-col md:flex-row md:items-center md:gap-4">
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300">Habitación {habitacion?.numero}</span>
+                                            <span className="text-slate-600 dark:text-slate-300">{formatearTipo(habitacion?.tipo || "")}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">{habitacion?.capacidad} personas</span>
+                                            <span className="text-slate-500 dark:text-slate-400 ml-auto">{diaInicioDate.toLocaleDateString()} - {diaFinDate.toLocaleDateString()}</span>
+                                            <span className="text-slate-900 dark:text-slate-50 font-semibold ml-4">${habitacion ? habitacion.precioNoche * (sel.diaFin - sel.diaInicio + 1) : 0}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                        {/* Total y acciones */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="text-lg font-bold text-slate-900 dark:text-slate-50">
+                                Total: ${calcularTotal()}
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-50 font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition"
+                                    onClick={handleVolverPaso}
+                                    disabled={loading}
+                                >
                                     ← Atrás
-                                </Button>
-                                <Button onClick={handleFinalizarReserva} className="flex-1 gap-2" disabled={loading}>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                                    onClick={handleFinalizarReserva}
+                                    disabled={loading}
+                                >
                                     {loading ? (
                                         <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Procesando...
+                                            <Loader2 className="h-4 w-4 animate-spin" /> Procesando...
                                         </>
                                     ) : (
                                         <>
-                                            Finalizar
-                                            <CheckCircle className="h-4 w-4" />
+                                            Confirmar reserva
+                                            <CheckCircle className="h-4 w-4 ml-2" />
                                         </>
                                     )}
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </Card>
