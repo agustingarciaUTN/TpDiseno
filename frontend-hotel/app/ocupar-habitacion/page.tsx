@@ -201,23 +201,24 @@ export default function OcuparHabitacion() {
         setErrorCarga("No se encontraron habitaciones");
         return false;
       }
-      const habitacionesMapeadas = data.map((h: any) => {
-        const estadosPorDia = h.estadosPorDia || {};
-        const todosLosEstados = Object.values(estadosPorDia);
-        const esFueraDeServicio = todosLosEstados.length > 0 && todosLosEstados.every((estado: any) => estado === "MANTENIMIENTO");
-        const estadoReservaBase = (estadosPorDia[fechaDesde]) || "DISPONIBLE";
-        return {
-          id: h.numero.toString(),
-          numero: h.numero.toString(),
-          tipo: h.tipoHabitacion,
-          capacidad: h.capacidad,
-          estadoHabitacion: esFueraDeServicio ? "FUERA_DE_SERVICIO" : "HABILITADA",
-          estado: estadoReservaBase as "DISPONIBLE" | "RESERVADA" | "OCUPADA",
-          estadosPorDia: estadosPorDia,
-          precioNoche: h.costoPorNoche
-        };
-      });
-      setHabitaciones(habitacionesMapeadas);
+        const habitacionesMapeadas = data.map((h: any) => {
+            const estadosPorDia = h.estadosPorDia || {};
+            const todosLosEstados = Object.values(estadosPorDia);
+            const esFueraDeServicio = todosLosEstados.length > 0 && todosLosEstados.every((estado: any) => estado === "MANTENIMIENTO");
+            const estadoReservaBase = (estadosPorDia[fechaDesde]) || "DISPONIBLE";
+            return {
+                id: h.numero.toString(),
+                numero: h.numero.toString(),
+                tipo: h.tipoHabitacion,
+                capacidad: h.capacidad,
+                estadoHabitacion: (esFueraDeServicio ? "FUERA_DE_SERVICIO" : "HABILITADA") as "HABILITADA" | "FUERA_DE_SERVICIO",
+                estado: estadoReservaBase as "DISPONIBLE" | "RESERVADA" | "OCUPADA",
+                estadosPorDia: estadosPorDia,
+                precioNoche: h.costoPorNoche
+            };
+        });
+
+        setHabitaciones(habitacionesMapeadas);
       setFechaDesdeGrilla(fechaDesde);
       setFechaHastaGrilla(fechaHasta);
       setErrorCarga("");
