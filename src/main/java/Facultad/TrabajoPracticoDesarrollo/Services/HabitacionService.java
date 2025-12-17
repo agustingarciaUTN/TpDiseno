@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 /**
  * Inventario de Habitaciones.
@@ -37,21 +37,11 @@ public class HabitacionService {
         this.estadiaRepository = estadiaRepository;
     }
 
-    /**
-     * Trae todas las habitaciones del hotel.
-     * Las ordena por tipo (primero las Simples, luego Dobles, etc.) para que
-     * en la pantalla se vean ordenaditas y no mezcladas.
-     *
-     * @return Lista completa y ordenada de habitaciones.
-     */
     @Transactional(readOnly = true)
     public List<Habitacion> obtenerTodas() {
         List<Habitacion> habitaciones = habitacionRepository.findAll();
-
-        // Ordenamiento en memoria para respetar el orden del Enum (Ordinal)
         habitaciones.sort(Comparator.comparing(Habitacion::getTipoHabitacion)
                 .thenComparing(Habitacion::getNumero));
-
         return habitaciones;
     }
 
@@ -60,89 +50,64 @@ public class HabitacionService {
         return habitacionRepository.findById(numero).orElse(null);
     }
 
-    /**
-     * Validación auxiliar de fechas.
-     * Se asegura de que no estemos intentando viajar al pasado (Fin antes que Inicio)
-     * y que no pidan un rango exagerado (más de 60 días) que rompa la vista.
-     */
     public boolean validarRangoFechas(Date inicio, Date fin) {
         if (inicio == null || fin == null) return false;
-
-        if (inicio.after(fin)) {
-            System.out.println("Error: La fecha de fin debe ser posterior a la de inicio.");
-            return false;
-        }
-
-        // Regla: No permitir rangos mayores a 60 días para la grilla visual
+        if (inicio.after(fin)) return false;
         long diferencia = Math.abs(fin.getTime() - inicio.getTime());
         long dias = TimeUnit.DAYS.convert(diferencia, TimeUnit.MILLISECONDS);
-
-        if (dias > 60) {
-            System.out.println("Error: El rango de visualización no puede superar los 60 días.");
-            return false;
-        }
-        return true;
+        return dias <= 60;
     }
 
     /**
      * Genera el reporte completo para la pantalla de "Estado de Habitaciones".
-     * Itera día por día en el rango solicitado y calcula el estado de cada habitación.
-     * Devuelve una estructura lista para ser consumida por el frontend.
+     * Ahora devuelve un objeto detallado por día con metadata de reservas.
      */
     @Transactional(readOnly = true)
-    public List<java.util.Map<String, Object>> obtenerEstadoPorFechas(String fechaDesdeStr, String fechaHastaStr) {
+    public List<Map<String, Object>> obtenerEstadoPorFechas(String fechaDesdeStr, String fechaHastaStr) {
         try {
-            System.out.println("Obteniendo estado para fechas: " + fechaDesdeStr + " a " + fechaHastaStr);
+            LocalDate fechaDesde = LocalDate.parse(fechaDesdeStr);
+            LocalDate fechaHasta = LocalDate.parse(fechaHastaStr);
             
-            java.time.LocalDate fechaDesde = java.time.LocalDate.parse(fechaDesdeStr);
-            java.time.LocalDate fechaHasta = java.time.LocalDate.parse(fechaHastaStr);
-            
-            // Convertir a Date para las consultas
+            // Convertir a Date para los repositorios
             Date inicio = convertToDate(fechaDesde);
             Date fin = convertToDate(fechaHasta);
             
-            System.out.println("Buscando reservas activas en el rango...");
-            // Obtener todas las reservas y estadías del rango
+            // Buscar reservas y estadías que toquen el rango
             List<Reserva> reservasActivas = reservaRepository.buscarReservasActivasEnRango(inicio, fin);
-            System.out.println("Reservas encontradas: " + (reservasActivas != null ? reservasActivas.size() : 0));
-            
-            System.out.println("Buscando estadías activas en el rango...");
             List<Estadia> estadiasActivas = estadiaRepository.buscarEstadiasEnRango(inicio, fin);
-            System.out.println("Estadías encontradas: " + (estadiasActivas != null ? estadiasActivas.size() : 0));
             
             List<Habitacion> todasHabitaciones = obtenerTodas();
-            System.out.println("Total habitaciones: " + todasHabitaciones.size());
             
-            List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
+            List<Map<String, Object>> resultado = new ArrayList<>();
             
             for (Habitacion hab : todasHabitaciones) {
-                java.util.Map<String, Object> habInfo = new java.util.HashMap<>();
+                Map<String, Object> habInfo = new HashMap<>();
                 habInfo.put("numero", hab.getNumero());
                 habInfo.put("tipoHabitacion", hab.getTipoHabitacion() != null ? hab.getTipoHabitacion().toString() : "DESCONOCIDO");
                 habInfo.put("capacidad", hab.getCapacidad());
                 habInfo.put("costoPorNoche", hab.getCostoPorNoche());
                 
-                // Calcular estado para cada día del rango
-                java.util.Map<String, String> estadosPorDia = new java.util.HashMap<>();
-                java.time.LocalDate diaActual = fechaDesde;
+                // Calcular estado detallado para cada día
+                Map<String, Object> estadosPorDia = new HashMap<>();
+                LocalDate diaActual = fechaDesde;
                 
                 while (!diaActual.isAfter(fechaHasta)) {
-                    String estado = determinarEstadoHabitacion(hab, diaActual, reservasActivas, estadiasActivas);
-                    estadosPorDia.put(diaActual.toString(), estado);
+                    Map<String, Object> estadoDetalle = determinarEstadoDetallado(hab, diaActual, reservasActivas, estadiasActivas);
+                    estadosPorDia.put(diaActual.toString(), estadoDetalle);
                     diaActual = diaActual.plusDays(1);
                 }
                 
                 habInfo.put("estadosPorDia", estadosPorDia);
-                // Estado general (del primer día para compatibilidad)
-                habInfo.put("estadoHabitacion", estadosPorDia.get(fechaDesde.toString()));
+                
+                // Estado general (compatible con versiones simples)
+                Map<String, Object> estadoHoy = (Map<String, Object>) estadosPorDia.get(fechaDesde.toString());
+                habInfo.put("estadoHabitacion", estadoHoy.get("estado"));
                 
                 resultado.add(habInfo);
             }
             
-            System.out.println("Resultado final: " + resultado.size() + " habitaciones procesadas con estados por día");
             return resultado;
         } catch (Exception e) {
-            System.err.println("Error en obtenerEstadoPorFechas: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error al calcular estados: " + e.getMessage(), e);
         }
@@ -151,82 +116,81 @@ public class HabitacionService {
     // --- MÉTODOS PRIVADOS ---
 
     /**
-     * El cerebro de la Grilla de Estados.
-     * Cruza tres fuentes de verdad para determinar el color de la celda:
-     * 1. Estado Físico (Mantenimiento).
-     * 2. Ocupación Real (Estadía activa en esa fecha).
-     * 3. Compromiso Futuro (Reserva confirmada en esa fecha).
-     *
-     * @return "MANTENIMIENTO", "OCUPADA", "RESERVADA" o "DISPONIBLE".
+     * Determina el estado y devuelve un mapa con metadata (ids, fechas reales, etc.)
      */
-    private String determinarEstadoHabitacion(
+    private Map<String, Object> determinarEstadoDetallado(
             Habitacion hab, 
-            java.time.LocalDate fecha,
+            LocalDate fecha,
             List<Reserva> reservasActivas,
             List<Estadia> estadiasActivas
     ) {
-        // 1. Verificar estado físico primero
+        Map<String, Object> detalle = new HashMap<>();
+        
+        // 1. Verificar estado físico primero (Mantenimiento)
         if (hab.getEstadoHabitacion() != null && 
             hab.getEstadoHabitacion().getDescripcion().contains("FUERA")) {
-            return "MANTENIMIENTO";
+            detalle.put("estado", "MANTENIMIENTO");
+            return detalle;
         }
         
         // 2. Verificar si hay estadía activa (OCUPADA)
-        boolean tieneEstadia = estadiasActivas.stream()
-            .anyMatch(e -> {
-                if (e.getHabitacion() == null || !e.getHabitacion().getNumero().equals(hab.getNumero())) {
-                    return false;
-                }
+        Estadia estadiaFound = estadiasActivas.stream()
+            .filter(e -> {
+                if (e.getHabitacion() == null || !e.getHabitacion().getNumero().equals(hab.getNumero())) return false;
                 if (e.getFechaCheckIn() == null) return false;
                 
-                java.time.LocalDate checkIn = convertToLocalDate(e.getFechaCheckIn());
-                java.time.LocalDate checkOut = e.getFechaCheckOut() != null ? 
-                    convertToLocalDate(e.getFechaCheckOut()) : fecha.plusYears(1);
+                LocalDate checkIn = convertToLocalDate(e.getFechaCheckIn());
+                LocalDate checkOut = e.getFechaCheckOut() != null ? 
+                    convertToLocalDate(e.getFechaCheckOut()) : fecha.plusYears(1); // Si no tiene checkout, asumimos ocupada indefinidamente por ahora
                     
                 return !fecha.isBefore(checkIn) && fecha.isBefore(checkOut);
-            });
+            })
+            .findFirst()
+            .orElse(null);
         
-        if (tieneEstadia) return "OCUPADA";
+        if (estadiaFound != null) {
+            detalle.put("estado", "OCUPADA");
+            detalle.put("idEstadia", estadiaFound.getIdEstadia());
+            return detalle;
+        }
         
         // 3. Verificar si hay reserva activa (RESERVADA)
-        boolean tieneReserva = reservasActivas.stream()
-            .anyMatch(r -> {
-                if (r.getHabitacion() == null || !r.getHabitacion().getNumero().equals(hab.getNumero())) {
-                    return false;
-                }
+        Reserva reservaFound = reservasActivas.stream()
+            .filter(r -> {
+                if (r.getHabitacion() == null || !r.getHabitacion().getNumero().equals(hab.getNumero())) return false;
                 if (r.getFechaDesde() == null || r.getFechaHasta() == null) return false;
                 
-                java.time.LocalDate desde = convertToLocalDate(r.getFechaDesde());
-                java.time.LocalDate hasta = convertToLocalDate(r.getFechaHasta());
+                LocalDate desde = convertToLocalDate(r.getFechaDesde());
+                LocalDate hasta = convertToLocalDate(r.getFechaHasta());
                 
+                // [desde, hasta) -> incluye inicio, excluye fin (check-out)
                 return !fecha.isBefore(desde) && fecha.isBefore(hasta);
-            });
+            })
+            .findFirst()
+            .orElse(null);
         
-        if (tieneReserva) return "RESERVADA";
+        if (reservaFound != null) {
+            detalle.put("estado", "RESERVADA");
+            detalle.put("idReserva", reservaFound.getIdReserva());
+            // Enviamos fechas reales para validación en frontend
+            detalle.put("fechaInicio", reservaFound.getFechaDesde().toString()); 
+            detalle.put("fechaFin", reservaFound.getFechaHasta().toString());
+            return detalle;
+        }
         
         // 4. Si no tiene nada, está disponible
-        return "DISPONIBLE";
+        detalle.put("estado", "DISPONIBLE");
+        return detalle;
     }
 
-    /**
-     * Convierte Date (Legacy) a LocalDate (Moderno) de forma segura,
-     * soportando tanto java.util.Date como java.sql.Date para evitar ClassCastException.
-     */
-    private java.time.LocalDate convertToLocalDate(Date date) {
-        // Manejar tanto java.util.Date como java.sql.Date
+    private LocalDate convertToLocalDate(Date date) {
         if (date instanceof java.sql.Date) {
             return ((java.sql.Date) date).toLocalDate();
         }
-        return date.toInstant()
-            .atZone(java.time.ZoneId.systemDefault())
-            .toLocalDate();
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    /**
-     * Convierte a la inversa: LocalDate a Date.
-     * Necesario porque la base de datos (JPA) a veces prefiere Date antiguo.
-     */
-    private Date convertToDate(java.time.LocalDate localDate) {
-        return Date.from(localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+    private Date convertToDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 }
