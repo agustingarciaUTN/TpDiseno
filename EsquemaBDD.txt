@@ -20,11 +20,7 @@ CREATE TABLE "cheque" (
 	"numero_cheque" varchar(50) PRIMARY KEY,
 	"banco" varchar(100),
 	"fecha_cobro" date,
-	"plaza" text,
-	"fecha_de_pago" date,
-	"moneda" varchar(255),
-	"monto" double precision,
-	CONSTRAINT "cheque_moneda_check" CHECK (CHECK (((moneda)::text = ANY ((ARRAY['PESOS_ARGENTINOS'::character varying, 'DOLARES'::character varying, 'REALES'::character varying, 'PESOS_URUGUAYOS'::character varying, 'EUROS'::character varying])::text[]))))
+	"plaza" text
 );
 CREATE TABLE "direccion" (
 	"id_direccion" serial PRIMARY KEY,
@@ -41,8 +37,7 @@ CREATE TABLE "efectivo" (
 	"id_efectivo" serial PRIMARY KEY,
 	"fecha_de_pago" date,
 	"moneda" varchar(255),
-	"monto" real,
-	CONSTRAINT "efectivo_moneda_check" CHECK (CHECK (((moneda)::text = ANY ((ARRAY['PESOS_ARGENTINOS'::character varying, 'DOLARES'::character varying, 'REALES'::character varying, 'PESOS_URUGUAYOS'::character varying, 'EUROS'::character varying])::text[]))))
+	"monto" real
 );
 CREATE TABLE "email_huesped" (
 	"email" text,
@@ -62,7 +57,7 @@ CREATE TABLE "estadia_huesped" (
 	"id_estadia" integer,
 	"tipo_documento" Tipo_Documento,
 	"nro_documento" varchar(20),
-	"responsable" EsResponsable DEFAULT 'NO',
+	"EsResponsable" EsResponsable DEFAULT 'NO',
 	CONSTRAINT "estadia_huesped_pkey" PRIMARY KEY("id_estadia","tipo_documento","nro_documento")
 );
 CREATE TABLE "factura" (
@@ -135,8 +130,7 @@ CREATE TABLE "persona_fisica" (
 CREATE TABLE "persona_juridica" (
 	"id_responsable" integer PRIMARY KEY,
 	"razon_social" varchar(200) NOT NULL,
-	"cuit" varchar(20),
-	"id_direccion" serial
+	"cuit" varchar(20)
 );
 CREATE TABLE "reserva" (
 	"id_reserva" serial PRIMARY KEY,
@@ -174,10 +168,6 @@ CREATE TABLE "tarjeta" (
 	"Red_de_pago" RedDePago NOT NULL,
 	"codigo_seg" integer,
 	"fecha_vencimiento" date,
-	"fecha_pago" date,
-	"moneda" varchar(255),
-	"monto" double precision,
-	CONSTRAINT "tarjeta_moneda_check" CHECK (CHECK (((moneda)::text = ANY ((ARRAY['PESOS_ARGENTINOS'::character varying, 'DOLARES'::character varying, 'REALES'::character varying, 'PESOS_URUGUAYOS'::character varying, 'EUROS'::character varying])::text[])))),
 	CONSTRAINT "tarjeta_tipo_tarjeta_check" CHECK (CHECK ((tipo_tarjeta = ANY (ARRAY['C'::bpchar, 'D'::bpchar]))))
 );
 CREATE TABLE "tarjeta_credito" (
@@ -201,11 +191,7 @@ CREATE TABLE "telefonos_personaJuridica" (
 CREATE TABLE "usuario" (
 	"idUsuario" serial PRIMARY KEY,
 	"nombre" varchar(100) NOT NULL,
-	"hashContrasenia" varchar(255) NOT NULL,
-	"id_usuario" integer DEFAULT nextval('usuario_id_usuario_seq1'::regclass) NOT NULL,
-	"contrasenia" varchar(255),
-	"tipo_usuario" varchar(255),
-	"usuario" varchar(255) CONSTRAINT "uk_i02kr8ui5pqddyd7pkm3v4jbt" UNIQUE
+	"hashContrasenia" varchar(255) NOT NULL
 );
 ALTER TABLE "cama" ADD CONSTRAINT "cama_habitacion_fkey" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion"("numero");
 ALTER TABLE "email_huesped" ADD CONSTRAINT "email_huesped_huesped_fkey" FOREIGN KEY ("nro_documento","tipo_documento") REFERENCES "huesped"("numero_documento","tipo_documento");
@@ -222,14 +208,13 @@ ALTER TABLE "factura" ADD CONSTRAINT "fk_factura_responsable" FOREIGN KEY ("id_r
 ALTER TABLE "huesped" ADD CONSTRAINT "fk_huesped_direccion" FOREIGN KEY ("id_direccion") REFERENCES "direccion"("id_direccion");
 ALTER TABLE "huesped" ADD CONSTRAINT "huesped_id_direccion_fkey" FOREIGN KEY ("id_direccion") REFERENCES "direccion"("id_direccion");
 ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_id_efectivo_fkey" FOREIGN KEY ("id_efectivo") REFERENCES "efectivo"("id_efectivo");
-ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_id_pago_fkey" FOREIGN KEY ("id_pago") REFERENCES "pago"("id_pago") ON DELETE CASCADE;
-ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_numero_cheque_fkey" FOREIGN KEY ("numero_cheque") REFERENCES "cheque"("numero_cheque");
+ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_id_pago_fkey" FOREIGN KEY ("id_pago") REFERENCES "pago"("id_pago") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_numero_cheque_fkey" FOREIGN KEY ("numero_cheque") REFERENCES "cheque"("numero_cheque") ON UPDATE CASCADE;
 ALTER TABLE "medio_pago" ADD CONSTRAINT "pago_metodo_numero_tarjeta_fkey" FOREIGN KEY ("numero_tarjeta") REFERENCES "tarjeta"("numero_tarjeta");
 ALTER TABLE "ocupacion_huesped" ADD CONSTRAINT "ocupacion_huesped_huesped_fkey" FOREIGN KEY ("tipo_documento","nro_documento") REFERENCES "huesped"("tipo_documento","numero_documento");
 ALTER TABLE "pago" ADD CONSTRAINT "constraint_1" FOREIGN KEY ("id_factura") REFERENCES "factura"("numero_factura");
 ALTER TABLE "persona_fisica" ADD CONSTRAINT "fkoftxho9uywb62yb4p5yuqff00" FOREIGN KEY ("nro_documento","tipo_documento") REFERENCES "huesped"("numero_documento","tipo_documento");
 ALTER TABLE "persona_fisica" ADD CONSTRAINT "persona_fisica_id_responsable_fkey" FOREIGN KEY ("id_responsable") REFERENCES "responsable_pago"("id_responsable") ON DELETE CASCADE;
-ALTER TABLE "persona_juridica" ADD CONSTRAINT "FK_direccion" FOREIGN KEY ("id_direccion") REFERENCES "direccion"("id_direccion");
 ALTER TABLE "persona_juridica" ADD CONSTRAINT "persona_juridica_id_responsable_fkey" FOREIGN KEY ("id_responsable") REFERENCES "responsable_pago"("id_responsable") ON DELETE CASCADE;
 ALTER TABLE "reserva" ADD CONSTRAINT "reserva_habitacion_fkey" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion"("numero");
 ALTER TABLE "responsable_pago" ADD CONSTRAINT "responsable_pago_id_direccion_fkey" FOREIGN KEY ("id_direccion") REFERENCES "direccion"("id_direccion");
@@ -272,5 +257,4 @@ CREATE UNIQUE INDEX "tarjeta_credito_pkey" ON "tarjeta_credito" ("numero_tarjeta
 CREATE UNIQUE INDEX "tarjeta_debito_pkey" ON "tarjeta_debito" ("numero_tarjeta");
 CREATE UNIQUE INDEX "telefono_huesped_pkey" ON "telefono_huesped" ("telefono","tipo_documento","nro_documento");
 CREATE UNIQUE INDEX "telefonos_personajuridica_pkey" ON "telefonos_personaJuridica" ("id_responsable","telefonos");
-CREATE UNIQUE INDEX "uk_i02kr8ui5pqddyd7pkm3v4jbt" ON "usuario" ("usuario");
 CREATE UNIQUE INDEX "usuario_pkey" ON "usuario" ("idUsuario");
