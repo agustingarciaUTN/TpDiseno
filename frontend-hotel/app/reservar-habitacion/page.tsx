@@ -381,7 +381,7 @@ export default function ReservarHabitacion() {
                     <Hotel className="h-8 w-8" />
                 </div>
                 <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Operaciones de Reserva</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">CASO DE USO 04</p>
                     <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Reservar Habitación</h1>
                 </div>
             </div>
