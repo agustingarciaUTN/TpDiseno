@@ -29,16 +29,22 @@ import {
 } from "lucide-react"
 
 // --- CONSTANTES Y REGEX DE VALIDACIÓN ---
+// MEJORA: Usamos la regex más completa (la de Factura que tiene ° y parens) para campos de dirección
 const regexCuit = /^\d{2}-?\d{8}-?\d{1}$/
 const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
 const regexCalle = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,°()-]+$/
 const regexTexto = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
 
+// MEJORA: Importamos las constantes de mensajes de AltaHuesped
 const MSJ_OBLIGATORIO = "Este campo es obligatorio"
 const MSJ_TEXTO = "Solo se permiten letras y espacios"
 const MSJ_NUMERICO = "Solo se permiten números válidos"
 const MSJ_FORMATO_TEL = "Formato inválido (ej: +54 342 1234567)"
 const MSJ_LARGO_CORTO = "El texto ingresado es demasiado corto"
+const MSJ_LARGO_EXCESIVO = "El texto supera el límite permitido"
+
+// Prefijos válidos para CUIT empresas (30, 33, 34) y personas (20, 23, 24, 27)
+const PREFIJOS_CUIT = ["20", "23", "24", "27", "30", "33", "34"]
 
 // --- INTERFACES ---
 interface Ocupante { tipoDocumento: string; nroDocumento: string; nombres: string; apellido: string; }
@@ -72,55 +78,86 @@ export function RegistrarFacturaForm() {
     const [telefonoTercero, setTelefonoTercero] = useState("")
     const [direccion, setDireccion] = useState({
         calle: "", numero: "", piso: "", departamento: "",
-        codPostal: "", localidad: "", provincia: "", pais: ""
+        codPostal: "", localidad: "", provincia: "", pais: "Argentina"
     })
     const [popupErrors, setPopupErrors] = useState<{ [key: string]: string }>({})
 
-    // --- VALIDACIONES ---
+    // --- VALIDACIONES UNIFICADAS (MEJORADAS) ---
     const validarCampoPopup = (nombre: string, valor: string) => {
             let error = ""
             switch (nombre) {
                 case "razonSocialTercero":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (valor.length < 3) error = "El nombre es muy corto"
-                    else if (valor.length > 50) error = "El nombre es muy largo"
+                    else if (valor.length < 3) error = MSJ_LARGO_CORTO
+                    else if (valor.length > 50) error = MSJ_LARGO_EXCESIVO
+                    // Permitimos regexCalle para razón social (permite S.A., números, etc)
                     else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
                     break;
+
                 case "cuitTercero":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!regexCuit.test(valor)) error = "Formato inválido (Ej: 30-12345678-9)"
-                    // No validamos longitud numérica pura aca porque la regex exige formato xx-xxxxxxxx-x
+                    else {
+                        // MEJORA: Validación lógica de prefijos traída de AltaHuesped
+                        const soloNumeros = valor.replace(/\D/g, "")
+                        const prefijo = soloNumeros.substring(0, 2)
+                        if (!PREFIJOS_CUIT.includes(prefijo)) {
+                            error = "Prefijo inválido (se espera 30, 33, 20...)"
+                        }
+                    }
                     break;
+
                 case "telefonoTercero":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (valor.length < 7) error = "El número es muy corto" // Validación de longitud mínima
                     else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
+                    // MEJORA: Límites de AltaHuesped
+                    else if (valor.length < 9) error = "Mínimo 9 caracteres"
+                    else if (valor.length > 15) error = "Máximo 15 caracteres"
                     break;
+
+                // --- GRUPO DIRECCIÓN: CALLE, LOCALIDAD, DEPTO, PISO ---
+
                 case "calle":
                 case "localidad":
-                case "departamento":
-                    if (nombre !== "departamento" && !valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
-                    // Validación de largo para depto.
-                    else if (nombre === "departamento" && valor.trim().length > 10) error = "Máx 10 caracteres"
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
+                    else if (nombre === "calle" && valor.length > 100) error = MSJ_LARGO_EXCESIVO
                     break;
+
+                case "departamento":
+                    if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                    else if (valor.length > 20) error = MSJ_LARGO_EXCESIVO
+                    break;
+
+                case "piso":
+                    if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                    else if (valor.length > 20) error = MSJ_LARGO_EXCESIVO
+                    break;
+                // --- GRUPO TEXTO STRICTO: PROVINCIA, PAIS ---
                 case "provincia":
                 case "pais":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (!regexTexto.test(valor)) error = MSJ_TEXTO
+                    break;
+
+                // --- GRUPO NUMÉRICO: NUMERO, CP ---
+                case "numero":
+                    if (!valor.trim()) error = MSJ_OBLIGATORIO
+                    // Primero validamos si lo que escribió son solo números
+                    else if (!/^\d+$/.test(valor)) error = "Solo se permiten números válidos"
+                    // Si son números, recién ahí validamos el rango
                     else {
-                        if (!regexTexto.test(valor)) error = MSJ_TEXTO
+                        const num = parseInt(valor)
+                        if (num < 1 || num > 99999) error = "Debe ser entre 1 y 99999"
                     }
                     break;
-                case "numero":
                 case "codPostal":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
-                    break;
-                case "piso": // Opcional real
-                    // Solo validamos si escribió algo.
-                    if (valor.trim() && !/^\d+$/.test(valor)) error = MSJ_NUMERICO
+                    else if (valor.length > 8) error = "CP demasiado largo"
                     break;
             }
+
             setPopupErrors((prev) => {
                 const newErrors = { ...prev }
                 if (error) newErrors[nombre] = error
@@ -132,6 +169,7 @@ export function RegistrarFacturaForm() {
 
     const validateAllPopup = () => {
         let isValid = true
+        // Validamos todos los campos explícitamente
         if(validarCampoPopup("cuitTercero", cuitTercero)) isValid = false;
         if(validarCampoPopup("razonSocialTercero", razonSocialTercero)) isValid = false;
         if(validarCampoPopup("telefonoTercero", telefonoTercero)) isValid = false;
@@ -141,8 +179,10 @@ export function RegistrarFacturaForm() {
         if(validarCampoPopup("localidad", direccion.localidad)) isValid = false;
         if(validarCampoPopup("provincia", direccion.provincia)) isValid = false;
         if(validarCampoPopup("pais", direccion.pais)) isValid = false;
+        // Opcionales (solo validan formato si hay texto)
         if(validarCampoPopup("piso", direccion.piso)) isValid = false;
         if(validarCampoPopup("departamento", direccion.departamento)) isValid = false;
+
         return isValid
     }
 
@@ -156,7 +196,6 @@ export function RegistrarFacturaForm() {
             setErrorMessage("Por favor, ingrese el número de habitación.");
             return
         }
-
         if (!horaSalida.trim()) {
             setErrorMessage("Por favor, ingrese la hora de salida.");
             return
@@ -190,14 +229,12 @@ export function RegistrarFacturaForm() {
             if (!res.ok) {
                 const errorText = await res.text();
                 let mensajeError = "Error al calcular detalle";
-
                 try {
                     const errorJson = JSON.parse(errorText);
                     mensajeError = errorJson.message || errorJson.error || errorText;
                 } catch {
                     if (errorText.length > 0) mensajeError = errorText;
                 }
-
                 throw new Error(mensajeError);
             }
 
@@ -205,44 +242,19 @@ export function RegistrarFacturaForm() {
             setDetalleCalculado(data);
             setIdResponsableSeleccionado(data.idResponsable);
 
-            // 1. Alojamiento
+            // Mapeo de items
             const itemsMapeados: ItemFactura[] = [
-                {
-                    id: "estadia",
-                    descripcion: "Alojamiento Base",
-                    monto: Number(data.montoEstadiaBase) || 0,
-                    selected: true
-                }
+                { id: "estadia", descripcion: "Alojamiento Base", monto: Number(data.montoEstadiaBase) || 0, selected: true }
             ];
-
-            // 2. Recargo
             const recargo = Number(data.recargoHorario);
             if (recargo > 0) {
-                itemsMapeados.push({
-                    id: "recargo",
-                    descripcion: data.detalleRecargo || "Recargo (Late Check-out)",
-                    monto: recargo,
-                    selected: true
-                });
+                itemsMapeados.push({ id: "recargo", descripcion: data.detalleRecargo || "Recargo", monto: recargo, selected: true });
             }
-
-            // 3. Servicios Adicionales
             if (Array.isArray(data.serviciosAdicionales)) {
                 data.serviciosAdicionales.forEach((serv: any, idx) => {
                     const valor = Number(serv?.valor) || 0;
-                    let textoDescripcion = "Servicio Adicional";
-                    if (serv) {
-                        const posibleTexto = serv.descripcion || serv.description || serv.detalle || serv.nombre;
-                        if (posibleTexto && typeof posibleTexto === 'string' && posibleTexto.trim().length > 0) {
-                            textoDescripcion = posibleTexto.trim();
-                        }
-                    }
-                    itemsMapeados.push({
-                        id: `serv-${idx}`,
-                        descripcion: textoDescripcion,
-                        monto: valor,
-                        selected: true
-                    });
+                    let textoDescripcion = serv.descripcion || "Servicio Adicional";
+                    itemsMapeados.push({ id: `serv-${idx}`, descripcion: textoDescripcion, monto: valor, selected: true });
                 });
             }
 
@@ -262,29 +274,41 @@ export function RegistrarFacturaForm() {
         }
         setIsLoading(true);
 
-        const pisoFinal = direccion.piso.trim() === "" ? null : parseInt(direccion.piso);
+        // MEJORA: Piso y Depto se envían como String (si están vacíos van null)
+        // Esto permite enviar "PB" o "1° A" sin que parseInt devuelva NaN
+        const pisoFinal = direccion.piso.trim() === "" ? null : direccion.piso;
         const deptoFinal = direccion.departamento.trim() === "" ? null : direccion.departamento;
 
         try {
             const res = await fetch('http://localhost:8080/api/factura/responsable', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    tipoResponsable: "J", cuit: cuitTercero, razonSocial: razonSocialTercero, telefono: [parseInt(telefonoTercero)],
-                    dtoDireccion: { ...direccion, numero: parseInt(direccion.numero), codPostal: parseInt(direccion.codPostal), piso: pisoFinal, departamento: deptoFinal }
+                    tipoResponsable: "J",
+                    cuit: cuitTercero, // Se envía con guiones
+                    razonSocial: razonSocialTercero,
+                    telefono: [parseInt(telefonoTercero)], // Teléfono sí va como número array
+                    dtoDireccion: {
+                        ...direccion,
+                        numero: parseInt(direccion.numero),
+                        codPostal: parseInt(direccion.codPostal),
+                        piso: pisoFinal, // String
+                        departamento: deptoFinal // String
+                    }
                 })
             });
             if (!res.ok) throw new Error("Error al crear empresa");
             const dataResp = await res.json();
 
-            setCuitTercero("");          // Limpia el CUIT
-            setRazonSocialTercero("");   // Limpia Razón Social
-            setTelefonoTercero("");      // Limpia Teléfono
-            setDireccion({               // Limpia Dirección
+            // Limpieza exitosa
+            setCuitTercero("");
+            setRazonSocialTercero("");
+            setTelefonoTercero("");
+            setDireccion({
                 calle: "", numero: "", piso: "", departamento: "",
                 codPostal: "", localidad: "", provincia: "", pais: "Argentina"
             });
 
-            // Éxito: Calculamos detalle con el nuevo ID
+            // Continuar
             obtenerDetalleFacturacion({ esTercero: true, idResponsableJuridico: dataResp.idResponsableGenerado });
 
         } catch (error: any) { setErrorMessage("Error: " + error.message); setIsLoading(false); }
@@ -298,38 +322,34 @@ export function RegistrarFacturaForm() {
     const handleDireccionBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         validarCampoPopup(e.target.name, e.target.value);
     }
-
     const handleTopLevelChange = (setter: any, field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setter(e.target.value);
         if(popupErrors[field]) { const newErrs = {...popupErrors}; delete newErrs[field]; setPopupErrors(newErrs); }
     }
 
-    // --- LÓGICA DE BÚSQUEDA CUIT vs ALTA (MODIFICADA) ---
+    // --- LÓGICA DE BÚSQUEDA CUIT vs ALTA ---
     const handleBuscarCuitOAlta = async () => {
-        // 1. Caso VACÍO: Ir a Alta de Empresa
         if (!cuitTercero.trim()) {
             setErrorMessage("");
             setPopupErrors({});
-            setStep("create-company"); // Vamos directo al formulario de alta
+            setStep("create-company");
             return;
         }
 
-        // 2. Caso FORMATO INVÁLIDO: Mostrar error y quedarse aquí
         if (!regexCuit.test(cuitTercero)) {
             setErrorMessage("Formato de CUIT inválido. Debe ser xx-xxxxxxxx-x");
             return;
         }
 
         setIsLoading(true);
-        setErrorMessage(""); // Limpiamos errores previos
+        setErrorMessage("");
 
         try {
             const query = new URLSearchParams({ idEstadia: idEstadia!.toString(), horaSalida: horaSalida, esTercero: "true", cuit: cuitTercero });
             const res = await fetch(`http://localhost:8080/api/factura/calcular-detalle?${query.toString()}`);
 
-            // 3. Caso NO ENCONTRADO: Mostrar error y quedarse aquí (usuario decide)
             if (res.status === 409) {
-                setErrorMessage("El CUIT no pertenece a ningún Responsable de Pago registrado en en sistema.");
+                setErrorMessage("El CUIT no pertenece a ningún Responsable registrado. Deje el campo vacío y presione 'Buscar/Alta' para registrarlo.");
                 setIsLoading(false);
                 return;
             }
@@ -401,7 +421,6 @@ export function RegistrarFacturaForm() {
     const resetForm = () => { window.location.reload(); }
 
     // --- RENDERIZADO ---
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -431,7 +450,7 @@ export function RegistrarFacturaForm() {
                     </Alert>
                 )}
 
-                {/* PASO 1 y 2 (BUSQUEDA y SELECCION) */}
+                {/* PASO 1 (BUSQUEDA) */}
                 {step === "search" && (
                     <Card className="shadow-lg">
                         <CardHeader className="border-b bg-slate-50/50 pb-4"><CardTitle>Datos de la Estadía</CardTitle></CardHeader>
@@ -442,15 +461,14 @@ export function RegistrarFacturaForm() {
                                     value={numeroHabitacion}
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        // Solo actualizamos si son números y longitud <= 3
                                         if (/^\d*$/.test(val) && val.length <= 3) {
                                              setNumeroHabitacion(val);
-                                             setErrorMessage(""); // Limpiamos el error al escribir
+                                             setErrorMessage("");
                                         }
                                     }}
                                     placeholder="Ej: 101"
                                     className="bg-white"
-                                    maxLength={3} // Refuerzo HTML estándar
+                                    maxLength={3}
                                     />
                                     </div>
                                     <div className="space-y-2"><Label>Hora Salida</Label><Input type="time" value={horaSalida} onChange={e=>setHoraSalida(e.target.value)} className="bg-white"/></div>
@@ -461,6 +479,7 @@ export function RegistrarFacturaForm() {
                     </Card>
                 )}
 
+                {/* PASO 2 (SELECCION PERSONA O EMPRESA) */}
                 {step === "select-person" && (
                     <Card className="shadow-lg animate-in fade-in">
                         <CardHeader className="border-b"><CardTitle>Seleccionar Responsable</CardTitle></CardHeader>
@@ -477,32 +496,27 @@ export function RegistrarFacturaForm() {
                             </div>
                             <div className="relative"><div className="absolute inset-0 flex items-center"><span className="w-full border-t"/></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-muted-foreground">O bien</span></div></div>
 
-                            {/* CAJA DE BÚSQUEDA RÁPIDA DE EMPRESA */}
                             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                                 <Label className="mb-2 block">Facturar a Empresa (CUIT)</Label>
                                 <div className="flex gap-2">
-                                    {/* CORRECCIÓN: Limpiar error al escribir y placeholder actualizado */}
                                     <Input
                                         value={cuitTercero}
                                         onChange={(e) => {
                                             handleTopLevelChange(setCuitTercero, "cuitTercero")(e);
-                                            setErrorMessage(""); // Limpia la alerta global al editar
+                                            setErrorMessage("");
                                         }}
                                         placeholder="Ej: XX-XXXXXXXX-X (Dejar vacío para Dar de Alta Responsable de Pago)"
                                         className={`bg-white ${errorMessage ? "border-red-500" : ""}`}
                                     />
                                     <Button onClick={handleBuscarCuitOAlta} disabled={isLoading}>Buscar / Alta</Button>
-
-                                    {/* CORRECCIÓN: Botón + eliminado */}
                                 </div>
                             </div>
-
                             <Button variant="outline" onClick={() => setStep("search")} className="w-full">Volver</Button>
                         </CardContent>
                     </Card>
                 )}
 
-                {/* --- NUEVO "PASO": PANTALLA DE ALTA --- */}
+                {/* PASO EXTRA (ALTA EMPRESA) */}
                 {step === "create-company" && (
                     <Card className="shadow-xl border-emerald-100 animate-in slide-in-from-right-4">
                         <CardHeader className="bg-emerald-50/50 border-b border-emerald-100">
@@ -551,7 +565,7 @@ export function RegistrarFacturaForm() {
                                     </div>
                                     <div className="col-span-2 space-y-2">
                                         <Label className={popupErrors.piso ? "text-red-500" : ""}>Piso</Label>
-                                        <Input name="piso" value={direccion.piso} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: 5" className={popupErrors.piso ? "border-red-500" : ""}/>
+                                        <Input name="piso" value={direccion.piso} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: 5 / PB" className={popupErrors.piso ? "border-red-500" : ""}/>
                                         {popupErrors.piso && <p className="text-xs text-red-500">{popupErrors.piso}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-2">
@@ -582,21 +596,14 @@ export function RegistrarFacturaForm() {
                                 </div>
                             </div>
 
-
                             <div className="flex gap-4 pt-4">
                                 <Button variant="ghost" onClick={() => {
-                                    // 1. Limpiamos todos los campos del formulario
                                     setCuitTercero("");
                                     setRazonSocialTercero("");
                                     setTelefonoTercero("");
-                                    setDireccion({
-                                        calle: "", numero: "", piso: "", departamento: "",
-                                        codPostal: "", localidad: "", provincia: "", pais: "Argentina"
-                                    });
-                                    // 2. Limpiamos errores
+                                    setDireccion({ calle: "", numero: "", piso: "", departamento: "", codPostal: "", localidad: "", provincia: "", pais: "Argentina" });
                                     setPopupErrors({});
                                     setErrorMessage("");
-                                    // 3. Volvemos a la pantalla de selección
                                     setStep("select-person");
                                 }} className="text-slate-500">Cancelar Alta</Button>
                                 <Button onClick={handleCrearEmpresa} disabled={isLoading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -607,7 +614,7 @@ export function RegistrarFacturaForm() {
                     </Card>
                 )}
 
-                {/* --- PASO 3: DETALLE FACTURACIÓN --- */}
+                {/* PASO 3: DETALLE FACTURACIÓN */}
                 {step === "select-items" && detalleCalculado && (
                     <Card className="shadow-xl border-slate-200 animate-in fade-in zoom-in-95">
                         <CardHeader className="bg-slate-50 border-b border-slate-100">
@@ -624,35 +631,22 @@ export function RegistrarFacturaForm() {
                             </div>
                         </CardHeader>
                         <CardContent className="pt-6 space-y-6">
-
-                            {/* Lista de Items */}
                             <div className="space-y-3">
                                 <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Conceptos a Facturar</h3>
                                 {items.length === 0 ? (
                                     <p className="text-sm text-slate-500 italic">No hay ítems para facturar.</p>
                                 ) : (
                                     items.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className={`flex items-center justify-between border p-4 rounded-lg transition-colors ${item.selected ? "bg-white border-emerald-200 shadow-sm" : "bg-slate-50 border-transparent opacity-60"}`}
-                                        >
+                                        <div key={item.id} className={`flex items-center justify-between border p-4 rounded-lg transition-colors ${item.selected ? "bg-white border-emerald-200 shadow-sm" : "bg-slate-50 border-transparent opacity-60"}`}>
                                             <div className="flex items-center gap-3">
-                                                <Checkbox
-                                                    checked={item.selected}
-                                                    onCheckedChange={() => handleToggleItem(item.id)}
-                                                    className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                                                />
+                                                <Checkbox checked={item.selected} onCheckedChange={() => handleToggleItem(item.id)} className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"/>
                                                 <span className="font-medium text-slate-700">{item.descripcion}</span>
                                             </div>
-                                            <span className="font-mono font-bold text-slate-900">
-                                                ${(item.monto || 0).toLocaleString('es-AR')}
-                                            </span>
+                                            <span className="font-mono font-bold text-slate-900">${(item.monto || 0).toLocaleString('es-AR')}</span>
                                         </div>
                                     ))
                                 )}
                             </div>
-
-                            {/* Resumen de Totales */}
                             <div className="bg-slate-50 p-6 rounded-lg border border-slate-100 space-y-2">
                                 <div className="flex justify-between text-sm text-slate-600">
                                     <span>Subtotal</span>
@@ -671,14 +665,10 @@ export function RegistrarFacturaForm() {
                                     </span>
                                 </div>
                             </div>
-
                             <div className="flex gap-4 pt-2">
-                                <Button onClick={() => setStep("select-person")} variant="ghost" className="text-slate-500">
-                                    Cancelar y Volver
-                                </Button>
+                                <Button onClick={() => setStep("select-person")} variant="ghost" className="text-slate-500">Cancelar y Volver</Button>
                                 <Button onClick={handleGenerateInvoice} disabled={isLoading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :
-                                        <> <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar e Imprimir Factura </>}
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <> <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar e Imprimir Factura </>}
                                 </Button>
                             </div>
                         </CardContent>
@@ -689,16 +679,12 @@ export function RegistrarFacturaForm() {
                 {step === "success" && (
                     <Card className="border-emerald-100 bg-emerald-50/50 shadow-lg text-center py-12 animate-in zoom-in-95 duration-500">
                         <CardContent className="flex flex-col items-center gap-4">
-                            <div className="rounded-full bg-emerald-100 p-4 shadow-sm">
-                                <CheckCircle2 className="h-12 w-12 text-emerald-600" />
-                            </div>
+                            <div className="rounded-full bg-emerald-100 p-4 shadow-sm"><CheckCircle2 className="h-12 w-12 text-emerald-600" /></div>
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-bold text-emerald-900">¡Factura Generada!</h2>
                                 <p className="text-emerald-700">El comprobante ha sido registrado y enviado a impresión.</p>
                             </div>
-                            <Button onClick={resetForm} className="mt-8 bg-emerald-600 hover:bg-emerald-700 min-w-[200px]">
-                                Realizar Nueva Factura
-                            </Button>
+                            <Button onClick={resetForm} className="mt-8 bg-emerald-600 hover:bg-emerald-700 min-w-[200px]">Realizar Nueva Factura</Button>
                         </CardContent>
                     </Card>
                 )}
