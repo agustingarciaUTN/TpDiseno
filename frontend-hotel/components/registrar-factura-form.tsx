@@ -97,10 +97,13 @@ export function RegistrarFacturaForm() {
                     else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
                     break;
                 case "calle":
-                    if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
-                    break;
                 case "localidad":
+                case "departamento":
+                    if (nombre !== "departamento" && !valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                    // Validación de largo para depto
+                    else if (nombre === "departamento" && valor.trim().length > 10) error = "Máx 10 caracteres"
+                    break;
                 case "provincia":
                 case "pais":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
@@ -110,10 +113,6 @@ export function RegistrarFacturaForm() {
                 case "codPostal":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
-                    break;
-                case "departamento": // Opcional real
-                    // Solo validamos si escribió algo. Si está vacío, no hay error.
-                    if (valor.trim() && valor.length > 10) error = "Máx 10 caracteres"
                     break;
                 case "piso": // Opcional real
                     // Solo validamos si escribió algo.
