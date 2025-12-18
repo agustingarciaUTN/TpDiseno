@@ -61,8 +61,6 @@ public interface HuespedRepository extends JpaRepository<Huesped, HuespedId> {
             @Param("nroDoc") String nroDoc
     );
 
-    // Reemplaza a 'existeHuesped'
-    //boolean existsByTipoDocumentoAndNroDocumento(TipoDocumento tipo, String nro);
 
 
     // Para el CU10: Permitir cambio de DNI manteniendo historial

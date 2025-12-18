@@ -72,7 +72,7 @@ export function RegistrarFacturaForm() {
     const [telefonoTercero, setTelefonoTercero] = useState("")
     const [direccion, setDireccion] = useState({
         calle: "", numero: "", piso: "", departamento: "",
-        codPostal: "", localidad: "", provincia: "", pais: "Argentina"
+        codPostal: "", localidad: "", provincia: "", pais: ""
     })
     const [popupErrors, setPopupErrors] = useState<{ [key: string]: string }>({})
 
@@ -320,7 +320,7 @@ export function RegistrarFacturaForm() {
 
             // 3. Caso NO ENCONTRADO: Mostrar error y quedarse aquí (usuario decide)
             if (res.status === 409) {
-                setErrorMessage("El CUIT no existe en la base de datos.");
+                setErrorMessage("El CUIT no pertenece a ningún Responsable de Pago registrado en en sistema.");
                 setIsLoading(false);
                 return;
             }
@@ -410,7 +410,7 @@ export function RegistrarFacturaForm() {
                             </div>
                         </div>
                         <Button variant="outline" className="bg-white/80 backdrop-blur-sm gap-2" asChild>
-                            <Link href="/"><Home className="h-4 w-4" /> Volver</Link>
+                            <Link href="/"><Home className="h-4 w-4" /> Volver al Menú Principal</Link>
                         </Button>
                     </div>
                 </div>
@@ -479,7 +479,7 @@ export function RegistrarFacturaForm() {
                                             handleTopLevelChange(setCuitTercero, "cuitTercero")(e);
                                             setErrorMessage(""); // Limpia la alerta global al editar
                                         }}
-                                        placeholder="Ej: 30-12345678-9 (Dejar vacío para Alta Nueva)"
+                                        placeholder="Ej: XX-XXXXXXXX-X (Dejar vacío para Dar de Alta Responsable de Pago)"
                                         className={`bg-white ${errorMessage ? "border-red-500" : ""}`}
                                     />
                                     <Button onClick={handleBuscarCuitOAlta} disabled={isLoading}>Buscar / Alta</Button>
@@ -512,7 +512,7 @@ export function RegistrarFacturaForm() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label className={popupErrors.cuitTercero ? "text-red-500" : ""}>CUIT <span className="text-black">*</span></Label>
-                                    <Input value={cuitTercero} onChange={handleTopLevelChange(setCuitTercero, "cuitTercero")} onBlur={(e) => validarCampoPopup("cuitTercero", e.target.value)} placeholder="30-12345678-9" className={popupErrors.cuitTercero ? "border-red-500" : ""}/>
+                                    <Input value={cuitTercero} onChange={handleTopLevelChange(setCuitTercero, "cuitTercero")} onBlur={(e) => validarCampoPopup("cuitTercero", e.target.value)} placeholder="XX-XXXXXXXX-X" className={popupErrors.cuitTercero ? "border-red-500" : ""}/>
                                     {popupErrors.cuitTercero && <p className="text-xs text-red-500">{popupErrors.cuitTercero}</p>}
                                 </div>
                                 <div className="space-y-2">
@@ -522,7 +522,7 @@ export function RegistrarFacturaForm() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className={popupErrors.telefonoTercero ? "text-red-500" : ""}>Teléfono <span className="text-black">*</span></Label>
-                                    <Input value={telefonoTercero} onChange={handleTopLevelChange(setTelefonoTercero, "telefonoTercero")} onBlur={(e) => validarCampoPopup("telefonoTercero", e.target.value)} placeholder="Ej: 342555555" className={popupErrors.telefonoTercero ? "border-red-500" : ""}/>
+                                    <Input value={telefonoTercero} onChange={handleTopLevelChange(setTelefonoTercero, "telefonoTercero")} onBlur={(e) => validarCampoPopup("telefonoTercero", e.target.value)} placeholder="Ej: +543424654987" className={popupErrors.telefonoTercero ? "border-red-500" : ""}/>
                                     {popupErrors.telefonoTercero && <p className="text-xs text-red-500">{popupErrors.telefonoTercero}</p>}
                                 </div>
                             </div>
@@ -532,46 +532,47 @@ export function RegistrarFacturaForm() {
                                 <div className="grid grid-cols-6 gap-4">
                                     <div className="col-span-4 space-y-2">
                                         <Label className={popupErrors.calle ? "text-red-500" : ""}>Calle <span className="text-black">*</span></Label>
-                                        <Input name="calle" value={direccion.calle} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.calle ? "border-red-500" : ""}/>
+                                        <Input name="calle" value={direccion.calle} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: Av. San Martín" className={popupErrors.calle ? "border-red-500" : ""}/>
                                         {popupErrors.calle && <p className="text-xs text-red-500">{popupErrors.calle}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-2">
                                         <Label className={popupErrors.numero ? "text-red-500" : ""}>Número <span className="text-black">*</span></Label>
-                                        <Input name="numero" value={direccion.numero} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.numero ? "border-red-500" : ""}/>
+                                        <Input name="numero" value={direccion.numero} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: 1234" className={popupErrors.numero ? "border-red-500" : ""}/>
                                         {popupErrors.numero && <p className="text-xs text-red-500">{popupErrors.numero}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-2">
                                         <Label className={popupErrors.piso ? "text-red-500" : ""}>Piso</Label>
-                                        <Input name="piso" value={direccion.piso} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.piso ? "border-red-500" : ""}/>
+                                        <Input name="piso" value={direccion.piso} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: 5" className={popupErrors.piso ? "border-red-500" : ""}/>
                                         {popupErrors.piso && <p className="text-xs text-red-500">{popupErrors.piso}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-2">
                                         <Label className={popupErrors.departamento ? "text-red-500" : ""}>Depto</Label>
-                                        <Input name="departamento" value={direccion.departamento} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.departamento ? "border-red-500" : ""}/>
+                                        <Input name="departamento" value={direccion.departamento} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: A" className={popupErrors.departamento ? "border-red-500" : ""}/>
                                         {popupErrors.departamento && <p className="text-xs text-red-500">{popupErrors.departamento}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-2">
                                         <Label className={popupErrors.codPostal ? "text-red-500" : ""}>CP <span className="text-black">*</span></Label>
-                                        <Input name="codPostal" value={direccion.codPostal} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.codPostal ? "border-red-500" : ""}/>
+                                        <Input name="codPostal" value={direccion.codPostal} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: 3000" className={popupErrors.codPostal ? "border-red-500" : ""}/>
                                         {popupErrors.codPostal && <p className="text-xs text-red-500">{popupErrors.codPostal}</p>}
                                     </div>
                                     <div className="col-span-3 space-y-2">
                                         <Label className={popupErrors.localidad ? "text-red-500" : ""}>Localidad <span className="text-black">*</span></Label>
-                                        <Input name="localidad" value={direccion.localidad} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.localidad ? "border-red-500" : ""}/>
+                                        <Input name="localidad" value={direccion.localidad} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: Santa Fe" className={popupErrors.localidad ? "border-red-500" : ""}/>
                                         {popupErrors.localidad && <p className="text-xs text-red-500">{popupErrors.localidad}</p>}
                                     </div>
                                     <div className="col-span-3 space-y-2">
                                         <Label className={popupErrors.provincia ? "text-red-500" : ""}>Provincia <span className="text-black">*</span></Label>
-                                        <Input name="provincia" value={direccion.provincia} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.provincia ? "border-red-500" : ""}/>
+                                        <Input name="provincia" value={direccion.provincia} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: Santa Fe" className={popupErrors.provincia ? "border-red-500" : ""}/>
                                         {popupErrors.provincia && <p className="text-xs text-red-500">{popupErrors.provincia}</p>}
                                     </div>
                                     <div className="col-span-6 space-y-2">
                                         <Label className={popupErrors.pais ? "text-red-500" : ""}>País <span className="text-black">*</span></Label>
-                                        <Input name="pais" value={direccion.pais} onChange={handleDireccionChange} onBlur={handleDireccionBlur} className={popupErrors.pais ? "border-red-500" : ""}/>
+                                        <Input name="pais" value={direccion.pais} onChange={handleDireccionChange} onBlur={handleDireccionBlur} placeholder="Ej: Argentina" className={popupErrors.pais ? "border-red-500" : ""}/>
                                         {popupErrors.pais && <p className="text-xs text-red-500">{popupErrors.pais}</p>}
                                     </div>
                                 </div>
                             </div>
+
 
                             <div className="flex gap-4 pt-4">
                                 <Button variant="ghost" onClick={() => setStep("select-person")} className="text-slate-500">Cancelar Alta</Button>
