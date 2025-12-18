@@ -275,6 +275,14 @@ export function RegistrarFacturaForm() {
             if (!res.ok) throw new Error("Error al crear empresa");
             const dataResp = await res.json();
 
+            setCuitTercero("");          // Limpia el CUIT
+            setRazonSocialTercero("");   // Limpia Razón Social
+            setTelefonoTercero("");      // Limpia Teléfono
+            setDireccion({               // Limpia Dirección
+                calle: "", numero: "", piso: "", departamento: "",
+                codPostal: "", localidad: "", provincia: "", pais: "Argentina"
+            });
+
             // Éxito: Calculamos detalle con el nuevo ID
             obtenerDetalleFacturacion({ esTercero: true, idResponsableJuridico: dataResp.idResponsableGenerado });
 
@@ -574,7 +582,21 @@ export function RegistrarFacturaForm() {
                             </div>
 
                             <div className="flex gap-4 pt-4">
-                                <Button variant="ghost" onClick={() => setStep("select-person")} className="text-slate-500">Cancelar Alta</Button>
+                                <Button variant="ghost" onClick={() => {
+                                    // 1. Limpiamos todos los campos del formulario
+                                    setCuitTercero("");
+                                    setRazonSocialTercero("");
+                                    setTelefonoTercero("");
+                                    setDireccion({
+                                        calle: "", numero: "", piso: "", departamento: "",
+                                        codPostal: "", localidad: "", provincia: "", pais: "Argentina"
+                                    });
+                                    // 2. Limpiamos errores
+                                    setPopupErrors({});
+                                    setErrorMessage("");
+                                    // 3. Volvemos a la pantalla de selección
+                                    setStep("select-person");
+                                }} className="text-slate-500">Cancelar Alta</Button>
                                 <Button onClick={handleCrearEmpresa} disabled={isLoading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <><CheckCircle2 className="mr-2 h-4 w-4"/> Guardar Empresa y Continuar</>}
                                 </Button>
