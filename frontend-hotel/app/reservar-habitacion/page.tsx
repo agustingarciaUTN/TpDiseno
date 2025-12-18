@@ -118,13 +118,15 @@ export default function ReservarHabitacion() {
     if (campo === "telefono") {
       // Regex estándar: permite +, (), espacios, guiones y números
       const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
-      
+      const digitos = valor.replace(/[^0-9]/g, "");
       if (!valor.trim()) {
         error = "El teléfono es obligatorio"
       } else if (!regexTelefono.test(valor)) {
         error = "Formato inválido (solo números, +, -, (), espacios)"
-      } else if (valor.replace(/[^0-9]/g, "").length < 8) {
+      } else if (digitos.length < 8) {
         error = "Debe tener al menos 8 dígitos"
+      } else if (digitos.length > 15) {
+        error = "Debe tener como máximo 15 dígitos"
       }
     }
 
@@ -430,88 +432,112 @@ export default function ReservarHabitacion() {
 
         {/* PASO GRILLA */}
         {paso === "grilla" && (
-            <div className="space-y-6">
-                {loading ? <div className="text-center p-12"><Loader2 className="animate-spin w-16 h-16 mx-auto text-blue-600"/></div> : (
-                    <>
-                    <Card className="p-8 border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                        <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-50">Grilla de Disponibilidad</h2>
-                        <div className="overflow-x-auto rounded-lg border border-slate-200">
-                            <table className="w-full border-collapse text-sm">
-                                <thead>
-                                    <tr className="bg-slate-100 dark:bg-slate-800">
-                                        <th className="border px-4 py-3 text-slate-900 dark:text-white">Fecha</th>
-                                        {TIPOS_HABITACION_ORDEN.map(t => {
-                                            const count = habitaciones.filter(h => h.tipo === t).length
-                                            return count > 0 ? <th key={t} colSpan={count} className="border px-2 py-3 bg-blue-50 dark:bg-blue-900/30 text-slate-900 dark:text-white">{formatearTipo(t)}</th> : null
-                                        })}
-                                    </tr>
-                                    <tr className="bg-slate-50 dark:bg-slate-800">
-                                        <th className="border px-4 py-3"></th>
-                                        {TIPOS_HABITACION_ORDEN.map(t => 
-                                            habitaciones.filter(h => h.tipo === t)
-                                            .sort((a,b) => parseInt(a.numero)-parseInt(b.numero))
-                                            .map(h => <th key={h.id} className="border px-2 text-xs text-slate-900 dark:text-white">Hab. {h.numero}</th>)
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {diasRango.map((dia, diaIdx) => (
-                                        <tr key={diaIdx} className={diaIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}>
-                                            <td className="border px-4 py-3 font-bold text-slate-700 dark:text-slate-200">
-                                                {dia.toLocaleDateString("es-AR", {weekday: 'short', day: '2-digit', month: '2-digit'})}
-                                            </td>
-                                            {TIPOS_HABITACION_ORDEN.map(t => 
-                                                habitaciones.filter(h => h.tipo === t)
-                                                .sort((a,b) => parseInt(a.numero)-parseInt(b.numero))
-                                                .map(h => {
-                                                    const info = obtenerDatosCelda(h.id, diaIdx)
-                                                    const infoPrev = diaIdx > 0 ? obtenerDatosCelda(h.id, diaIdx - 1) : null
-                                                    const seleccionado = esCeldaSeleccionada(h.id, diaIdx)
-                                                    const esInicio = esInicioSeleccionActual(h.id, diaIdx)
-                                                    const baseColor = getEstadoColor(info.estado)
-
-                                                    let bordeClase = "border border-slate-200 dark:border-slate-700"
-                                                    if (info.estado === "RESERVADA" && infoPrev?.estado === "RESERVADA" && info.idReserva !== infoPrev.idReserva) {
-                                                        bordeClase = "border-t-4 border-t-white border-x border-b border-slate-200"
-                                                    }
-
-                                                    return (
-                                                        <td key={`${h.id}-${diaIdx}`} className={`p-0 text-center relative ${bordeClase}`}>
-                                                            <div 
-                                                                onClick={() => handleClickCelda(h.id, diaIdx)}
-                                                                className={`
-                                                                    h-10 flex items-center justify-center text-xs font-bold text-white transition-all cursor-pointer
-                                                                    ${seleccionado ? "bg-blue-600 ring-2 ring-blue-600 z-10 relative" : 
-                                                                      esInicio ? "bg-blue-400 animate-pulse" :
-                                                                      info.estado === "DISPONIBLE" ? baseColor : `${baseColor} opacity-75 cursor-not-allowed`
-                                                                    }
-                                                                `}
-                                                            >
-                                                                {seleccionado ? "✓" : esInicio ? "●" : 
-                                                                 info.estado === "RESERVADA" ? "R" :
-                                                                 info.estado === "OCUPADA" ? "X" :
-                                                                 info.estado === "DISPONIBLE" ? "○" : "FS"}
-                                                            </div>
-                                                        </td>
-                                                    )
-                                                })
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        {selecciones.length > 0 && (
-                            <div className="mt-6 flex justify-end">
-                                <Button onClick={() => setPaso("datosHuesped")} className="h-12 bg-blue-600 hover:bg-blue-700 font-bold px-8">
-                                    Continuar con Datos del Huésped
-                                </Button>
-                            </div>
+          <div className="space-y-6">
+            {loading ? <div className="text-center p-12"><Loader2 className="animate-spin w-16 h-16 mx-auto text-blue-600"/></div> : (
+              <>
+              <Card className="p-8 border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-50">Grilla de Disponibilidad</h2>
+                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-slate-100 dark:bg-slate-800">
+                        <th className="border px-4 py-3 text-slate-900 dark:text-white">Fecha</th>
+                        {TIPOS_HABITACION_ORDEN.map(t => {
+                          const count = habitaciones.filter(h => h.tipo === t).length
+                          return count > 0 ? <th key={t} colSpan={count} className="border px-2 py-3 bg-blue-50 dark:bg-blue-900/30 text-slate-900 dark:text-white">{formatearTipo(t)}</th> : null
+                        })}
+                      </tr>
+                      <tr className="bg-slate-50 dark:bg-slate-800">
+                        <th className="border px-4 py-3"></th>
+                        {TIPOS_HABITACION_ORDEN.map(t => 
+                          habitaciones.filter(h => h.tipo === t)
+                          .sort((a,b) => parseInt(a.numero)-parseInt(b.numero))
+                          .map(h => <th key={h.id} className="border px-2 text-xs text-slate-900 dark:text-white">Hab. {h.numero}</th>)
                         )}
-                    </Card>
-                    </>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {diasRango.map((dia, diaIdx) => (
+                        <tr key={diaIdx} className={diaIdx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-transparent"}>
+                          <td className="border px-4 py-3 font-bold text-slate-700 dark:text-slate-200">
+                            {dia.toLocaleDateString("es-AR", {weekday: 'short', day: '2-digit', month: '2-digit'})}
+                          </td>
+                          {TIPOS_HABITACION_ORDEN.map(t => 
+                            habitaciones.filter(h => h.tipo === t)
+                            .sort((a,b) => parseInt(a.numero)-parseInt(b.numero))
+                            .map(h => {
+                              const info = obtenerDatosCelda(h.id, diaIdx)
+                              const infoPrev = diaIdx > 0 ? obtenerDatosCelda(h.id, diaIdx - 1) : null
+                              const seleccionado = esCeldaSeleccionada(h.id, diaIdx)
+                              const esInicio = esInicioSeleccionActual(h.id, diaIdx)
+                              const baseColor = getEstadoColor(info.estado)
+
+                              let bordeClase = "border border-slate-200 dark:border-slate-700"
+                              if (info.estado === "RESERVADA" && infoPrev?.estado === "RESERVADA" && info.idReserva !== infoPrev.idReserva) {
+                                bordeClase = "border-t-4 border-t-white border-x border-b border-slate-200"
+                              }
+
+                              return (
+                                <td key={`${h.id}-${diaIdx}`} className={`p-0 text-center relative ${bordeClase}`}>
+                                  <div 
+                                    onClick={() => handleClickCelda(h.id, diaIdx)}
+                                    className={`
+                                      h-10 flex items-center justify-center text-xs font-bold text-white transition-all cursor-pointer
+                                      ${seleccionado ? "bg-blue-600 ring-2 ring-blue-600 z-10 relative" : 
+                                        esInicio ? "bg-blue-400 animate-pulse" :
+                                        info.estado === "DISPONIBLE" ? baseColor : `${baseColor} opacity-75 cursor-not-allowed`
+                                      }
+                                    `}
+                                  >
+                                    {seleccionado ? "✓" : esInicio ? "●" : 
+                                     info.estado === "RESERVADA" ? "R" :
+                                     info.estado === "OCUPADA" ? "X" :
+                                     info.estado === "DISPONIBLE" ? "○" : "FS"}
+                                  </div>
+                                </td>
+                              )
+                            })
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Listado de reservas seleccionadas con opción de quitar */}
+                {selecciones.length > 0 && (
+                  <>
+                  <div className="mt-8">
+                    <h3 className="text-lg font-bold mb-3 text-blue-700">Reservas seleccionadas</h3>
+                    <ul className="space-y-3">
+                    {selecciones.map((sel, idx) => {
+                      const habitacion = habitaciones.find(h => h.id === sel.habitacionId)
+                      const diaInicio = diasRango[sel.diaInicio]
+                      const diaFin = new Date(diasRango[sel.diaFin])
+                      diaFin.setDate(diaFin.getDate() + 1)
+                      return (
+                      <li key={idx} className="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg px-4 py-3 border border-blue-100 dark:border-blue-800">
+                        <span className="font-bold text-blue-800 dark:text-blue-200">Hab. {habitacion?.numero}</span>
+                        <span className="text-slate-700 dark:text-slate-200">{formatearTipo(habitacion?.tipo || "")}</span>
+                        <span className="text-slate-600 dark:text-slate-300">{diaInicio?.toLocaleDateString()} - {diaFin?.toLocaleDateString()}</span>
+                        <Button variant="outline" size="sm" className="ml-auto" onClick={() => handleRemoverSeleccion(idx)}>
+                        Quitar
+                        </Button>
+                      </li>
+                      )
+                    })}
+                    </ul>
+                  </div>
+                  <div className="mt-6 flex justify-end">
+                    <Button onClick={() => setPaso("datosHuesped")} className="h-12 bg-blue-600 hover:bg-blue-700 font-bold px-8">
+                      Continuar con Datos del Huésped
+                    </Button>
+                  </div>
+                  </>
                 )}
-            </div>
+              </Card>
+              </>
+            )}
+          </div>
         )}
 
         {/* PASO 4: DATOS HUÉSPED (CORREGIDO) */}
