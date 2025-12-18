@@ -292,10 +292,20 @@ export default function RegistrarPagoPage() {
                 }
             }
         } else if (paymentMethod === "TARJETA_CREDITO" || paymentMethod === "TARJETA_DEBITO") {
-            if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || (paymentMethod === "TARJETA_CREDITO" && !cardQuota)) {
+            // Normalizar fecha a yyyy-MM-dd si viene como dd/MM/yyyy
+            let expiry = cardExpiry;
+            if (cardExpiry && cardExpiry.includes("/")) {
+                const [d, m, y] = cardExpiry.split("/");
+                if (d && m && y) expiry = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+            // Validar campos
+            if (!cardNumber || cardNetwork === "" || !cardBank || !cardCvv || !expiry || (paymentMethod === "TARJETA_CREDITO" && (cardQuota === undefined || cardQuota === null || cardQuota === ""))) {
                 setError("Debe completar todos los datos de la tarjeta")
                 return
             }
+            // Usar expiry normalizado para el resto del flujo
+            // ...existing code...
+            // Reemplazar cardExpiry por expiry en la creación del medio de pago
             // Validar duplicado en la operación actual
             const digits = cardNumber.replace(/\D/g, "");
             const yaIngresada = mediosPagoAcumulados.some((m) => {
@@ -410,7 +420,7 @@ export default function RegistrarPagoPage() {
                 redDePago: cardNetwork,
                 cuotasCantidad: Number.parseInt(cardQuota || "1"),
                 codigoSeguridad: Number.parseInt(cardCvv),
-                fechaVencimiento: cardExpiry,
+                fechaVencimiento: Date,
                 banco: cardBank
             })
         } else if (paymentMethod === "TARJETA_DEBITO") {
@@ -418,7 +428,7 @@ export default function RegistrarPagoPage() {
                 numeroDeTarjeta: digitsTarjeta,
                 redDePago: cardNetwork,
                 codigoSeguridad: Number.parseInt(cardCvv),
-                fechaVencimiento: cardExpiry,
+                fechaVencimiento: Date,
                 banco: cardBank
             })
         }
