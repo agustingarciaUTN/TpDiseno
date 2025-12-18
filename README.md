@@ -125,24 +125,38 @@ Aquí tienes la sección 5 lista para copiar y pegar en tu `README.md`, ajustada
 
 ---
 
-## 7. Estado de Implementación de Casos de Uso
+## 7. Endpoints Implementados (API REST)
 
-A continuación se detalla el grado de cobertura de los requisitos funcionales planteados por la cátedra y los endpoints expuestos en la API para resolverlos:
+A continuación listamos los endpoints principales expuestos por la API, demostrando que superamos el requisito mínimo de operaciones por tipo de verbo HTTP:
 
-| Nro. | Nombre del Caso de Uso | Estado | Endpoint (API REST) |
-|:---:|:---|:---:|:---|
-| **CU01** | Autenticar Usuario | ✅ Implementado | `POST /auth/login` |
-| **CU02** | Buscar Huésped | ✅ Implementado | `GET /huespedes` |
-| **CU04** | Reservar Habitación | ✅ Implementado | `POST /reservas` |
-| **CU05** | Mostrar Estado de Habitaciones | ✅ Implementado | `GET /habitaciones/estado` |
-| **CU06** | Cancelar Reserva | ✅ Implementado | `DELETE /reservas/{id}` |
-| **CU07** | Facturar (Check-out) | ✅ Implementado | `POST /facturas/checkout` |
-| **CU09** | Dar alta de Huésped | ✅ Implementado | `POST /huespedes` |
-| **CU10** | Modificar Huésped | ✅ Implementado | `PUT /huespedes/{id}` |
-| **CU11** | Dar baja de Huésped | ✅ Implementado | `DELETE /huespedes/{id}` |
-| **CU12** | Dar alta de Responsable de Pago | ✅ Implementado | `POST /responsables` |
-| **CU15** | Ocupar Habitación (Check-in) | ✅ Implementado | `POST /estadias` |
-| **CU16** | Ingresar Pago | ✅ Implementado | `POST /pagos` |
+### Gestión de Huéspedes
+| Verbo | Endpoint | Descripción |
+|:---:|:---|:---|
+| **GET** | `/huespedes` | Buscar huéspedes con filtros combinados (CU02). |
+| **POST** | `/huespedes` | Registrar un nuevo huésped (CU09). |
+| **PUT** | `/huespedes/{id}` | Modificar datos de un huésped existente (CU10). |
+| **DELETE** | `/huespedes/{id}` | Dar de baja un huésped (CU11). |
+
+### Gestión de Habitaciones y Reservas
+| Verbo | Endpoint | Descripción |
+|:---:|:---|:---|
+| **GET** | `/habitaciones/estado` | Grilla de disponibilidad por fechas (CU05). |
+| **GET** | `/habitaciones` | Listado general de habitaciones. |
+| **POST** | `/reservas` | Crear una nueva reserva validando fechas (CU04). |
+| **DELETE** | `/reservas/{id}` | Cancelar una reserva activa (CU06). |
+
+### Facturación y Pagos
+| Verbo | Endpoint | Descripción |
+|:---:|:---|:---|
+| **POST** | `/estadias` | Registrar Ocupación / Check-in (CU15). |
+| **POST** | `/facturas/checkout` | Generar factura y cerrar estadía (CU07). |
+| **POST** | `/pagos` | Registrar el pago de una factura (CU16). |
+| **POST** | `/responsables` | Alta de Responsable Jurídico (CU12). |
+
+### Seguridad
+| Verbo | Endpoint | Descripción |
+|:---:|:---|:---|
+| **POST** | `/auth/login` | Autenticación de usuarios y generación de sesión (CU01). |
 
 ---
 ## 8. Cómo levantar el proyecto
