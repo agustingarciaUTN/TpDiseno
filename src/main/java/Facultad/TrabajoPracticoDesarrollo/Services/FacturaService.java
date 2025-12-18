@@ -430,9 +430,11 @@ public class FacturaService {
 
         nuevaEmpresa.setDireccion(direccionEntidad);
 
+        /*
         if (direccionEntidad != null) {
             nuevaEmpresa.setDireccion(direccionEntidad);
         }
+        */
 
         // 4. Guardar
         responsablePagoRepository.save(nuevaEmpresa);
