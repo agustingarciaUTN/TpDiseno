@@ -4,13 +4,14 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { GuestProvider } from "@/lib/guest-context"
+import { AuthGuard } from "@/components/auth-guard" // <--- Importamos el Guard
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-    title: "v0 App",
-    description: "Created with v0",
+    title: "Sistema de Hotelería", // Ajustado el título para que sea más profesional
+    description: "Sistema de gestión para hotel",
     generator: "v0.app",
     icons: {
         icon: [
@@ -31,17 +32,27 @@ export const metadata: Metadata = {
     },
 }
 
+
 export default function RootLayout({
                                        children,
                                    }: Readonly<{
     children: React.ReactNode
 }>) {
     return (
-        <html lang="en">
+        <html lang="es">
         <body className={`font-sans antialiased`}>
-        <GuestProvider>{children}</GuestProvider>
-        <Analytics />
+            {/* GuestProvider maneja el estado global del huésped seleccionado */}
+            <GuestProvider>
+                {/* AuthGuard protege todas las rutas hijas verificando la sesión */}
+                <AuthGuard>
+                    {children}
+                </AuthGuard>
+            </GuestProvider>
+            <Analytics />
         </body>
         </html>
     )
 }
+
+
+
