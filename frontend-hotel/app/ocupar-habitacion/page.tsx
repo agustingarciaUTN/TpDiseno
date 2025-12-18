@@ -1002,7 +1002,23 @@ export default function OcuparHabitacion() {
               <p>Responsable: {huespedes[responsableIdx!]?.apellido}, {huespedes[responsableIdx!]?.nombres}</p>
               {ocupandoReserva && <p className="text-blue-600 font-semibold mt-2">✓ Vinculado a Reserva Existente</p>}
             </div>
-            
+
+            {/* Listado de huéspedes */}
+            <div className="bg-slate-50 p-6 rounded-lg mb-6">
+              <h3 className="font-semibold mb-2">Listado de Huéspedes</h3>
+              <ul className="space-y-2">
+                {huespedes.map((h, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="font-semibold">
+                      {responsableIdx === idx && <span title="Responsable" className="text-blue-600">👤</span>}
+                      {h.apellido}, {h.nombres}
+                    </span>
+                    <span className="text-slate-600 text-sm">({h.tipoDocumento}: {h.nroDocumento})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div className="flex flex-col gap-3">
               {/* BOTÓN 1: Modificar (Vuelve atrás) */}
               <Button 
