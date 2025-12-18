@@ -101,13 +101,15 @@ export function RegistrarFacturaForm() {
                 case "departamento":
                     if (nombre !== "departamento" && !valor.trim()) error = MSJ_OBLIGATORIO
                     else if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
-                    // Validación de largo para depto
+                    // Validación de largo para depto.
                     else if (nombre === "departamento" && valor.trim().length > 10) error = "Máx 10 caracteres"
                     break;
                 case "provincia":
                 case "pais":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (!regexTexto.test(valor) && nombre !== 'calle') error = MSJ_TEXTO // Calle permite números
+                    else {
+                        if (!regexTexto.test(valor)) error = MSJ_TEXTO
+                    }
                     break;
                 case "numero":
                 case "codPostal":
