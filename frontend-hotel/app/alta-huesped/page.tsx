@@ -384,6 +384,13 @@ export default function AltaHuesped() {
         guardarEnBackend(false)
     }
 
+    const [dialogError, setDialogError] = useState<{
+        titulo: string;
+        mensaje: string;
+        tipo: "error" | "warning" | "info";
+    } | null>(null);
+
+
     const handleContinuarConDuplicado = () => {
         setPopup(null)
         guardarEnBackend(true)
@@ -444,7 +451,12 @@ export default function AltaHuesped() {
 
         } catch (error: any) {
             console.error("Error al guardar huésped:", error)
-            alert("Error al guardar en el sistema: " + (error.message || "Error desconocido"))
+            setDialogError({
+                titulo: "Error al guardar",
+                mensaje: "Error al guardar en el sistema: " + (error.message || "Error desconocido"),
+                tipo: "error"
+            });
+
         }
     }
 
@@ -983,6 +995,38 @@ export default function AltaHuesped() {
                         </Card>
                     </div>
                 )}
+                {dialogError && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDialogError(null)}>
+                        <Card className={`w-full max-w-md p-6 border-2 ${
+                            dialogError.tipo === "error" ? "border-red-500" :
+                                dialogError.tipo === "warning" ? "border-orange-500" :
+                                    "border-blue-500"
+                        }`} onClick={(e) => e.stopPropagation()}>
+                            <div className="mb-4 flex items-center gap-3">
+                                <AlertCircle className={`h-6 w-6 ${
+                                    dialogError.tipo === "error" ? "text-red-600" :
+                                        dialogError.tipo === "warning" ? "text-orange-600" :
+                                            "text-blue-600"
+                                }`} />
+                                <h3 className="text-lg font-semibold">{dialogError.titulo}</h3>
+                            </div>
+                            <p className="mb-6 text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">
+                                {dialogError.mensaje}
+                            </p>
+                            <Button
+                                onClick={() => setDialogError(null)}
+                                className={`w-full ${
+                                    dialogError.tipo === "error" ? "bg-red-600 hover:bg-red-700" :
+                                        dialogError.tipo === "warning" ? "bg-orange-600 hover:bg-orange-700" :
+                                            "bg-blue-600 hover:bg-blue-700"
+                                }`}
+                            >
+                                Entendido
+                            </Button>
+                        </Card>
+                    </div>
+                )}
+
             </div>
         </div>
     )

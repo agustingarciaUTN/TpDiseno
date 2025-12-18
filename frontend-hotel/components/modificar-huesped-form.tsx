@@ -161,7 +161,7 @@ export function ModificarHuespedForm() {
 
     // --- REGEX Y VALIDACIONES (Idéntico a CU09) ---
     const regexNombre = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
-    const regexCuit = /^\d{2}-?\d{8}-?\d{1}$/
+    const regexCuit = /^\d{2}-?\d{7,8}-?\d{1}$/
     const regexTelefono = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     const regexCalle = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,]+$/
@@ -208,22 +208,35 @@ export function ModificarHuespedForm() {
                 }
                 break
             case "cuit":
-                const esObligatorio = datos.posicionIva === "RESPONSABLE_INSCRIPTO"
-                const cuitLimpio = limpiarCuit(valor)
-                if (esObligatorio && !valor.trim()) error = "Requerido para Resp. Inscripto"
-                else if (valor.trim()) {
-                    if (!regexCuit.test(valor)) error = "Formato inválido"
-                    else {
+                const esCuitObligatorio = datos.posicionIva === "RESPONSABLE_INSCRIPTO"
+                const cuitValor = valor.trim()
+
+                if (esCuitObligatorio && !cuitValor) {
+                    error = "Requerido para Resp. Inscripto"
+                } else if (cuitValor) {
+                    const cuitLimpio = limpiarCuit(cuitValor)
+
+                    if (!regexCuit.test(cuitValor)) {
+                        error = "Formato inválido (Ej: 20-12345678-9)"
+                    } else {
                         const prefijo = cuitLimpio.substring(0, 2)
-                        if (!PREFIJOS_CUIT.includes(prefijo)) error = "Prefijo inválido"
+
+                        if (!PREFIJOS_CUIT.includes(prefijo)) {
+                            error = "Prefijo inválido (se espera 20, 23, 27...)"
+                        }
                         else if (["DNI", "LC", "LE"].includes(datos.tipoDocumento) && datos.nroDocumento) {
-                            const dniEnCuit = parseInt(cuitLimpio.substring(2, cuitLimpio.length - 1), 10)
-                            const dniIngresado = parseInt(datos.nroDocumento, 10)
-                            if (dniEnCuit !== dniIngresado) error = "El CUIT no coincide con el Documento"
+                            const dniEnCuitString = cuitLimpio.substring(2, cuitLimpio.length - 1)
+                            const dniEnCuitNum = parseInt(dniEnCuitString, 10)
+                            const dniIngresadoNum = parseInt(datos.nroDocumento, 10)
+
+                            if (dniEnCuitNum !== dniIngresadoNum) {
+                                error = "El CUIT no coincide con el Documento ingresado"
+                            }
                         }
                     }
                 }
                 break
+
             case "fechaNacimiento":
                 if (!valor) error = MSJ_OBLIGATORIO
                 else {
@@ -236,7 +249,7 @@ export function ModificarHuespedForm() {
             case "departamento":
                 if (valor.trim()) {
                     if (!regexCalle.test(valor)) error = "Caracteres inválidos"
-                    else if (valor.length > 10) error = MSJ_LARGO_EXCESIVO
+                    else if (valor.length > 20) error = MSJ_LARGO_EXCESIVO
                 }
                 break
             case "nacionalidad":

@@ -105,6 +105,13 @@ export default function OcuparHabitacion() {
     nroDocumento: "",
   });
 
+  const [dialogError, setDialogError] = useState<{
+        titulo: string;
+        mensaje: string;
+        tipo: "error" | "warning" | "info";
+   } | null>(null);
+
+
   const [erroresBusqueda, setErroresBusqueda] = useState<Errores>({});
   const [resultadosBusqueda, setResultadosBusqueda] = useState<DatosHuesped[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -302,12 +309,55 @@ export default function OcuparHabitacion() {
     );
   };
 
+
+// Línea 178
+
+
+// Línea 192
+
+
+// Línea 213
+
+
+// Línea 223
+
+
+// Línea 250
+
+
+// Línea 398
+
+
+// Línea 402
+
+
+// Línea 428
+
+
+// Línea 440
+
+
+// Línea 485
+
+
+// Línea 496
+
+
+// Línea 384
+
+
+
+
   const handleClickCelda = (habitacionId: string, diaIdx: number) => {
     const hab = habitaciones.find((h) => h.id === habitacionId);
     if (!hab) return;
     
     if (diaIdx === 0) {
-      alert("El check-in es HOY. Por favor seleccione la fecha de check-out (salida).");
+        setDialogError({
+            titulo: "Selección no permitida",
+            mensaje: "El check-in es HOY. Por favor seleccione la fecha de check-out (salida).",
+            tipo: "warning"
+        });
       return;
     }
 
@@ -318,7 +368,11 @@ export default function OcuparHabitacion() {
     for (const idx of rangoCompleto) {
       const info = obtenerDatosCelda(habitacionId, idx);
       if (info.estado === "OCUPADA" || info.estado === "MANTENIMIENTO" || info.estado === "FUERA_DE_SERVICIO") {
-        alert("No se puede seleccionar ese rango. Hay días no disponibles.");
+          setDialogError({
+              titulo: "Rango no disponible",
+              mensaje: "No se puede seleccionar ese rango. Hay días no disponibles.",
+              tipo: "error"
+          });
         return;
       }
     }
@@ -339,7 +393,11 @@ export default function OcuparHabitacion() {
     }
 
     if (multiplesReservas) {
-      alert("No puede seleccionar un rango que abarque múltiples reservas distintas.");
+        setDialogError({
+            titulo: "Múltiples reservas",
+            mensaje: "No puede seleccionar un rango que abarque múltiples reservas distintas.",
+            tipo: "error"
+        });
       return;
     }
 
@@ -351,8 +409,12 @@ export default function OcuparHabitacion() {
     if (reservaEncontrada && reservaEncontrada.idReserva && reservaEncontrada.fechaInicio && reservaEncontrada.fechaFin) {
         const resFinStr = reservaEncontrada.fechaFin.split(" ")[0];
         if (fechaFinSel < resFinStr) {
-            alert(`No puede ocupar parcialmente una reserva.\nEsta reserva termina el ${resFinStr}.\nDebe extender su selección hasta esa fecha o posterior.`);
-            return;
+            setDialogError({
+                titulo: "Reserva incompleta",
+                mensaje: `No puede ocupar parcialmente una reserva\\nEsta reserva termina el ${resFinStr}.\nDebe extender su selección hasta esa fecha o posterior.`,
+                tipo: "warning"
+            });
+             return;
         }
     }
 
@@ -380,7 +442,11 @@ export default function OcuparHabitacion() {
 
   const handleContinuarDesdeGrilla = () => {
     if (!seleccion) {
-      alert("Debe seleccionar una habitación y un rango de fechas");
+        setDialogError({
+            titulo: "Selección requerida",
+            mensaje: "Debe seleccionar una habitación y un rango de fechas",
+            tipo: "warning"
+        });
       return;
     }
     if (confirmacionTipo) return;
@@ -463,7 +529,11 @@ export default function OcuparHabitacion() {
       setMostrarResultados(true);
     } catch (error) {
       console.error("Error en búsqueda:", error);
-      alert("Error al buscar huésped");
+        setDialogError({
+            titulo: "Error de búsqueda",
+            mensaje: "Error al buscar huésped",
+            tipo: "error"
+        });
     } finally {
       setBuscando(false);
     }
@@ -474,12 +544,19 @@ export default function OcuparHabitacion() {
       h => h.tipoDocumento === huesped.tipoDocumento && h.nroDocumento === huesped.nroDocumento
     );
     if (yaExiste) {
-      alert("Este huésped ya ha sido agregado a la lista.");
+        setDialogError({
+            titulo: "Huésped duplicado",
+            mensaje: "Este huésped ya ha sido agregado a la lista.",
+            tipo: "info"
+        });
       return;
     }
     if (habitacionSeleccionada && huespedes.length >= habitacionSeleccionada.capacidad) {
-      alert(`La capacidad máxima de esta habitación es de ${habitacionSeleccionada.capacidad} personas.`);
-      return;
+        setDialogError({
+            titulo: "Capacidad máxima",
+            mensaje: `La capacidad máxima de esta habitación es de ${habitacionSeleccionada.capacidad} personas.`,
+            tipo: "warning"
+        });return;
     }
     const nuevaLista = [...huespedes, huesped];
     setHuespedes(nuevaLista);
@@ -511,7 +588,11 @@ export default function OcuparHabitacion() {
 
   const handleContinuarConfirmacion = () => {
     if (huespedes.length === 0 || responsableIdx === null) {
-      alert("Debe seleccionar un huésped responsable");
+        setDialogError({
+            titulo: "Responsable requerido",
+            mensaje: "Debe seleccionar un huésped responsable",
+            tipo: "warning"
+        });
       return;
     }
     setPaso("confirmacion");
@@ -521,7 +602,11 @@ export default function OcuparHabitacion() {
   const handleConfirmarYGuardar = async (accionPosterior: "reset" | "salir") => {
     // 1. Validaciones previas
     if (!habitacionSeleccionada || huespedes.length === 0) {
-      alert("Faltan datos para realizar el check-in");
+        setDialogError({
+            titulo: "Datos incompletos",
+            mensaje: "Faltan datos para realizar el check-in",
+            tipo: "error"
+        });
       return;
     }
 
@@ -579,7 +664,11 @@ export default function OcuparHabitacion() {
       await crearEstadia(estadiaPayload);
       
       // 5. ÉXITO y ACCIÓN POSTERIOR
-      alert("Check-in realizado correctamente.");
+        setDialogError({
+            titulo: "Check-in exitoso",
+            mensaje: "Check-in realizado correctamente.",
+            tipo: "info"
+        });
       
       if (accionPosterior === "reset") {
           resetearTodo();
@@ -589,7 +678,11 @@ export default function OcuparHabitacion() {
 
     } catch (error: any) {
       console.error("Error al guardar estadía:", error);
-      alert("Error al realizar el check-in: " + (error.message || "Error desconocido"));
+        setDialogError({
+            titulo: "Error al guardar",
+            mensaje: "Error al realizar el check-in: " + (error.message || "Error desconocido"),
+            tipo: "error"
+        });
     } finally {
       setLoading(false);
     }
@@ -602,11 +695,7 @@ export default function OcuparHabitacion() {
   };
 
   const diasRango = generarDias(fechaDesdeGrilla, fechaHastaGrilla);
-  const conteo = {
-    disponibles: habitaciones.filter((h) => h.estado === "DISPONIBLE").length,
-    reservadas: habitaciones.filter((h) => h.estado === "RESERVADA").length,
-    ocupadas: habitaciones.filter((h) => h.estado === "OCUPADA").length,
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -684,11 +773,6 @@ export default function OcuparHabitacion() {
               </Card>
             ) : (
               <>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-white border p-4 rounded"><p className="text-sm">Disponibles</p><p className="text-2xl font-bold text-green-600">{conteo.disponibles}</p></div>
-              <div className="bg-white border p-4 rounded"><p className="text-sm">Reservadas</p><p className="text-2xl font-bold text-orange-600">{conteo.reservadas}</p></div>
-              <div className="bg-white border p-4 rounded"><p className="text-sm">Ocupadas</p><p className="text-2xl font-bold text-slate-600">{conteo.ocupadas}</p></div>
-            </div>
 
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4 text-slate-900">Grilla de disponibilidad</h2>
@@ -926,7 +1010,7 @@ export default function OcuparHabitacion() {
                 variant="outline" 
                 className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
               >
-                Seguir cargando (Modificar)
+                  Volver a la selección de Huéspedes
               </Button>
               
               <div className="flex gap-4">
@@ -936,8 +1020,8 @@ export default function OcuparHabitacion() {
                     disabled={loading} 
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                   >
-                    {loading ? <Loader2 className="animate-spin mr-2" /> : null} 
-                    Cargar otra habitación
+                    {loading ? <Loader2 className="animate-spin mr-2" /> : null}
+                      Confirmar y cargar otra habitación
                   </Button>
 
                   {/* BOTÓN 3: Guardar y Salir */}
@@ -947,12 +1031,41 @@ export default function OcuparHabitacion() {
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
                     {loading ? <Loader2 className="animate-spin mr-2" /> : null} 
-                    Confirmar y Salir
+                    Confirmar y Salir al Menú Principal
                   </Button>
               </div>
             </div>
           </Card>
         )}
+          {dialogError && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDialogError(null)}>
+                  <Card className={`w-full max-w-md p-6 border-2 ${
+                      dialogError.tipo === "error" ? "border-red-500" :
+                          dialogError.tipo === "warning" ? "border-orange-500" :
+                              "border-blue-500"
+                  }`} onClick={(e) => e.stopPropagation()}>
+                      <h3 className={`text-xl font-bold mb-4 ${
+                          dialogError.tipo === "error" ? "text-red-600" :
+                              dialogError.tipo === "warning" ? "text-orange-600" :
+                                  "text-blue-600"
+                      }`}>
+                          {dialogError.titulo}
+                      </h3>
+                      <p className="text-slate-700 mb-6 whitespace-pre-line">{dialogError.mensaje}</p>
+                      <Button
+                          onClick={() => setDialogError(null)}
+                          className={`w-full ${
+                              dialogError.tipo === "error" ? "bg-red-600 hover:bg-red-700" :
+                                  dialogError.tipo === "warning" ? "bg-orange-600 hover:bg-orange-700" :
+                                      "bg-blue-600 hover:bg-blue-700"
+                          }`}
+                      >
+                          Entendido
+                      </Button>
+                  </Card>
+              </div>
+          )}
+
       </main>
     </div>
   );

@@ -254,6 +254,12 @@ export default function ReservarHabitacion() {
     )
   }
 
+    const [dialogError, setDialogError] = useState<{
+        titulo: string;
+        mensaje: string;
+        tipo: "error" | "warning" | "info";
+    } | null>(null);
+
   const handleClickCelda = (habitacionId: string, diaIdx: number) => {
     if (!esCeldaDisponible(habitacionId, diaIdx)) return
 
@@ -272,8 +278,13 @@ export default function ReservarHabitacion() {
         setSelecciones(prev => [...prev, { habitacionId, diaInicio: min, diaFin: max }])
         setSeleccionActual(null)
       } else {
-        alert("El rango seleccionado contiene días no disponibles.")
-        setSeleccionActual(null)
+          setDialogError({
+              titulo: "Rango no disponible",
+              mensaje: "El rango seleccionado contiene días no disponibles.",
+              tipo: "warning"
+          });
+
+          setSeleccionActual(null)
       }
     }
   }
@@ -291,10 +302,6 @@ export default function ReservarHabitacion() {
   }
 
   // --- NAVEGACIÓN ---
-  const handleContinuarHuesped = () => {
-      if (selecciones.length === 0) { alert("Seleccione al menos una habitación."); return }
-      setPaso("datosHuesped")
-  }
 
   const handleConfirmarHuesped = () => { if (validarDatosHuesped()) setPaso("confirmacion") }
 
@@ -760,6 +767,35 @@ export default function ReservarHabitacion() {
                 </Card>
             </div>
         )}
+          {dialogError && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setDialogError(null)}>
+                  <Card className={`w-full max-w-md p-6 border-2 ${
+                      dialogError.tipo === "error" ? "border-red-500" :
+                          dialogError.tipo === "warning" ? "border-orange-500" :
+                              "border-blue-500"
+                  }`} onClick={(e) => e.stopPropagation()}>
+                      <h3 className={`text-xl font-bold mb-4 ${
+                          dialogError.tipo === "error" ? "text-red-600" :
+                              dialogError.tipo === "warning" ? "text-orange-600" :
+                                  "text-blue-600"
+                      }`}>
+                          {dialogError.titulo}
+                      </h3>
+                      <p className="text-slate-700 mb-6 whitespace-pre-line">{dialogError.mensaje}</p>
+                      <Button
+                          onClick={() => setDialogError(null)}
+                          className={`w-full ${
+                              dialogError.tipo === "error" ? "bg-red-600 hover:bg-red-700" :
+                                  dialogError.tipo === "warning" ? "bg-orange-600 hover:bg-orange-700" :
+                                      "bg-blue-600 hover:bg-blue-700"
+                          }`}
+                      >
+                          Entendido
+                      </Button>
+                  </Card>
+              </div>
+          )}
+
       </main>
     </div>
   )
