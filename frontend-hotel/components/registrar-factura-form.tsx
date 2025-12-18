@@ -111,8 +111,8 @@ export function RegistrarFacturaForm() {
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
                     // MEJORA: Límites de AltaHuesped
-                    else if (valor.length < 9) error = "Mínimo 9 caracteres"
-                    else if (valor.length > 15) error = "Máximo 15 caracteres"
+                    else if (valor.length < 9) error = "El número ingresado es demasiado  corto (min. 9 caracteres)"
+                    else if (valor.length > 15) error = "El número ingresado es demasiado largo (max. 15 caracteres)"
                     break;
 
                 // --- GRUPO DIRECCIÓN: CALLE, LOCALIDAD, DEPTO, PISO ---
@@ -120,7 +120,7 @@ export function RegistrarFacturaForm() {
                 case "calle":
                 case "localidad":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
+                    else if (!regexCalle.test(valor)) error = "Contiene caracteres inválidos"
                     else if (nombre === "calle" && valor.length > 100) error = MSJ_LARGO_EXCESIVO
                     break;
 
@@ -148,13 +148,13 @@ export function RegistrarFacturaForm() {
                     // Si son números, recién ahí validamos el rango
                     else {
                         const num = parseInt(valor)
-                        if (num < 1 || num > 99999) error = "Debe ser entre 1 y 99999"
+                        if (num < 1 || num > 99999) error = "Número inválido (máx. 5 dígitos)"
                     }
                     break;
                 case "codPostal":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
-                    else if (valor.length > 8) error = "CP demasiado largo"
+                    else if (valor.length > 8) error = "Código postal demasiado largo"
                     break;
             }
 
