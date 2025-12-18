@@ -66,7 +66,7 @@ export function AltaResponsablePagoForm() {
         codigoPostal: "",
         localidad: "",
         provincia: "",
-        pais: "Argentina",
+        pais: "",
         telefono: "",
     })
 
@@ -99,7 +99,9 @@ export function AltaResponsablePagoForm() {
 
             case "telefono":
                 if (!valor.trim()) error = MSJ_OBLIGATORIO
-                else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
+                else if (!regexTelefono.test(valor.trim())) error = MSJ_FORMATO_TEL
+                else if (valor.trim().length > 15) error = "El número ingresado es demasiado largo (max. 15 caracteres)"
+                else if (valor.trim().length < 9) error = "El número ingresado es demasiado  corto (min. 9 caracteres)"
                 break
 
             case "calle":
@@ -208,7 +210,7 @@ export function AltaResponsablePagoForm() {
     }
 
     const handleCancel = () => {
-        const hasData = Object.values(formData).some((value) => value.trim() !== "" && value !== "Argentina")
+        const hasData = Object.values(formData).some((value) => value.trim() !== "")
         if (hasData) setShowCancelDialog(true)
         else router.push("/")
     }

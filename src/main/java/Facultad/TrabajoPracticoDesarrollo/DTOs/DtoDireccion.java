@@ -43,7 +43,7 @@ public class DtoDireccion {
     private Integer codPostal;
 
     @NotBlank(message = "La localidad es obligatoria")
-    @Pattern(regexp = REGEX_TEXTO, message = "La localidad solo puede contener letras y espacios")
+    @Pattern(regexp = REGEX_ALFANUMERICO, message = "La localidad solo puede contener letras, numeros y espacios")
     private String localidad;
 
     @NotBlank(message = "La provincia es obligatoria")
