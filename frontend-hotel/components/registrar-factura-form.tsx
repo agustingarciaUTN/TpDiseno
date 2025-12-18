@@ -296,7 +296,20 @@ export function RegistrarFacturaForm() {
                     }
                 })
             });
-            if (!res.ok) throw new Error("Error al crear empresa");
+
+            if (!res.ok) {
+                // Leemos el texto que manda el backend
+                const errorText = await res.text();
+
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    throw new Error(errorJson.message || errorJson.error || errorText);
+                } catch {
+                    // Si es texto plano, lo lanzamos tal cual
+                    throw new Error(errorText || "Error desconocido al crear empresa");
+                }
+            }
+
             const dataResp = await res.json();
 
             // Limpieza exitosa
@@ -307,11 +320,16 @@ export function RegistrarFacturaForm() {
                 calle: "", numero: "", piso: "", departamento: "",
                 codPostal: "", localidad: "", provincia: "", pais: "Argentina"
             });
+            setPopupErrors({});
 
             // Continuar
             obtenerDetalleFacturacion({ esTercero: true, idResponsableJuridico: dataResp.idResponsableGenerado });
 
-        } catch (error: any) { setErrorMessage("Error: " + error.message); setIsLoading(false); }
+        } catch (error: any) {
+            let mensaje = error.message;
+            setErrorMessage(mensaje);
+            setIsLoading(false);
+        }
     }
 
     // Funciones de manejo de inputs
