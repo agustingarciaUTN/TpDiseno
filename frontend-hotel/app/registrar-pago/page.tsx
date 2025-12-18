@@ -223,6 +223,7 @@ export default function RegistrarPagoPage() {
     }
 
     const handleAddPaymentMethod = async () => {
+
         if (!selectedInvoice) return
 
         const amount = Number.parseFloat(paymentAmount)
@@ -240,8 +241,13 @@ export default function RegistrarPagoPage() {
 
         // Validaciones específicas
         if (paymentMethod === "EFECTIVO") {
-            if (!cashAmount || Number.parseFloat(cashAmount) <= 0) {
+            const cash = Number.parseFloat(cashAmount)
+            if (!cashAmount || cash <= 0) {
                 setError("Debe ingresar el importe en efectivo")
+                return
+            }
+            if (cash < amount) {
+                setError("El importe entregado debe ser mayor o igual al monto a imputar")
                 return
             }
         } else if (paymentMethod === "CHEQUE") {
@@ -249,52 +255,123 @@ export default function RegistrarPagoPage() {
                 setError("Debe completar todos los datos del cheque")
                 return
             }
+            // Validar duplicado en la operación actual
+            const yaIngresado = mediosPagoAcumulados.some(
+                (m) => m.tipoMedio === "CHEQUE" && m.cheque?.numeroCheque === checkNumber
+            );
+            if (yaIngresado) {
+                setChequeBddError("Ya ingresaste un cheque con ese número en esta operación.");
+                setError("No se puede agregar el mismo cheque dos veces.");
+                return;
+            }
             // Verificar en BDD
             try {
                 const existe = await verificarChequeExiste(checkNumber)
                 if (existe) {
-                    setChequeBddError("El número de cheque ya existe")
+                    setChequeBddError("Ese cheque ya fue entregado. Revise el número.")
+                    setError("No se puede agregar el cheque porque ya fue entregado. Revise el número.")
                     return
                 } else {
                     setChequeBddError("")
                 }
-            } catch {
-                setChequeBddError("No se pudo verificar en BDD")
-                return
+            } catch (err: any) {
+                // Si el error es 404, significa que el cheque NO existe y se puede agregar
+                if (err?.message?.includes("404") || err?.message?.toLowerCase().includes("no existe el cheque")) {
+                    setChequeBddError("")
+                    // No retornes, permite continuar
+                } else {
+                    setChequeBddError("No se pudo verificar en BDD")
+                    setError("No se pudo verificar el cheque en la base de datos")
+                    return
+                }
             }
         } else if (paymentMethod === "TARJETA_CREDITO" || paymentMethod === "TARJETA_DEBITO") {
             if (!cardNumber || !cardNetwork || !cardBank || !cardCvv || !cardExpiry || (paymentMethod === "TARJETA_CREDITO" && !cardQuota)) {
                 setError("Debe completar todos los datos de la tarjeta")
                 return
             }
+            // Validar duplicado en la operación actual
+            const digits = cardNumber.replace(/\D/g, "");
+            const yaIngresada = mediosPagoAcumulados.some((m) => {
+                if (m.tipoMedio === "TARJETA_CREDITO" && m.tarjetaCredito) {
+                    return m.tarjetaCredito.numeroTarjeta === digits;
+                }
+                if (m.tipoMedio === "TARJETA_DEBITO" && m.tarjetaDebito) {
+                    return m.tarjetaDebito.numeroTarjeta === digits;
+                }
+                // Evitar que exista una de crédito y una de débito con el mismo número
+                if (m.tipoMedio === "TARJETA_CREDITO" && m.tarjetaCredito) {
+                    return m.tarjetaCredito.numeroTarjeta === digits;
+                }
+                if (m.tipoMedio === "TARJETA_DEBITO" && m.tarjetaDebito) {
+                    return m.tarjetaDebito.numeroTarjeta === digits;
+                }
+                return false;
+            });
+            if (yaIngresada) {
+                setTarjetaBddError("Ya ingresaste una tarjeta (crédito o débito) con ese número en esta operación.");
+                setError("No se puede agregar una tarjeta de crédito y una de débito con el mismo número.");
+                return;
+            }
             // Verificar en BDD
             try {
-                const tipo = paymentMethod === "TARJETA_CREDITO" ? "credito" : "debito"
-                const digits = cardNumber.replace(/\D/g, "")
+                const tipo = paymentMethod === "TARJETA_CREDITO" ? "credito" : "debito";
                 if (digits.length === 16) {
-                    const tarjeta = await verificarTarjetaExiste(digits, tipo)
+                    // Chequear si existe la tarjeta del tipo opuesto
+                    const tipoOpuesto = paymentMethod === "TARJETA_CREDITO" ? "debito" : "credito";
+                    try {
+                        const tarjetaOpuesta = await verificarTarjetaExiste(digits, tipoOpuesto);
+                        if (tarjetaOpuesta) {
+                            setTarjetaBddError("Ya existe una tarjeta " + (tipoOpuesto === "credito" ? "de crédito" : "de débito") + " con ese número en la base de datos.");
+                            setError("No se puede agregar una tarjeta de " + (tipo === "debito" ? "débito" : "crédito") + " si ya existe una de " + (tipoOpuesto === "credito" ? "crédito" : "débito") + " con el mismo número.");
+                            return;
+                        }
+                    } catch (errOpuesto: any) {
+                        // Si el error es 404, no existe la opuesta, se puede continuar
+                    }
+                    const tarjeta = await verificarTarjetaExiste(digits, tipo);
                     if (tarjeta) {
-                        let diferencias = []
-                        if (tarjeta.banco && tarjeta.banco !== cardBank) diferencias.push("Banco")
-                        if (tarjeta.redDePago && tarjeta.redDePago !== cardNetwork) diferencias.push("Red")
-                        if (tarjeta.fechaVencimiento && tarjeta.fechaVencimiento !== cardExpiry) diferencias.push("Vencimiento")
+                        let diferencias = [];
+                        if (tarjeta.banco && tarjeta.banco !== cardBank) diferencias.push("Banco");
+                        if (tarjeta.redDePago && tarjeta.redDePago !== cardNetwork) diferencias.push("Red");
+                        if (tarjeta.fechaVencimiento && tarjeta.fechaVencimiento !== cardExpiry) diferencias.push("Vencimiento");
                         // Comparar CVV como string de 3 dígitos
-                        const cvvFront = cardCvv.padStart(3, '0')
-                        const cvvBack = tarjeta.codigoSeguridad?.toString().padStart(3, '0')
-                        if (cvvBack && cvvBack !== cvvFront) diferencias.push("CVV")
-                        if (diferencias.length > 0) {
-                            setTarjetaBddError(`Difiere en: ${diferencias.join(", ")}`)
-                            return
+                        const cvvFront = cardCvv.padStart(3, '0');
+                        const cvvBack = tarjeta.codigoSeguridad?.toString().padStart(3, '0');
+                        if (cvvBack && cvvBack !== cvvFront) diferencias.push("CVV");
+                        if (paymentMethod === "TARJETA_CREDITO") {
+                            // Solo cuotas puede diferir, se actualiza al confirmar pago
+                            if (diferencias.length > 0) {
+                                // Si la única diferencia es cuotas, permitir
+                                const soloCuotas = diferencias.length === 1 && diferencias[0] === "Cuotas";
+                                if (!soloCuotas) {
+                                    setTarjetaBddError(`Difiere en: ${diferencias.filter(d => d !== "Cuotas").join(", ")}`);
+                                    return;
+                                }
+                            }
+                            setTarjetaBddError("");
                         } else {
-                            setTarjetaBddError("")
+                            // Débito: todo debe coincidir
+                            if (diferencias.length > 0) {
+                                setTarjetaBddError(`Difiere en: ${diferencias.join(", ")}`);
+                                return;
+                            } else {
+                                setTarjetaBddError("");
+                            }
                         }
                     } else {
-                        setTarjetaBddError("")
+                        setTarjetaBddError(""); // No existe, se creará
                     }
                 }
-            } catch {
-                setTarjetaBddError("No se pudo verificar en BDD")
-                return
+            } catch (err: any) {
+                // Si el error es 404, significa que la tarjeta NO existe y se puede crear
+                if (err?.message?.includes("404") || err?.message?.toLowerCase().includes("no existe la tarjeta")) {
+                    setTarjetaBddError("");
+                    // No retornes, permite continuar
+                } else {
+                    setTarjetaBddError("No se pudo verificar en BDD");
+                    return;
+                }
             }
         }
 
@@ -308,8 +385,12 @@ export default function RegistrarPagoPage() {
             fechaDePago: fechaActual
         }
 
+        let vuelto = 0
+
         if (paymentMethod === "EFECTIVO") {
-            Object.assign(nuevoMedio, {})
+            const cash = Number.parseFloat(cashAmount)
+            vuelto = cash - amount
+            Object.assign(nuevoMedio, { importeEntregado: cash, vuelto })
         } else if (paymentMethod === "CHEQUE") {
             Object.assign(nuevoMedio, {
                 numeroCheque: checkNumber,
@@ -353,7 +434,11 @@ export default function RegistrarPagoPage() {
         resetPaymentFields()
         setError("")
 
-        setSuccess("Medio de pago agregado correctamente")
+        setSuccess(
+            paymentMethod === "EFECTIVO" && vuelto > 0
+                ? `Medio de pago agregado correctamente. Vuelto: $${vuelto.toFixed(2)}`
+                : "Medio de pago agregado correctamente"
+        )
         setTimeout(() => setSuccess(""), 3000)
     }
 
@@ -513,38 +598,41 @@ export default function RegistrarPagoPage() {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                         <h3 className="text-lg font-semibold text-slate-800 ml-1">Facturas Pendientes</h3>
                         <div className="grid grid-cols-1 gap-4">
-                            {invoices.map((invoice) => (
-                                <Card
-                                    key={invoice.numeroFactura}
-                                    onClick={() => handleSelectInvoice(invoice)}
-                                    className={`
-                                        cursor-pointer transition-all hover:shadow-md border-l-4
-                                        ${invoice.estadoFactura === "PAGADA"
-                                        ? "border-l-green-500 border-slate-200 opacity-60"
-                                        : "border-l-amber-500 border-slate-200 hover:border-teal-400"}
-                                    `}
-                                >
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                                                <Wallet className="h-5 w-5" />
+                            {invoices.map((invoice) => {
+                                const isPagada = invoice.estadoFactura === "PAGADA";
+                                return (
+                                    <Card
+                                        key={invoice.numeroFactura}
+                                        onClick={() => !isPagada && handleSelectInvoice(invoice)}
+                                        className={`
+                                            ${isPagada ? "cursor-not-allowed opacity-60 border-l-green-500" : "cursor-pointer hover:shadow-md border-l-amber-500 hover:border-teal-400"}
+                                            border-slate-200 transition-all
+                                        `}
+                                        tabIndex={isPagada ? -1 : 0}
+                                        aria-disabled={isPagada}
+                                    >
+                                        <CardContent className="p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                                    <Wallet className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-900">{invoice.numeroFactura}</p>
+                                                    <p className="text-sm text-slate-500">
+                                                        Resp: {invoice.nombreResponsable} {invoice.apellidoResponsable}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-slate-900">{invoice.numeroFactura}</p>
-                                                <p className="text-sm text-slate-500">
-                                                    Resp: {invoice.nombreResponsable} {invoice.apellidoResponsable}
-                                                </p>
+                                            <div className="text-right">
+                                                <p className="text-2xl font-bold text-slate-900">${invoice.importeTotal.toLocaleString('es-AR')}</p>
+                                                <Badge variant={isPagada ? "default" : "secondary"} className={isPagada ? "bg-green-600" : "bg-amber-100 text-amber-800 hover:bg-amber-200"}>
+                                                    {invoice.estadoFactura}
+                                                </Badge>
                                             </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-2xl font-bold text-slate-900">${invoice.importeTotal.toLocaleString('es-AR')}</p>
-                                            <Badge variant={invoice.estadoFactura === "PAGADA" ? "default" : "secondary"} className={invoice.estadoFactura === "PAGADA" ? "bg-green-600" : "bg-amber-100 text-amber-800 hover:bg-amber-200"}>
-                                                {invoice.estadoFactura}
-                                            </Badge>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     </div>
                 )}

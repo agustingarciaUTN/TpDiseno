@@ -22,6 +22,18 @@ import java.util.stream.Collectors;
 @Service
 public class PagoService {
 
+    @Transactional
+    public TarjetaCredito crearTarjetaCredito(DtoTarjetaCredito dto) {
+        TarjetaCredito tarjeta = MapearTarjetaCredito.mapearDtoAEntidad(dto);
+        return tarjetaRepository.save(tarjeta);
+    }
+
+    @Transactional
+    public TarjetaDebito crearTarjetaDebito(DtoTarjetaDebito dto) {
+        TarjetaDebito tarjeta = MapearTarjetaDebito.mapearDtoAEntidad(dto);
+        return tarjetaRepository.save(tarjeta);
+    }
+
     private final FacturaRepository facturaRepository;
     private final PagoRepository pagoRepository;
     private final MedioDePagoRepository medioDePagoRepository;
@@ -29,6 +41,7 @@ public class PagoService {
     private final HabitacionRepository habitacionRepository;
     private final FacturaService facturaService;
     private final TarjetaRepository tarjetaRepository;
+    private final ChequeRepository chequeRepository;
 
     @Autowired
     public PagoService(FacturaRepository facturaRepository,
@@ -37,7 +50,8 @@ public class PagoService {
                        EstadiaRepository estadiaRepository,
                        HabitacionRepository habitacionRepository,
                        FacturaService facturaService,
-                       TarjetaRepository tarjetaRepository) {
+                       TarjetaRepository tarjetaRepository,
+                       ChequeRepository chequeRepository) {
         this.facturaRepository = facturaRepository;
         this.pagoRepository = pagoRepository;
         this.medioDePagoRepository = medioDePagoRepository;
@@ -45,6 +59,12 @@ public class PagoService {
         this.habitacionRepository = habitacionRepository;
         this.facturaService = facturaService;
         this.tarjetaRepository = tarjetaRepository;
+        this.chequeRepository = chequeRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public Cheque buscarChequePorNumero(String numeroCheque) {
+        return chequeRepository.findById(numeroCheque).orElse(null);
     }
 
     /**

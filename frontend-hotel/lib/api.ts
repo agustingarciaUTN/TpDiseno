@@ -57,45 +57,57 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
     const response = await fetch(fullUrl, config)
     console.log(`[API] Response status: ${response.status}`)
 
-        if (!response.ok) {
-          try {
-            const contentType = response.headers.get("content-type");
-            let errorMessage = "";
+    if (!response.ok) {
+      try {
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "";
 
-            if (contentType && contentType.includes("application/json")) {
-              const errorData = await response.json();
-              if (errorData && typeof errorData === 'object') {
-                if (errorData.message) {
-                  errorMessage = errorData.message;
-                } else {
-                  const valores = Object.values(errorData);
-                  if (valores.length > 0 && valores.every(v => typeof v === 'string')) {
-                    errorMessage = valores.join('. ');
-                  } else {
-                    errorMessage = JSON.stringify(errorData);
-                  }
-                }
-              } else {
-                errorMessage = String(errorData);
-              }
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            if (errorData.message) {
+              errorMessage = errorData.message;
             } else {
-              errorMessage = await response.text();
+              const valores = Object.values(errorData);
+              if (valores.length > 0 && valores.every(v => typeof v === 'string')) {
+                errorMessage = valores.join('. ');
+              } else {
+                errorMessage = JSON.stringify(errorData);
+              }
             }
-
-            // Si el error es "No existen facturas pendientes de pago", devolver null o [] según el tipo esperado
-            if (errorMessage && errorMessage.toLowerCase().includes("no existen facturas pendientes de pago")) {
-              // @ts-ignore
-              return ([] as unknown) as T;
-            }
-
-            throw new Error(errorMessage || `Error HTTP ${response.status}`);
-          } catch (parseError: any) {
-            if (parseError instanceof Error && !parseError.message.startsWith("Unexpected token")) {
-              throw parseError;
-            }
-            throw new Error(`Error HTTP ${response.status}`);
+          } else {
+            errorMessage = String(errorData);
           }
+        } else {
+          errorMessage = await response.text();
         }
+
+        // Si el error es "No existen facturas pendientes de pago", devolver null o [] según el tipo esperado
+        if (errorMessage && errorMessage.toLowerCase().includes("no existen facturas pendientes de pago")) {
+          // @ts-ignore
+          return ([] as unknown) as T;
+        }
+
+        // Si es cheque o tarjeta no existe (404), no mostrar error en consola, solo lanzar para manejo de frontend
+        if (
+          response.status === 404 && (
+            endpoint.includes("cheque-existe") ||
+            endpoint.includes("tarjeta-existe") ||
+            errorMessage.toLowerCase().includes("no existe el cheque") ||
+            errorMessage.toLowerCase().includes("no existe la tarjeta")
+          )
+        ) {
+          throw new Error(errorMessage || `Error HTTP 404`);
+        }
+
+        throw new Error(errorMessage || `Error HTTP ${response.status}`);
+      } catch (parseError: any) {
+        if (parseError instanceof Error && !parseError.message.startsWith("Unexpected token")) {
+          throw parseError;
+        }
+        throw new Error(`Error HTTP ${response.status}`);
+      }
+    }
 
     // Si la respuesta es 204 No Content o vacía
     if (response.status === 204) return {} as T;
@@ -132,6 +144,14 @@ export async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {
     }
 
   } catch (error: any) {
+    // Si es cheque o tarjeta no existe (404), no mostrar error en consola
+    if (
+      (endpoint.includes("cheque-existe") && error?.message?.toLowerCase().includes("no existe el cheque")) ||
+      (endpoint.includes("tarjeta-existe") && error?.message?.toLowerCase().includes("no existe la tarjeta"))
+    ) {
+      // No loguear como error
+      throw error;
+    }
     console.error(`API Error [${method} ${endpoint}]:`, error)
     throw error
   }

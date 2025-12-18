@@ -30,6 +30,34 @@ import java.util.List;
 @Validated
 public class PagoController {
 
+    /**
+     * Endpoint para crear tarjeta de crédito
+     * POST /api/pagos/crear-tarjeta-credito
+     */
+    @PostMapping("/crear-tarjeta-credito")
+    public ResponseEntity<?> crearTarjetaCredito(@RequestBody DtoTarjetaCredito dto) {
+        try {
+            var tarjeta = pagoService.crearTarjetaCredito(dto);
+            return ResponseEntity.ok(tarjeta);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Endpoint para crear tarjeta de débito
+     * POST /api/pagos/crear-tarjeta-debito
+     */
+    @PostMapping("/crear-tarjeta-debito")
+    public ResponseEntity<?> crearTarjetaDebito(@RequestBody DtoTarjetaDebito dto) {
+        try {
+            var tarjeta = pagoService.crearTarjetaDebito(dto);
+            return ResponseEntity.ok(tarjeta);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", e.getMessage()));
+        }
+    }
+
     private final PagoService pagoService;
 
     /**
@@ -41,6 +69,26 @@ public class PagoController {
     public PagoController(PagoService pagoService) {
         this.pagoService = pagoService;
     }
+
+    /**
+     * CU16 - Endpoint: Verificar existencia de cheque por número
+     * GET /api/pagos/cheque-existe/{numeroCheque}
+     * @param numeroCheque número de cheque a buscar
+     * @return 200 OK con el cheque si existe, 404 si no existe
+     */
+    @GetMapping("/cheque-existe/{numeroCheque}")
+public ResponseEntity<?> verificarChequeExiste(@PathVariable String numeroCheque) {
+    try {
+        var cheque = pagoService.buscarChequePorNumero(numeroCheque);
+        if (cheque == null) {
+            // Esto es correcto:
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", "No existe el cheque"));
+        }
+        return ResponseEntity.ok(cheque);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.singletonMap("error", e.getMessage()));
+    }
+}
 
     /**
      * CU16 - Endpoint 1: Buscar facturas pendientes por número de habitación.
