@@ -31,6 +31,7 @@ import { DtoFactura, Moneda, TipoMedioPago, DtoMedioPago, DtoPago, EstadoFactura
 
 type PaymentMethod = "EFECTIVO" | "CHEQUE" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
 
+
 export default function RegistrarPagoPage() {
     // --- ESTADOS (Lógica original) ---
     const [roomNumber, setRoomNumber] = useState("")
@@ -48,6 +49,7 @@ export default function RegistrarPagoPage() {
     const [roomNumberError, setRoomNumberError] = useState("")
     const [mediosPagoAcumulados, setMediosPagoAcumulados] = useState<DtoMedioPago[]>([])
     const [montoAcumulado, setMontoAcumulado] = useState(0)
+    const [pagosCompletados, setPagosCompletados] = useState(false)
 
     // Estados para campos de pago detallados y errores
     const [cashAmount, setCashAmount] = useState("")
@@ -125,7 +127,7 @@ export default function RegistrarPagoPage() {
         else setCardBankError("")
     }
     const handleCardExpiryChange = (val: string) => {
-        setCardExpiry(val)
+         setCardExpiry(val)
         if (val) {
             const inputDate = new Date(val)
             const now = new Date()
@@ -225,6 +227,10 @@ export default function RegistrarPagoPage() {
     const handleAddPaymentMethod = async () => {
 
         if (!selectedInvoice) return
+        if (pagosCompletados) {
+            setError("No se pueden agregar más pagos. La factura ya está saldada.");
+            return;
+        }
 
         const amount = Number.parseFloat(paymentAmount)
         const cotizacionNum = Number.parseFloat(cotizacion)
@@ -426,7 +432,6 @@ export default function RegistrarPagoPage() {
         setMontoAcumulado(nuevoMontoAcumuladoEnPesos)
 
         const faltaPagar = Math.max(0, selectedInvoice.importeTotal - nuevoMontoAcumuladoEnPesos)
-
         setPaymentMethod("")
         setPaymentAmount(faltaPagar > 0 ? faltaPagar.toFixed(2) : "") // Sugerir el restante
         setMoneda(Moneda.PESOS_ARGENTINOS)
@@ -438,8 +443,13 @@ export default function RegistrarPagoPage() {
             paymentMethod === "EFECTIVO" && vuelto > 0
                 ? `Medio de pago agregado correctamente. Vuelto: $${vuelto.toFixed(2)}`
                 : "Medio de pago agregado correctamente"
-        )
-        setTimeout(() => setSuccess(""), 3000)
+        );
+        setTimeout(() => setSuccess(""), 3000);
+
+        // Si el monto acumulado cubre o supera el total, bloquear más pagos
+        if (nuevoMontoAcumuladoEnPesos >= selectedInvoice.importeTotal) {
+            setPagosCompletados(true);
+        }
     }
 
     const handleRemoverMedioPago = (indice: number) => {
@@ -454,9 +464,13 @@ export default function RegistrarPagoPage() {
         const nuevoMontoAcumulado = Math.max(0, montoAcumulado - montoEnPesos)
         setMontoAcumulado(nuevoMontoAcumulado)
 
-        setError("")
-        setSuccess("Medio removido")
-        setTimeout(() => setSuccess(""), 2000)
+        setError("");
+        setSuccess("Medio removido");
+        setTimeout(() => setSuccess(""), 2000);
+        // Si se remueve y ya no está cubierto, permitir pagos nuevamente
+        if (selectedInvoice && nuevoMontoAcumulado < selectedInvoice.importeTotal) {
+            setPagosCompletados(false);
+        }
     }
 
     const handleFinalizarPago = async () => {
@@ -513,6 +527,7 @@ export default function RegistrarPagoPage() {
         resetPaymentFields()
         setError("")
         setSuccess("")
+        setPagosCompletados(false)
     }
 
     return (
@@ -741,7 +756,7 @@ export default function RegistrarPagoPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>Vencimiento</Label>
-                                                    <Input type="date" value={cardExpiry} onChange={(e) => handleCardExpiryChange(e.target.value)} className="bg-white" />
+                                                     <Input type="date" value={cardExpiry} onChange={(e) => handleCardExpiryChange(e.target.value)} className="bg-white" />
                                                     {cardExpiryError && <p className="text-xs text-red-500">{cardExpiryError}</p>}
                                                 </div>
                                                 <div className="space-y-2">
@@ -774,6 +789,9 @@ export default function RegistrarPagoPage() {
                                     <Button onClick={handleAddPaymentMethod} className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-md" disabled={!paymentMethod || !paymentAmount}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Agregar Medio de Pago
                                     </Button>
+                                    {pagosCompletados && (
+                                        <p className="text-sm text-teal-700 font-bold text-center mt-2">La factura ya está saldada. No se pueden agregar más pagos.</p>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>
@@ -783,13 +801,13 @@ export default function RegistrarPagoPage() {
                             <Card className="shadow-lg border-slate-200 bg-slate-50/50 h-full">
                                 <CardHeader className="border-b border-slate-100 pb-4">
                                     <CardTitle className="text-lg">Resumen de Pago</CardTitle>
-                                    <p className="text-sm text-slate-500">Factura: {selectedInvoice.numeroFactura}</p>
+                                    <p className="text-sm text-slate-500">Factura: {selectedInvoice ? selectedInvoice.numeroFactura : ""}</p>
                                 </CardHeader>
                                 <CardContent className="pt-6 flex flex-col justify-between h-[calc(100%-80px)]">
                                     <div>
                                         <div className="mb-6 text-center">
                                             <p className="text-sm text-slate-500 uppercase tracking-wider">Total Factura</p>
-                                            <p className="text-3xl font-bold text-slate-900">${selectedInvoice.importeTotal.toLocaleString('es-AR')}</p>
+                                            <p className="text-3xl font-bold text-slate-900">{selectedInvoice ? `$${selectedInvoice.importeTotal.toLocaleString('es-AR')}` : ""}</p>
                                         </div>
 
                                         <div className="space-y-3">
@@ -822,24 +840,22 @@ export default function RegistrarPagoPage() {
                                             <span>Acumulado:</span>
                                             <span className="font-bold">${montoAcumulado.toFixed(2)}</span>
                                         </div>
-
-                                        {montoAcumulado < selectedInvoice.importeTotal ? (
+                                        {selectedInvoice && montoAcumulado < selectedInvoice.importeTotal ? (
                                             <div className="flex justify-between text-red-600 font-bold bg-red-50 p-2 rounded">
                                                 <span>Falta:</span>
-                                                <span>${(selectedInvoice.importeTotal - montoAcumulado).toFixed(2)}</span>
+                                                <span>{`$${(selectedInvoice.importeTotal - montoAcumulado).toFixed(2)}`}</span>
                                             </div>
-                                        ) : (
+                                        ) : selectedInvoice ? (
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-green-700 font-bold bg-green-50 p-2 rounded">
                                                     <span>¡Cubierto!</span>
-                                                    <span>Vuelto: ${(montoAcumulado - selectedInvoice.importeTotal).toFixed(2)}</span>
+                                                    <span>{`Vuelto: $${(montoAcumulado - selectedInvoice.importeTotal).toFixed(2)}`}</span>
                                                 </div>
                                                 <Button onClick={handleFinalizarPago} className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg animate-pulse">
                                                     Finalizar y Cerrar Factura
                                                 </Button>
                                             </div>
-                                        )}
-
+                                        ) : null}
                                         <Button variant="outline" onClick={handleCancelarPago} className="w-full">Cancelar Operación</Button>
                                     </div>
                                 </CardContent>
