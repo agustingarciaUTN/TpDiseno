@@ -31,14 +31,6 @@ import { DtoFactura, Moneda, TipoMedioPago, DtoMedioPago, DtoPago, EstadoFactura
 
 type PaymentMethod = "EFECTIVO" | "CHEQUE" | "TARJETA_CREDITO" | "TARJETA_DEBITO"
 
-// Add this function near the top of your component or file
-function getMinDate(): string {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    // Set day to 01 for expiry month selection
-    return `${year}-${month}-01`;
-}
 
 export default function RegistrarPagoPage() {
     // --- ESTADOS (Lógica original) ---
@@ -135,26 +127,13 @@ export default function RegistrarPagoPage() {
         else setCardBankError("")
     }
     const handleCardExpiryChange = (val: string) => {
-        // Forzar día 1
+         setCardExpiry(val)
         if (val) {
-            const dateObj = new Date(val);
-            if (dateObj.getDate() !== 1) {
-                setCardExpiryError("La fecha debe ser el 1ro del mes");
-                setCardExpiry("");
-                return;
-            }
-            const now = new Date();
-            if (dateObj <= now) {
-                setCardExpiryError("Debe ser posterior a hoy");
-                setCardExpiry("");
-                return;
-            }
-            setCardExpiry(val);
-            setCardExpiryError("");
-        } else {
-            setCardExpiry("");
-            setCardExpiryError("");
-        }
+            const inputDate = new Date(val)
+            const now = new Date()
+            if (inputDate <= now) setCardExpiryError("Debe ser posterior a hoy")
+            else setCardExpiryError("")
+        } else setCardExpiryError("")
     }
     const handleCardCvvChange = (val: string) => {
         const onlyNumbers = val.replace(/\D/g, "").slice(0, 3)
@@ -777,7 +756,7 @@ export default function RegistrarPagoPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>Vencimiento</Label>
-                                                    <Input type="date" value={cardExpiry} onChange={(e) => handleCardExpiryChange(e.target.value)} className="bg-white" min={getMinDate()} pattern="\d{4}-\d{2}-01" />
+                                                     <Input type="date" value={cardExpiry} onChange={(e) => handleCardExpiryChange(e.target.value)} className="bg-white" />
                                                     {cardExpiryError && <p className="text-xs text-red-500">{cardExpiryError}</p>}
                                                 </div>
                                                 <div className="space-y-2">
