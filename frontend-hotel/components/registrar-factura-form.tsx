@@ -97,10 +97,13 @@ export function RegistrarFacturaForm() {
                     else if (!regexTelefono.test(valor)) error = MSJ_FORMATO_TEL
                     break;
                 case "calle":
-                    if (!valor.trim()) error = MSJ_OBLIGATORIO
-                    else if (!regexCalle.test(valor)) error = "Caracteres inválidos"
-                    break;
                 case "localidad":
+                case "departamento":
+                    if (nombre !== "departamento" && !valor.trim()) error = MSJ_OBLIGATORIO
+                    else if (valor.trim() && !regexCalle.test(valor)) error = "Caracteres inválidos"
+                    // Validación de largo para depto
+                    else if (nombre === "departamento" && valor.trim().length > 10) error = "Máx 10 caracteres"
+                    break;
                 case "provincia":
                 case "pais":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
@@ -110,10 +113,6 @@ export function RegistrarFacturaForm() {
                 case "codPostal":
                     if (!valor.trim()) error = MSJ_OBLIGATORIO
                     else if (!/^\d+$/.test(valor)) error = MSJ_NUMERICO
-                    break;
-                case "departamento": // Opcional real
-                    // Solo validamos si escribió algo. Si está vacío, no hay error.
-                    if (valor.trim() && valor.length > 10) error = "Máx 10 caracteres"
                     break;
                 case "piso": // Opcional real
                     // Solo validamos si escribió algo.
@@ -274,6 +273,14 @@ export function RegistrarFacturaForm() {
             });
             if (!res.ok) throw new Error("Error al crear empresa");
             const dataResp = await res.json();
+
+            setCuitTercero("");          // Limpia el CUIT
+            setRazonSocialTercero("");   // Limpia Razón Social
+            setTelefonoTercero("");      // Limpia Teléfono
+            setDireccion({               // Limpia Dirección
+                calle: "", numero: "", piso: "", departamento: "",
+                codPostal: "", localidad: "", provincia: "", pais: "Argentina"
+            });
 
             // Éxito: Calculamos detalle con el nuevo ID
             obtenerDetalleFacturacion({ esTercero: true, idResponsableJuridico: dataResp.idResponsableGenerado });
@@ -575,7 +582,21 @@ export function RegistrarFacturaForm() {
 
 
                             <div className="flex gap-4 pt-4">
-                                <Button variant="ghost" onClick={() => setStep("select-person")} className="text-slate-500">Cancelar Alta</Button>
+                                <Button variant="ghost" onClick={() => {
+                                    // 1. Limpiamos todos los campos del formulario
+                                    setCuitTercero("");
+                                    setRazonSocialTercero("");
+                                    setTelefonoTercero("");
+                                    setDireccion({
+                                        calle: "", numero: "", piso: "", departamento: "",
+                                        codPostal: "", localidad: "", provincia: "", pais: "Argentina"
+                                    });
+                                    // 2. Limpiamos errores
+                                    setPopupErrors({});
+                                    setErrorMessage("");
+                                    // 3. Volvemos a la pantalla de selección
+                                    setStep("select-person");
+                                }} className="text-slate-500">Cancelar Alta</Button>
                                 <Button onClick={handleCrearEmpresa} disabled={isLoading} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <><CheckCircle2 className="mr-2 h-4 w-4"/> Guardar Empresa y Continuar</>}
                                 </Button>
