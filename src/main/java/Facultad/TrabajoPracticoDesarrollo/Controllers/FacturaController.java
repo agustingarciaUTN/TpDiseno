@@ -44,7 +44,7 @@ public class FacturaController {
      *
      * <p>POST /api/factura/buscar-ocupantes</p>
      *
-     * @param datos DTO con la información inicial necesaria (por ejemplo {@link DtoInicioFactura#numeroHabitacion})
+     * @param datos DTO con la información inicial necesaria (por ejemplo {@link DtoInicioFactura numeroHabitacion})
      * @return {@code 200 OK} con la lista de ocupantes encontrados,
      *         {@code 400 Bad Request} cuando faltan datos o los parámetros son inválidos.
      */

@@ -192,11 +192,37 @@ public class FacturaService {
 
         // 2. Determinar Tipo de Factura
         TipoFactura tipo = TipoFactura.B;
+        double tasaIva = 0.0; // Por defecto Exento o sin especificar
+
         if (responsable instanceof PersonaJuridica) {
             tipo = TipoFactura.A;
+            tasaIva = 0.21; // Responsable Inscripto (Empresas)
         } else if (responsable instanceof PersonaFisica pf) {
-            if (pf.getHuesped().getPosicionIva() == PosIva.RESPONSABLE_INSCRIPTO) {
+            PosIva posIva = pf.getHuesped().getPosicionIva();
+
+            // Lógica de Tipo de Factura
+            if (posIva == PosIva.RESPONSABLE_INSCRIPTO) {
                 tipo = TipoFactura.A;
+            } else {
+                tipo = TipoFactura.B;
+            }
+
+            // Lógica de Tasa de IVA
+            switch (posIva) {
+                case RESPONSABLE_INSCRIPTO:
+                    tasaIva = 0.21;
+                    break;
+                case CONSUMIDOR_FINAL:
+                    tasaIva = 0.21; // Consumidor Final paga 21%
+                    break;
+                case MONOTRIBUTISTA:
+                    tasaIva = 0.07; // Monotributista paga 7%
+                    break;
+                case EXENTO:
+                    tasaIva = 0.0;
+                    break;
+                default:
+                    tasaIva = 0.21; // Default
             }
         }
 
@@ -207,16 +233,25 @@ public class FacturaService {
 
         // Iteramos la lista que nos devolvió el repositorio
         for (ServiciosAdicionales s : serviciosEntidad) {
+            // Protección contra nulos
+            double valorItem = (s.getValor() != null) ? s.getValor() : 0.0;
+            String descItem = (s.getDescripcion() != null) ? s.getDescripcion() : "Servicio sin nombre";
 
-            totalServicios += s.getValor(); // Asumiendo que tiene getPrecio() o getValor()
+            totalServicios += valorItem;
 
+            // Usamos el builder del DTO
             DtoServiciosAdicionales dtoItem = new DtoServiciosAdicionales.Builder()
-                    .descripcion(s.getDescripcion())
-                    .valor(s.getValor())
-                    .build(); // <--- Importante: construye el objeto al final
+                    .id(s.getId())
+                    .tipo(s.getTipoServicio())
+                    .descripcion(descItem)
+                    .valor(valorItem)
+                    .fecha(s.getFechaConsumo())
+                    .idEstadia(idEstadia)
+                    .build();
 
             listaServiciosDto.add(dtoItem);
         }
+
         // 4. Totales
         double subtotal = estadia.getValorEstadia() + recargo + totalServicios;
         double iva = subtotal * 0.21;
@@ -315,20 +350,24 @@ public class FacturaService {
 
         // --- ARREGLO 3: CALCULAR NETO SI FALTA ---
         // Si el neto viene nulo o es 0, lo calculamos desde el total.
-        if (factura.getImporteNeto() == null || factura.getImporteNeto() == 0) {
-            if (factura.getTipoFactura() == TipoFactura.A) {
-                // Si es A, el Total tiene IVA. Neto = Total / 1.21
-                double neto = factura.getImporteTotal() / 1.21;
-                factura.setImporteNeto(neto);
-                factura.setIva(factura.getImporteTotal() - neto);
-            } else {
-                // Si es B, usualmente el Neto es igual al Total (o se desglosa internamente igual)
-                // Para simplificar, asumimos Neto = Total / 1.21 también si queremos guardar el valor sin impuestos,
-                // o Neto = Total si consideramos que B no discrimina.
-                // Lo estándar contable: El neto siempre es la base imponible.
-                factura.setImporteNeto(factura.getImporteTotal() / 1.21);
-                factura.setIva(0.0); // En B no se muestra, pero existe contablemente. O lo dejas en 0.
+        if (factura.getImporteTotal() != null) {
+            double total = factura.getImporteTotal();
+            double tasa = 0.21; // Default
+
+            if (responsable instanceof PersonaFisica pf) {
+                switch (pf.getHuesped().getPosicionIva()) {
+                    case MONOTRIBUTISTA: tasa = 0.07; break;
+                    case EXENTO: tasa = 0.0; break;
+                    default: tasa = 0.21;
+                }
             }
+
+            // Fórmula: Total = Neto * (1 + tasa)  =>  Neto = Total / (1 + tasa)
+            double neto = total / (1 + tasa);
+            double iva = total - neto;
+
+            factura.setImporteNeto(neto);
+            factura.setIva(iva);
         }
 
         facturaRepository.save(factura);

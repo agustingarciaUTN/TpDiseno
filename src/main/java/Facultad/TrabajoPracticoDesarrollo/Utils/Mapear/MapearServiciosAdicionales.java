@@ -43,9 +43,9 @@ public class MapearServiciosAdicionales  {
 
         return new ServiciosAdicionales.Builder()
                 .id(dtoServiciosAdicionales.getIdServicio())
-                .descripcion(dtoServiciosAdicionales.getDescripcionServicio())
+                .descripcion(dtoServiciosAdicionales.getDescripcion())
                 .tipo(dtoServiciosAdicionales.getTipoServicio())
-                .valor(dtoServiciosAdicionales.getValorServicio())
+                .valor(dtoServiciosAdicionales.getValor())
                 .fecha(dtoServiciosAdicionales.getFechaConsumo())
                 .estadia(estadiaRef)
                 .build();
